@@ -1,0 +1,299 @@
+/**
+ * Autor: Brandon Medina
+ * Fecha: 11/05/2026
+ * DescripciÃ³n: Estilos globales, atmÃ³sfera visual y utilidades DAWGS.
+ */
+
+@import "tailwindcss";
+
+:root {
+  --background: #050505;
+  --foreground: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #050505;
+  color: white;
+  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(255, 0, 24, 0.72);
+  color: white;
+}
+
+@keyframes lightningFast {
+  0% {
+    opacity: 0;
+    transform: translateX(-120%) skewX(-12deg);
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  30% {
+    opacity: 0;
+    transform: translateX(120%) skewX(-12deg);
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes lightningSlow {
+  0% {
+    opacity: 0;
+    transform: translateX(-140%) skewX(-10deg);
+  }
+
+  20% {
+    opacity: 0.8;
+  }
+
+  50% {
+    opacity: 0;
+    transform: translateX(120%) skewX(-10deg);
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes pulseRed {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.9);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.08);
+  }
+
+  100% {
+    opacity: 0.3;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes floatCard {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes smokeMove {
+  0% {
+    transform: translateX(-10%) translateY(0%);
+    opacity: 0.2;
+  }
+
+  50% {
+    transform: translateX(10%) translateY(-3%);
+    opacity: 0.35;
+  }
+
+  100% {
+    transform: translateX(-10%) translateY(0%);
+    opacity: 0.2;
+  }
+}
+
+@keyframes electricFlicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  10% {
+    opacity: 0.6;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  30% {
+    opacity: 0.7;
+  }
+
+  40% {
+    opacity: 1;
+  }
+}
+
+@keyframes scanMove {
+  0% {
+    background-position: 0 -100%;
+  }
+
+  100% {
+    background-position: 0 100%;
+  }
+}
+
+@keyframes dawgsParticles {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.45;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translate3d(-3%, -6%, 0);
+    opacity: 0.45;
+  }
+}
+
+@keyframes dawgsLightning {
+  0%,
+  72%,
+  100% {
+    opacity: 0;
+    transform: translate3d(-24%, 0, 0) rotate(var(--bolt-rotation, -10deg));
+  }
+
+  76% {
+    opacity: 0.95;
+  }
+
+  83% {
+    opacity: 0;
+    transform: translate3d(18%, 0, 0) rotate(var(--bolt-rotation, -10deg));
+  }
+}
+
+@keyframes dawgsSmoke {
+  0%,
+  100% {
+    transform: translate3d(-3%, 1%, 0) scale(1);
+    opacity: 0.45;
+  }
+
+  50% {
+    transform: translate3d(4%, -4%, 0) scale(1.08);
+    opacity: 0.72;
+  }
+}
+
+@layer utilities {
+  .animate-lightning-fast {
+    animation: lightningFast 2.4s linear infinite;
+  }
+
+  .animate-lightning-slow {
+    animation: lightningSlow 4s linear infinite;
+  }
+
+  .animate-pulse-red {
+    animation: pulseRed 5s ease-in-out infinite;
+  }
+
+  .animate-float-card {
+    animation: floatCard 5s ease-in-out infinite;
+  }
+
+  .animate-smoke {
+    animation: smokeMove 8s ease-in-out infinite;
+  }
+
+  .animate-electric {
+    animation: electricFlicker 4s infinite;
+  }
+
+  .scanlines {
+    background-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(255,255,255,0.03) 50%,
+      transparent 100%
+    );
+
+    background-size: 100% 8px;
+
+    animation: scanMove 8s linear infinite;
+  }
+
+  .dawgs-particles {
+    background-image:
+      radial-gradient(circle, rgba(255,255,255,0.62) 0 1px, transparent 1.6px),
+      radial-gradient(circle, rgba(255,0,24,0.62) 0 1px, transparent 1.7px);
+    background-position: 0 0, 38px 70px;
+    background-size: 92px 112px, 132px 154px;
+    animation: dawgsParticles 9s ease-in-out infinite alternate;
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+
+  .dawgs-lightning {
+    animation: dawgsLightning 2.8s linear infinite;
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+
+  .dawgs-smoke {
+    animation: dawgsSmoke 8s ease-in-out infinite;
+    transform: translateZ(0);
+    will-change: transform, opacity;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .perspective-dramatic {
+    perspective: 1100px;
+  }
+
+  .glass-action {
+    display: flex;
+    height: 56px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    backdrop-filter: blur(18px);
+    transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+  }
+
+  .glass-action:hover {
+    transform: translateY(-2px);
+    border-color: rgba(248, 113, 113, 0.6);
+    background: rgba(239, 68, 68, 0.18);
+  }
+}
