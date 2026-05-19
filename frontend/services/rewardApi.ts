@@ -1,7 +1,7 @@
 /**
  * Autor: Brandon Medina
  * Fecha: 11/05/2026
- * DescripciÃ³n: Cliente API para validar cÃ³digos y reclamar Party Pass.
+ * Descripción: Cliente API para validar códigos y reclamar Party Pass.
  */
 
 import type { PartyPass } from "@/frontend/types/domain";
@@ -12,14 +12,22 @@ type ClaimResponse = {
   partyPass?: PartyPass & { qrDataUrl?: string };
 };
 
-const API_URL = process.env.NEXT_PUBLIC_DAWGS_API_URL ?? "http://localhost:4000/api";
-
 export async function claimRewardCode(code: string): Promise<ClaimResponse> {
-  const response = await fetch(`${API_URL}/claim-reward`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code }),
-  });
+  try {
+    const response = await fetch(`/api/claim`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
 
-  return response.json();
+    const data = await response.json();
+    
+    if (!response.ok || !data.success) {
+      return { ok: false, error: data.error || "No se pudo reclamar el código." };
+    }
+
+    return { ok: true, partyPass: data.partyPass };
+  } catch (error) {
+    return { ok: false, error: "Error de red" };
+  }
 }

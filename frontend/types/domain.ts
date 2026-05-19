@@ -6,8 +6,8 @@
 
 export type SocialLinks = {
   instagram: string;
-  tiktok: string;
-  whatsapp: string;
+  tiktok?: string;
+  whatsapp?: string;
 };
 
 export type Artist = {
@@ -16,6 +16,7 @@ export type Artist = {
   role: string;
   image: string;
   socials: SocialLinks;
+  description?: string;
 };
 
 export type Event = {

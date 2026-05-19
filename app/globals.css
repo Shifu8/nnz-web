@@ -200,6 +200,16 @@ body {
   }
 }
 
+@keyframes laserSwingLeft {
+  0%, 100% { transform: rotate(25deg); opacity: 0.8; }
+  50% { transform: rotate(55deg); opacity: 1; }
+}
+
+@keyframes laserSwingRight {
+  0%, 100% { transform: rotate(-25deg); opacity: 0.8; }
+  50% { transform: rotate(-55deg); opacity: 1; }
+}
+
 @layer utilities {
   .animate-lightning-fast {
     animation: lightningFast 2.4s linear infinite;
@@ -223,6 +233,14 @@ body {
 
   .animate-electric {
     animation: electricFlicker 4s infinite;
+  }
+
+  .animate-laser-left {
+    animation: laserSwingLeft 4s ease-in-out infinite;
+  }
+
+  .animate-laser-right {
+    animation: laserSwingRight 5s ease-in-out infinite;
   }
 
   .scanlines {

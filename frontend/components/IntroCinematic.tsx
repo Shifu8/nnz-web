@@ -1,37 +1,103 @@
 /**
  * Autor: Brandon Medina
- * Fecha: 11/05/2026
- * DescripciÃ³n: Intro cinematogrÃ¡fica con zoom 3D preparada para audio futuro.
+ * Fecha: 2026
+ * Descripción: Intro premium fluida, sin cuadros estáticos. Efecto cristal holográfico.
  */
 
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
+
+function forceScrollTop() {
+  window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+}
 
 export default function IntroCinematic() {
   const scope = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLHeadingElement>(null);
+  const orbRef = useRef<HTMLDivElement>(null);
   const [hidden, setHidden] = useState(false);
+
+  // Forzar scroll y reset de vista antes de que React pinte
+  if (typeof window !== "undefined") {
+    window.history.scrollRestoration = "manual";
+  }
 
   useGSAP(
     () => {
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
       if (reduceMotion) {
         gsap.set(scope.current, { autoAlpha: 0 });
         setHidden(true);
+        forceScrollTop();
         return;
       }
 
+      // Animación fluida desde el instante 0
       const tl = gsap.timeline({
-        defaults: { ease: "power4.inOut" },
-        onComplete: () => setHidden(true),
+        onComplete: () => {
+          forceScrollTop();
+          setHidden(true);
+        },
       });
 
-      tl.fromTo(".intro-camera", { scale: 1.35, rotationX: 12, z: -200 }, { scale: 1, rotationX: 0, z: 0, duration: 1.7 })
-        .from(".intro-logo", { autoAlpha: 0, y: 34, scale: 0.88, duration: 0.8 }, 0.25)
-        .to(".intro-logo", { textShadow: "0 0 48px rgba(255,0,24,.9)", duration: 0.4, repeat: 3, yoyo: true }, 0.6)
-        .to(scope.current, { autoAlpha: 0, scale: 1.08, duration: 0.9 }, 2.35);
+      // Animación del orbe de luz (respiración y expansión)
+      gsap.fromTo(
+        orbRef.current,
+        { scale: 0, opacity: 0 },
+        { scale: 1.5, opacity: 0.6, duration: 2, ease: "power2.out" }
+      );
+
+      // Texto: Entra con zoom, rotación 3D fluida y desenfoque
+      tl.fromTo(
+        textRef.current,
+        { 
+          scale: 4, 
+          opacity: 0, 
+          filter: "blur(40px)",
+          rotationX: 45,
+          rotationY: 20,
+          z: 500
+        },
+        { 
+          scale: 1, 
+          opacity: 1, 
+          filter: "blur(0px)",
+          rotationX: 0,
+          rotationY: 0,
+          z: 0,
+          duration: 2.2, 
+          ease: "expo.out" 
+        }
+      )
+      .fromTo(
+        ".intro-subtitle",
+        { opacity: 0, y: 20, letterSpacing: "0.2em" },
+        { opacity: 1, y: 0, letterSpacing: "0.5em", duration: 1.5, ease: "power3.out" },
+        "-=1.5"
+      )
+      // Efecto salida suave
+      .to(scope.current, { 
+        opacity: 0, 
+        scale: 1.1,
+        filter: "blur(20px)", 
+        duration: 0.8, 
+        ease: "power2.inOut" 
+      }, 3.0);
+
+      // Efecto parallax muy sutil en el orbe
+      const handleMouseMove = (e: MouseEvent) => {
+        const x = (e.clientX / window.innerWidth - 0.5) * 50;
+        const y = (e.clientY / window.innerHeight - 0.5) * 50;
+        gsap.to(orbRef.current, { x, y, duration: 1, ease: "power2.out" });
+        gsap.to(textRef.current, { rotationY: x * 0.5, rotationX: -y * 0.5, duration: 1, ease: "power2.out" });
+      };
+
+      window.addEventListener("mousemove", handleMouseMove);
+      return () => window.removeEventListener("mousemove", handleMouseMove);
     },
     { scope }
   );
@@ -39,17 +105,47 @@ export default function IntroCinematic() {
   if (hidden) return null;
 
   return (
-    <div ref={scope} className="fixed inset-0 z-[100] grid place-items-center overflow-hidden bg-black perspective-dramatic">
-      <div className="intro-camera absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,0,24,.36),transparent_34%),linear-gradient(180deg,#030303,#120104)]" />
-        <div className="dawgs-particles absolute inset-0 opacity-80" />
-        <div className="dawgs-smoke absolute left-1/2 top-1/2 h-[34rem] w-[34rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-600/15 blur-3xl" />
-        <div className="scanlines absolute inset-0 opacity-35" />
+    <div
+      ref={scope}
+      className="pointer-events-auto fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#000000] overflow-hidden"
+      style={{ perspective: "1000px" }}
+    >
+      {/* Orbe de luz roja cinematográfica de fondo */}
+      <div 
+        ref={orbRef}
+        className="absolute top-1/2 left-1/2 h-[40vh] w-[40vh] -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-600 blur-[100px] md:h-[60vh] md:w-[60vh] md:blur-[140px]"
+      />
+
+      {/* Contenedor Principal */}
+      <div className="relative z-10 flex flex-col items-center justify-center transform-style-3d">
+        <h1 
+          ref={textRef}
+          className="text-[5rem] sm:text-[10rem] font-black uppercase tracking-[0.05em]"
+          style={{
+            // Cristal holográfico y metálico muy limpio (sin hacks de 15 capas)
+            background: "linear-gradient(135deg, #ffffff 0%, #a3a3a3 40%, #555555 50%, #d4d4d4 60%, #ffffff 100%)",
+            backgroundSize: "200% auto",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            filter: "drop-shadow(0px 10px 30px rgba(0,0,0,0.8)) drop-shadow(0px 0px 20px rgba(255,0,24,0.3))",
+            transformStyle: "preserve-3d",
+            willChange: "transform, opacity, filter" // Previene cuadros estáticos iniciales
+          }}
+        >
+          DAWGS
+        </h1>
+        
+        <p className="intro-subtitle mt-4 text-[9px] font-bold uppercase text-zinc-400 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+          Welcome to the underground
+        </p>
       </div>
-      <div className="relative z-10 text-center">
-        <p className="mb-4 text-[10px] font-black uppercase tracking-[0.52em] text-red-300">access signal</p>
-        <h1 className="intro-logo text-[4.5rem] font-black leading-none tracking-[0.18em] text-white sm:text-8xl">DAWGS</h1>
-      </div>
+
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes shine {
+          to { background-position: 200% center; }
+        }
+        h1 { animation: shine 4s linear infinite; }
+      `}} />
     </div>
   );
 }
