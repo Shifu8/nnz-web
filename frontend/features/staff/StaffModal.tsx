@@ -8,7 +8,7 @@
 
 import { useState, FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ShieldAlert } from "lucide-react";
+import { ChevronLeft, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function StaffModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -63,9 +63,9 @@ export default function StaffModal({ isOpen, onClose }: { isOpen: boolean; onClo
           >
             <button
               onClick={onClose}
-              className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white transition hover:bg-white/20"
+              className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest text-zinc-400 transition hover:bg-white/10 hover:text-white"
             >
-              <X className="h-4 w-4" />
+              <ChevronLeft className="h-3 w-3" /> VOLVER
             </button>
 
             <div className="flex flex-col items-center text-center">

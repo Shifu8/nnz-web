@@ -17,9 +17,10 @@ import type { Event } from "@/frontend/types/domain";
 type EventCardProps = {
   event: Event;
   onArtistClick: (artistName: string) => void;
+  isFirst?: boolean;
 };
 
-export default function EventCard({ event, onArtistClick }: EventCardProps) {
+export default function EventCard({ event, onArtistClick, isFirst = false }: EventCardProps) {
   const scope = useRef<HTMLElement>(null);
   const countdown = useCountdown(event.startsAt);
 
@@ -64,8 +65,8 @@ export default function EventCard({ event, onArtistClick }: EventCardProps) {
       });
 
       gsap.to(".poster-parallax", {
-        yPercent: -8,
-        scale: 1.07,
+        yPercent: -2,
+        scale: 1.0,
         scrollTrigger: {
           trigger: scope.current,
           start: "top bottom",
@@ -92,10 +93,10 @@ export default function EventCard({ event, onArtistClick }: EventCardProps) {
       style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="group relative h-[72vh] min-h-[560px] w-[82vw] max-w-[430px] shrink-0 snap-center rounded-[34px] border border-white/12 bg-white/[0.06] shadow-[0_30px_90px_rgba(0,0,0,.6)] backdrop-blur-2xl md:h-[680px] md:w-[390px] perspective-1000"
+      className={`group relative h-[60vh] min-h-[460px] w-[75vw] max-w-[320px] shrink-0 snap-center rounded-[30px] border border-white/12 shadow-[0_30px_90px_rgba(0,0,0,.6)] backdrop-blur-2xl md:h-[520px] md:w-[300px] perspective-1000 transition-all duration-500 ${isFirst ? 'bg-white/[0.06] hover:shadow-[0_0_80px_rgba(255,0,24,0.3)]' : 'bg-white/[0.02] grayscale opacity-70 hover:opacity-100 hover:grayscale-[0.5]'}`}
     >
-      <div className="absolute inset-0 overflow-hidden rounded-[34px]" style={{ transform: "translateZ(-10px)" }}>
-        <Image src={event.poster} alt={event.title} fill priority={event.id === "trap-loud"} sizes="(max-width: 768px) 82vw, 390px" className="poster-parallax object-cover" />
+      <div className="absolute inset-0 overflow-hidden rounded-[30px]" style={{ transform: "translateZ(-10px)" }}>
+        <Image src={event.poster} alt={event.title} fill priority={event.id === "trap-loud"} sizes="(max-width: 768px) 75vw, 300px" className="poster-parallax object-cover object-top" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.15)_36%,rgba(0,0,0,.94))]" />
         <div className="absolute inset-0 scanlines opacity-25" />
         <div className="dawgs-dynamic-lightning absolute left-[-35%] top-[25%] h-px w-[160%] rotate-[-13deg] bg-gradient-to-r from-transparent via-red-400 to-transparent blur-[1px] opacity-0" />
@@ -139,7 +140,7 @@ export default function EventCard({ event, onArtistClick }: EventCardProps) {
           </div>
 
           <a href="#access" className="event-reveal mt-4 flex h-[52px] items-center justify-between rounded-2xl bg-white px-5 text-xs font-black uppercase tracking-[0.22em] text-black transition hover:bg-zinc-200 hover:scale-[1.02] group-hover:shadow-[0_0_50px_rgba(255,0,24,.5)]">
-            SECURE ACCESS <ChevronRight className="h-4 w-4" />
+            BUY TICKET $10 <ChevronRight className="h-4 w-4" />
           </a>
         </div>
       </div>

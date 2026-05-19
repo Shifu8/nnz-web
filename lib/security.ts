@@ -30,3 +30,15 @@ export function validateName(name: string): boolean {
   const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{2,25}$/;
   return nameRegex.test(name);
 }
+
+/**
+ * Genera un payload seguro en formato JSON para el código QR.
+ */
+export function generateSecureQrPayload(serialNumber: string, token: string, eventId: string): string {
+  return JSON.stringify({
+    type: "DAWGS_PASS",
+    serialNumber,
+    token,
+    eventId
+  });
+}

@@ -44,56 +44,50 @@ export default function IntroCinematic() {
         },
       });
 
-      // Animación del orbe de luz (respiración y expansión)
+      // Animación del orbe de luz (respiración y expansión sutil)
       gsap.fromTo(
         orbRef.current,
-        { scale: 0, opacity: 0 },
-        { scale: 1.5, opacity: 0.6, duration: 2, ease: "power2.out" }
+        { scale: 0.8, opacity: 0 },
+        { scale: 1.2, opacity: 0.3, duration: 3, ease: "power2.out" }
       );
 
-      // Texto: Entra con zoom, rotación 3D fluida y desenfoque
+      // Texto: Entra suavemente con fade y blur ligero, sin zoom agresivo
       tl.fromTo(
         textRef.current,
-        { 
-          scale: 4, 
-          opacity: 0, 
-          filter: "blur(40px)",
-          rotationX: 45,
-          rotationY: 20,
-          z: 500
+        {
+          scale: 0.95,
+          opacity: 0,
+          filter: "blur(15px)",
         },
-        { 
-          scale: 1, 
-          opacity: 1, 
+        {
+          scale: 1,
+          opacity: 1,
           filter: "blur(0px)",
-          rotationX: 0,
-          rotationY: 0,
-          z: 0,
-          duration: 2.2, 
-          ease: "expo.out" 
+          duration: 2.5,
+          ease: "power2.out"
         }
       )
-      .fromTo(
-        ".intro-subtitle",
-        { opacity: 0, y: 20, letterSpacing: "0.2em" },
-        { opacity: 1, y: 0, letterSpacing: "0.5em", duration: 1.5, ease: "power3.out" },
-        "-=1.5"
-      )
-      // Efecto salida suave
-      .to(scope.current, { 
-        opacity: 0, 
-        scale: 1.1,
-        filter: "blur(20px)", 
-        duration: 0.8, 
-        ease: "power2.inOut" 
-      }, 3.0);
+        .fromTo(
+          ".intro-subtitle",
+          { opacity: 0, y: 10, letterSpacing: "0.2em" },
+          { opacity: 1, y: 0, letterSpacing: "0.5em", duration: 1.5, ease: "power3.out" },
+          "-=1.5"
+        )
+        // Efecto salida suave
+        .to(scope.current, {
+          opacity: 0,
+          scale: 1.05,
+          filter: "blur(10px)",
+          duration: 1.0,
+          ease: "power2.inOut"
+        }, 3.5);
 
       // Efecto parallax muy sutil en el orbe
       const handleMouseMove = (e: MouseEvent) => {
-        const x = (e.clientX / window.innerWidth - 0.5) * 50;
-        const y = (e.clientY / window.innerHeight - 0.5) * 50;
-        gsap.to(orbRef.current, { x, y, duration: 1, ease: "power2.out" });
-        gsap.to(textRef.current, { rotationY: x * 0.5, rotationX: -y * 0.5, duration: 1, ease: "power2.out" });
+        const x = (e.clientX / window.innerWidth - 0.5) * 20;
+        const y = (e.clientY / window.innerHeight - 0.5) * 20;
+        gsap.to(orbRef.current, { x, y, duration: 1.5, ease: "power2.out" });
+        gsap.to(textRef.current, { x: x * 0.2, y: y * 0.2, duration: 1.5, ease: "power2.out" });
       };
 
       window.addEventListener("mousemove", handleMouseMove);
@@ -111,14 +105,14 @@ export default function IntroCinematic() {
       style={{ perspective: "1000px" }}
     >
       {/* Orbe de luz roja cinematográfica de fondo */}
-      <div 
+      <div
         ref={orbRef}
         className="absolute top-1/2 left-1/2 h-[40vh] w-[40vh] -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-600 blur-[100px] md:h-[60vh] md:w-[60vh] md:blur-[140px]"
       />
 
       {/* Contenedor Principal */}
       <div className="relative z-10 flex flex-col items-center justify-center transform-style-3d">
-        <h1 
+        <h1
           ref={textRef}
           className="text-[5rem] sm:text-[10rem] font-black uppercase tracking-[0.05em]"
           style={{
@@ -134,13 +128,14 @@ export default function IntroCinematic() {
         >
           DAWGS
         </h1>
-        
+
         <p className="intro-subtitle mt-4 text-[9px] font-bold uppercase text-zinc-400 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
-          Welcome to the underground
+          Welcome
         </p>
       </div>
 
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes shine {
           to { background-position: 200% center; }
         }

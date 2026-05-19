@@ -8,10 +8,11 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { Flame, Gem, Radio, Ticket, Gift, X } from "lucide-react";
+import { Flame, Gem, Radio, Ticket, Gift, X, ChevronLeft } from "lucide-react";
 import { events } from "@/frontend/services/dawgsData";
 import AccessDrop from "@/frontend/features/access-drop/AccessDrop";
 import LiveGiveaway from "@/frontend/features/giveaway/LiveGiveaway";
+import { motion, AnimatePresence } from "framer-motion";
 
 const tags = [
   { label: "trap latino", Icon: Flame },
@@ -101,19 +102,21 @@ export default function MobileFirstShell() {
 
             return (
               <div key={event.id} className="w-full shrink-0 snap-center px-1 flex flex-col justify-end pb-2">
-                <div className="relative flex-1 flex flex-col justify-end overflow-hidden rounded-[24px] border border-red-500/30 bg-black/50 shadow-[0_0_50px_rgba(255,0,24,.2)] backdrop-blur-md">
+                <div className={`relative flex-1 flex flex-col justify-end overflow-hidden rounded-[24px] border bg-black/50 shadow-[0_0_50px_rgba(255,0,24,.2)] backdrop-blur-md transition-all duration-500 ${isFirst ? 'border-red-500/30' : 'border-white/10 grayscale opacity-80'}`}>
                   
                   {/* Luces sutiles en la base del card, sin animaciones glitch a los lados */}
                   <div className="absolute inset-0 z-0 bg-black" />
-                  <div className="absolute bottom-0 left-1/2 h-[80%] w-[120%] -translate-x-1/2 bg-[radial-gradient(ellipse_at_bottom,rgba(255,0,24,0.15),transparent_60%)] mix-blend-screen animate-pulse [animation-duration:6s] z-0" />
+                  {isFirst && (
+                    <div className="absolute bottom-0 left-1/2 h-[80%] w-[120%] -translate-x-1/2 bg-[radial-gradient(ellipse_at_bottom,rgba(255,0,24,0.15),transparent_60%)] mix-blend-screen animate-pulse [animation-duration:6s] z-0" />
+                  )}
 
                   <img
                     src={imageSrc}
                     alt={event.title}
-                    className="absolute inset-0 h-full w-full object-cover object-top opacity-95 mix-blend-luminosity brightness-80 z-10 scale-[1.15]"
+                    className={`absolute inset-0 h-full w-full object-cover object-top mix-blend-luminosity brightness-80 z-10 scale-100 ${isFirst ? 'opacity-95' : 'opacity-60'}`}
                   />
                   <div className="absolute inset-0 z-10 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,.6)_40%,#000)]" />
-                  <div className="absolute inset-0 z-10 bg-red-900/10 mix-blend-color" />
+                  {isFirst && <div className="absolute inset-0 z-10 bg-red-900/10 mix-blend-color" />}
                   
                   <div className="relative z-10 p-5">
                     {isFirst && (
@@ -156,7 +159,7 @@ export default function MobileFirstShell() {
                         onClick={() => isFirst && setActiveModal("access")}
                         className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[9px] font-black uppercase tracking-widest transition ${isFirst ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(255,0,24,0.4)] hover:bg-red-500' : 'bg-white/5 text-zinc-500 cursor-not-allowed'}`}
                       >
-                        <Ticket className="h-3.5 w-3.5" /> Access
+                        <Ticket className="h-3.5 w-3.5" /> Buy $10
                       </button>
                       <button 
                         disabled={!isFirst}
@@ -185,29 +188,47 @@ export default function MobileFirstShell() {
       </div>
 
       {/* Modales de Interacción */}
-      {activeModal === "access" && (
-        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/90 pb-28 pt-14 backdrop-blur-xl">
-          <button
-            onClick={() => setActiveModal(null)}
-            className="fixed right-4 top-4 z-[110] flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/80 text-white"
+      <AnimatePresence>
+        {activeModal === "access" && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] overflow-y-auto bg-black/95 pb-28 pt-14 backdrop-blur-xl flex items-center justify-center p-3"
           >
-            <X className="h-5 w-5" />
-          </button>
-          <AccessDrop />
-        </div>
-      )}
-
-      {activeModal === "giveaway" && (
-        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/90 pb-28 pt-14 backdrop-blur-xl">
-          <button
-            onClick={() => setActiveModal(null)}
-            className="fixed right-4 top-4 z-[110] flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/80 text-white"
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.92, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 15 }}
+              transition={{ type: "spring", stiffness: 350, damping: 25 }}
+              className="relative w-full max-w-lg"
+            >
+              <AccessDrop onClose={() => setActiveModal(null)} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+ 
+      <AnimatePresence>
+        {activeModal === "giveaway" && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] overflow-y-auto bg-black/95 pb-28 pt-14 backdrop-blur-xl flex items-center justify-center p-3"
           >
-            <X className="h-5 w-5" />
-          </button>
-          <LiveGiveaway />
-        </div>
-      )}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.92, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 15 }}
+              transition={{ type: "spring", stiffness: 350, damping: 25 }}
+              className="relative w-full max-w-lg"
+            >
+              <LiveGiveaway onClose={() => setActiveModal(null)} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

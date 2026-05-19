@@ -11,13 +11,15 @@ import { Calendar, ChevronDown, Flame, Gem, Radio, Ticket, Gift, X } from "lucid
 import Atmosphere from "@/frontend/components/Atmosphere";
 import IntroCinematic from "@/frontend/components/IntroCinematic";
 import MobileFirstShell from "@/frontend/features/mobile/MobileFirstShell";
-import EventCarousel from "@/frontend/features/events/EventCarousel";
 import AccessDrop from "@/frontend/features/access-drop/AccessDrop";
 import LiveGiveaway from "@/frontend/features/giveaway/LiveGiveaway";
 import { events } from "@/frontend/services/dawgsData";
 import StaffModal from "@/frontend/features/staff/StaffModal";
-import FloatingWhatsAppBubble from "@/frontend/components/FloatingWhatsAppBubble";
+import AIChatbot from "@/frontend/components/AIChatbot";
+import DawgsWearSection from "@/frontend/features/merch/DawgsWearSection";
+import DawgsStudio from "@/frontend/components/DawgsStudio";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function HomePage() {
   const scope = useRef<HTMLElement>(null);
@@ -146,17 +148,21 @@ export default function HomePage() {
                   const imageSrc = isFirst ? "/images/trap_loud_trio_artists.png?v=2" : event.poster;
 
                   return (
-                    <div key={event.id} className="relative w-full shrink-0 snap-center overflow-hidden flex flex-col justify-end p-8 group">
+                    <div key={event.id} className={`relative w-full shrink-0 snap-center overflow-hidden flex flex-col justify-end p-8 group transition-all duration-500 ${isFirst ? '' : 'grayscale opacity-80'}`}>
                       {/* Fondo y Luces Animadas */}
                       <div className="absolute inset-0 bg-black z-0" />
-                      <div className="absolute left-0 top-0 h-[150%] w-[60px] origin-top-left bg-gradient-to-b from-red-600/40 via-red-500/10 to-transparent blur-2xl mix-blend-screen animate-laser-left [animation-duration:12s] z-0" />
-                      <div className="absolute right-0 top-0 h-[150%] w-[60px] origin-top-right bg-gradient-to-b from-red-600/40 via-red-500/10 to-transparent blur-2xl mix-blend-screen animate-laser-right [animation-duration:15s] z-0" />
-                      <div className="absolute bottom-0 left-1/2 h-[80%] w-[120%] -translate-x-1/2 bg-[radial-gradient(ellipse_at_bottom,rgba(255,0,24,0.15),transparent_60%)] mix-blend-screen animate-pulse [animation-duration:6s] z-0" />
+                      {isFirst && (
+                        <>
+                          <div className="absolute left-0 top-0 h-[150%] w-[60px] origin-top-left bg-gradient-to-b from-red-600/40 via-red-500/10 to-transparent blur-2xl mix-blend-screen animate-laser-left [animation-duration:12s] z-0" />
+                          <div className="absolute right-0 top-0 h-[150%] w-[60px] origin-top-right bg-gradient-to-b from-red-600/40 via-red-500/10 to-transparent blur-2xl mix-blend-screen animate-laser-right [animation-duration:15s] z-0" />
+                          <div className="absolute bottom-0 left-1/2 h-[80%] w-[120%] -translate-x-1/2 bg-[radial-gradient(ellipse_at_bottom,rgba(255,0,24,0.15),transparent_60%)] mix-blend-screen animate-pulse [animation-duration:6s] z-0" />
+                        </>
+                      )}
 
                       <img 
                         src={imageSrc} 
                         alt={event.title} 
-                        className="absolute inset-0 h-full w-full object-cover object-top opacity-85 mix-blend-luminosity brightness-90 transition-transform duration-1000 group-hover:scale-110 z-10" 
+                        className={`absolute inset-0 h-full w-full object-cover object-top opacity-85 mix-blend-luminosity brightness-90 transition-transform duration-1000 group-hover:scale-110 z-10 ${!isFirst && 'opacity-60'}`} 
                       />
                       <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,.7)_50%,#000)] z-10" />
                       
@@ -214,8 +220,6 @@ export default function HomePage() {
             swipe experience <ChevronDown className="h-4 w-4 animate-bounce text-red-400" />
           </a>
         </section>
-
-        <EventCarousel />
       </section>
 
       <section className="relative z-10 mx-auto max-w-6xl px-4 pb-24">
@@ -235,33 +239,55 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Burbuja Flotante para Merch y Producción (Nueva) */}
-      <FloatingWhatsAppBubble />
+      {/* Ropa y Estudio */}
+      <DawgsWearSection />
+      <DawgsStudio />
+
+      {/* Asistente IA Concierge */}
+      <AIChatbot />
 
       {/* Modales de Interacción Desktop */}
-      {activeModal === "access" && (
-        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/90 pb-28 pt-14 backdrop-blur-xl">
-          <button
-            onClick={() => setActiveModal(null)}
-            className="fixed right-6 top-6 z-[110] flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-black/80 text-white transition hover:bg-white/10"
+      <AnimatePresence>
+        {activeModal === "access" && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] overflow-y-auto bg-black/90 pb-28 pt-14 backdrop-blur-xl flex items-center justify-center p-4"
           >
-            <X className="h-6 w-6" />
-          </button>
-          <AccessDrop />
-        </div>
-      )}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.92, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 15 }}
+              transition={{ type: "spring", stiffness: 350, damping: 25 }}
+              className="relative w-full max-w-6xl"
+            >
+              <AccessDrop onClose={() => setActiveModal(null)} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {activeModal === "giveaway" && (
-        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/90 pb-28 pt-14 backdrop-blur-xl">
-          <button
-            onClick={() => setActiveModal(null)}
-            className="fixed right-6 top-6 z-[110] flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-black/80 text-white transition hover:bg-white/10"
+      <AnimatePresence>
+        {activeModal === "giveaway" && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] overflow-y-auto bg-black/90 pb-28 pt-14 backdrop-blur-xl flex items-center justify-center p-4"
           >
-            <X className="h-6 w-6" />
-          </button>
-          <LiveGiveaway />
-        </div>
-      )}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.92, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 15 }}
+              transition={{ type: "spring", stiffness: 350, damping: 25 }}
+              className="relative w-full max-w-6xl"
+            >
+              <LiveGiveaway onClose={() => setActiveModal(null)} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <StaffModal isOpen={isStaffModalOpen} onClose={() => setIsStaffModalOpen(false)} />
     </main>

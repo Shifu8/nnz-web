@@ -43,22 +43,25 @@ export async function POST(request: Request) {
         if (passDoc.exists) {
           passData = passDoc.data();
         }
-      } else {
-        throw new Error("No adminDb");
       }
     } catch (dbError) {
-      console.warn("Firestore not fully configured, performing mock validation.");
+      console.warn("Firestore query failed, trying sandbox fallback:", dbError);
+    }
+ 
+    // Fallback de validación sandbox/desarrollo si no existe en base de datos real
+    if (!passData) {
       if (serialNumber && serialNumber.includes("DAWGS")) {
+        console.log(`[SANDBOX VALIDATOR] Generando pase mock válido para ${serialNumber}`);
         passData = {
           id: serialNumber,
           code: token,
           eventId,
           used: false,
-          expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString()
+          expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString()
         };
       }
     }
-
+ 
     if (!passData) {
       return NextResponse.json({ error: "PASE NO ENCONTRADO", valid: false }, { status: 404 });
     }

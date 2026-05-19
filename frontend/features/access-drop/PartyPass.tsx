@@ -7,7 +7,7 @@
 "use client";
 
 import { useRef } from "react";
-import { QRCodeSVG } from "qrcode.react";
+import { QRCodeCanvas } from "qrcode.react";
 import { Download, Share2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toPng } from "html-to-image";
@@ -68,7 +68,7 @@ export default function PartyPass({ data }: PartyPassProps) {
 
           {/* QR Code Section */}
           <div className="mt-8 rounded-3xl border border-white/10 bg-white p-4">
-            <QRCodeSVG value={data.qrPayload} size={180} level="H" includeMargin={false} />
+            <QRCodeCanvas value={data.qrPayload} size={180} level="H" includeMargin={true} fgColor="#000000" bgColor="#ffffff" />
           </div>
 
           {/* User Data */}
