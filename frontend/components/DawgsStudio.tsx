@@ -19,7 +19,7 @@ export default function DawgsStudio() {
         <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" />
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 md:px-8 relative z-10">
+      <div className="mx-auto max-w-[1600px] w-full px-6 md:px-12 lg:px-16 xl:px-20 relative z-10">
 
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-20">

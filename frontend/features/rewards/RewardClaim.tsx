@@ -83,7 +83,7 @@ export default function RewardClaim() {
   }
 
   return (
-    <section id="claim" className="relative z-10 mx-auto max-w-6xl px-4 py-14 md:py-24">
+    <section id="claim" className="relative z-10 mx-auto max-w-[1600px] w-full px-6 md:px-12 lg:px-16 xl:px-20 py-14 md:py-24">
       <div className="grid gap-4 md:grid-cols-[0.9fr_1.1fr] md:items-stretch">
         <div className="rounded-[34px] border border-white/12 bg-white/[0.055] p-5 backdrop-blur-2xl">
           <p className="text-[10px] font-black uppercase tracking-[0.46em] text-red-300">secure access</p>

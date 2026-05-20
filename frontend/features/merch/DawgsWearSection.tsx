@@ -64,7 +64,7 @@ export default function DawgsWearSection() {
  
   return (
     <section id="wear" className="relative z-10 w-full min-h-screen bg-black py-32 border-t border-white/5">
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
+      <div className="mx-auto max-w-[1600px] w-full px-6 md:px-12 lg:px-16 xl:px-20">
  
         {/* Header Editorial */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-24">

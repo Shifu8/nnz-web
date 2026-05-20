@@ -154,7 +154,7 @@ export default function LiveGiveaway({ onClose }: { onClose?: () => void }) {
   }
  
   return (
-    <section ref={container} className="relative z-10 mx-auto max-w-6xl px-4 py-8 md:py-16 overflow-hidden">
+    <section ref={container} className="relative z-10 mx-auto max-w-[1400px] w-full px-6 md:px-12 py-8 md:py-16 overflow-hidden">
       <div className="relative rounded-[40px] border border-white/10 bg-zinc-950/80 p-6 md:p-12 backdrop-blur-3xl shadow-2xl min-h-[600px] flex flex-col">
         
         {/* Back Button (Local for states) */}

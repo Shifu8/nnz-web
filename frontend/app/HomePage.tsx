@@ -75,7 +75,7 @@ export default function HomePage() {
 
       {/* Header unificado */}
       <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur-2xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+        <div className="mx-auto flex max-w-[1600px] w-full items-center justify-between px-6 md:px-12 lg:px-16 py-4">
           <button
             onMouseDown={handleTouchStart}
             onMouseUp={handleTouchEnd}
@@ -108,9 +108,9 @@ export default function HomePage() {
       <section className="relative z-10 hidden md:block">
         <section
           id="home"
-          className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-4 pb-10 pt-28"
+          className="relative z-10 mx-auto flex min-h-screen max-w-[1600px] w-full flex-col justify-center px-6 md:px-12 lg:px-16 xl:px-20 pb-10 pt-28"
         >
-          <div className="grid gap-8 md:grid-cols-[1fr_0.82fr] md:items-center">
+          <div className="grid gap-8 md:grid-cols-2 lg:gap-16 items-center">
             <div>
               <p className="cinematic-reveal text-[10px] font-black uppercase tracking-[0.54em] text-red-300 drop-shadow-[0_0_10px_red]">
                 underground access
@@ -222,7 +222,7 @@ export default function HomePage() {
         </section>
       </section>
 
-      <section className="relative z-10 mx-auto max-w-6xl px-4 pb-24">
+      <section className="relative z-10 mx-auto max-w-[1600px] w-full px-6 md:px-12 lg:px-16 xl:px-20 pb-24">
         <div className="rounded-[34px] border border-white/12 bg-white/[0.03] p-8 backdrop-blur-2xl">
           <p className="text-[10px] font-black uppercase tracking-[0.46em] text-red-400">secure channel</p>
           <h2 className="mt-3 text-3xl md:text-5xl font-black text-white">Protocolo de acceso digital verificado.</h2>
@@ -260,7 +260,7 @@ export default function HomePage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.92, y: 15 }}
               transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              className="relative w-full max-w-6xl"
+              className="relative w-full max-w-[1400px]"
             >
               <AccessDrop onClose={() => setActiveModal(null)} />
             </motion.div>
@@ -281,7 +281,7 @@ export default function HomePage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.92, y: 15 }}
               transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              className="relative w-full max-w-6xl"
+              className="relative w-full max-w-[1400px]"
             >
               <LiveGiveaway onClose={() => setActiveModal(null)} />
             </motion.div>

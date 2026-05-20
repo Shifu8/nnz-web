@@ -45,7 +45,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
     if (dropState === "winner") {
       gsap.from(".pass-reveal", { scale: 0.8, opacity: 0, y: 50, duration: 1, ease: "elastic.out(1, 0.7)" });
     }
-    
+
     // Pulsing urgency glow
     gsap.to(".urgency-glow", {
       opacity: 0.8,
@@ -73,13 +73,13 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
       return;
     }
 
-    if (false) {
+    if (localStorage.getItem("dawgs_claimed")) {
       setErrorMsg("ESTE DISPOSITIVO YA RECLAMÓ UN ACCESO.");
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const res = await fetch("/api/kushki/initiate", {
         method: "POST",
@@ -87,15 +87,15 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
         body: JSON.stringify(formData)
       });
       const data = await res.json();
-      
+
       if (!res.ok) {
         throw new Error(data.error || "Error al iniciar pago");
       }
-      
+
       // En un flujo real, aquí redirigirías a data.paymentUrl o inicializarías el SDK de Kushki.
       // Simulamos la espera del pago:
       setDropState("waiting");
-      
+
       // Simulamos que el Webhook responde y activa el ticket después de 3 segundos
       setTimeout(async () => {
         try {
@@ -143,7 +143,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
             });
           }
 
-          // localStorage.setItem("dawgs_claimed", "true");
+          localStorage.setItem("dawgs_claimed", "true");
           localStorage.setItem("dawgs_recovery_token", data.transactionId);
           setDropState("winner");
         } catch (webhookErr) {
@@ -176,7 +176,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
   const handleRecover = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
-    
+
     const phoneDigits = recoveryPhone.replace(/[^\d]/g, '');
     if (!/^09\d{8}$/.test(phoneDigits)) {
       setErrorMsg("NÚMERO INVÁLIDO.");
@@ -197,7 +197,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
         body: JSON.stringify({ phone: phoneDigits, token: recoveryToken })
       });
       const data = await res.json();
-      
+
       if (!res.ok) throw new Error(data.error || "No se encontró acceso.");
 
       setPassData(data);
@@ -211,22 +211,22 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
   };
 
   return (
-    <section id="access" ref={scope} className="relative z-10 mx-auto max-w-6xl px-4 py-16 md:py-24">
+    <section id="access" ref={scope} className="relative z-10 mx-auto max-w-[1400px] w-full px-6 md:px-12 py-16 md:py-24">
       <div className="relative overflow-hidden rounded-[40px] border border-red-500/30 bg-zinc-950/80 p-6 shadow-[0_0_80px_rgba(255,0,24,.15)] backdrop-blur-3xl md:p-12 min-h-[600px] flex flex-col justify-center">
-        
+
         {/* Global Back / Close Button when in Countdown/Winner/Loser state */}
         {(dropState === "countdown" || dropState === "winner" || dropState === "loser") && onClose && (
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="absolute top-6 left-6 flex items-center gap-2 rounded-full border border-red-500/20 bg-red-950/40 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-400 transition hover:bg-red-900/40 hover:text-white z-50 shadow-[0_0_15px_rgba(239,68,68,0.2)] animate-pulse"
           >
             <ChevronLeft className="h-4 w-4" /> VOLVER
           </button>
         )}
- 
+
         {/* Background Ambient Glow */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,.03),transparent_60%)] opacity-40" />
-        
+
         <style>{`
           @keyframes slideLeft {
             from {
@@ -239,10 +239,10 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
             }
           }
         `}</style>
- 
+
         {(dropState === "countdown" || dropState === "register" || dropState === "recover") && (
           <div className={`relative z-10 w-full transition-all duration-700 grid grid-cols-1 ${dropState !== "countdown" ? "lg:grid-cols-2 gap-12 items-center" : "max-w-md mx-auto"}`}>
-            
+
             {/* LEFT COLUMN: Event Details Summary */}
             <div className={`flex flex-col ${dropState !== "countdown" ? "text-left items-start" : "items-center text-center"} transition-all duration-700`}>
               {dropState !== "countdown" && (
@@ -250,22 +250,22 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                   <ChevronLeft className="h-3 w-3" /> VOLVER AL EVENTO
                 </button>
               )}
-              
+
               <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-300">
                 <Zap className="h-4 w-4 text-white" /> TRAP LOUD - OCT 31
               </span>
               <h2 className={`mt-8 font-black text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.2)] tracking-tighter uppercase italic leading-tight ${dropState !== "countdown" ? "text-3xl md:text-5xl" : "text-5xl md:text-7xl"}`}>
                 MEDELLIN<br />EXPERIENCE.
               </h2>
-              
+
               <div className="mt-8 grid grid-cols-2 gap-4 w-full">
                 <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
                   <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Locación</span>
-                  <span className="text-sm font-bold text-white text-center">Secret Location<br/><span className="text-zinc-400 text-xs">(Revelado al comprar)</span></span>
+                  <span className="text-sm font-bold text-white text-center">Secret Location<br /><span className="text-zinc-400 text-xs">(Revelado al comprar)</span></span>
                 </div>
                 <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
                   <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Lineup</span>
-                  <span className="text-sm font-bold text-white text-center">DJ KHRIZ<br/>YAN BLOCK<br/>Y MÁS...</span>
+                  <span className="text-sm font-bold text-white text-center">DJ KHRIZ<br />YAN BLOCK<br />Y MÁS...</span>
                 </div>
               </div>
 
@@ -301,7 +301,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                     </div>
                     <span className="text-[10px] font-bold text-zinc-600 mt-1 uppercase tracking-widest">$10.00 (INCLUYE IVA Y COMISIONES)</span>
                   </button>
-                  
+
                   <button onClick={() => setDropState("recover")} className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500 hover:text-white transition mt-2">
                     ¿YA TIENES UN TICKET? RECUPERAR AQUÍ
                   </button>
@@ -311,7 +311,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
 
             {/* RIGHT COLUMN: Interactive Form (Slides/Animates in) */}
             {dropState !== "countdown" && (
-              <div 
+              <div
                 className="w-full relative z-10 flex flex-col items-center justify-center rounded-3xl border border-white/5 bg-white/[0.01] p-6 backdrop-blur-xl max-w-md mx-auto transition-all duration-500"
                 style={{
                   animation: "slideLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards"
@@ -323,35 +323,35 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                     <p className="text-[9px] uppercase tracking-[0.4em] text-zinc-500 mb-6 font-bold flex items-center justify-center gap-2">
                       POWERED BY <span className="text-red-500 font-black">KUSHKI</span>
                     </p>
-                    
+
                     <form onSubmit={handleRegister} className="w-full space-y-4">
                       {/* Datos Personales */}
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
                           <p className="ml-2 text-[8px] uppercase tracking-widest text-zinc-500">nombre</p>
-                          <input required type="text" placeholder="EJ. BRANDON" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, '')})} />
+                          <input required type="text" placeholder="EJ. BRANDON" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, '') })} />
                         </div>
                         <div className="space-y-1">
                           <p className="ml-2 text-[8px] uppercase tracking-widest text-zinc-500">apellido</p>
-                          <input required type="text" placeholder="EJ. MEDINA" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, '')})} />
+                          <input required type="text" placeholder="EJ. MEDINA" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, '') })} />
                         </div>
                       </div>
-                      
+
                       <div className="space-y-1">
                         <p className="ml-2 text-[8px] uppercase tracking-widest text-zinc-500">teléfono ecuador (09XXXXXXXX)</p>
-                        <input required type="tel" maxLength={10} placeholder="0987654321" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value.replace(/[^\d]/g, '')})} />
+                        <input required type="tel" maxLength={10} placeholder="0987654321" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/[^\d]/g, '') })} />
                       </div>
 
                       {/* Mock Payment Form (Kushki UI Prep) */}
                       <div className="pt-4 mt-4 border-t border-white/10">
                         <p className="ml-2 text-[10px] uppercase tracking-widest text-white mb-3 font-bold">Detalles de Pago ($10.00)</p>
-                        
+
                         <div className="space-y-3">
                           <div className="space-y-1">
                             <p className="ml-2 text-[8px] uppercase tracking-widest text-zinc-500">Número de Tarjeta</p>
                             <input required type="text" maxLength={19} placeholder="0000 0000 0000 0000" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition tracking-widest" />
                           </div>
-                          
+
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
                               <p className="ml-2 text-[8px] uppercase tracking-widest text-zinc-500">Expiración</p>
@@ -364,7 +364,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                           </div>
                         </div>
                       </div>
-                      
+
                       {errorMsg && (
                         <div className="flex items-center gap-3 text-[10px] font-bold text-red-400 bg-red-950/40 p-4 rounded-xl border border-red-500/30">
                           <ShieldAlert className="h-4 w-4 shrink-0" /> {errorMsg}
@@ -375,7 +375,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                         <span>{isSubmitting ? "PROCESANDO PAGO..." : "PAGAR $10.00"}</span>
                         {!isSubmitting && <ChevronRight className="h-4 w-4" />}
                       </button>
-                      
+
                       <p className="text-center mt-3 text-[8px] uppercase tracking-widest text-zinc-500">Transacción encriptada end-to-end</p>
                     </form>
                   </div>
@@ -385,7 +385,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                   <div className="w-full text-center">
                     <h2 className="text-2xl font-black text-white tracking-widest mb-2 uppercase italic">recuperar access</h2>
                     <p className="text-[10px] uppercase tracking-[0.4em] text-zinc-500 mb-8 font-bold">ingresa tu número registrado</p>
-                    
+
                     <form onSubmit={handleRecover} className="w-full space-y-4">
                       <div className="space-y-1 text-left">
                         <p className="ml-2 text-[8px] uppercase tracking-widest text-zinc-500">teléfono (09XXXXXXXX)</p>
@@ -429,6 +429,11 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
               <p className="text-[10px] uppercase tracking-[0.4em] text-red-500 mt-2 font-bold">bienvenido a la familia dawgs</p>
             </div>
             <PartyPass data={passData} />
+            {onClose && (
+              <button onClick={onClose} className="mt-8 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.3em] text-zinc-400 hover:text-white border border-white/20 bg-white/5 px-6 py-3 rounded-full transition hover:bg-white/10">
+                <ChevronLeft className="h-3 w-3" /> VOLVER AL EVENTO
+              </button>
+            )}
           </div>
         )}
 
@@ -439,7 +444,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
             </div>
             <h2 className="text-3xl font-black text-white tracking-widest uppercase italic">drop agotado</h2>
             <p className="mt-4 text-xs text-zinc-400 uppercase tracking-widest leading-loose">
-              Has llegado tarde a la señal. Los 100 pases exclusivos han sido reclamados. 
+              Has llegado tarde a la señal. Los 100 pases exclusivos han sido reclamados.
               <br /> <span className="text-red-500 font-bold">INTENTA EN EL LIVE GIVEAWAY ABAJO.</span>
             </p>
             <button onClick={() => setDropState("countdown")} className="mt-8 flex h-14 w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-transparent text-xs font-black uppercase tracking-[0.2em] text-white transition hover:bg-white/5">
