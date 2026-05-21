@@ -113,10 +113,10 @@ export default function MobileFirstShell() {
                   <img
                     src={imageSrc}
                     alt={event.title}
-                    className={`absolute inset-0 h-full w-full object-cover object-top mix-blend-luminosity brightness-80 z-10 scale-100 ${isFirst ? 'opacity-95' : 'opacity-60'}`}
+                    className={`absolute inset-0 h-full w-full object-cover object-top z-10 scale-100 transition-all duration-500 ${isFirst ? 'opacity-95' : 'mix-blend-luminosity grayscale opacity-60'}`}
                   />
                   <div className="absolute inset-0 z-10 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,.6)_40%,#000)]" />
-                  {isFirst && <div className="absolute inset-0 z-10 bg-red-900/10 mix-blend-color" />}
+                  {!isFirst && <div className="absolute inset-0 z-10 bg-red-900/10 mix-blend-color" />}
                   
                   <div className="relative z-10 p-5">
                     {isFirst && (
@@ -177,7 +177,7 @@ export default function MobileFirstShell() {
         </div>
 
         {/* Puntos de Paginación */}
-        <div className="mt-2 flex justify-center gap-2">
+        <div className="mt-3.5 flex justify-center gap-2">
           {events.map((_, i) => (
             <div 
               key={i} 

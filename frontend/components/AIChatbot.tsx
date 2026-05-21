@@ -11,7 +11,7 @@ type Message = {
 };
 
 const initialMessages: Message[] = [
-  { id: "1", sender: "bot", text: "Bienvenido a DAWGS. Soy tu AI Concierge personal. ¿En qué te puedo asistir hoy? (Eventos, Accesos, Ropa o Studio Sessions)" }
+  { id: "1", sender: "bot", text: "Bienvenido a DAWGS. Soy tu AI personal. ¿En qué te puedo asistir hoy? (Eventos, Accesos, Ropa o Studio Sessions)" }
 ];
 
 const quickReplies = [
@@ -54,7 +54,7 @@ export default function AIChatbot() {
     // Simulate AI response
     setTimeout(() => {
       let botReply = "Puedo ayudarte con eso. Para soporte avanzado contáctanos vía Instagram @dawgscollective.";
-      
+
       const lower = text.toLowerCase();
       if (lower.includes("evento") || lower.includes("próximo") || lower.includes("next")) {
         botReply = "Nuestro próximo evento es TRAP LOUD el 31 de Octubre en Medellín. El Access Drop está disponible ahora mismo.";
@@ -85,8 +85,8 @@ export default function AIChatbot() {
       {isOpen && (
         <div className="fixed inset-0 z-[110] flex items-end justify-center p-4 sm:items-center sm:p-0">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
-          
-          <div 
+
+          <div
             ref={chatRef}
             className="relative flex h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-[30px] border border-white/10 bg-black/80 shadow-[0_0_80px_rgba(0,0,0,0.8)] backdrop-blur-2xl sm:h-[600px]"
           >
@@ -101,7 +101,7 @@ export default function AIChatbot() {
                   <p className="text-[10px] uppercase tracking-widest text-zinc-400">Concierge</p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setIsOpen(false)}
                 className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-zinc-400 transition hover:bg-white/20 hover:text-white"
               >
@@ -136,7 +136,7 @@ export default function AIChatbot() {
 
             {/* Input */}
             <div className="border-t border-white/10 bg-black/40 p-4">
-              <form 
+              <form
                 onSubmit={(e) => { e.preventDefault(); handleSend(inputText); }}
                 className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 pl-5 pr-2 py-2"
               >
@@ -147,7 +147,7 @@ export default function AIChatbot() {
                   placeholder="Escribe tu mensaje..."
                   className="flex-1 bg-transparent text-sm text-white placeholder-zinc-500 outline-none"
                 />
-                <button 
+                <button
                   type="submit"
                   disabled={!inputText.trim()}
                   className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black disabled:opacity-50 disabled:bg-white/20 disabled:text-zinc-400 transition"
@@ -155,7 +155,7 @@ export default function AIChatbot() {
                   <Send className="h-4 w-4 ml-0.5" />
                 </button>
               </form>
-              
+
               {/* Sleek branded watermark logo */}
               <div className="mt-4 flex items-center justify-center gap-1.5 text-[8px] font-black uppercase tracking-[0.3em] text-zinc-600">
                 <span>DAWGS</span>

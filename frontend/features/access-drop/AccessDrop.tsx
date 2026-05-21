@@ -73,11 +73,6 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
       return;
     }
 
-    if (localStorage.getItem("dawgs_claimed")) {
-      setErrorMsg("ESTE DISPOSITIVO YA RECLAMÓ UN ACCESO.");
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -143,7 +138,6 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
             });
           }
 
-          localStorage.setItem("dawgs_claimed", "true");
           localStorage.setItem("dawgs_recovery_token", data.transactionId);
           setDropState("winner");
         } catch (webhookErr) {
@@ -210,9 +204,24 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
     }
   };
 
+  const isWideLayout = dropState === "register" || dropState === "recover";
+
   return (
-    <section id="access" ref={scope} className="relative z-10 mx-auto max-w-[1400px] w-full px-6 md:px-12 py-16 md:py-24">
-      <div className="relative overflow-hidden rounded-[40px] border border-red-500/30 bg-zinc-950/80 p-6 shadow-[0_0_80px_rgba(255,0,24,.15)] backdrop-blur-3xl md:p-12 min-h-[600px] flex flex-col justify-center">
+    <section id="access" ref={scope} className="relative z-10 mx-auto w-full px-6 md:px-12 py-16 md:py-24 flex justify-center">
+      <div className={`relative overflow-hidden rounded-[40px] border border-dashed border-red-500/40 bg-zinc-950/95 p-6 shadow-[0_0_80px_rgba(255,0,24,.15)] backdrop-blur-3xl md:p-12 min-h-[600px] flex flex-col justify-center transition-all duration-500 w-full ${isWideLayout ? "max-w-5xl" : "max-w-xl"}`}>
+
+        {/* Global Ticket punch hole cutouts */}
+        <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black border-r border-red-500/30 z-20" />
+        <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black border-l border-red-500/30 z-20" />
+
+        {/* Tear-off vertical line divider on desktop */}
+        {isWideLayout && (
+          <>
+            <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 border-r border-dashed border-red-500/30 -translate-x-1/2 z-10 pointer-events-none" />
+            <div className="hidden lg:block absolute left-1/2 top-[-10px] -translate-x-1/2 w-5 h-5 rounded-full bg-black border-b border-red-500/30 z-20" />
+            <div className="hidden lg:block absolute left-1/2 bottom-[-10px] -translate-x-1/2 w-5 h-5 rounded-full bg-black border-t border-red-500/30 z-20" />
+          </>
+        )}
 
         {/* Global Back / Close Button when in Countdown/Winner/Loser state */}
         {(dropState === "countdown" || dropState === "winner" || dropState === "loser") && onClose && (
@@ -244,65 +253,89 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
           <div className={`relative z-10 w-full transition-all duration-700 grid grid-cols-1 ${dropState !== "countdown" ? "lg:grid-cols-2 gap-12 items-center" : "max-w-md mx-auto"}`}>
 
             {/* LEFT COLUMN: Event Details Summary */}
-            <div className={`flex flex-col ${dropState !== "countdown" ? "text-left items-start" : "items-center text-center"} transition-all duration-700`}>
+            <div className={`relative flex flex-col ${dropState !== "countdown" ? "text-left items-start lg:pr-8" : "items-center text-center"} transition-all duration-700 w-full`}>
+
               {dropState !== "countdown" && (
                 <button onClick={() => setDropState("countdown")} className="mb-6 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.3em] text-red-500 hover:text-white border border-red-500/20 bg-red-500/5 px-4 py-2 rounded-full transition hover:bg-red-500/10">
                   <ChevronLeft className="h-3 w-3" /> VOLVER AL EVENTO
                 </button>
               )}
 
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-300">
-                <Zap className="h-4 w-4 text-white" /> TRAP LOUD - OCT 31
+              <span className="inline-flex items-center gap-2 rounded border border-[#C8FF00]/40 bg-[#C8FF00]/5 px-3 py-1 text-[9px] font-black uppercase tracking-[0.25em] text-[#C8FF00] shadow-[0_0_15px_rgba(200,255,0,0.1)]">
+                <Zap className="h-3.5 w-3.5 fill-[#C8FF00]" /> TRAP LOUD • OCT 31
               </span>
-              <h2 className={`mt-8 font-black text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.2)] tracking-tighter uppercase italic leading-tight ${dropState !== "countdown" ? "text-3xl md:text-5xl" : "text-5xl md:text-7xl"}`}>
-                MEDELLIN<br />EXPERIENCE.
+              
+              <h2 className={`mt-6 font-black text-white drop-shadow-[0_0_20px_rgba(239,68,68,0.4)] tracking-tighter uppercase leading-none ${dropState !== "countdown" ? "text-4xl md:text-5xl text-left" : "text-5xl md:text-7xl text-center"}`}>
+                MEDELLIN<br />
+                <span className="text-[#C8FF00] drop-shadow-[0_0_15px_rgba(200,255,0,0.3)] italic">EXPERIENCE.</span>
               </h2>
 
-              <div className="mt-8 grid grid-cols-2 gap-4 w-full">
-                <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Locación</span>
-                  <span className="text-sm font-bold text-white text-center">Secret Location<br /><span className="text-zinc-400 text-xs">(Revelado al comprar)</span></span>
+              <div className="mt-8 grid grid-cols-2 gap-4 w-full text-left">
+                <div className="flex flex-col p-4 rounded-xl border border-red-500/30 bg-black/40 backdrop-blur-sm relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-8 h-8 bg-red-500/10 rounded-bl-full flex items-center justify-center">
+                    <span className="text-[9px] font-bold text-red-400">LOC</span>
+                  </div>
+                  <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#C8FF00] mb-2">UBICACIÓN</span>
+                  <span className="text-xs font-black text-white uppercase tracking-wider">SECRET LOCATION</span>
+                  <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest mt-1">(Revelado al comprar)</span>
                 </div>
-                <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Lineup</span>
-                  <span className="text-sm font-bold text-white text-center">DJ KHRIZ<br />YAN BLOCK<br />Y MÁS...</span>
+                <div className="flex flex-col p-4 rounded-xl border border-red-500/30 bg-black/40 backdrop-blur-sm relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-8 h-8 bg-red-500/10 rounded-bl-full flex items-center justify-center">
+                    <span className="text-[9px] font-bold text-red-400">LINE</span>
+                  </div>
+                  <span className="text-[8px] font-black uppercase tracking-[0.2em] text-[#C8FF00] mb-2">ARTISTAS</span>
+                  <span className="text-xs font-black text-white uppercase tracking-wider leading-tight">DJ KHRIZ<br />YAN BLOCK<br />Y MÁS...</span>
                 </div>
               </div>
 
               {/* Official Sponsors Block */}
               <div className="mt-8 w-full">
-                <p className={`text-[8px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-3 ${dropState !== "countdown" ? "text-left" : "text-center"}`}>OFFICIAL PARTNERS</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2 text-[9px] font-bold text-zinc-400 uppercase tracking-widest hover:border-orange-500/20 transition-all duration-300">
-                    <span>🍔</span>
+                <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#C8FF00] mb-3 text-center">• OFFICIAL PARTNERS •</p>
+                <div className="grid grid-cols-2 gap-2.5 text-left">
+                  <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3.5 py-2.5 text-[9px] font-black text-zinc-400 uppercase tracking-widest hover:border-[#C8FF00]/40 hover:text-white transition-all duration-300">
+                    <span className="text-[12px]">🍔</span>
                     <span>DAWGS Burgers</span>
                   </div>
-                  <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2 text-[9px] font-bold text-zinc-400 uppercase tracking-widest hover:border-red-500/20 transition-all duration-300">
-                    <span>🍣</span>
+                  <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3.5 py-2.5 text-[9px] font-black text-zinc-400 uppercase tracking-widest hover:border-[#C8FF00]/40 hover:text-white transition-all duration-300">
+                    <span className="text-[12px]">🍣</span>
                     <span>Kyoto Sushi Bar</span>
                   </div>
-                  <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2 text-[9px] font-bold text-zinc-400 uppercase tracking-widest hover:border-zinc-500/20 transition-all duration-300">
-                    <span>🏋️</span>
+                  <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3.5 py-2.5 text-[9px] font-black text-zinc-400 uppercase tracking-widest hover:border-[#C8FF00]/40 hover:text-white transition-all duration-300">
+                    <span className="text-[12px]">🏋️</span>
                     <span>Iron Athletics</span>
                   </div>
-                  <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2 text-[9px] font-bold text-zinc-400 uppercase tracking-widest hover:border-blue-500/20 transition-all duration-300">
-                    <span>⚡</span>
+                  <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3.5 py-2.5 text-[9px] font-black text-zinc-400 uppercase tracking-widest hover:border-[#C8FF00]/40 hover:text-white transition-all duration-300">
+                    <span className="text-[12px]">⚡</span>
                     <span>Zen Fisioterapia</span>
                   </div>
                 </div>
               </div>
 
+              {/* Monospace Barcode */}
+              <div className="mt-8 flex flex-col items-center w-full select-none opacity-50">
+                <div className="flex gap-[2px] h-8 items-stretch justify-center w-full">
+                  {[1, 3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 1, 3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 1, 3, 1, 2].map((w, idx) => (
+                    <span key={idx} className="bg-white" style={{ width: `${w}px` }} />
+                  ))}
+                </div>
+                <span className="text-[7px] font-mono tracking-[0.4em] text-zinc-500 mt-1">TL-9812-MED-2026</span>
+              </div>
+
               {/* Render Buy Buttons if state is countdown */}
               {dropState === "countdown" && (
                 <div className="mt-8 flex flex-col items-center gap-4 w-full">
-                  <button onClick={() => setDropState("register")} className="flex flex-col w-full items-center justify-center py-4 rounded-2xl bg-white text-black shadow-[0_0_50px_rgba(255,255,255,.2)] transition hover:bg-zinc-200 hover:scale-[1.02]">
-                    <div className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.2em]">
-                      COMPRAR TICKET <ChevronRight className="h-5 w-5" />
+                  <button 
+                    onClick={() => setDropState("register")} 
+                    className="group relative flex flex-col w-full items-center justify-center py-4 rounded-xl bg-[#C8FF00] text-black shadow-[0_0_35px_rgba(200,255,0,0.35)] transition duration-300 hover:bg-[#b5e600] hover:scale-[1.01] hover:shadow-[0_0_45px_rgba(200,255,0,0.5)] overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_50%,rgba(0,0,0,0.05)_50%)] bg-[length:4px_100%] opacity-20" />
+                    <div className="relative flex items-center gap-2 text-sm font-black uppercase tracking-[0.25em]">
+                      COMPRAR TICKET <ChevronRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                     </div>
-                    <span className="text-[10px] font-bold text-zinc-600 mt-1 uppercase tracking-widest">$10.00 (INCLUYE IVA Y COMISIONES)</span>
+                    <span className="relative text-[9px] font-black text-black/60 mt-1 uppercase tracking-widest">$10.00 • INCLUYE IVA Y COMISIONES</span>
                   </button>
 
-                  <button onClick={() => setDropState("recover")} className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500 hover:text-white transition mt-2">
+                  <button onClick={() => setDropState("recover")} className="text-[9px] font-black uppercase tracking-[0.4em] text-zinc-500 hover:text-white transition mt-2">
                     ¿YA TIENES UN TICKET? RECUPERAR AQUÍ
                   </button>
                 </div>
@@ -312,7 +345,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
             {/* RIGHT COLUMN: Interactive Form (Slides/Animates in) */}
             {dropState !== "countdown" && (
               <div
-                className="w-full relative z-10 flex flex-col items-center justify-center rounded-3xl border border-white/5 bg-white/[0.01] p-6 backdrop-blur-xl max-w-md mx-auto transition-all duration-500"
+                className="w-full relative z-10 flex flex-col items-center justify-center rounded-3xl border border-[#C8FF00]/20 bg-zinc-950/90 p-6 shadow-[0_0_35px_rgba(200,255,0,0.05)] backdrop-blur-xl max-w-md mx-auto transition-all duration-500"
                 style={{
                   animation: "slideLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards"
                 }}
@@ -329,17 +362,17 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
                           <p className="ml-2 text-[8px] uppercase tracking-widest text-zinc-500">nombre</p>
-                          <input required type="text" placeholder="EJ. BRANDON" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, '') })} />
+                          <input required type="text" placeholder="EJ. BRANDON" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-[#C8FF00]/50 transition" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, '') })} />
                         </div>
                         <div className="space-y-1">
                           <p className="ml-2 text-[8px] uppercase tracking-widest text-zinc-500">apellido</p>
-                          <input required type="text" placeholder="EJ. MEDINA" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, '') })} />
+                          <input required type="text" placeholder="EJ. MEDINA" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-[#C8FF00]/50 transition" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, '') })} />
                         </div>
                       </div>
 
                       <div className="space-y-1">
                         <p className="ml-2 text-[8px] uppercase tracking-widest text-zinc-500">teléfono ecuador (09XXXXXXXX)</p>
-                        <input required type="tel" maxLength={10} placeholder="0987654321" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/[^\d]/g, '') })} />
+                        <input required type="tel" maxLength={10} placeholder="0987654321" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-[#C8FF00]/50 transition" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/[^\d]/g, '') })} />
                       </div>
 
                       {/* Mock Payment Form (Kushki UI Prep) */}
@@ -349,17 +382,17 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                         <div className="space-y-3">
                           <div className="space-y-1">
                             <p className="ml-2 text-[8px] uppercase tracking-widest text-zinc-500">Número de Tarjeta</p>
-                            <input required type="text" maxLength={19} placeholder="0000 0000 0000 0000" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition tracking-widest" />
+                            <input required type="text" maxLength={19} placeholder="0000 0000 0000 0000" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-[#C8FF00]/50 transition tracking-widest" />
                           </div>
 
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
                               <p className="ml-2 text-[8px] uppercase tracking-widest text-zinc-500">Expiración</p>
-                              <input required type="text" maxLength={5} placeholder="MM/YY" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition text-center" />
+                              <input required type="text" maxLength={5} placeholder="MM/YY" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-[#C8FF00]/50 transition text-center" />
                             </div>
                             <div className="space-y-1">
                               <p className="ml-2 text-[8px] uppercase tracking-widest text-zinc-500">CVC</p>
-                              <input required type="password" maxLength={4} placeholder="•••" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition text-center" />
+                              <input required type="password" maxLength={4} placeholder="•••" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-[#C8FF00]/50 transition text-center" />
                             </div>
                           </div>
                         </div>
@@ -371,9 +404,13 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                         </div>
                       )}
 
-                      <button disabled={isSubmitting} type="submit" className="mt-6 flex h-14 w-full items-center justify-between px-6 rounded-2xl bg-red-600 text-xs font-black uppercase tracking-[0.2em] text-white shadow-[0_0_30px_rgba(255,0,24,.4)] transition hover:bg-red-500 disabled:opacity-50">
+                      <button 
+                        disabled={isSubmitting} 
+                        type="submit" 
+                        className="mt-6 flex h-14 w-full items-center justify-between px-6 rounded-xl bg-[#C8FF00] text-xs font-black uppercase tracking-[0.2em] text-black shadow-[0_0_20px_rgba(200,255,0,0.25)] transition hover:bg-[#b5e600] hover:shadow-[0_0_30px_rgba(200,255,0,0.4)] disabled:opacity-50"
+                      >
                         <span>{isSubmitting ? "PROCESANDO PAGO..." : "PAGAR $10.00"}</span>
-                        {!isSubmitting && <ChevronRight className="h-4 w-4" />}
+                        {!isSubmitting && <ChevronRight className="h-4 w-4 text-black" />}
                       </button>
 
                       <p className="text-center mt-3 text-[8px] uppercase tracking-widest text-zinc-500">Transacción encriptada end-to-end</p>
@@ -389,7 +426,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                     <form onSubmit={handleRecover} className="w-full space-y-4">
                       <div className="space-y-1 text-left">
                         <p className="ml-2 text-[8px] uppercase tracking-widest text-zinc-500">teléfono (09XXXXXXXX)</p>
-                        <input required type="tel" maxLength={10} placeholder="0987654321" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-4 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={recoveryPhone} onChange={(e) => setRecoveryPhone(e.target.value.replace(/[^\d]/g, ''))} />
+                        <input required type="tel" maxLength={10} placeholder="0987654321" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-4 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-[#C8FF00]/50 transition" value={recoveryPhone} onChange={(e) => setRecoveryPhone(e.target.value.replace(/[^\d]/g, ''))} />
                       </div>
 
                       {errorMsg && (
@@ -398,7 +435,11 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                         </div>
                       )}
 
-                      <button disabled={isSubmitting} type="submit" className="flex h-16 w-full items-center justify-center gap-2 rounded-2xl bg-white text-xs font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200">
+                      <button 
+                        disabled={isSubmitting} 
+                        type="submit" 
+                        className="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#C8FF00] text-xs font-black uppercase tracking-[0.2em] text-black transition hover:bg-[#b5e600]"
+                      >
                         {isSubmitting ? "BUSCANDO..." : "RECLAMAR MI PASE"}
                       </button>
                     </form>

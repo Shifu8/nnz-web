@@ -162,7 +162,7 @@ export default function HomePage() {
                       <img 
                         src={imageSrc} 
                         alt={event.title} 
-                        className={`absolute inset-0 h-full w-full object-cover object-top opacity-85 mix-blend-luminosity brightness-90 transition-transform duration-1000 group-hover:scale-110 z-10 ${!isFirst && 'opacity-60'}`} 
+                        className={`absolute inset-0 h-full w-full object-cover object-top transition-transform duration-1000 group-hover:scale-110 z-10 ${isFirst ? 'opacity-95 brightness-95' : 'mix-blend-luminosity grayscale opacity-60'}`} 
                       />
                       <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,.7)_50%,#000)] z-10" />
                       
@@ -213,12 +213,6 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          <a
-            href="#events"
-            className="cinematic-reveal mt-8 inline-flex w-fit items-center gap-2 text-[10px] font-black uppercase tracking-[0.34em] text-zinc-400 transition hover:text-white"
-          >
-            swipe experience <ChevronDown className="h-4 w-4 animate-bounce text-red-400" />
-          </a>
         </section>
       </section>
 

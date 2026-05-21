@@ -1,8 +1,37 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { ArrowRight, Music, SlidersHorizontal, Disc3, Speaker } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+const studioImages = [
+  {
+    src: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=2070&auto=format&fit=crop",
+    title: "Medellin, CO",
+    desc: "Analog & Digital Hybrid Setup"
+  },
+  {
+    src: "https://images.unsplash.com/photo-1598653222000-6b7b7a552625?q=80&w=2070&auto=format&fit=crop",
+    title: "Vocal Booth",
+    desc: "Neumann U87 & Premium Acoustics"
+  },
+  {
+    src: "https://images.unsplash.com/photo-1559782501-974b3da954a2?q=80&w=2070&auto=format&fit=crop",
+    title: "Control Room A",
+    desc: "Solid State Logic & Custom Monitoring"
+  }
+];
 
 export default function DawgsStudio() {
+  const [currentImgIndex, setCurrentImgIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentImgIndex((prev) => (prev + 1) % studioImages.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
   const services = [
     { icon: Music, title: "Production", desc: "Beatmaking, sound design y estructuración." },
     { icon: SlidersHorizontal, title: "Mix & Master", desc: "Sonido cristalino, punch analógico." },
@@ -11,11 +40,11 @@ export default function DawgsStudio() {
   ];
 
   return (
-    <section id="studio" className="relative z-10 w-full min-h-screen bg-[#050505] py-24 border-t border-white/5 overflow-hidden">
+    <section id="studio" className="relative z-10 w-full min-h-screen bg-transparent py-24 border-t border-white/5 overflow-hidden">
       {/* Background Cinematic Effects */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-1/4 left-0 w-96 h-96 bg-red-900/10 rounded-full blur-[120px] mix-blend-screen" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-zinc-800/20 rounded-full blur-[150px] mix-blend-screen" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-zinc-800/10 rounded-full blur-[150px] mix-blend-screen" />
         <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" />
       </div>
 
@@ -37,21 +66,50 @@ export default function DawgsStudio() {
         {/* Content Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
 
-          {/* Visual Showcase (Mock image placeholder with CSS) */}
+          {/* Visual Showcase (Slideshow) */}
           <div className="relative h-[500px] md:h-[600px] rounded-[40px] border border-white/5 bg-black overflow-hidden group">
-            {/* Background Image de Estudio real o placeholder */}
-            <img
-              src="https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=2070&auto=format&fit=crop"
-              alt="Studio Setup"
-              className="absolute inset-0 w-full h-full object-cover mix-blend-luminosity opacity-40 transition-transform duration-1000 group-hover:scale-110"
-            />
+            {/* Background Image de Estudio real con crossfade */}
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={currentImgIndex}
+                src={studioImages[currentImgIndex].src}
+                alt="Studio Setup"
+                initial={{ opacity: 0, scale: 1.05 }}
+                animate={{ opacity: 0.4, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 1.2, ease: "easeInOut" }}
+                className="absolute inset-0 w-full h-full object-cover mix-blend-luminosity"
+              />
+            </AnimatePresence>
 
-            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.8)_0%,transparent_1px)] bg-[size:4px_4px]" />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.4)_40%,#000)]" />
+            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.8)_0%,transparent_1px)] bg-[size:4px_4px] pointer-events-none" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.4)_40%,#000)] pointer-events-none" />
 
-            <div className="absolute bottom-0 inset-x-0 p-8 bg-gradient-to-t from-black to-transparent">
-              <p className="text-white text-xl font-black uppercase tracking-widest">Medellin, CO</p>
-              <p className="text-zinc-500 text-sm mt-1">Analog & Digital Hybrid Setup</p>
+            <div className="absolute bottom-0 inset-x-0 p-8 bg-gradient-to-t from-black to-transparent pointer-events-none z-10">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentImgIndex}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  <p className="text-white text-xl font-black uppercase tracking-widest">{studioImages[currentImgIndex].title}</p>
+                  <p className="text-zinc-500 text-sm mt-1">{studioImages[currentImgIndex].desc}</p>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Slide indicators */}
+            <div className="absolute top-6 right-8 flex gap-1.5 z-10 pointer-events-none">
+              {studioImages.map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all duration-500 ${
+                    i === currentImgIndex ? "bg-red-500 w-6 shadow-[0_0_8px_red]" : "bg-white/20 w-1.5"
+                  }`}
+                />
+              ))}
             </div>
           </div>
 
@@ -67,13 +125,15 @@ export default function DawgsStudio() {
               ))}
             </div>
 
-            <div className="space-y-4">
-              <a href="https://wa.me/593988831372?text=Hola%20DAWGS%20Studio,%20quiero%20empezar%20un%20proyecto" target="_blank" rel="noreferrer" className="w-full sm:w-auto flex items-center justify-between sm:justify-center gap-4 bg-white text-black h-14 px-8 rounded-2xl font-black uppercase tracking-widest transition-all hover:bg-zinc-200 hover:scale-[1.02]">
+            <div className="flex justify-start">
+              <a 
+                href="https://wa.me/593988831372?text=Hola%20DAWGS%20Studio,%20quiero%20empezar%20un%20proyecto" 
+                target="_blank" 
+                rel="noreferrer" 
+                className="w-full sm:w-auto flex items-center justify-center gap-4 bg-white text-black h-14 px-10 rounded-2xl font-black uppercase tracking-widest transition-all hover:bg-zinc-200 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)]"
+              >
                 Start a Project
                 <ArrowRight className="w-5 h-5" />
-              </a>
-              <a href="https://wa.me/593988831372?text=Hola%20DAWGS%20Studio,%20quiero%20agendar%20una%20sesi%C3%B3n" target="_blank" rel="noreferrer" className="w-full sm:w-auto flex items-center justify-center gap-4 bg-transparent text-white border border-white/20 h-14 px-8 rounded-2xl font-bold uppercase tracking-widest transition-all hover:bg-white/5">
-                Book a Session
               </a>
             </div>
           </div>
