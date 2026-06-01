@@ -126,8 +126,23 @@ export async function PUT(
       return NextResponse.json({ success: true, event: updated });
     }
 
-    // Event doesn't exist — create it
-    const created = createEvent(body);
+    // Event doesn't exist — create it with defaults for missing fields
+    const created = createEvent({
+      title: body.title || "Nuevo Evento",
+      subtitle: body.subtitle || "",
+      location: body.location || "",
+      date: body.date || "",
+      time: body.time || "",
+      countdownDate: body.countdownDate || "",
+      price: body.price !== undefined ? Number(body.price) : 10,
+      imageUrl: body.imageUrl || "",
+      description: body.description || "",
+      lineup: body.lineup || [],
+      position: body.position !== undefined ? Number(body.position) : 0,
+      status: body.status || "active",
+      isFeatured: body.isFeatured ?? false,
+      slug: body.slug || "",
+    });
 
     return NextResponse.json({ success: true, event: created });
   } catch (err) {

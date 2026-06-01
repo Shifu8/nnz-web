@@ -323,6 +323,7 @@ export function validateUtplQrPayload(qrPayload: string, visualText = ""): UtplQ
       careerId: career?.id || "desconocida",
       modality: student.modality,
       gender: student.gender === "female" ? "female" : "unknown",
+      institutionConfidence: student.institutionConfidence || "partial",
     },
     requiresVisualGenderCheck: false,
     requiresVisualCardCheck: false,

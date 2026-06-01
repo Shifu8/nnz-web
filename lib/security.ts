@@ -173,7 +173,7 @@ export async function readJson<T>(
 
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    const first = parsed.error.errors[0];
+    const first = parsed.error.issues[0];
     const field = first?.path?.join(".") || "desconocido";
     const reason = first?.message || "invalido";
     throw new ApiError(400, `Campo "${field}": ${reason}`, "VALIDATION_ERROR");

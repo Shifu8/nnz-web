@@ -34,6 +34,8 @@ export async function POST(request: NextRequest) {
       price: Number(price),
       imageUrl: imageUrl || "",
       description: description || "",
+      lineup: body.lineup || [],
+      position: body.position !== undefined ? Number(body.position) : 0,
       slug: body.slug || "",
       status: "active",
       isFeatured: false,

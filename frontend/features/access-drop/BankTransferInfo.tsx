@@ -387,7 +387,7 @@ export default function BankTransferInfo({
                     </button>
                     <button
                       type="button"
-                      onClick={(e) => { setShowConfirm(false); handleSubmit(e); }}
+                      onClick={() => { setShowConfirm(false); handleSubmit(); }}
                       disabled={isSubmitting}
                       className="glass-action glass-action-primary flex-1"
                       style={{ "--glass-action-height": "44px", "--glass-action-text": "0.65rem" } as CSSProperties}

@@ -2,6 +2,7 @@ import { secureLog } from "./security";
 import { generateTicketQrPng } from "./tickets/ticketImage";
 import { ticketImagePublicUrl } from "./tickets/ticketImageToken";
 import { createWhatsAppDeepLink } from "./whatsapp";
+import { loadAllEvents } from "./admin/events-store";
 
 export type DeliveryChannel = "whatsapp";
 
@@ -46,4 +47,16 @@ export async function resendTicketNotifications(
     phone: phone || pass.phone,
   };
   return sendTicketNotifications(resolved, qrPayload);
+}
+
+export function getNotificationsDiagnostics() {
+  return {
+    whatsapp: !!process.env.WHATSAPP_ACCESS_TOKEN,
+    whatsappPhoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || "",
+    whatsappTokenPreview: process.env.WHATSAPP_ACCESS_TOKEN
+      ? `${process.env.WHATSAPP_ACCESS_TOKEN.slice(0, 8)}...`
+      : "",
+    whatsappVerifyToken: process.env.WHATSAPP_VERIFY_TOKEN || "",
+    publicTicketUrl: process.env.NEXT_PUBLIC_SITE_URL || "",
+  };
 }
