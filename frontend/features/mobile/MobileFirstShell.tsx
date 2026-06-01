@@ -6,10 +6,9 @@
 
 "use client";
 
-import Image from "next/image";
-import { useState, useEffect } from "react";
-import { Flame, Gem, Radio, Ticket, Gift, X, ChevronLeft } from "lucide-react";
-import { events } from "@/frontend/services/dawgsData";
+import { useState, useEffect, type CSSProperties } from "react";
+import { Flame, Gem, Radio, Ticket, Gift } from "lucide-react";
+import type { Event } from "@/frontend/types/domain";
 import AccessDrop from "@/frontend/features/access-drop/AccessDrop";
 import LiveGiveaway from "@/frontend/features/giveaway/LiveGiveaway";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,6 +23,14 @@ const tags = [
 export default function MobileFirstShell() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeModal, setActiveModal] = useState<"access" | "giveaway" | null>(null);
+  const [events, setEvents] = useState<Event[]>([]);
+
+  useEffect(() => {
+    fetch("/api/events")
+      .then((r) => r.json())
+      .then((data) => { if (data.success) setEvents(data.events); })
+      .catch(() => {});
+  }, []);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const slide = Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth);
@@ -98,7 +105,7 @@ export default function MobileFirstShell() {
           {events.map((event, index) => {
             const isFirst = index === 0;
             // Para el primer evento usamos la imagen local editada, para los demas el poster del objeto
-            const imageSrc = isFirst ? "/images/trap_loud_trio_artists.png?v=2" : event.poster;
+            const imageSrc = event.poster || "/images/trap_loud_trio_artists.png";
 
             return (
               <div key={event.id} className="w-full shrink-0 snap-center px-1 flex flex-col justify-end pb-2">
@@ -157,14 +164,16 @@ export default function MobileFirstShell() {
                       <button 
                         disabled={!isFirst}
                         onClick={() => isFirst && setActiveModal("access")}
-                        className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[9px] font-black uppercase tracking-widest transition ${isFirst ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(255,0,24,0.4)] hover:bg-red-500' : 'bg-white/5 text-zinc-500 cursor-not-allowed'}`}
+                        className={`glass-action flex-1 ${isFirst ? "glass-action-primary" : "glass-action-quiet text-zinc-500"}`}
+                        style={{ "--glass-action-height": "40px", "--glass-action-px": "0.85rem", "--glass-action-text": "0.56rem" } as CSSProperties}
                       >
                         <Ticket className="h-3.5 w-3.5" /> Buy $10
                       </button>
                       <button 
                         disabled={!isFirst}
                         onClick={() => isFirst && setActiveModal("giveaway")}
-                        className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[9px] font-black uppercase tracking-widest transition ${isFirst ? 'bg-red-950/80 border border-red-500/30 text-red-100 hover:bg-red-900' : 'bg-white/5 text-zinc-500 cursor-not-allowed'}`}
+                        className={`glass-action flex-1 ${isFirst ? "glass-action-quiet" : "glass-action-quiet text-zinc-500"}`}
+                        style={{ "--glass-action-height": "40px", "--glass-action-px": "0.85rem", "--glass-action-text": "0.56rem" } as CSSProperties}
                       >
                         <Gift className="h-3.5 w-3.5" /> Giveaway
                       </button>
@@ -215,14 +224,14 @@ export default function MobileFirstShell() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] overflow-y-auto bg-black/95 pb-28 pt-14 backdrop-blur-xl flex items-center justify-center p-3"
+            className="fixed inset-0 z-[100] overflow-y-auto bg-black/95 backdrop-blur-xl flex items-start justify-center"
           >
             <motion.div 
               initial={{ opacity: 0, scale: 0.92, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.92, y: 15 }}
               transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              className="relative w-full max-w-lg"
+              className="relative w-full max-w-lg px-3 py-4"
             >
               <LiveGiveaway onClose={() => setActiveModal(null)} />
             </motion.div>

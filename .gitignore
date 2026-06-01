@@ -7,3 +7,5 @@ dist/
 build/
 *.log
 tsconfig.tsbuildinfo
+wa_session/
+auth_info*/

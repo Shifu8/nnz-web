@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 import { ArrowRight, Music, SlidersHorizontal, Disc3, Speaker } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -16,11 +16,17 @@ const studioImages = [
     desc: "Neumann U87 & Premium Acoustics"
   },
   {
-    src: "https://images.unsplash.com/photo-1559782501-974b3da954a2?q=80&w=2070&auto=format&fit=crop",
+    src: "https://images.unsplash.com/photo-1605722243979-fe0be8158232?q=80&w=2070&auto=format&fit=crop",
+    title: "Creative Sessions",
+    desc: "Live Vocal Recording & Songwriting"
+  },
+  {
+    src: "https://images.unsplash.com/photo-1601042879364-f3947d3f9c16?q=80&w=2070&auto=format&fit=crop",
     title: "Control Room A",
-    desc: "Solid State Logic & Custom Monitoring"
+    desc: "Solid State Logic & Producer Collaboration"
   }
 ];
+
 
 export default function DawgsStudio() {
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
@@ -45,7 +51,7 @@ export default function DawgsStudio() {
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-1/4 left-0 w-96 h-96 bg-red-900/10 rounded-full blur-[120px] mix-blend-screen" />
         <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-zinc-800/10 rounded-full blur-[150px] mix-blend-screen" />
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" />
+        <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")", backgroundRepeat: "repeat", backgroundSize: "128px 128px" }} />
       </div>
 
       <div className="mx-auto max-w-[1600px] w-full px-6 md:px-12 lg:px-16 xl:px-20 relative z-10">
@@ -130,7 +136,8 @@ export default function DawgsStudio() {
                 href="https://wa.me/593988831372?text=Hola%20DAWGS%20Studio,%20quiero%20empezar%20un%20proyecto" 
                 target="_blank" 
                 rel="noreferrer" 
-                className="w-full sm:w-auto flex items-center justify-center gap-4 bg-white text-black h-14 px-10 rounded-2xl font-black uppercase tracking-widest transition-all hover:bg-zinc-200 hover:scale-[1.02] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)]"
+                className="glass-action"
+                style={{ "--glass-action-height": "56px", "--glass-action-px": "2.5rem", "--glass-action-text": "0.72rem" } as CSSProperties}
               >
                 Start a Project
                 <ArrowRight className="w-5 h-5" />

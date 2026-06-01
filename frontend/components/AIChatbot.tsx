@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { MessageSquare, X, Send, Bot, User } from "lucide-react";
+import { useState, useRef, useEffect, type CSSProperties } from "react";
+import { X, Send, Bot } from "lucide-react";
 import { gsap } from "gsap";
 
 type Message = {
@@ -11,11 +11,15 @@ type Message = {
 };
 
 const initialMessages: Message[] = [
-  { id: "1", sender: "bot", text: "Bienvenido a DAWGS. Soy tu AI personal. ¿En qué te puedo asistir hoy? (Eventos, Accesos, Ropa o Studio Sessions)" }
+  {
+    id: "1",
+    sender: "bot",
+    text: "Hola, que tal. Bienvenido a DAWGS. Soy tu concierge del evento: entradas, giveaway, merch o studio. Que necesitas?",
+  },
 ];
 
 const quickReplies = [
-  "Próximo Evento",
+  "Proximo Evento",
   "Comprar Acceso",
   "DAWGS Wear",
   "Studio Sessions",
@@ -44,31 +48,36 @@ export default function AIChatbot() {
     }
   }, [isOpen]);
 
-  const handleSend = (text: string) => {
+  const handleSend = async (text: string) => {
     if (!text.trim()) return;
 
-    const userMsg: Message = { id: Date.now().toString(), sender: "user", text };
+    const userMsg: Message = { id: crypto.randomUUID(), sender: "user", text };
     setMessages((prev) => [...prev, userMsg]);
     setInputText("");
 
-    // Simulate AI response
-    setTimeout(() => {
-      let botReply = "Puedo ayudarte con eso. Para soporte avanzado contáctanos vía Instagram @dawgscollective.";
+    const thinkingId = crypto.randomUUID();
+    setMessages((prev) => [...prev, { id: thinkingId, sender: "bot", text: "..." }]);
 
-      const lower = text.toLowerCase();
-      if (lower.includes("evento") || lower.includes("próximo") || lower.includes("next")) {
-        botReply = "Nuestro próximo evento es TRAP LOUD el 31 de Octubre en Medellín. El Access Drop está disponible ahora mismo.";
-      } else if (lower.includes("comprar") || lower.includes("acceso") || lower.includes("ticket") || lower.includes("access")) {
-        botReply = "Puedes asegurar tu entrada directamente desde el botón 'BUY TICKET $10'. Aceptamos tarjetas y transferencias vía Kushki de forma 100% segura.";
-      } else if (lower.includes("ropa") || lower.includes("wear") || lower.includes("merch")) {
-        botReply = "DAWGS Wear está disponible más abajo en esta misma página. Ahora mismo tenemos la Signature Tee (Solo talla M disponible). Premium heavy cotton.";
-      } else if (lower.includes("studio") || lower.includes("musica") || lower.includes("produccion")) {
-        botReply = "DAWGS Studio ofrece producción, mezcla, masterización y creative sessions. Ve a la sección Studio y presiona 'Start a Project' para ir a nuestro WhatsApp directo.";
-      }
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [...messages, userMsg].map(({ sender, text }) => ({ sender, text })),
+        }),
+      });
 
-      const botMsg: Message = { id: (Date.now() + 1).toString(), sender: "bot", text: botReply };
-      setMessages((prev) => [...prev, botMsg]);
-    }, 1000);
+      const data = await res.json();
+      const reply = data.reply || "No se que decir.";
+
+      setMessages((prev) => prev.map((m) => (m.id === thinkingId ? { ...m, text: reply } : m)));
+    } catch {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === thinkingId ? { ...m, text: "Hubo un error. Intenta de nuevo." } : m,
+        ),
+      );
+    }
   };
 
   return (
@@ -76,7 +85,8 @@ export default function AIChatbot() {
       {/* Botón flotante */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-white text-black shadow-[0_0_30px_rgba(255,255,255,0.3)] transition-all duration-500 hover:scale-110 hover:shadow-[0_0_40px_rgba(255,255,255,0.6)] ${isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"}`}
+        className={`glass-icon-button fixed bottom-6 right-6 z-50 text-white transition-all duration-500 ${isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"}`}
+        style={{ "--glass-icon-size": "56px", position: "fixed" } as CSSProperties}
       >
         <Bot className="h-6 w-6 animate-pulse" />
       </button>
@@ -103,7 +113,8 @@ export default function AIChatbot() {
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-zinc-400 transition hover:bg-white/20 hover:text-white"
+                className="glass-icon-button text-zinc-300"
+                style={{ "--glass-icon-size": "34px" } as CSSProperties}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -127,7 +138,8 @@ export default function AIChatbot() {
                 <button
                   key={reply}
                   onClick={() => handleSend(reply)}
-                  className="shrink-0 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-zinc-300 transition hover:bg-white/20 hover:text-white"
+                  className="glass-action glass-action-quiet shrink-0 text-zinc-200"
+                  style={{ "--glass-action-height": "34px", "--glass-action-px": "1rem", "--glass-action-text": "0.58rem" } as CSSProperties}
                 >
                   {reply}
                 </button>
@@ -150,7 +162,8 @@ export default function AIChatbot() {
                 <button
                   type="submit"
                   disabled={!inputText.trim()}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black disabled:opacity-50 disabled:bg-white/20 disabled:text-zinc-400 transition"
+                  className="glass-icon-button glass-action-lime"
+                  style={{ "--glass-icon-size": "40px" } as CSSProperties}
                 >
                   <Send className="h-4 w-4 ml-0.5" />
                 </button>
@@ -160,7 +173,7 @@ export default function AIChatbot() {
               <div className="mt-4 flex items-center justify-center gap-1.5 text-[8px] font-black uppercase tracking-[0.3em] text-zinc-600">
                 <span>DAWGS</span>
                 <div className="h-1 w-1 rounded-full bg-red-500 animate-pulse" />
-                <span>AI CONCIERGE v1.2</span>
+                <span>AI CONCIERGE v2.0</span>
               </div>
             </div>
           </div>

@@ -1,0 +1,14 @@
+[
+  {
+    "payloadHash": "a65705da2b4da3bfd5b0d4aa4821720aa585ff730da0ee45046163b36a224f7f",
+    "eventId": "trap-loud",
+    "scannedAt": "2026-05-30T00:37:04.550Z",
+    "scannedBy": "07a7ec8d-32e9-47d4-a91a-796e833ccdf5",
+    "ipHash": "60a294988df09b61080666996202aac25b7327da7c3617386041e6f9a3b02cdd",
+    "userAgentHash": "1a60eef573085a9d384d4f446d2b82d454b49347c11b1cc952a8832758f9699b",
+    "career": "PSICOLOGIA CLINICA",
+    "careerId": "psicologia",
+    "requiresVisualGenderCheck": false,
+    "requiresVisualCardCheck": false
+  }
+]

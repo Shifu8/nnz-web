@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DAWGS Web
 
-## Getting Started
+Next.js 16 app with PayPhone checkout, one-use QR validation, staff scanner, admin tickets, and live giveaway.
 
-First, run the development server:
+## Local Setup
+
+1. Copy `.env.example` to `.env.local`.
+2. Configure PayPhone (`PAYPHONE_TOKEN`, `PAYPHONE_STORE_ID`).
+3. Add Supabase or Firebase Admin credentials.
+4. Configure Gmail SMTP (App Password) + Meta WhatsApp Cloud API for ticket delivery.
+5. Run:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Payments (PayPhone)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Flow:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. User completes buyer form and clicks pay.
+2. Backend calls PayPhone `Prepare` and redirects to PayPhone checkout (card or PayPhone balance).
+3. PayPhone redirects to `/checkout/result?id=...&clientTransactionId=...`.
+4. Backend calls PayPhone `Confirm` within 5 minutes (required by PayPhone).
+5. On approval: ticket + unique QR saved, email/SMS sent.
 
-## Learn More
+PayPhone Developer app type must be **WEB** with:
 
-To learn more about Next.js, take a look at the following resources:
+- **Dominio Web**: your site domain (or `http://localhost:3000` for local tests)
+- **URL de Respuesta**: `https://your-domain.com/checkout/result`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## QR Testing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Buy a ticket through PayPhone (test env approves in sandbox).
+2. Open staff mode, log in, scan the QR.
+3. First scan: `ACCESO PERMITIDO`.
+4. Scan again: `QR YA USADO`.
 
-## Deploy on Vercel
+## Security Testing
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run test
+npm run build
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Supabase
+
+Run `supabase/schema.sql` in the Supabase SQL editor.
+
+## Production (Vercel)
+
+Required env:
+
+- `NEXT_PUBLIC_SITE_URL`
+- `PAYPHONE_ENV=production`
+- `PAYPHONE_TOKEN`
+- `PAYPHONE_STORE_ID`
+- `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (or Firebase Admin)
+- `DATA_ENCRYPTION_KEY`, `JWT_SECRET`, `QR_HASH_SECRET`
+- `STAFF_PASSWORD_HASH_B64`, `ADMIN_PASSWORD_HASH_B64` (generar con `node scripts/gen-password-hashes.mjs`)
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` (Gmail SMTP)
+- `SMTP_FROM`
+- `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`

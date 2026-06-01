@@ -1,72 +1,91 @@
 /**
- * Autor: Brandon Medina
- * Fecha: 16/05/2026
- * Descripción: Registro seguro para el Live Giveaway.
+ * Registro seguro para el Live Giveaway (Supabase o Firebase).
  */
 
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase/adminApp";
-import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
+import { registerGiveawayEntry } from "@/lib/db/giveawayStore";
 import { isBadWord } from "@/lib/badWords";
-import { validateEcuadorPhone, getFingerprint } from "@/lib/security";
+import { getGiveawaySchedule } from "@/lib/giveaway/schedule";
+import {
+  ApiError,
+  enforceRateLimit,
+  getClientIp,
+  handleApiError,
+  readJson,
+  sanitizeEmail,
+  sanitizeName,
+  sanitizePhone,
+  validateEcuadorPhone,
+} from "@/lib/security";
 
-const rateLimitMap = new Map<string, number>();
+export const runtime = "nodejs";
+
+const registerSchema = z.object({
+  firstName: z.string().min(2).max(40),
+  lastName: z.string().min(2).max(40),
+  phone: z.string().min(10).max(15),
+  email: z.string().email().max(120).optional(),
+});
 
 export async function POST(request: Request) {
   try {
-    const ip = request.headers.get("x-forwarded-for") || "unknown";
-    const userAgent = request.headers.get("user-agent") || "unknown";
-    const fingerprint = getFingerprint(ip, userAgent);
-    const now = Date.now();
+    enforceRateLimit(request, { namespace: "giveaway-register", limit: 5, windowMs: 60_000 });
 
-    if (rateLimitMap.has(fingerprint)) {
-      const lastReq = rateLimitMap.get(fingerprint)!;
-      if (now - lastReq < 15000) {
-        return NextResponse.json({ error: "Espera 15 segundos entre intentos." }, { status: 429 });
-      }
+    const schedule = getGiveawaySchedule();
+    const isDemo = process.env.NEXT_PUBLIC_PAYPHONE_DEMO_MODE === "true";
+    if (schedule.phase !== "open" && !isDemo) {
+      throw new ApiError(403, "El sorteo no esta abierto.", "GIVEAWAY_CLOSED");
     }
-    rateLimitMap.set(fingerprint, now);
 
-    const body = await request.json();
-    const { firstName, lastName, phone } = body;
-
-    if (!firstName || !lastName || !phone) {
-      return NextResponse.json({ error: "Faltan datos requeridos." }, { status: 400 });
-    }
+    const body = await readJson(request, registerSchema);
+    const firstName = sanitizeName(body.firstName);
+    const lastName = sanitizeName(body.lastName);
+    const phone = sanitizePhone(body.phone);
+    const email = body.email ? sanitizeEmail(body.email) : undefined;
 
     if (isBadWord(firstName) || isBadWord(lastName)) {
-      return NextResponse.json({ error: "Contenido no permitido." }, { status: 400 });
+      throw new ApiError(400, "Contenido no permitido.", "BAD_WORD");
     }
 
-    const sanitizedPhone = phone.replace(/[^\d]/g, '');
-    if (!validateEcuadorPhone(sanitizedPhone)) {
-      return NextResponse.json({ error: "Teléfono inválido (Ecuador: 09XXXXXXXX)." }, { status: 400 });
+    if (!validateEcuadorPhone(phone)) {
+      throw new ApiError(400, "Telefono invalido (Ecuador: 09XXXXXXXX).", "INVALID_PHONE");
     }
 
-    if (!adminDb) {
-      return NextResponse.json({ success: true, message: "Modo Demo: Registrado." });
+    const ip = getClientIp(request);
+    const userAgent = request.headers.get("user-agent") || "unknown";
+
+    try {
+      const { id } = await registerGiveawayEntry({
+        firstName,
+        lastName,
+        phone,
+        email,
+        ip,
+        userAgent,
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: "Registrado para el sorteo.",
+        participantId: id,
+      });
+    } catch (err: unknown) {
+      let msg = "";
+      if (err instanceof Error) {
+        msg = err.message;
+      } else if (err && typeof err === "object" && "message" in err) {
+        msg = String((err as { message: unknown }).message);
+      }
+      if (msg === "DUPLICATE_PHONE") {
+        throw new ApiError(409, "Este telefono ya esta registrado.", "DUPLICATE_PHONE");
+      }
+      if (msg === "DUPLICATE_EMAIL") {
+        throw new ApiError(409, "Este correo ya esta registrado.", "DUPLICATE_EMAIL");
+      }
+      throw new ApiError(500, "Error interno del servidor.", "INTERNAL_ERROR");
     }
-
-    // Verificar duplicado
-    const existing = await adminDb.collection("giveawayParticipants").where("phone", "==", sanitizedPhone).get();
-    if (!existing.empty) {
-      return NextResponse.json({ error: "Ya estás registrado en el sorteo." }, { status: 409 });
-    }
-
-    const id = uuidv4();
-    await adminDb.collection("giveawayParticipants").doc(id).set({
-      firstName: firstName.toUpperCase(),
-      lastName: lastName.toUpperCase(),
-      phone: sanitizedPhone,
-      fingerprint,
-      ip,
-      registeredAt: new Date().toISOString()
-    });
-
-    return NextResponse.json({ success: true, message: "¡Registrado para el sorteo!" });
-
   } catch (error) {
-    console.error("Giveaway Register Error:", error);
-    return NextResponse.json({ error: "Error interno." }, { status: 500 });
+    return handleApiError(error);
   }
 }

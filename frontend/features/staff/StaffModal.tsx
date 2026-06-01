@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -26,7 +26,7 @@ export default function StaffModal({ isOpen, onClose }: { isOpen: boolean; onClo
       const res = await fetch("/api/staff/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password })
+        body: JSON.stringify({ password, role: "staff" })
       });
 
       const data = await res.json();
@@ -36,8 +36,7 @@ export default function StaffModal({ isOpen, onClose }: { isOpen: boolean; onClo
         return;
       }
 
-      // If successful, store session and redirect to scanner
-      localStorage.setItem("dawgs_staff_session", data.sessionToken);
+      // La sesion real queda en una cookie HttpOnly; el front no guarda JWT.
       router.push("/staff/scanner");
     } catch (err) {
       setError("Error de red");
@@ -61,10 +60,7 @@ export default function StaffModal({ isOpen, onClose }: { isOpen: boolean; onClo
             exit={{ scale: 0.95, y: 20 }}
             className="relative w-full max-w-sm rounded-[34px] border border-red-500/30 bg-black/60 p-6 shadow-[0_0_80px_rgba(255,0,24,.15)] backdrop-blur-xl"
           >
-            <button
-              onClick={onClose}
-              className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full border border-white/20 bg-white/5 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest text-zinc-400 transition hover:bg-white/10 hover:text-white"
-            >
+            <button onClick={onClose} className="glass-pill absolute top-4 left-4">
               <ChevronLeft className="h-3 w-3" /> VOLVER
             </button>
 
@@ -73,7 +69,7 @@ export default function StaffModal({ isOpen, onClose }: { isOpen: boolean; onClo
                 <ShieldAlert className="h-6 w-6" />
               </div>
               <h2 className="mt-4 text-2xl font-black uppercase tracking-[0.15em] text-white">Staff Access</h2>
-              <p className="mt-2 text-xs text-zinc-400">Restricted zone. Identify yourself.</p>
+              <p className="mt-2 text-xs text-zinc-400">Zona de validacion. Cada QR aprobado queda usado al instante.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -88,7 +84,8 @@ export default function StaffModal({ isOpen, onClose }: { isOpen: boolean; onClo
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-2xl bg-red-600 py-4 text-xs font-black uppercase tracking-[0.2em] text-white transition hover:bg-red-500 disabled:opacity-50"
+                className="glass-action-primary w-full"
+                style={{ "--glass-action-height": "52px", "--glass-action-text": "0.65rem" } as CSSProperties}
               >
                 {loading ? "Validating..." : "Enter"}
               </button>

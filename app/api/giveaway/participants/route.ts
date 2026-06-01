@@ -1,38 +1,26 @@
-/**
- * Autor: Brandon Medina
- * Fecha: 16/05/2026
- * Descripción: Obtiene los últimos participantes del sorteo con teléfonos ocultos.
- */
-
 import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebase/adminApp";
+import { listGiveawayParticipants } from "@/lib/db/giveawayStore";
+
+export const runtime = "nodejs";
+
+function maskPhone(phone: string) {
+  if (phone.length < 6) return "******";
+  return phone.slice(0, 3) + "*******";
+}
 
 export async function GET() {
   try {
-    if (!adminDb) {
-      return NextResponse.json({ participants: [] });
-    }
-
-    const snapshot = await adminDb.collection("giveawayParticipants")
-      .orderBy("registeredAt", "desc")
-      .limit(10)
-      .get();
-
-    const participants = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        // Mask phone: 0987******
-        phone: data.phone.slice(0, 4) + "******"
-      };
+    const participants = await listGiveawayParticipants(500);
+    return NextResponse.json({
+      participants: participants.map((p) => ({
+        id: p.id,
+        firstName: p.firstName,
+        lastName: p.lastName,
+        phone: maskPhone(p.phone),
+      })),
+      total: participants.length,
     });
-
-    return NextResponse.json({ participants });
-
-  } catch (error) {
-    console.error("Giveaway Participants Error:", error);
-    return NextResponse.json({ participants: [] });
+  } catch {
+    return NextResponse.json({ participants: [], total: 0 });
   }
 }

@@ -20,11 +20,13 @@ export default function IntroCinematic() {
   const textRef = useRef<HTMLHeadingElement>(null);
   const orbRef = useRef<HTMLDivElement>(null);
   const [hidden, setHidden] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Forzar scroll y reset de vista antes de que React pinte
-  if (typeof window !== "undefined") {
+  useEffect(() => {
+    setMounted(true);
     window.history.scrollRestoration = "manual";
-  }
+    forceScrollTop();
+  }, []);
 
   useGSAP(
     () => {
@@ -96,13 +98,14 @@ export default function IntroCinematic() {
     { scope }
   );
 
-  if (hidden) return null;
+  if (!mounted || hidden) return null;
 
   return (
     <div
       ref={scope}
       className="pointer-events-auto fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#000000] overflow-hidden"
       style={{ perspective: "1000px" }}
+      suppressHydrationWarning
     >
       {/* Orbe de luz roja cinematográfica de fondo */}
       <div

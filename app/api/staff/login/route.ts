@@ -1,43 +1,74 @@
-/**
- * Autor: Brandon Medina
- * Fecha: 11/05/2026
- * Descripción: Ruta de API para validar la contraseña de STAFF.
- */
-
+import crypto from "crypto";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { adminDb } from "@/lib/firebase/adminApp";
+import {
+  assertSameOrigin,
+  createStaffSessionJwt,
+  enforceRateLimit,
+  handleApiError,
+  readJson,
+  STAFF_CSRF_COOKIE,
+  STAFF_SESSION_COOKIE,
+  verifyRolePassword,
+} from "@/lib/security";
+
+export const runtime = "nodejs";
+
+const loginSchema = z.object({
+  password: z.string().min(6).max(160),
+  role: z.enum(["staff", "admin"]).default("staff"),
+});
 
 export async function POST(request: Request) {
   try {
-    const { password } = await request.json();
+    assertSameOrigin(request);
+    enforceRateLimit(request, { namespace: "staff-login", limit: 5, windowMs: 5 * 60_000 });
 
-    const validPassword = process.env.STAFF_PASSWORD || "DAWGS-STAFF-2026";
+    const { password, role } = await readJson(request, loginSchema, 4096);
+    const isValid = await verifyRolePassword(password, role);
 
-    if (password !== validPassword) {
+    if (!isValid) {
       return NextResponse.json({ error: "ACCESO DENEGADO" }, { status: 401 });
     }
 
-    // Create a staff session in Firestore (mocked for simplicity if DB not fully connected)
-    const sessionId = `staff-session-${Date.now()}`;
-    
-    try {
-      if (adminDb) {
-        await adminDb.collection("staffSessions").doc(sessionId).set({
-          createdAt: new Date().toISOString(),
-          expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 12).toISOString(), // 12 hours
-        });
-      } else {
-        console.warn("Firestore fallback active, using local mock session.");
-      }
-    } catch (dbError) {
-      console.warn("Firestore error, skipping session creation.", dbError);
+    const sessionId = crypto.randomUUID();
+    const csrfToken = crypto.randomBytes(32).toString("hex");
+    const sessionToken = await createStaffSessionJwt(sessionId, csrfToken, role);
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 12);
+
+    if (adminDb) {
+      await adminDb.collection("staffSessions").doc(sessionId).set({
+        createdAt: new Date().toISOString(),
+        expiresAt: expiresAt.toISOString(),
+      });
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      sessionToken: sessionId 
+    const response = NextResponse.json({
+      success: true,
+      role,
+      csrfToken,
+      expiresAt: expiresAt.toISOString(),
     });
+
+    response.cookies.set(STAFF_SESSION_COOKIE, sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      expires: expiresAt,
+    });
+
+    response.cookies.set(STAFF_CSRF_COOKIE, csrfToken, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      expires: expiresAt,
+    });
+
+    return response;
   } catch (error) {
-    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+    return handleApiError(error);
   }
 }

@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useRef } from "react";
+import { useRef, type CSSProperties } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { Download, Share2 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -199,13 +199,29 @@ export default function PartyPass({ data }: PartyPassProps) {
       <div className="mt-6 flex w-full max-w-[360px] gap-3 px-2">
         <button 
           onClick={handleDownload}
-          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#C8FF00] text-[9.5px] font-black uppercase tracking-widest text-black transition hover:bg-[#b0e000] active:scale-95 shadow-[0_4px_20px_rgba(200,255,0,0.2)]"
+          className="glass-action glass-action-lime flex-1"
+          style={{ "--glass-action-height": "48px", "--glass-action-text": "0.6rem" } as CSSProperties}
         >
           <Download className="h-4 w-4" /> descargar png
         </button>
-        <button className="flex h-12 w-12 items-center justify-center rounded-2xl border border-zinc-800 bg-white/5 text-white transition hover:bg-white/10 active:scale-95">
+        <button className="glass-icon-button text-white" style={{ "--glass-icon-size": "48px" } as CSSProperties}>
           <Share2 className="h-4 w-4" />
         </button>
+      </div>
+
+      {/* Aviso de acceso para asistentes */}
+      <div className="mt-6 w-full max-w-[360px] rounded-3xl border border-dashed border-red-500/35 bg-red-950/20 p-4 text-center backdrop-blur-md shadow-[0_0_30px_rgba(239,68,68,0.05)]">
+        <span className="inline-flex items-center gap-1.5 text-[8.5px] font-black text-red-500 uppercase tracking-[0.2em] mb-2 animate-pulse">
+          <svg className="w-3.5 h-3.5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          QR de entrada: uso unico
+        </span>
+        <h4 className="text-[10px] font-black text-white uppercase tracking-wider mb-1">PRE-REGISTRO / CANJE EN TAQUILLA</h4>
+        <p className="text-[8.5px] text-zinc-400 leading-normal uppercase">
+          este ticket digital sirve como <strong className="text-[#C8FF00] font-black">pre-registro oficial</strong>. debes presentarlo en la taquilla del evento el día del show para canjearlo por tu pase físico de acceso. no compartas tu qr con nadie, ya que es de <strong className="text-red-500 font-black">uso único</strong> y se desactiva al canjearse.
+        </p>
       </div>
     </div>
   );

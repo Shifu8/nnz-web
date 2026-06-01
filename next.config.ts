@@ -6,7 +6,26 @@
 
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV !== "production";
+const csp = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' blob: data: https://images.unsplash.com",
+  "font-src 'self'",
+  "connect-src 'self' https://pay.payphonetodoesposible.com https://*.supabase.co https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://graph.facebook.com https://in-v3.mailjet.com",
+  "media-src 'self' data:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  ...(isDev ? [] : ["upgrade-insecure-requests"]),
+].join("; ");
+
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_PAYPHONE_ENV: process.env.NEXT_PUBLIC_PAYPHONE_ENV || process.env.PAYPHONE_ENV || "",
+  },
   images: {
     remotePatterns: [
       {
@@ -29,8 +48,12 @@ const nextConfig: NextConfig = {
             value: "nosniff",
           },
           {
+            key: "X-DNS-Prefetch-Control",
+            value: "off",
+          },
+          {
             key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
+            value: "origin-when-cross-origin",
           },
           {
             key: "Permissions-Policy",
@@ -38,8 +61,16 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.unsplash.com; font-src 'self'; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com; media-src 'self' data:;",
+            value: csp,
           },
+          ...(isDev
+            ? []
+            : [
+                {
+                  key: "Strict-Transport-Security",
+                  value: "max-age=63072000; includeSubDomains; preload",
+                },
+              ]),
         ],
       },
     ];
