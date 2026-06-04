@@ -339,6 +339,7 @@ export default function HomePage() {
                             style={{ "--glass-action-height": "44px", "--glass-action-px": "1.65rem", "--glass-action-text": "0.72rem" } as CSSProperties}
                           >
                             <Ticket className="h-3.5 w-3.5" /> Shop Now
+                          </button>
                         </div>
                       </div>
                     </div>
