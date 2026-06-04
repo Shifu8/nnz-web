@@ -84,8 +84,8 @@ export default function AIChatbot() {
       {/* Botón flotante */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`glass-icon-button fixed bottom-6 right-6 z-50 text-white transition-all duration-500 ${isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"}`}
-        style={{ "--glass-icon-size": "56px", position: "fixed" } as CSSProperties}
+        className={`fixed bottom-6 right-6 z-50 flex items-center justify-center rounded-full border border-pink-300/30 bg-pink-500/20 text-pink-300 shadow-[0_0_30px_rgba(236,72,153,0.2)] backdrop-blur-xl transition-all duration-500 hover:bg-pink-500/30 hover:shadow-[0_0_40px_rgba(236,72,153,0.3)] ${isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"}`}
+        style={{ width: "56px", height: "56px", position: "fixed" } as CSSProperties}
       >
         <Bot className="h-6 w-6 animate-pulse" />
       </button>
@@ -102,7 +102,7 @@ export default function AIChatbot() {
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/10 bg-white/5 p-5">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-500/20 border border-pink-300/30 text-pink-300">
                   <Bot className="h-5 w-5" />
                 </div>
                 <div>
@@ -112,8 +112,7 @@ export default function AIChatbot() {
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="glass-icon-button text-zinc-300"
-                style={{ "--glass-icon-size": "34px" } as CSSProperties}
+                className="flex h-[34px] w-[34px] items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-zinc-400 backdrop-blur-xl transition hover:border-pink-300/30 hover:bg-pink-500/20 hover:text-pink-300"
               >
                 <X className="h-4 w-4" />
               </button>

@@ -65,6 +65,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
   const [selectedDesign, setSelectedDesign] = useState(1);
   const [errorMsg, setErrorMsg] = useState("");
 
+  const [step, setStep] = useState(1);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -103,6 +104,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
 
   const goToRegister = () => {
     setErrorMsg("");
+    setStep(1);
     setDropState("register");
   };
 
@@ -252,43 +254,49 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
     </div>
   );
 
-  const songs = [
-    { label: "Qué Vas Hacer Hoy", artist: "Yan Block", image: "/images/covers/que-vas-hacer-hoy.jpg", color: "from-red-600 to-red-950", rotate: -12, top: "-4%", left: "0%" },
-    { label: "Me gustas CC", artist: "Yan Block", image: "/images/covers/me-gustas-cc.jpg", color: "from-zinc-800 to-black", rotate: 8, top: "-3%", right: "10%" },
-    { label: "Talento", artist: "Yan Block", image: "/images/covers/talento.jpg", color: "from-zinc-800 to-black", rotate: -6, top: "30%", left: "-12%" },
-    { label: "666", artist: "Yan Block", image: "/images/covers/666.jpg", color: "from-red-800 to-red-950", rotate: 15, bottom: "18%", right: "-6%" },
-    { label: "18", artist: "Yan Block", image: "/images/covers/18.jpg", color: "from-black to-zinc-900", rotate: -18, top: "52%", left: "6%" },
-    { label: "Yo Se", artist: "Yan Block", image: "/images/covers/yo-se.jpg", color: "from-zinc-800 to-black", rotate: 12, bottom: "48%", left: "-5%" },
-    { label: "444", artist: "Yan Block", image: "/images/covers/444.jpg", color: "from-red-900 to-black", rotate: -8, top: "62%", right: "8%" },
-    { label: "111", artist: "Yan Block", image: "/images/covers/111.jpg", color: "from-red-700 to-black", rotate: -14, bottom: "15%", left: "-6%" },
-    { label: "Vacile", artist: "Yan Block", image: "/images/covers/vacile.jpg", color: "from-zinc-900 to-black", rotate: 18, bottom: "58%", right: "-8%" },
-    { label: "Wo Oh Oh", artist: "Omar Courtz & ROA", image: "/images/covers/wo-oh-oh.jpg", color: "from-[#C8FF00]/20 to-zinc-900", rotate: 10, bottom: "-3%", right: "18%" },
-    { label: "Tate Quieta", artist: "ROA", image: "/images/covers/tate-quieta.jpg", color: "from-zinc-900 to-black", rotate: 20, bottom: "4%", left: "2%" },
-  ];
-
   return (
-    <section id="access" ref={scope} className="relative z-10 mx-auto w-full px-4 py-14 md:py-18 flex justify-center">
+    <section id="ticket-flow" ref={scope} className="relative z-10 mx-auto flex w-full justify-center px-3 py-8 sm:px-4 md:py-14">
       <div className="relative w-full max-w-6xl">
         {dropState === "intro" && renderIntro()}
 
         {dropState === "register" && (
-          <div className="relative z-10 w-full max-w-7xl mx-auto">
+          <div className="relative z-10 w-full max-w-5xl mx-auto">
             {onClose && (
               <button onClick={onClose} className="glass-pill glass-pill-red absolute -top-3 right-4 z-50">
                 <ChevronLeft className="h-3 w-3" /> SALIR
               </button>
             )}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-[1.3fr_1.6fr] md:items-start">
-              <div className="relative w-full min-h-[640px] flex flex-col items-center justify-center gap-4">
-                <p className="relative z-20 text-[9px] font-black uppercase tracking-[0.35em] text-zinc-500">elige tu diseño</p>
-                <div className="relative z-20 flex flex-col items-center gap-4">
+
+            {/* Step indicator */}
+            <div className="mb-8 flex items-center justify-center gap-1 sm:mb-10 sm:gap-4">
+              {[
+                { num: 1, label: "DISEÑO" },
+                { num: 2, label: "DATOS" },
+                { num: 3, label: "PAGO" },
+              ].map((s) => (
+                <div key={s.num} className="flex items-center gap-1.5 sm:gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className={`h-8 w-8 rounded-full flex items-center justify-center transition-all duration-500 ${step === s.num ? "bg-red-500 shadow-[0_0_20px_rgba(255,0,24,0.3)]" : step > s.num ? "bg-green-500/80" : "border border-white/10 bg-white/[0.04]"}`}>
+                      {step > s.num ? <CheckCircle className="h-4 w-4 text-black" /> : <span className={`text-xs font-black ${step === s.num ? "text-white" : "text-zinc-600"}`}>{s.num}</span>}
+                    </div>
+                    <span className={`text-[7px] font-black uppercase tracking-[0.15em] transition-all duration-500 sm:text-[9px] sm:tracking-[0.3em] ${step === s.num ? "text-white" : "text-zinc-600"}`}>{s.label}</span>
+                  </div>
+                  {s.num < 3 && <div className={`h-px w-4 transition-all duration-500 sm:w-12 ${step > s.num ? "bg-green-500/50" : "bg-white/10"}`} />}
+                </div>
+              ))}
+            </div>
+
+            {/* Step 1: Diseño */}
+            {step === 1 && (
+              <div className="w-full max-w-3xl mx-auto">
+                <div className="relative flex flex-col items-center justify-center gap-6 sm:flex-row">
                   {TICKET_DESIGNS.map((t) => {
                     const isSelected = selectedDesign === t.id;
                     return (
-                      <button key={t.id} type="button" onClick={() => setSelectedDesign(t.id)} className={`ticket-float w-[240px] text-left transition-all duration-500 ${isSelected ? "scale-105" : "opacity-60 hover:opacity-90 hover:scale-[1.02]"}`} style={{ animationDelay: t.id === 1 ? "0s" : "0.5s" }}>
+                      <button key={t.id} type="button" onClick={() => setSelectedDesign(t.id)} className={`ticket-float w-full max-w-[260px] text-left transition-all duration-500 ${isSelected ? "scale-105" : "opacity-60 hover:opacity-90 hover:scale-[1.02]"}`} style={{ animationDelay: t.id === 1 ? "0s" : "0.5s" }}>
                         <div className={`relative overflow-hidden rounded-2xl border-2 ${isSelected ? t.id === 1 ? "border-red-500/50 shadow-[0_0_30px_rgba(255,0,24,0.15)]" : "border-[#C8FF00]/50 shadow-[0_0_30px_rgba(200,255,0,0.15)]" : "border-white/10"} bg-gradient-to-br ${t.gradient}`}>
                           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.08),transparent_60%)]" />
-                          <div className="relative p-5 flex flex-col min-h-[260px]">
+                          <div className="relative p-5 flex flex-col min-h-[280px]">
                             <div className="flex items-center justify-between">
                               <div className={`flex items-center gap-1.5 ${t.accent === "red" ? "text-red-400" : "text-[#C8FF00]"}`}>
                                 <Zap className="h-3 w-3" />
@@ -299,7 +307,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                               </div>
                             </div>
                             <div className="flex-1 flex flex-col justify-center">
-                              <p className="text-xs font-black text-white uppercase tracking-wider leading-relaxed">{t.label}</p>
+                              <p className="text-sm font-black text-white uppercase tracking-wider leading-relaxed">{t.label}</p>
                               <div className={`mt-3 h-px w-3/4 ${t.accent === "red" ? "bg-red-500/30" : "bg-[#C8FF00]/30"}`} />
                             </div>
                             <div className="flex items-center justify-between">
@@ -314,80 +322,94 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                     );
                   })}
                 </div>
-                <div className="absolute inset-0 pointer-events-none">
-                  {songs.map((s, i) => (
-                    <div key={s.label} className="absolute w-[130px]" style={{ top: s.top as string | undefined, right: s.right as string | undefined, bottom: s.bottom as string | undefined, left: s.left as string | undefined, transform: `rotate(${s.rotate}deg)` }}>
-                      <div className="album-float-inner" style={{ animationDelay: `${i * 0.3}s` }}>
-                        <div className={`rounded-xl overflow-hidden bg-gradient-to-br ${s.color} border border-white/10 shadow-lg relative`}>
-                          <div className="aspect-square relative">
-                            <img src={s.image} alt={s.label} className="absolute inset-0 w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                            <div className="absolute bottom-0 left-0 right-0 p-2.5 text-center">
-                              <p className="text-[8px] font-black uppercase leading-tight text-white">{s.label}</p>
-                              <p className="text-[6px] font-bold text-zinc-400 uppercase tracking-wider mt-0.5 truncate">{s.artist}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="mt-8 flex justify-center">
+                  <button type="button" onClick={() => setStep(2)} className="glass-action glass-action-primary" style={{ "--glass-action-height": "48px", "--glass-action-px": "2.5rem", "--glass-action-text": "0.82rem" } as CSSProperties}>
+                    SIGUIENTE <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="mt-4 flex justify-center">
+                  <button type="button" onClick={() => setDropState("intro")} className="glass-action glass-action-quiet text-zinc-400" style={{ "--glass-action-height": "36px", "--glass-action-px": "1.5rem", "--glass-action-text": "0.6rem" } as CSSProperties}>
+                    &larr; volver al evento
+                  </button>
                 </div>
               </div>
+            )}
 
-              <div className="w-full space-y-5">
-                <div>
-                  <h2 className="text-4xl font-black text-white tracking-widest uppercase italic">registro</h2>
-                  <p className="text-sm uppercase tracking-[0.4em] text-red-500 font-bold">completa tus datos</p>
+            {/* Step 2: Datos */}
+            {step === 2 && (
+              <div className="w-full max-w-xl mx-auto space-y-6">
+                <div className="text-center">
+                  <h2 className="text-3xl font-black text-white tracking-widest uppercase italic">tus datos</h2>
+                  <p className="text-xs uppercase tracking-[0.4em] text-red-500 font-bold">completa el formulario</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <p className="ml-2 text-xs uppercase tracking-widest text-zinc-500 font-bold">nombre</p>
-                      <input required type="text" placeholder="AXEL" className="w-full rounded-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "") })} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <p className="ml-2 text-xs uppercase tracking-widest text-zinc-500 font-bold">apellido</p>
-                      <input required type="text" placeholder="PEREZ" className="w-full rounded-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "") })} />
-                    </div>
-                  </div>
-
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <p className="ml-2 text-xs uppercase tracking-widest text-zinc-500 font-bold">teléfono</p>
-                    <div className="flex">
-                      <span className="inline-flex items-center rounded-l-xl border border-r-0 border-white/10 bg-white/[0.04] px-4 text-sm font-bold text-zinc-400">+593</span>
-                      <input required type="tel" maxLength={10} placeholder="0988888888" className="w-full rounded-r-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, "") })} />
-                    </div>
+                    <p className="ml-2 text-xs uppercase tracking-widest text-zinc-500 font-bold">nombre</p>
+                    <input required type="text" placeholder="AXEL" className="w-full rounded-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "") })} />
                   </div>
-
-                  <div className="rounded-xl border border-white/10 bg-black/40 p-4 flex items-center gap-4">
-                    <div className={`h-10 w-10 rounded-lg bg-gradient-to-br ${selectedDesign === 1 ? "from-red-900 via-red-950 to-black" : "from-[#C8FF00]/20 via-black to-black"} flex items-center justify-center`}>
-                      <Zap className={`h-4 w-4 ${selectedDesign === 1 ? "text-red-400" : "text-[#C8FF00]"}`} />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-[9px] font-black uppercase tracking-wider text-zinc-500">diseño seleccionado</p>
-                      <p className="text-sm font-black text-white uppercase tracking-wider">{TICKET_DESIGNS[selectedDesign - 1].name}</p>
-                    </div>
+                  <div className="space-y-1.5">
+                    <p className="ml-2 text-xs uppercase tracking-widest text-zinc-500 font-bold">apellido</p>
+                    <input required type="text" placeholder="PEREZ" className="w-full rounded-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "") })} />
                   </div>
+                </div>
 
-                  <div className="rounded-xl border border-white/10 bg-black/40 p-6">
-                    <p className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-3">cantidad de entradas</p>
-                    <div className="flex items-center justify-between">
-                      <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="glass-icon-button text-white" style={{ "--glass-icon-size": "48px" } as CSSProperties}>
-                        <Minus className="h-5 w-5" />
-                      </button>
-                      <div className="text-center">
-                        <span className="text-4xl font-black text-white">{quantity}</span>
-                        <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">entradas</p>
-                      </div>
-                      <button type="button" onClick={() => setQuantity(Math.min(10, quantity + 1))} className="glass-icon-button text-white" style={{ "--glass-icon-size": "48px" } as CSSProperties}>
-                        <Plus className="h-5 w-5" />
-                      </button>
+                <div className="space-y-1.5">
+                  <p className="ml-2 text-xs uppercase tracking-widest text-zinc-500 font-bold">teléfono</p>
+                  <div className="flex">
+                    <span className="inline-flex items-center rounded-l-xl border border-r-0 border-white/10 bg-white/[0.04] px-4 text-sm font-bold text-zinc-400">+593</span>
+                    <input required type="tel" maxLength={10} placeholder="0988888888" className="w-full rounded-r-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, "") })} />
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-black/40 p-4 flex items-center gap-4">
+                  <div className={`h-10 w-10 rounded-lg bg-gradient-to-br ${selectedDesign === 1 ? "from-red-900 via-red-950 to-black" : "from-[#C8FF00]/20 via-black to-black"} flex items-center justify-center`}>
+                    <Zap className={`h-4 w-4 ${selectedDesign === 1 ? "text-red-400" : "text-[#C8FF00]"}`} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[9px] font-black uppercase tracking-wider text-zinc-500">diseño seleccionado</p>
+                    <p className="text-sm font-black text-white uppercase tracking-wider">{TICKET_DESIGNS[selectedDesign - 1].name}</p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-black/40 p-6">
+                  <p className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-3">cantidad de entradas</p>
+                  <div className="flex items-center justify-between">
+                    <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="glass-icon-button text-white" style={{ "--glass-icon-size": "48px" } as CSSProperties}>
+                      <Minus className="h-5 w-5" />
+                    </button>
+                    <div className="text-center">
+                      <span className="text-4xl font-black text-white">{quantity}</span>
+                      <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">entradas</p>
                     </div>
-                    <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-4">
-                      <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">total</span>
-                      <span className="text-2xl font-black text-[#C8FF00]">${totalPrice.toFixed(2)}</span>
-                    </div>
+                    <button type="button" onClick={() => setQuantity(Math.min(10, quantity + 1))} className="glass-icon-button text-white" style={{ "--glass-icon-size": "48px" } as CSSProperties}>
+                      <Plus className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-4">
+                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">total</span>
+                    <span className="text-2xl font-black text-[#C8FF00]">${totalPrice.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <button type="button" onClick={() => setStep(1)} className="glass-action glass-action-quiet" style={{ "--glass-action-height": "44px", "--glass-action-px": "1.5rem", "--glass-action-text": "0.68rem" } as CSSProperties}>
+                    <ChevronLeft className="h-4 w-4" /> ANTERIOR
+                  </button>
+                  <button type="button" onClick={() => setStep(3)} className="glass-action glass-action-primary" style={{ "--glass-action-height": "44px", "--glass-action-px": "2rem", "--glass-action-text": "0.82rem" } as CSSProperties}>
+                    SIGUIENTE <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Pago */}
+            {step === 3 && (
+              <div className="w-full max-w-2xl mx-auto">
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="text-center">
+                    <h2 className="text-3xl font-black text-white tracking-widest uppercase italic">pago</h2>
+                    <p className="text-xs uppercase tracking-[0.4em] text-red-500 font-bold">elige tu método</p>
                   </div>
 
                   <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-5">
@@ -406,48 +428,50 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-5">
-                    <div className="flex items-center gap-2 mb-3">
-                      <CreditCard className="h-4 w-4 text-red-400" />
-                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-red-400">cuenta</p>
-                    </div>
-                    <div className="rounded-xl border border-white/[0.06] bg-black/40 p-4">
-                      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-1">a nombre de:</p>
-                      <div className="flex items-center gap-2">
-                        <p className="text-base font-black text-white tracking-wider">MEDINA BRANDON</p>
-                        <span className="rounded-full border border-red-500/20 bg-red-950/40 px-2 py-0.5 text-[7px] font-black uppercase tracking-widest text-red-300">miembro dawgs</span>
+                  <div className="grid grid-cols-1 items-start gap-5 sm:grid-cols-[1fr_auto]">
+                    <div className="space-y-4">
+                      <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-5">
+                        <div className="flex items-center gap-2 mb-3">
+                          <CreditCard className="h-4 w-4 text-red-400" />
+                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-red-400">cuenta</p>
+                        </div>
+                        <div className="rounded-xl border border-white/[0.06] bg-black/40 p-4">
+                          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-1">a nombre de:</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-base font-black text-white tracking-wider">MEDINA BRANDON</p>
+                            <span className="rounded-full border border-red-500/20 bg-red-950/40 px-2 py-0.5 text-[7px] font-black uppercase tracking-widest text-red-300">miembro dawgs</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <p className="ml-2 text-[7px] uppercase tracking-widest text-zinc-500 font-bold">sube tu comprobante (JPG, PNG, PDF)</p>
+                        <div onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFileSelect(e.dataTransfer.files?.[0] || null); }} onClick={() => fileInputRef.current?.click()} className={`relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 transition ${dragOver ? "border-red-500 bg-red-950/20" : selectedFile ? "border-green-500/40 bg-green-950/10" : "border-white/10 bg-black/40 hover:border-white/20"}`}>
+                          <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png,.pdf" className="hidden" onChange={(e) => handleFileSelect(e.target.files?.[0] || null)} />
+                          {selectedFile && preview ? (
+                            <div className="w-full">
+                              <img src={preview} alt="" className="mx-auto max-h-32 rounded-lg object-contain" />
+                              <p className="mt-2 text-center text-[8px] font-bold text-green-400 uppercase tracking-wider"><FileCheck className="mr-1 inline h-3 w-3" /> {selectedFile.name}</p>
+                              <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedFile(null); setPreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="glass-action glass-action-danger mx-auto mt-2" style={{ "--glass-action-height": "28px", "--glass-action-px": "0.75rem", "--glass-action-text": "0.44rem" } as CSSProperties}>eliminar</button>
+                            </div>
+                          ) : selectedFile ? (
+                            <div className="text-center">
+                              <FileCheck className="mx-auto h-8 w-8 text-green-400" />
+                              <p className="mt-2 text-[8px] font-bold text-green-400 uppercase tracking-wider">{selectedFile.name}</p>
+                              <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedFile(null); setPreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="glass-action glass-action-danger mx-auto mt-2" style={{ "--glass-action-height": "28px", "--glass-action-px": "0.75rem", "--glass-action-text": "0.44rem" } as CSSProperties}>eliminar</button>
+                            </div>
+                          ) : (
+                            <><Upload className="mb-2 h-7 w-7 text-zinc-600" /><p className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider">ARRASTRA O SELECCIONA</p><p className="mt-1 text-[6px] text-zinc-700 uppercase tracking-widest">JPG, PNG o PDF — 5MB máx</p></>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-5">
-                    <p className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-3 text-center">código QR</p>
-                    <div className="flex justify-center">
-                      <div className="flex items-center justify-center rounded-2xl border border-dashed border-white/10 bg-black/40 p-5 w-fit">
-                        <img src={BANKS.find((b) => b.id === selectedBank)?.qrImage} alt="QR" className="h-32 w-32 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; const parent = (e.target as HTMLImageElement).parentElement; if (parent) parent.innerHTML = '<div class="text-[8px] text-zinc-600 font-bold uppercase tracking-widest">QR no disponible</div>'; }} />
+                    <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-5">
+                      <p className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-3 text-center">código QR</p>
+                      <div className="flex items-center justify-center rounded-2xl border border-dashed border-white/10 bg-black/40 p-4 w-fit mx-auto">
+                        <img src={BANKS.find((b) => b.id === selectedBank)?.qrImage} alt="QR" className="h-28 w-28 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; const parent = (e.target as HTMLImageElement).parentElement; if (parent) parent.innerHTML = '<div class="text-[8px] text-zinc-600 font-bold uppercase tracking-widest">QR no disponible</div>'; }} />
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <p className="ml-2 text-[7px] uppercase tracking-widest text-zinc-500 font-bold">sube tu comprobante (JPG, PNG, PDF)</p>
-                    <div onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFileSelect(e.dataTransfer.files?.[0] || null); }} onClick={() => fileInputRef.current?.click()} className={`relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 transition ${dragOver ? "border-red-500 bg-red-950/20" : selectedFile ? "border-green-500/40 bg-green-950/10" : "border-white/10 bg-black/40 hover:border-white/20"}`}>
-                      <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png,.pdf" className="hidden" onChange={(e) => handleFileSelect(e.target.files?.[0] || null)} />
-                      {selectedFile && preview ? (
-                        <div className="w-full">
-                          <img src={preview} alt="" className="mx-auto max-h-32 rounded-lg object-contain" />
-                          <p className="mt-2 text-center text-[8px] font-bold text-green-400 uppercase tracking-wider"><FileCheck className="mr-1 inline h-3 w-3" /> {selectedFile.name}</p>
-                          <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedFile(null); setPreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="glass-action glass-action-danger mx-auto mt-2" style={{ "--glass-action-height": "28px", "--glass-action-px": "0.75rem", "--glass-action-text": "0.44rem" } as CSSProperties}>eliminar</button>
-                        </div>
-                      ) : selectedFile ? (
-                        <div className="text-center">
-                          <FileCheck className="mx-auto h-8 w-8 text-green-400" />
-                          <p className="mt-2 text-[8px] font-bold text-green-400 uppercase tracking-wider">{selectedFile.name}</p>
-                          <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedFile(null); setPreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="glass-action glass-action-danger mx-auto mt-2" style={{ "--glass-action-height": "28px", "--glass-action-px": "0.75rem", "--glass-action-text": "0.44rem" } as CSSProperties}>eliminar</button>
-                        </div>
-                      ) : (
-                        <><Upload className="mb-2 h-7 w-7 text-zinc-600" /><p className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider">ARRASTRA O SELECCIONA</p><p className="mt-1 text-[6px] text-zinc-700 uppercase tracking-widest">JPG, PNG o PDF — 5MB máx</p></>
-                      )}
                     </div>
                   </div>
 
@@ -461,12 +485,14 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                     {isSubmitting ? <><Loader2 className="h-5 w-5 animate-spin" /> ENVIANDO...</> : <>COMPRAR — ${totalPrice.toFixed(2)}</>}
                   </button>
 
-                  <button type="button" onClick={() => setDropState("intro")} className="glass-action glass-action-quiet w-full text-zinc-300" style={{ "--glass-action-height": "44px", "--glass-action-text": "0.68rem" } as CSSProperties}>
-                    &larr; volver al evento
-                  </button>
+                  <div className="flex items-center justify-center">
+                    <button type="button" onClick={() => setStep(2)} className="glass-action glass-action-quiet text-zinc-400" style={{ "--glass-action-height": "36px", "--glass-action-px": "1.5rem", "--glass-action-text": "0.6rem" } as CSSProperties}>
+                      <ChevronLeft className="h-4 w-4" /> ANTERIOR
+                    </button>
+                  </div>
                 </form>
               </div>
-            </div>
+            )}
           </div>
         )}
 

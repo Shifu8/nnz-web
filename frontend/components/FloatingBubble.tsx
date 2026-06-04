@@ -15,7 +15,7 @@ type FloatingBubbleProps = {
   passCount?: number;
 };
 
-export default function FloatingBubble({ onAccessClick, onGiveawayClick, passCount = 100 }: FloatingBubbleProps) {
+export default function FloatingBubble({ onAccessClick, passCount = 100 }: FloatingBubbleProps) {
   const scope = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
 
@@ -84,4 +84,3 @@ export default function FloatingBubble({ onAccessClick, onGiveawayClick, passCou
     </div>
   );
 }
-

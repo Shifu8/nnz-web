@@ -1,190 +1,284 @@
-﻿/**
+/**
  * Autor: Brandon Medina
  * Fecha: 2026
- * Descripción: Home principal simplificado. Mantiene desktop, y la shell mobile optimizada sin scroll largo.
+ * Descripción: Homepage DAWGS para presentar el próximo show y vender entradas.
  */
 
 "use client";
 
-import { useRef, useState, useEffect, type CSSProperties } from "react";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
-  Calendar,
-  Radio,
-  Ticket,
+  ArrowRight,
   ChevronLeft,
-  ChevronRight,
-  Clock,
-  MapPin,
-  ShieldAlert,
-  Zap
+  Disc3,
+  LockKeyhole,
+  MessageCircle,
+  Music2,
+  Radio,
+  ShieldCheck,
+  Ticket,
+  Zap,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import Atmosphere from "@/frontend/components/Atmosphere";
 import AnimatedHeading from "@/frontend/components/AnimatedHeading";
-
-import AccessDrop from "@/frontend/features/access-drop/AccessDrop";
-import type { Event } from "@/frontend/types/domain";
-import StaffModal from "@/frontend/features/staff/StaffModal";
-import AdminPanelModal from "@/frontend/features/staff/AdminPanelModal";
-import { useRouter } from "next/navigation";
-
 import AIChatbot from "@/frontend/components/AIChatbot";
+import AccessDrop from "@/frontend/features/access-drop/AccessDrop";
+import MerchTeaser from "@/frontend/features/merch/MerchTeaser";
+import StaffModal from "@/frontend/features/staff/StaffModal";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
-import { motion, AnimatePresence } from "framer-motion";
-import { loadActiveModal, saveActiveModal } from "@/lib/persistence/clientState";
+import { events as fallbackEvents } from "@/frontend/services/dawgsData";
+import { useCountdown } from "@/frontend/hooks/useCountdown";
+import type { Event } from "@/frontend/types/domain";
+
+const TICKET_PRICE = 10;
+
+const HOME_NAV_ITEMS = [
+  { id: "show", label: "Show" },
+  { id: "tickets", label: "Entradas" },
+  { id: "access", label: "Acceso" },
+] as const;
+
+type Cover = {
+  src: string;
+  label: string;
+  className: string;
+  rotation: number;
+  delay: number;
+};
+
+const ARTISTS = [
+  { first: "Yan", second: "Block", gradient: "from-pink-200 via-pink-500 to-fuchsia-700" },
+  { first: "Omar", second: "Courtz", gradient: "from-blue-200 via-blue-400 to-purple-600" },
+  { first: "ROA", second: "", gradient: "from-amber-200 via-amber-400 to-orange-600" },
+];
+
+const SHOW_COVERS: Record<string, Cover[]> = {
+  "trap-loud": [
+    {
+      src: "/images/covers/que-vas-hacer-hoy.jpg",
+      label: "Qué Vas Hacer Hoy",
+      className: "left-[1%] top-[12%] w-16 sm:w-20 lg:-left-[10%] lg:top-[16%] lg:w-24",
+      rotation: -12,
+      delay: 0,
+    },
+    {
+      src: "/images/covers/me-gustas-cc.jpg",
+      label: "Me Gustas CC",
+      className: "right-[1%] top-[20%] w-14 sm:w-20 lg:-right-[6%] lg:top-[12%] lg:w-24",
+      rotation: 10,
+      delay: 0.3,
+    },
+    {
+      src: "/images/covers/666.jpg",
+      label: "666",
+      className: "right-[3%] top-[52%] w-16 sm:w-20 lg:-right-[11%] lg:top-[48%] lg:w-28",
+      rotation: 13,
+      delay: 0.55,
+    },
+    {
+      src: "/images/covers/talento.jpg",
+      label: "Talento",
+      className: "left-[2%] top-[55%] w-14 sm:w-20 lg:-left-[13%] lg:top-[50%] lg:w-24",
+      rotation: -8,
+      delay: 0.8,
+    },
+    {
+      src: "/images/covers/444.jpg",
+      label: "444",
+      className: "right-[19%] bottom-[4%] w-14 sm:w-16 lg:right-[4%] lg:bottom-[1%] lg:w-20",
+      rotation: -9,
+      delay: 1.05,
+    },
+    {
+      src: "/images/covers/vacile.jpg",
+      label: "Vacile",
+      className: "left-[18%] bottom-[5%] w-14 sm:w-16 lg:left-[2%] lg:bottom-[3%] lg:w-20",
+      rotation: 11,
+      delay: 1.3,
+    },
+  ],
+};
 
 function getEventTimeLabel(startsAt: string) {
   const time = startsAt.split("T")[1]?.slice(0, 5);
   if (!time) return "";
+
   const [hourRaw, minuteRaw] = time.split(":");
   const hour = Number(hourRaw);
   const minute = Number(minuteRaw);
   if (!Number.isFinite(hour) || !Number.isFinite(minute)) return "";
+
   const suffix = hour >= 12 ? "PM" : "AM";
   const hour12 = hour % 12 || 12;
   return `${hour12}:${String(minute).padStart(2, "0")} ${suffix}`;
 }
 
-type DemoState = "scanning_1" | "success" | "scanning_2" | "denied";
-const DEMO_STATES: DemoState[] = ["scanning_1", "success", "scanning_2", "denied"];
-const HOME_NAV_ITEMS = [
-  { id: "events", label: "Events" },
-  { id: "access", label: "Access Info" },
-] as const;
-
 export default function HomePage() {
   const router = useRouter();
   const scope = useRef<HTMLElement>(null);
-  const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
-  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const [events, setEvents] = useState<Event[]>(fallbackEvents);
+  const [activeSection, setActiveSection] = useState("show");
   const [showHiddenMenu, setShowHiddenMenu] = useState(false);
-  const [activeModal, setActiveModal] = useState<"access" | null>(null);
-  const [currentSlideDesktop, setCurrentSlideDesktop] = useState(0);
-  const [activeSection, setActiveSection] = useState("events");
-  const [demoState, setDemoState] = useState<DemoState>("scanning_1");
-  const [events, setEvents] = useState<Event[]>([]);
-  const [eventsLoading, setEventsLoading] = useState(true);
+  const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
+  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
+  const [artistIndex, setArtistIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setArtistIndex((i) => (i + 1) % ARTISTS.length);
+    }, 7000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const featuredEvent = events[0] ?? fallbackEvents[0];
+  const featuredCovers = SHOW_COVERS[featuredEvent.id] ?? [];
+  const countdown = useCountdown(featuredEvent.startsAt);
 
   useEffect(() => {
     fetch("/api/events")
-      .then((r) => r.json())
-      .then((data) => { if (data.success) setEvents(data.events); })
-      .catch(() => {})
-      .finally(() => setEventsLoading(false));
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.events) && data.events.length > 0) {
+          setEvents(data.events);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("menu") === "access") {
-      setShowHiddenMenu(true);
+      queueMicrotask(() => setShowHiddenMenu(true));
       const url = new URL(window.location.href);
       url.searchParams.delete("menu");
       window.history.replaceState({}, "", url.toString());
     }
   }, []);
-  const [demoTime, setDemoTime] = useState("");
 
-  useEffect(() => {
-    const savedModal = loadActiveModal();
-    if (savedModal) {
-      queueMicrotask(() => setActiveModal(savedModal));
-    }
-  }, []);
-
-  useEffect(() => {
-    saveActiveModal(activeModal);
-  }, [activeModal]);
-
-  useEffect(() => {
-    let currentStep = 0;
-
-    const interval = setInterval(() => {
-      currentStep = (currentStep + 1) % DEMO_STATES.length;
-      const nextDemoState = DEMO_STATES[currentStep];
-      if (nextDemoState === "success") {
-        setDemoTime(new Date().toLocaleTimeString());
-      }
-      setDemoState(nextDemoState);
-    }, 2500);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Monitor scroll for section highlighting
   useEffect(() => {
     const handleScroll = () => {
-      const scrollPosition = window.scrollY + 120;
-      const sections = ["events", "access"];
-      for (const section of sections) {
-        const el = document.getElementById(section);
-        if (el) {
-          const top = el.offsetTop;
-          const height = el.offsetHeight;
-          if (scrollPosition >= top && scrollPosition < top + height) {
-            setActiveSection(section);
-            break;
-          }
+      const scrollPosition = window.scrollY + 160;
+      for (const item of HOME_NAV_ITEMS) {
+        const section = document.getElementById(item.id);
+        if (!section) continue;
+        if (
+          scrollPosition >= section.offsetTop &&
+          scrollPosition < section.offsetTop + section.offsetHeight
+        ) {
+          setActiveSection(item.id);
+          break;
         }
       }
     };
-    window.addEventListener("scroll", handleScroll);
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const moveDesktopEvent = (direction: -1 | 1) => {
-    setCurrentSlideDesktop((current) => (current + direction + events.length) % events.length);
-  };
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
 
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+      mm.add(
+        {
+          isDesktop: "(min-width: 1024px)",
+          reduceMotion: "(prefers-reduced-motion: reduce)",
+        },
+        (context) => {
+          const { isDesktop, reduceMotion } = context.conditions as {
+            isDesktop: boolean;
+            reduceMotion: boolean;
+          };
+
+          if (reduceMotion) {
+            gsap.set(".hero-reveal", { autoAlpha: 1, y: 0 });
+            return;
+          }
+
+          gsap
+            .timeline({ defaults: { ease: "power3.out" } })
+            .from(".hero-reveal", {
+              autoAlpha: 0,
+              y: 28,
+              stagger: 0.08,
+              duration: 0.85,
+            })
+            .from(
+              ".album-orbit",
+              {
+                autoAlpha: 0,
+                scale: 0.6,
+                stagger: 0.07,
+                duration: 0.65,
+                ease: "back.out(1.5)",
+              },
+              "-=0.4",
+            );
+
+          gsap.to(".mascot-float", {
+            y: isDesktop ? -18 : -10,
+            rotation: isDesktop ? 1.2 : 0.6,
+            repeat: -1,
+            yoyo: true,
+            duration: 4.8,
+            ease: "sine.inOut",
+          });
+
+          gsap.to(".hero-ring", {
+            rotation: 360,
+            repeat: -1,
+            duration: 24,
+            ease: "none",
+          });
+        },
+        scope.current ?? undefined,
+      );
+
+      return () => mm.revert();
+    },
+    { scope },
+  );
 
   const handleTouchStart = () => {
     longPressTimer.current = setTimeout(() => {
       setShowHiddenMenu(true);
       if (navigator.vibrate) navigator.vibrate(50);
-    }, 3000); // 3 segundos para Hidden Menu
+    }, 3000);
   };
 
   const handleTouchEnd = () => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
     }
   };
 
-  useGSAP(
-    () => {
-      gsap.from(".cinematic-reveal", {
-        autoAlpha: 0,
-        y: 20,
-        stagger: 0.06,
-        delay: 0.15,
-      });
-
-      gsap.to(".hero-orbit", {
-        y: -15,
-        rotation: 2,
-        repeat: -1,
-        yoyo: true,
-        duration: 4.0,
-        ease: "sine.inOut",
-      });
-    },
-    { scope }
-  );
+  const countdownItems = [
+    { label: "días", value: countdown.days },
+    { label: "horas", value: countdown.hours },
+    { label: "min", value: countdown.minutes },
+    { label: "seg", value: countdown.seconds },
+  ];
 
   return (
-    <main ref={scope} className="relative min-h-screen overflow-hidden bg-black text-white">
+    <main ref={scope} className="relative min-h-screen overflow-x-hidden bg-black text-white">
       <Atmosphere />
 
-      {/* Header unificado */}
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/5 bg-black/10 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1600px] w-full items-center px-6 md:px-12 lg:px-16 py-4">
-          {/* DAWGS - left */}
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] bg-black/35 backdrop-blur-2xl">
+        <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between px-4 py-3.5 sm:px-6 md:px-12 lg:px-16">
           <button
+            type="button"
             onMouseDown={handleTouchStart}
             onMouseUp={handleTouchEnd}
             onMouseLeave={handleTouchEnd}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            className="text-sm font-black tracking-[0.38em] text-white uppercase outline-none select-none transition hover:text-red-400"
+            className="select-none text-sm font-black uppercase tracking-[0.38em] text-white outline-none transition hover:text-pink-300"
             style={{ WebkitTapHighlightColor: "transparent" }}
           >
             <AnimatedHeading
@@ -192,432 +286,326 @@ export default function HomePage() {
               as="span"
               staggerMs={55}
               durationMs={420}
-              className="block text-sm font-black tracking-[0.38em] text-white uppercase"
+              className="block text-sm font-black uppercase tracking-[0.38em] text-white"
             />
           </button>
 
-          {/* Nav - center */}
-          <div className="hidden md:flex flex-1 items-center justify-center">
-            <nav className="flex items-center gap-1">
-              {HOME_NAV_ITEMS.map((item) => (
-                <div key={item.id} className="flex flex-col items-center gap-1">
-                  <motion.a
-                    href={`#${item.id}`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`glass-action relative overflow-hidden ${activeSection === item.id ? "border-red-500/30 bg-red-500/20 text-red-400 shadow-[0_0_20px_rgba(255,0,24,0.15)]" : "glass-action-quiet text-zinc-300"}`}
-                    style={{ "--glass-action-height": "34px", "--glass-action-px": "0.85rem", "--glass-action-text": "0.6rem" } as CSSProperties}
-                  >
-                    {activeSection === item.id && (
-                      <motion.div layoutId="nav-glow-desktop" className="absolute inset-0 bg-red-500/10 blur-xl" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} />
-                    )}
-                    <span className="relative z-10">{item.label}</span>
-                  </motion.a>
-                  {activeSection === item.id && (
-                    <motion.div layoutId="nav-indicator-desktop" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="h-0.5 w-6 rounded-full bg-red-500 shadow-[0_0_12px_rgba(255,0,24,0.5)]" />
-                  )}
-                </div>
-              ))}
-            </nav>
-          </div>
+          <nav className="hidden items-center gap-7 md:flex">
+            {HOME_NAV_ITEMS.map((item) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                className={`relative py-2 text-[10px] font-black uppercase tracking-[0.24em] transition ${
+                  activeSection === item.id ? "text-white" : "text-zinc-500 hover:text-zinc-200"
+                }`}
+              >
+                {item.label}
+                <span
+                  className={`absolute inset-x-0 -bottom-0.5 h-px bg-pink-400 transition-transform duration-300 ${
+                    activeSection === item.id ? "scale-x-100" : "scale-x-0"
+                  }`}
+                />
+              </a>
+            ))}
+          </nav>
+
+          <a
+            href="#tickets"
+            className="inline-flex h-10 items-center gap-2 rounded-full border border-pink-300/25 bg-pink-500/10 px-4 text-[9px] font-black uppercase tracking-[0.18em] text-pink-100 transition hover:border-pink-300/45 hover:bg-pink-500/20"
+          >
+            <Ticket className="h-3.5 w-3.5" />
+            Comprar
+          </a>
         </div>
       </header>
 
-      {/* Desktop (Preservado) */}
-      {/* Ambient background that shifts with active section */}
-      <motion.div
-        animate={{ background: activeSection === "events" ? "radial-gradient(ellipse at 50% 16%, rgba(255,0,24,0.14), transparent 56%)" : "radial-gradient(ellipse at 70% 30%, rgba(255,0,24,0.06), transparent 60%)" }}
-        transition={{ duration: 0.8, ease: "easeInOut" }}
-        className="fixed inset-0 z-0 pointer-events-none hidden md:block"
-      />
-      <section className="relative z-10 hidden md:block">
-        <motion.section
-          id="events"
-          initial={{ opacity: 0.6 }}
-          animate={{ opacity: activeSection === "events" ? 1 : 0.6 }}
-          transition={{ duration: 0.5 }}
-          className="relative z-10 mx-auto flex min-h-screen max-w-[1600px] w-full flex-col items-center justify-center overflow-hidden px-6 md:px-12 lg:px-16 xl:px-20 pb-14 pt-28"
-        >
-          <div aria-hidden className="dawgs-red-event-bg absolute inset-0 -z-10 overflow-hidden rounded-b-[48px]" />
-
-
-
-          <div className="relative mt-12 hidden h-[520px] w-full max-w-[1200px] items-center justify-center perspective-dramatic md:flex lg:h-[610px]">
-              <button
-                type="button"
-                aria-label="Evento anterior"
-                onClick={() => moveDesktopEvent(-1)}
-                className="glass-icon-button absolute -left-2 z-40 text-white lg:-left-5"
-              >
-                <ChevronLeft className="h-6 w-6" />
-              </button>
-
-              <div className="cinematic-reveal hero-orbit relative h-full w-full max-w-[1120px]">
-                {events.map((event, index) => {
-                  const isFirst = index === 0;
-                  const isActive = index === currentSlideDesktop;
-                  const stackSlot = (index - currentSlideDesktop + events.length) % events.length;
-                  const isVisible = stackSlot < 3;
-                  const imageSrc = event.poster || "/images/trap_loud_trio_artists.png";
-                  const timeLabel = getEventTimeLabel(event.startsAt);
-
-                  return (
-                    <div
-                      key={event.id}
-                      role={!isActive ? "button" : undefined}
-                      tabIndex={!isActive && isVisible ? 0 : -1}
-                      aria-hidden={!isVisible}
-                      onClick={() => !isActive && isVisible && setCurrentSlideDesktop(index)}
-                      onKeyDown={(eventKey) => {
-                        if (!isActive && isVisible && (eventKey.key === "Enter" || eventKey.key === " ")) {
-                          setCurrentSlideDesktop(index);
-                        }
-                      }}
-                      className={`event-stack-card group absolute inset-y-0 left-0 right-[78px] flex origin-center flex-col justify-end overflow-hidden rounded-[26px] border bg-black p-5 shadow-[0_28px_90px_rgba(0,0,0,0.72)] transition-all duration-700 ease-out lg:right-[112px] lg:rounded-[34px] lg:p-8 ${isActive ? "border-red-500/45 shadow-[0_0_90px_rgba(255,0,24,.24)]" : "cursor-pointer border-white/20 grayscale hover:border-red-400/40 hover:brightness-110"} ${isVisible ? "visible" : "invisible pointer-events-none"}`}
-                      style={{
-                        zIndex: 30 - stackSlot,
-                        opacity: isVisible ? 1 - stackSlot * 0.18 : 0,
-                        transform: `translateX(${stackSlot * 62}px) translateY(${stackSlot * 18}px) scale(${1 - stackSlot * 0.06}) rotateY(${stackSlot * -4}deg)`,
-                        pointerEvents: isActive || isVisible ? "auto" : "none",
-                        transitionDelay: `${stackSlot * 45}ms`,
-                      }}
-                    >
-                      <div className="absolute inset-0 z-0 bg-black" />
-                      <img
-                        src={imageSrc}
-                        alt={event.title}
-                        className={`absolute inset-0 z-10 h-full w-full object-cover object-[58%_top] transition duration-700 ${isActive ? "scale-[1.035] opacity-95 brightness-95 group-hover:scale-[1.075]" : "opacity-55 brightness-50 contrast-125"}`}
-                      />
-                      <div className={`absolute inset-0 z-10 ${isActive ? "bg-[linear-gradient(90deg,rgba(0,0,0,.78),rgba(0,0,0,.34)_42%,rgba(0,0,0,.12)_68%,rgba(0,0,0,.66))]" : "bg-black/45"}`} />
-                      <div className="absolute inset-x-0 top-0 z-20 h-px bg-gradient-to-r from-transparent via-red-500/80 to-transparent" />
-                      {isActive && (
-                        <>
-                          <div className="absolute left-0 top-0 z-20 h-[140%] w-[70px] origin-top-left bg-gradient-to-b from-red-600/35 via-red-500/10 to-transparent blur-2xl mix-blend-screen animate-laser-left [animation-duration:12s]" />
-                          <div className="absolute right-4 top-0 z-20 h-[140%] w-[70px] origin-top-right bg-gradient-to-b from-red-600/35 via-red-500/10 to-transparent blur-2xl mix-blend-screen animate-laser-right [animation-duration:15s]" />
-                          <div className="absolute bottom-0 left-1/2 z-20 h-[70%] w-[120%] -translate-x-1/2 bg-[radial-gradient(ellipse_at_bottom,rgba(255,0,24,0.16),transparent_60%)] mix-blend-screen" />
-                        </>
-                      )}
-
-                      <div className="relative z-30 max-w-[460px]">
-                        <p className={`inline-flex w-fit items-center gap-2 rounded-lg px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] ${isFirst ? "bg-red-600 text-white shadow-[0_0_18px_rgba(255,0,24,.58)]" : "border border-white/15 bg-black/60 text-zinc-300"}`}>
-                          <Zap className="h-3 w-3" />
-                          {isFirst ? "proximo evento" : "proxima fecha"}
-                        </p>
-                        <h2 className="mt-4 text-3xl font-black leading-none text-white drop-shadow-[0_0_22px_rgba(255,0,24,0.58)] lg:text-5xl xl:text-6xl">
-                          {event.title}
-                        </h2>
-                        <div className="mt-4 flex flex-wrap items-center gap-2.5 text-[9px] font-bold uppercase tracking-[0.1em] text-zinc-200 lg:text-[10px] lg:tracking-[0.13em]">
-                          <span className="inline-flex items-center gap-1.5">
-                            <Calendar className="h-3.5 w-3.5 text-zinc-100" />
-                            {event.dateLabel}
-                          </span>
-                          <span className="h-3 w-px bg-white/20" />
-                          <span className="inline-flex items-center gap-1.5">
-                            <MapPin className="h-3.5 w-3.5 text-zinc-100" />
-                            {event.city}
-                          </span>
-                          {timeLabel && (
-                            <>
-                              <span className="h-3 w-px bg-white/20" />
-                              <span className="inline-flex items-center gap-1.5">
-                                <Clock className="h-3.5 w-3.5 text-zinc-100" />
-                                {timeLabel}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                        <div className="mt-4 h-1 w-14 rounded-full bg-red-500 shadow-[0_0_16px_rgba(255,0,24,0.68)]" />
-                        <p className="mt-4 max-w-sm text-[11px] leading-5 text-zinc-300 line-clamp-2 lg:text-xs lg:leading-6">
-                          {event.description}
-                        </p>
-
-                        <div className="mt-6 flex gap-3">
-                          <button
-                            disabled={!isFirst}
-                            onClick={() => isFirst && setActiveModal("access")}
-                            className={`glass-action ${isFirst ? "glass-action-primary" : "glass-action-quiet text-zinc-500"}`}
-                            style={{ "--glass-action-height": "44px", "--glass-action-px": "1.65rem", "--glass-action-text": "0.72rem" } as CSSProperties}
-                          >
-                            <Ticket className="h-3.5 w-3.5" /> Shop Now
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <button
-                type="button"
-                aria-label="Siguiente evento"
-                onClick={() => moveDesktopEvent(1)}
-                className="glass-icon-button glass-icon-button-red absolute -right-2 z-40 text-white lg:-right-5"
-              >
-                <ChevronRight className="h-6 w-6" />
-              </button>
-
-              <div className="absolute -bottom-8 left-1/2 z-40 flex -translate-x-1/2 gap-3">
-                {events.map((_, i) => (
-                  <button
-                    type="button"
-                    aria-label={`Ir al evento ${i + 1}`}
-                    onClick={() => setCurrentSlideDesktop(i)}
-                    key={i}
-                    className={`h-2 rounded-full transition-all duration-300 ${i === currentSlideDesktop ? "w-9 bg-red-500 shadow-[0_0_10px_red]" : "w-4 bg-white/20 hover:bg-white/40"}`}
-                  />
-                ))}
-              </div>
-            </div>
-        </motion.section>
-      </section>
-
-      {/* Secure Channel & Access Simulator */}
-      <motion.section
-        id="access"
-        initial={{ opacity: 0.6 }}
-        animate={{ opacity: activeSection === "access" ? 1 : 0.6 }}
-        transition={{ duration: 0.5 }}
-        className="relative z-10 mx-auto max-w-[1600px] w-full px-6 md:px-12 lg:px-16 xl:px-20 pb-24 border-t border-white/5 pt-24"
+      <section
+        id="show"
+        className="relative z-10 mx-auto flex min-h-[100svh] w-full max-w-[1600px] flex-col overflow-hidden px-4 pb-8 pt-24 sm:px-6 md:px-12 lg:px-16 lg:pb-10"
       >
-        <div className="relative overflow-hidden rounded-[40px] border border-white/[0.07] bg-black/20 p-8 md:p-12 backdrop-blur-3xl shadow-[0_0_100px_rgba(239,68,68,0.06)]">
-          <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-red-500/5 blur-[120px] pointer-events-none" />
-          <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-red-500/5 blur-[120px] pointer-events-none" />
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <div aria-hidden className="absolute inset-0 -z-20 overflow-hidden rounded-b-[44px] border-x border-b border-white/[0.05] bg-[#08070b]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(255,31,111,0.24),transparent_29%),radial-gradient(circle_at_16%_56%,rgba(120,0,70,0.20),transparent_30%),radial-gradient(circle_at_88%_40%,rgba(0,183,255,0.08),transparent_24%),linear-gradient(180deg,#09070d_0%,#10050d_52%,#060607_100%)]" />
+          <div className="absolute inset-0 opacity-40 [background-image:radial-gradient(circle,rgba(255,255,255,0.5)_0_1px,transparent_1.5px)] [background-size:84px_84px]" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px)] [background-size:72px_72px] [mask-image:linear-gradient(to_bottom,black,transparent_78%)]" />
+          <div className="absolute inset-x-[10%] top-[18%] h-[48%] rounded-full border border-pink-300/[0.06] shadow-[0_0_120px_rgba(255,0,102,0.16),inset_0_0_120px_rgba(255,0,102,0.05)]" />
+        </div>
 
-            {/* Left side: Instructions and Diagram */}
-            <div className="lg:col-span-7 flex flex-col text-left">
-              <span className="inline-flex items-center gap-1.5 w-fit rounded border border-red-500/30 bg-red-950/30 px-3 py-1 text-[9px] font-black uppercase tracking-[0.25em] text-red-500">
-                <svg className="w-3.5 h-3.5 text-red-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                prueba visual de acceso
-              </span>
-              <h2 className="mt-4 text-3xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none">
-                Tu QR entra una vez<br />
-                <span className="text-[#C8FF00] italic">y queda cerrado.</span>
-              </h2>
-              <p className="mt-4 text-sm text-zinc-400 leading-relaxed max-w-xl">
-                Esta demo muestra el proceso de entrada. El QR real se entrega despues de comprar tu ticket; en puerta el staff lo escanea una sola vez y, si pasa, ese mismo codigo ya no vuelve a servir.
-              </p>
+        <p
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-[18%] -z-10 -translate-x-1/2 select-none whitespace-nowrap text-[27vw] font-black leading-none tracking-[-0.09em] text-white/[0.025] lg:top-[10%] lg:text-[19vw]"
+        >
+          DAWGS
+        </p>
 
-              {/* Flow Steps */}
-              <div className="mt-8 space-y-4">
-                {[
-                  {
-                    step: "01",
-                    title: "Compra tu ticket",
-                    desc: "Pagas por transferencia bancaria (Banco Loja o Pichincha). Subes tu comprobante y recibes confirmación."
-                  },
-                  {
-                    step: "02",
-                    title: "Recibe tu QR",
-                    desc: "Despues de la compra veras tu pase con QR. Guardalo y no lo compartas en chats ni historias."
-                  },
-                  {
-                    step: "03",
-                    title: "Muestralo en puerta",
-                    desc: "Al llegar, ensenas el QR desde tu celular. El staff lo revisa con el scanner oficial."
-                  },
-                  {
-                    step: "04",
-                    title: "Primer uso y bloqueo",
-                    desc: "Si el scanner marca acceso permitido, el QR queda usado. Una captura o reenvio posterior sera rechazado."
-                  }
-                ].map((s) => (
-                  <div key={s.step} className="group flex gap-4 p-4 rounded-2xl border border-white/[0.04] bg-white/[0.01] hover:border-red-500/20 hover:bg-red-500/[0.03] hover:shadow-[0_0_30px_rgba(239,68,68,0.04)] transition-all duration-300">
-                    <span className="text-sm font-black text-red-500 font-mono">{s.step}</span>
-                    <div>
-                      <h4 className="text-xs font-black text-white uppercase tracking-wider">{s.title}</h4>
-                      <p className="text-[11px] text-zinc-500 mt-1">{s.desc}</p>
-                    </div>
-                  </div>
+        <div className="relative grid flex-1 items-center gap-8 lg:grid-cols-12 lg:gap-4">
+          <div className="hero-reveal relative z-30 order-1 pt-4 text-center lg:col-span-3 lg:pt-0 lg:text-left">
+            <p className="inline-flex items-center gap-2 rounded-full border border-pink-300/20 bg-pink-500/[0.08] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.28em] text-pink-200 backdrop-blur-xl">
+              <Radio className="h-3 w-3 text-pink-400" />
+              Próxima señal en vivo
+            </p>
+            <p className="mt-6 text-[10px] font-black uppercase tracking-[0.48em] text-zinc-500">
+              DAWGS presenta
+            </p>
+            <div className="mt-3 h-[8rem] sm:h-[9rem] lg:h-[10rem] xl:h-[12rem] relative overflow-hidden">
+              <AnimatePresence mode="wait">
+                {ARTISTS.map((a, i) => i === artistIndex && (
+                  <motion.h1
+                    key={a.first}
+                    initial={{ opacity: 0, y: 40, rotateX: 15 }}
+                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                    exit={{ opacity: 0, y: -40, rotateX: -15 }}
+                    transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+                    className="absolute inset-0 text-5xl font-black uppercase leading-[0.82] tracking-[-0.06em] text-white sm:text-6xl lg:text-[4rem] xl:text-[5.3rem]"
+                  >
+                    {a.first}
+                    {a.second && <><br /><span className={`bg-gradient-to-r ${a.gradient} bg-clip-text text-transparent`}>{a.second}</span></>}
+                  </motion.h1>
                 ))}
+              </AnimatePresence>
+            </div>
+            <p className="mx-auto mt-5 max-w-sm text-xs leading-6 text-zinc-400 lg:hidden">
+              Trap latino, bajos pesados y una noche diseñada para sentirse cerca del artista.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-2 lg:hidden">
+              {featuredEvent.lineup.slice(0, 4).map((artist) => (
+                <span
+                  key={artist}
+                  className="rounded-full border border-white/10 bg-white/[0.035] px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.18em] text-zinc-300"
+                >
+                  {artist}
+                </span>
+              ))}
+            </div>
+            <button
+              onClick={() => setIsTicketModalOpen(true)}
+              className="mx-auto mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[8px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-pink-200 lg:hidden"
+            >
+              <Ticket className="h-3.5 w-3.5" />
+              Comprar entrada · ${TICKET_PRICE}
+            </button>
+          </div>
+
+          <div className="order-2 lg:col-span-6">
+            <div className="relative mx-auto h-[390px] w-full max-w-[640px] sm:h-[520px] lg:h-[620px]">
+              <div className="hero-ring absolute left-1/2 top-1/2 h-[78%] w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-pink-200/[0.09]" />
+              <div className="absolute left-1/2 top-1/2 h-[60%] w-[60%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-pink-500/20 blur-[90px]" />
+              <div className="absolute inset-x-[16%] bottom-[8%] h-[14%] rounded-full bg-pink-600/20 blur-[50px]" />
+
+              {featuredCovers.map((cover) => (
+                <div
+                  key={cover.label}
+                  className={`album-orbit absolute z-20 ${cover.className}`}
+                  style={{
+                    transform: `rotate(${cover.rotation}deg)`,
+                    animationDelay: `${cover.delay}s`,
+                  }}
+                >
+                  <div className="group relative aspect-square overflow-hidden rounded-[16px] border border-white/15 bg-black shadow-[0_14px_40px_rgba(0,0,0,0.65),0_0_24px_rgba(255,0,102,0.12)]">
+                    <Image
+                      src={cover.src}
+                      alt={cover.label}
+                      fill
+                      sizes="112px"
+                      className="object-cover transition duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
+                    <p className="absolute inset-x-1 bottom-1.5 truncate text-center text-[5px] font-black uppercase tracking-[0.12em] text-white/90 sm:text-[6px]">
+                      {cover.label}
+                    </p>
+                  </div>
+                </div>
+              ))}
+
+              <div className="mascot-float absolute inset-0 z-10">
+                <Image
+                  src="/images/dawgs-mascot-3d.png"
+                  alt="Mascota 3D de DAWGS"
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 640px"
+                  className="object-contain object-bottom drop-shadow-[0_0_42px_rgba(255,39,132,0.28)]"
+                />
               </div>
             </div>
-
-            {/* Right side: QR demo automática (no interactiva) */}
-            <div className="lg:col-span-5 flex flex-col items-center pointer-events-none select-none">
-              <div className="absolute w-[300px] h-[300px] rounded-full bg-red-500/10 blur-[100px] -top-20 -right-20 pointer-events-none" />
-              <div className="absolute w-[250px] h-[250px] rounded-full bg-red-500/5 blur-[100px] -bottom-20 -left-20 pointer-events-none" />
-              <p className="mb-3 text-[9px] font-black uppercase tracking-[0.35em] text-zinc-500 text-center">
-                Demo automática · validación en tiempo real
-              </p>
-              <div className="w-full max-w-[360px] rounded-[38px] border border-white/[0.06] bg-black/30 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col items-center backdrop-blur-2xl">
-
-                {/* Scanner Glow border state overlay */}
-                <div className={`absolute inset-0 border-[3px] rounded-[38px] pointer-events-none z-30 transition-all duration-500 ${demoState === "success"
-                  ? "border-green-500/80 shadow-[inset_0_0_30px_rgba(34,197,94,0.4),0_0_40px_rgba(34,197,94,0.15)]"
-                  : demoState === "denied"
-                    ? "border-red-500/80 shadow-[inset_0_0_30px_rgba(239,68,68,0.4),0_0_40px_rgba(239,68,68,0.15)]"
-                    : (demoState === "scanning_1" || demoState === "scanning_2")
-                      ? "border-red-500/40 shadow-[0_0_20px_rgba(239,68,68,0.2),0_0_40px_rgba(239,68,68,0.1)] animate-qr-scan"
-                      : "border-white/[0.06]"
-                  }`} />
-
-                {/* Header of Pass */}
-                <div className="w-full flex justify-between items-center border-b border-white/[0.06] pb-3 mb-4 z-10">
-                  <span className="text-[8px] font-black tracking-[0.25em] text-[#C8FF00]">DAWGS VIP ACCESS</span>
-                  <span className={`text-[7px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${demoState === "success"
-                    ? "bg-green-950/40 text-green-400 border-green-500/30"
-                    : demoState === "denied"
-                      ? "bg-red-950/40 text-red-500 border-red-500/30"
-                      : "bg-zinc-900 text-zinc-500 border-zinc-800"
-                    }`}>
-                    {demoState === "success" ? "usado" : demoState === "denied" ? "bloqueado" : "activo"}
-                  </span>
-                </div>
-
-                {/* QR visual de prueba */}
-                <div className="relative w-44 h-44 bg-white rounded-2xl p-3 flex items-center justify-center shadow-lg transition-transform duration-300">
-                  {/* Blurred overlay if already used / blocked */}
-                  {demoState === "success" && (
-                    <div className="absolute inset-0 bg-white/90 backdrop-blur-[2px] rounded-2xl flex flex-col items-center justify-center p-3 z-10">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 shadow-[0_0_20px_rgba(34,197,94,0.2)]">
-                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      <span className="text-[10px] font-black text-green-700 uppercase tracking-widest mt-2 text-center">pase verificado</span>
-                    </div>
-                  )}
-                  {demoState === "denied" && (
-                    <div className="absolute inset-0 bg-white/95 backdrop-blur-[2px] rounded-2xl flex flex-col items-center justify-center p-3 z-10">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
-                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                      </div>
-                      <span className="text-[8px] font-black text-red-700 uppercase tracking-widest mt-2 text-center">¡acceso rechazado!<br />ya escaneado</span>
-                    </div>
-                  )}
-
-                  {/* QR SVG de prueba */}
-                  <svg className="w-full h-full text-black" viewBox="0 0 100 100" fill="currentColor">
-                    <rect x="10" y="10" width="20" height="20" />
-                    <rect x="15" y="15" width="10" height="10" fill="white" />
-                    <rect x="70" y="10" width="20" height="20" />
-                    <rect x="75" y="15" width="10" height="10" fill="white" />
-                    <rect x="10" y="70" width="20" height="20" />
-                    <rect x="15" y="75" width="10" height="10" fill="white" />
-                    <rect x="40" y="40" width="20" height="20" />
-                    <rect x="45" y="10" width="5" height="10" />
-                    <rect x="55" y="25" width="10" height="5" />
-                    <rect x="70" y="45" width="15" height="5" />
-                    <rect x="10" y="45" width="10" height="10" />
-                    <rect x="45" y="70" width="10" height="10" />
-                    <rect x="70" y="70" width="5" height="15" />
-                    <rect x="80" y="80" width="10" height="10" />
-                  </svg>
-                </div>
-
-                {/* Ticket metadata */}
-                <div className="w-full text-center mt-5 z-10 font-mono text-[9px] text-zinc-500 uppercase tracking-wider">
-                  <p className="text-white font-bold text-xs tracking-normal">USUARIO</p>
-                  <p className="mt-1">SERIAL: DAWGS-1982-MED</p>
-                  <p className="text-[8px]">TRAP LOUD MEDELLIN • 2026</p>
-                </div>
-
-                {/* Real-time Status Message box */}
-                <div className={`w-full mt-4 p-3 rounded-xl border text-center backdrop-blur-xl transition-all duration-300 ${demoState === "success"
-                  ? "bg-green-950/30 border-green-500/30 text-green-400 text-[9px] font-bold shadow-[0_0_20px_rgba(34,197,94,0.05)]"
-                  : demoState === "denied"
-                    ? "bg-red-950/30 border-red-500/30 text-red-400 text-[9px] font-bold shadow-[0_0_20px_rgba(239,68,68,0.05)]"
-                    : "bg-black/40 border-white/[0.06] text-zinc-400 text-[8px]"
-                  }`}>
-                  {demoState === "success" && (
-                    <p className="uppercase tracking-wider">
-                      [OK] ACCESO PERMITIDO a las {demoTime}<br />
-                      <span className="text-green-500/70">QR usado. ya no vuelve a servir.</span>
-                    </p>
-                  )}
-                  {demoState === "denied" && (
-                    <p className="uppercase tracking-wider animate-pulse">
-                      [FALLA] ACCESO RECHAZADO.<br />
-                      <span className="text-red-400/70">este mismo QR ya fue escaneado antes.</span>
-                    </p>
-                  )}
-                  {(demoState === "scanning_1" || demoState === "scanning_2") && <p className="uppercase tracking-widest animate-pulse text-zinc-500">consultando el estado del QR...</p>}
-                </div>
-              </div>
-              <p className="mt-4 max-w-[360px] text-center text-[9px] leading-5 text-zinc-500 uppercase tracking-widest">
-                Cada QR funciona una sola vez · sistema anti replicación
-              </p>
-            </div>
-
           </div>
         </div>
-        <style dangerouslySetInnerHTML={{
-          __html: `
-          @keyframes qr-scan {
-            0% { border-color: rgba(239,68,68,0.3); box-shadow: 0 0 10px rgba(239,68,68,0.1); }
-            50% { border-color: rgba(239,68,68,0.7); box-shadow: 0 0 30px rgba(239,68,68,0.3), 0 0 60px rgba(239,68,68,0.1); }
-            100% { border-color: rgba(239,68,68,0.3); box-shadow: 0 0 10px rgba(239,68,68,0.1); }
-          }
-        `}} />
-      </motion.section>
+
+        <a
+          href="#tickets"
+          className="mx-auto mt-10 hidden h-12 w-full max-w-sm items-center justify-between rounded-2xl bg-white px-4 text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-pink-200 lg:inline-flex"
+        >
+          Comprar entrada
+          <ArrowRight className="h-4 w-4" />
+        </a>
+      </section>
 
       <section
-        id="contact"
-        className="relative z-10 border-t border-white/5 px-6 py-16 md:px-12 lg:px-16 xl:px-20"
+        id="tickets"
+        className="relative z-10 mx-auto w-full max-w-[1600px] px-4 pt-6 pb-20 sm:px-6 md:px-12 lg:px-16 lg:pt-10 lg:pb-28"
       >
-        <div className="mx-auto grid w-full max-w-[1600px] gap-10 md:grid-cols-[1.2fr_0.8fr_0.8fr] md:items-start">
-          <div>
-            <p className="text-2xl font-black uppercase tracking-[0.28em] text-white">DAWGS</p>
-            <p className="mt-4 max-w-xl text-sm leading-7 text-zinc-400">
-              Eventos en vivo, accesos organizados y soporte cercano para que tu noche fluya desde la compra hasta la entrada.
-            </p>
-          </div>
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-[9px] font-black uppercase tracking-[0.42em] text-pink-300">Entradas oficiales</p>
+          <h2 className="mt-4 text-4xl font-black uppercase leading-[0.9] tracking-[-0.05em] text-white sm:text-6xl">
+            Tu noche empieza
+            <br />
+            <span className="text-pink-400">aquí.</span>
+          </h2>
+          <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-zinc-400">
+            Elige tu diseño, registra tus datos y sube el comprobante. Todo el proceso está en la
+            homepage, sin ventanas que te saquen del show.
+          </p>
+        </div>
 
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.32em] text-red-400">Enlaces rapidos</p>
-            <div className="mt-5 flex flex-col items-start gap-3 text-sm text-zinc-300">
-              <a href="#events" className="transition hover:text-white">Events</a>
-              <a href="#access" className="transition hover:text-white">Access Info</a>
+        <div className="mt-10 overflow-hidden rounded-[34px] border border-white/[0.08] bg-black/30 shadow-[0_30px_120px_rgba(0,0,0,0.5),0_0_100px_rgba(255,0,102,0.05)] backdrop-blur-2xl">
+          <AccessDrop />
+        </div>
+      </section>
 
+      <section
+        id="access"
+        className="relative z-10 mx-auto w-full max-w-[1600px] px-4 pb-20 sm:px-6 md:px-12 lg:px-16 lg:pb-28"
+      >
+        <div className="overflow-hidden rounded-[34px] border border-white/[0.08] bg-white/[0.025] p-6 shadow-[0_30px_100px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:p-8 lg:p-12">
+          <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <div>
+              <p className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.36em] text-pink-300">
+                <LockKeyhole className="h-3.5 w-3.5" />
+                Acceso protegido
+              </p>
+              <h2 className="mt-4 text-4xl font-black uppercase leading-[0.9] tracking-[-0.05em] text-white sm:text-5xl">
+                Un QR.
+                <br />
+                Una entrada.
+              </h2>
+              <p className="mt-5 max-w-lg text-sm leading-7 text-zinc-400">
+                Tu pase se valida una sola vez en puerta. No compartas capturas ni reenvíes el
+                código antes del show.
+              </p>
             </div>
-          </div>
 
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.32em] text-red-400">Contacto</p>
-            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=soporte.dawgs@gmail.com" target="_blank" rel="noopener noreferrer" className="mt-5 block text-sm text-zinc-300 transition hover:text-white">
-              soporte.dawgs@gmail.com
-            </a>
-            <p className="mt-8 text-xs text-zinc-600">
-              © 2026 DAWGS. Todos los derechos reservados.
-            </p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                {
+                  icon: Ticket,
+                  step: "01",
+                  title: "Compra",
+                  copy: "Completa el flujo y sube tu comprobante.",
+                },
+                {
+                  icon: MessageCircle,
+                  step: "02",
+                  title: "Recibe",
+                  copy: "Tu acceso confirmado llega por WhatsApp.",
+                },
+                {
+                  icon: ShieldCheck,
+                  step: "03",
+                  title: "Entra",
+                  copy: "El staff escanea tu QR oficial una sola vez. Usado = bloqueado, así evitamos fraudes y reventa.",
+                },
+              ].map(({ icon: Icon, step, title, copy }) => (
+                <article
+                  key={step}
+                  className="rounded-[24px] border border-white/[0.07] bg-black/35 p-5 transition hover:border-pink-300/20 hover:bg-pink-500/[0.035]"
+                >
+                  <div className="flex items-center justify-between">
+                    <Icon className="h-5 w-5 text-pink-400" />
+                    <span className="text-[8px] font-black tracking-[0.24em] text-zinc-600">{step}</span>
+                  </div>
+                  <h3 className="mt-8 text-lg font-black uppercase text-white">{title}</h3>
+                  <p className="mt-2 text-[10px] leading-5 text-zinc-500">{copy}</p>
+                </article>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Asistente IA Concierge */}
-      <AIChatbot />
+      {events.length > 1 && (
+        <section className="relative z-10 mx-auto w-full max-w-[1600px] px-4 pb-20 sm:px-6 md:px-12 lg:px-16 lg:pb-28">
+          <div className="mb-7 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.36em] text-zinc-500">Después de Yan Block</p>
+              <h2 className="mt-2 text-2xl font-black uppercase text-white sm:text-3xl">Próximas señales</h2>
+            </div>
+            <Disc3 className="h-6 w-6 text-pink-400" />
+          </div>
 
-      {/* Modales de Interacción Desktop */}
+          <div className="grid gap-4 md:grid-cols-3">
+            {events.slice(1, 4).map((event) => (
+              <article
+                key={event.id}
+                className="group relative min-h-[260px] overflow-hidden rounded-[26px] border border-white/[0.08] bg-black"
+              >
+                <Image
+                  src={event.poster || "/images/trap_loud_trio_artists.png"}
+                  alt={event.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover object-top opacity-65 grayscale transition duration-700 group-hover:scale-105 group-hover:opacity-80 group-hover:grayscale-0"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-5">
+                  <p className="text-[8px] font-black uppercase tracking-[0.28em] text-pink-300">
+                    {event.dateLabel} · {event.city}
+                  </p>
+                  <h3 className="mt-2 text-2xl font-black uppercase text-white">{event.title}</h3>
+                  <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-zinc-400">
+                    {event.subtitle}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <footer className="relative z-10 border-t border-white/[0.06] px-4 py-14 sm:px-6 md:px-12 lg:px-16">
+        <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center text-center gap-4">
+          <p className="text-lg font-black uppercase tracking-[0.34em] text-white">DAWGS</p>
+          <p className="text-[9px] uppercase tracking-[0.24em] text-zinc-600">Live shows · official access · wear</p>
+          <a
+            href="https://mail.google.com/mail/?view=cm&fs=1&to=soporte.dawgs@gmail.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-zinc-400 transition hover:text-white"
+          >
+            soporte.dawgs@gmail.com
+          </a>
+          <p className="mt-2 text-[8px] font-bold tracking-wider text-zinc-600">© 2026 DAWGS. Todos los derechos reservados.</p>
+        </div>
+      </footer>
+
+      <MerchTeaser />
+      <AIChatbot />
+      <StaffModal isOpen={isStaffModalOpen} onClose={() => setIsStaffModalOpen(false)} />
+
       <AnimatePresence>
-        {activeModal === "access" && (
+        {isTicketModalOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] overflow-y-auto bg-black/60 backdrop-blur-xl flex items-center justify-center p-4 no-scrollbar"
+            className="fixed inset-0 z-[150] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 15 }}
-              transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              className="relative w-full max-w-[1400px]"
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="relative max-h-[90vh] w-full max-w-[450px] overflow-y-auto rounded-[34px] border border-white/[0.08] bg-black shadow-[0_30px_120px_rgba(0,0,0,0.7)]"
             >
-              <AccessDrop onClose={() => setActiveModal(null)} />
+              <button
+                onClick={() => setIsTicketModalOpen(false)}
+                className="fixed top-4 right-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/60 text-white/60 hover:text-white"
+              >
+                ✕
+              </button>
+              <AccessDrop />
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-<StaffModal isOpen={isStaffModalOpen} onClose={() => setIsStaffModalOpen(false)} />
-      <AdminPanelModal isOpen={isAdminPanelOpen} onClose={() => setIsAdminPanelOpen(false)} />
-
-      {/* Hidden Admin/Staff Menu Selection */}
       <AnimatePresence>
         {showHiddenMenu && (
           <motion.div
@@ -630,37 +618,62 @@ export default function HomePage() {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="relative w-full max-w-sm rounded-[40px] border border-white/[0.08] bg-white/[0.03] backdrop-blur-2xl p-10 shadow-[0_0_80px_rgba(255,0,24,0.06)] text-center flex flex-col items-center"
+              className="relative flex w-full max-w-sm flex-col items-center rounded-[40px] border border-white/[0.08] bg-white/[0.03] p-10 text-center shadow-[0_0_80px_rgba(255,0,102,0.08)] backdrop-blur-2xl"
             >
-              <div className="absolute inset-0 bg-gradient-to-b from-red-500/5 to-transparent pointer-events-none rounded-[40px]" />
-              <button onClick={() => setShowHiddenMenu(false)} className="absolute top-5 left-5 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl px-4 py-2.5 text-[8px] font-black uppercase tracking-wider text-zinc-400 transition hover:text-white hover:border-white/20 z-10">
-                <ChevronLeft className="h-3 w-3" /> VOLVER
+              <button
+                type="button"
+                onClick={() => setShowHiddenMenu(false)}
+                className="absolute left-5 top-5 z-10 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-[8px] font-black uppercase tracking-wider text-zinc-400 transition hover:border-white/20 hover:text-white"
+              >
+                <ChevronLeft className="h-3 w-3" /> Volver
               </button>
 
-              <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.06] border border-white/10 mb-5 shadow-[0_0_30px_rgba(255,255,255,0.03)]">
-                <ShieldAlert className="h-6 w-6 text-zinc-300" />
+              <div className="mb-5 mt-8 flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-white/[0.06]">
+                <Zap className="h-6 w-6 text-pink-300" />
               </div>
-              <h2 className="relative text-2xl font-black uppercase tracking-[0.15em] text-white">System Access</h2>
-              <p className="relative mt-2 text-[9px] text-zinc-500 mb-8 uppercase tracking-[0.3em] font-bold">Selecciona el modulo</p>
+              <h2 className="text-2xl font-black uppercase tracking-[0.15em] text-white">System Access</h2>
+              <p className="mb-8 mt-2 text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-500">
+                Selecciona el módulo
+              </p>
 
-              <div className="relative flex flex-col gap-4 w-full">
+              <div className="flex w-full flex-col gap-4">
                 <button
-                  onClick={() => { setShowHiddenMenu(false); setIsStaffModalOpen(true); }}
-                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl px-5 py-4 text-[11px] font-black uppercase tracking-wider text-zinc-300 transition hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-400"
+                  type="button"
+                  onClick={() => {
+                    setShowHiddenMenu(false);
+                    setIsStaffModalOpen(true);
+                  }}
+                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-[11px] font-black uppercase tracking-wider text-zinc-300 transition hover:border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-400"
                 >
                   <Radio className="h-4 w-4" /> Agente Staff
                 </button>
                 <button
-                  onClick={() => { setShowHiddenMenu(false); router.push("/admin"); }}
-                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl px-5 py-4 text-[11px] font-black uppercase tracking-wider text-zinc-300 transition hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400"
+                  type="button"
+                  onClick={() => {
+                    setShowHiddenMenu(false);
+                    router.push("/admin");
+                  }}
+                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-[11px] font-black uppercase tracking-wider text-zinc-300 transition hover:border-pink-500/30 hover:bg-pink-500/10 hover:text-pink-300"
                 >
-                  <Zap className="h-4 w-4" /> Admin
+                  <Music2 className="h-4 w-4" /> Admin
                 </button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .album-orbit {
+          animation: albumFloat 3.7s ease-in-out infinite;
+        }
+        .album-orbit:nth-child(even) {
+          animation-delay: 0.18s;
+          animation-name: albumFloatEven;
+        }
+        @keyframes albumFloat { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-12px) rotate(2deg); } }
+        @keyframes albumFloatEven { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(12px) rotate(-2deg); } }
+      `}} />
     </main>
   );
 }

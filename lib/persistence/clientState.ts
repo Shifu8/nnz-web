@@ -92,13 +92,13 @@ export function loadGiveawayState(): StoredGiveawayState | null {
 }
 
 /** Modal / sección activa en home */
-export function saveActiveModal(modal: "access" | "giveaway" | null) {
+export function saveActiveModal(modal: "access" | null) {
   if (modal) setItem("active_modal", modal, true);
   else removeItem("active_modal", true);
 }
 
-export function loadActiveModal(): "access" | "giveaway" | null {
-  return getItem<"access" | "giveaway">("active_modal", true);
+export function loadActiveModal(): "access" | null {
+  return getItem<"access">("active_modal", true);
 }
 
 /** Countdown giveaway sincronizado */
