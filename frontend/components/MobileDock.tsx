@@ -6,9 +6,9 @@
 
 "use client";
 
-import { CalendarDays, Gift, Gem } from "lucide-react";
+import { CalendarDays, Gem } from "lucide-react";
 
-export type MobileTab = "events" | "giveaway" | "access";
+export type MobileTab = "events" | "access";
 
 type DockItem = {
   tab: MobileTab;
@@ -18,7 +18,6 @@ type DockItem = {
 
 const items: DockItem[] = [
   { tab: "events", icon: CalendarDays, label: "Eventos" },
-  { tab: "giveaway", icon: Gift, label: "Giveaway" },
   { tab: "access", icon: Gem, label: "Access" },
 ];
 
@@ -30,7 +29,7 @@ type MobileDockProps = {
 export default function MobileDock({ activeTab, onTabChange }: MobileDockProps) {
   return (
     <nav className="fixed inset-x-3 bottom-4 z-[70] mx-auto max-w-md rounded-[28px] border border-white/12 bg-black/52 px-3 py-3 shadow-[0_0_55px_rgba(255,0,24,.25)] backdrop-blur-2xl md:hidden">
-      <div className="grid grid-cols-3 gap-1">
+      <div className="grid grid-cols-2 gap-1">
         {items.map(({ tab, icon: Icon, label }) => {
           const isActive = activeTab === tab;
 

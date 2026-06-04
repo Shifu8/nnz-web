@@ -6,7 +6,6 @@ import { Menu, X } from "lucide-react";
 
 const NAV_ITEMS = [
   { label: "Inicio", href: "/" },
-  { label: "Giveaway", href: "/giveaway" },
   { label: "Acceso", href: "/#access" },
 ];
 

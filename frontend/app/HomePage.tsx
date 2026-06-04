@@ -11,7 +11,6 @@ import {
   Calendar,
   Radio,
   Ticket,
-  Gift,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -23,7 +22,6 @@ import Atmosphere from "@/frontend/components/Atmosphere";
 import AnimatedHeading from "@/frontend/components/AnimatedHeading";
 
 import AccessDrop from "@/frontend/features/access-drop/AccessDrop";
-import LiveGiveaway from "@/frontend/features/giveaway/LiveGiveaway";
 import type { Event } from "@/frontend/types/domain";
 import StaffModal from "@/frontend/features/staff/StaffModal";
 import AdminPanelModal from "@/frontend/features/staff/AdminPanelModal";
@@ -59,7 +57,7 @@ export default function HomePage() {
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [showHiddenMenu, setShowHiddenMenu] = useState(false);
-  const [activeModal, setActiveModal] = useState<"access" | "giveaway" | null>(null);
+  const [activeModal, setActiveModal] = useState<"access" | null>(null);
   const [currentSlideDesktop, setCurrentSlideDesktop] = useState(0);
   const [activeSection, setActiveSection] = useState("events");
   const [demoState, setDemoState] = useState<DemoState>("scanning_1");
@@ -341,15 +339,6 @@ export default function HomePage() {
                             style={{ "--glass-action-height": "44px", "--glass-action-px": "1.65rem", "--glass-action-text": "0.72rem" } as CSSProperties}
                           >
                             <Ticket className="h-3.5 w-3.5" /> Shop Now
-                          </button>
-                          <button
-                            disabled={!isFirst}
-                            onClick={() => isFirst && setActiveModal("giveaway")}
-                            className={`glass-action ${isFirst ? "glass-action-quiet" : "glass-action-quiet text-zinc-500"}`}
-                            style={{ "--glass-action-height": "44px", "--glass-action-px": "1.65rem", "--glass-action-text": "0.72rem" } as CSSProperties}
-                          >
-                            <Gift className="h-3.5 w-3.5" /> Giveaway
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -583,17 +572,14 @@ export default function HomePage() {
             <div className="mt-5 flex flex-col items-start gap-3 text-sm text-zinc-300">
               <a href="#events" className="transition hover:text-white">Events</a>
               <a href="#access" className="transition hover:text-white">Access Info</a>
-              <button onClick={() => setShowHiddenMenu(true)} className="transition hover:text-white">
-                Iniciar sesion
-              </button>
-              <a href="mailto:soporte@dawgs.ec" className="transition hover:text-white">Contacto</a>
+
             </div>
           </div>
 
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.32em] text-red-400">Contacto</p>
-            <a href="mailto:soporte@dawgs.ec" className="mt-5 block text-sm text-zinc-300 transition hover:text-white">
-              soporte@dawgs.ec
+            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=soporte.dawgs@gmail.com" target="_blank" rel="noopener noreferrer" className="mt-5 block text-sm text-zinc-300 transition hover:text-white">
+              soporte.dawgs@gmail.com
             </a>
             <p className="mt-8 text-xs text-zinc-600">
               © 2026 DAWGS. Todos los derechos reservados.
@@ -627,28 +613,7 @@ export default function HomePage() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {activeModal === "giveaway" && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] overflow-y-auto bg-black/60 pb-28 pt-14 backdrop-blur-xl flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 15 }}
-              transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              className="relative w-full max-w-[1400px] px-4 py-6"
-            >
-              <LiveGiveaway onClose={() => setActiveModal(null)} />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <StaffModal isOpen={isStaffModalOpen} onClose={() => setIsStaffModalOpen(false)} />
+<StaffModal isOpen={isStaffModalOpen} onClose={() => setIsStaffModalOpen(false)} />
       <AdminPanelModal isOpen={isAdminPanelOpen} onClose={() => setIsAdminPanelOpen(false)} />
 
       {/* Hidden Admin/Staff Menu Selection */}

@@ -14,14 +14,13 @@ const initialMessages: Message[] = [
   {
     id: "1",
     sender: "bot",
-    text: "Hola, que tal. Bienvenido a DAWGS. Soy tu concierge del evento: entradas, giveaway y soporte. Que necesitas?",
+    text: "Hola, que tal. Bienvenido a DAWGS. Soy tu concierge del evento: entradas y soporte. Que necesitas?",
   },
 ];
 
 const quickReplies = [
   "Proximo Evento",
   "Comprar Acceso",
-  "Giveaway",
   "Contacto",
 ];
 

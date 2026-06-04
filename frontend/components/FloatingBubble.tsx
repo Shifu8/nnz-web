@@ -7,12 +7,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Gift, Sparkles, Ticket, X } from "lucide-react";
+import { Sparkles, Ticket, X } from "lucide-react";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
 
 type FloatingBubbleProps = {
   onAccessClick?: () => void;
-  onGiveawayClick?: () => void;
   passCount?: number;
 };
 
@@ -72,15 +71,6 @@ export default function FloatingBubble({ onAccessClick, onGiveawayClick, passCou
             Canjear pase ahora <Ticket className="h-4 w-4" />
           </button>
 
-          <button
-            onClick={() => {
-              onGiveawayClick?.();
-              setOpen(false);
-            }}
-            className="mt-2 flex h-12 w-full items-center justify-between rounded-2xl border border-white/15 bg-white/5 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-100"
-          >
-            Participar giveaway <Gift className="h-4 w-4 text-red-400" />
-          </button>
         </div>
 
         <button

@@ -7,10 +7,9 @@
 "use client";
 
 import { useState, useEffect, type CSSProperties } from "react";
-import { Flame, Gem, Radio, Ticket, Gift } from "lucide-react";
+import { Flame, Gem, Radio, Ticket } from "lucide-react";
 import type { Event } from "@/frontend/types/domain";
 import AccessDrop from "@/frontend/features/access-drop/AccessDrop";
-import LiveGiveaway from "@/frontend/features/giveaway/LiveGiveaway";
 import { motion, AnimatePresence } from "framer-motion";
 
 const tags = [
@@ -22,7 +21,7 @@ const tags = [
 
 export default function MobileFirstShell() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [activeModal, setActiveModal] = useState<"access" | "giveaway" | null>(null);
+  const [activeModal, setActiveModal] = useState<"access" | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
 
   useEffect(() => {
@@ -167,14 +166,7 @@ export default function MobileFirstShell() {
                       >
                         <Ticket className="h-3.5 w-3.5" /> Buy $10
                       </button>
-                      <button 
-                        disabled={!isFirst}
-                        onClick={() => isFirst && setActiveModal("giveaway")}
-                        className={`glass-action flex-1 ${isFirst ? "glass-action-quiet" : "glass-action-quiet text-zinc-500"}`}
-                        style={{ "--glass-action-height": "40px", "--glass-action-px": "0.85rem", "--glass-action-text": "0.56rem" } as CSSProperties}
-                      >
-                        <Gift className="h-3.5 w-3.5" /> Giveaway
-                      </button>
+
                     </div>
                   </div>
                 </div>
@@ -216,26 +208,7 @@ export default function MobileFirstShell() {
         )}
       </AnimatePresence>
  
-      <AnimatePresence>
-        {activeModal === "giveaway" && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] overflow-y-auto bg-black/95 backdrop-blur-xl flex items-start justify-center"
-          >
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.92, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 15 }}
-              transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              className="relative w-full max-w-lg px-3 py-4"
-            >
-              <LiveGiveaway onClose={() => setActiveModal(null)} />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
     </section>
   );
 }
