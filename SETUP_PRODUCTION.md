@@ -1,0 +1,267 @@
+# DAWGS — Guía de producción
+
+Sistema completo: PayPhone, Supabase, tickets QR, giveaway realtime, staff scanner, admin, Gmail SMTP, Meta WhatsApp Cloud API.
+
+---
+
+## 1. Dependencias
+
+```bash
+npm install
+```
+
+Ya incluidas en `package.json`: `@supabase/supabase-js`, `bcryptjs`, `jose`, `qrcode`, `nodemailer`, `gsap`, `framer-motion`, etc.
+
+---
+
+## 2. Variables `.env.local`
+
+Copia `.env.example`:
+
+```bash
+cp .env.example .env.local
+```
+
+| Variable | Descripción |
+|----------|-------------|
+| `NEXT_PUBLIC_SITE_URL` | URL pública (Vercel o dominio) |
+| `PAYPHONE_DEMO_MODE` | `true` = pagos simulados; `false` = PayPhone real |
+| `PAYPHONE_TOKEN` | Bearer token Payphone Developer |
+| `PAYPHONE_STORE_ID` | Store ID de tu app WEB |
+| `SUPABASE_URL` | Proyecto Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | Solo servidor (nunca en cliente) |
+| `SMTP_*` | Gmail SMTP (email + QR) |
+| `WHATSAPP_*` | Meta WhatsApp Cloud API |
+| `STAFF_PASSWORD_HASH_B64` | Hash bcrypt staff |
+| `ADMIN_PASSWORD_HASH_B64` | Hash bcrypt admin |
+| `GIVEAWAY_OPEN_HOUR` | 19 = 7:30 PM Ecuador |
+| `GIVEAWAY_OPEN_MINUTE` | 30 |
+| `GIVEAWAY_DURATION_MINUTES` | 10 |
+
+---
+
+## 3. Supabase — SQL
+
+En **SQL Editor** de Supabase, ejecuta todo el archivo:
+
+```
+supabase/schema.sql
+```
+
+Tablas principales:
+
+- `tickets` — compras PayPhone
+- `party_passes` — QR de un solo uso
+- `access_drops` — participantes
+- `ticket_resends` — logs de reenvío
+- `giveaway_entries` — sorteo en vivo
+- `admin_logs` — acciones admin
+
+---
+
+## 4. Contraseñas Staff / Admin
+
+Generar hashes:
+
+```bash
+node scripts/gen-password-hashes.mjs
+```
+
+**Contraseñas por defecto del script** (cámbialas en producción):
+
+| Rol | Contraseña |
+|-----|------------|
+| **Staff** (scanner) | `D@wgs-St4ff#9Kp2!Qm7&Vx4` |
+| **Admin** (tickets) | `D@wgs-@dm1n#R7n!Wq3$Zp8&Kf5` |
+
+Pega los valores `*_HASH_B64` en `.env.local`.
+
+**Acceso staff:** mantén pulsado el logo **DAWGS** 3 segundos → menú oculto.
+
+---
+
+## 5. PayPhone — paso a paso
+
+### 5.1 Crear cuenta
+
+1. Regístrate en [Payphone Developer](https://pay.payphonetodoesposible.com) (Ecuador).
+2. Crea una aplicación tipo **WEB**.
+3. Obtén **Token** y **Store ID**.
+
+### 5.2 Sandbox / testing
+
+```env
+PAYPHONE_ENV=test
+PAYPHONE_DEMO_MODE=false
+PAYPHONE_TOKEN=tu_token_sandbox
+PAYPHONE_STORE_ID=tu_store_id
+```
+
+En Developer configura:
+
+- **Dominio web:** `localhost:3000` (dev) o tu dominio
+- **URL respuesta:** `https://tu-dominio.com/checkout/result`
+- **URL cancelación:** `https://tu-dominio.com/checkout/result?cancelled=1`
+- **Webhook (opcional):** `https://tu-dominio.com/api/payphone/webhook`
+
+### 5.3 Modo demo (sin PayPhone aún)
+
+```env
+PAYPHONE_DEMO_MODE=true
+NEXT_PUBLIC_PAYPHONE_DEMO_MODE=true
+```
+
+Flujo: formulario → `/api/payphone/prepare` → redirect demo → `/api/payphone/demo-complete` → ticket + email/WhatsApp.
+
+### 5.4 Producción
+
+```env
+PAYPHONE_ENV=production
+PAYPHONE_DEMO_MODE=false
+```
+
+1. Conecta cuenta bancaria en Payphone.
+2. Activa app en producción.
+3. Usa token y store ID de producción.
+4. Verifica webhook y URLs HTTPS.
+
+---
+
+## 6. Gmail SMTP (email + tickets QR)
+
+1. Activa **2-factor authentication** en tu cuenta Google.
+2. Ve a [App Passwords](https://myaccount.google.com/apppasswords).
+3. Selecciona **Mail** y genera una contraseña de 16 caracteres.
+4. Variables:
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=mrshifu879@gmail.com
+SMTP_PASS=xxxx_xxxx_xxxx_xxxx
+SMTP_FROM=DAWGS <mrshifu879@gmail.com>
+```
+
+Sin credenciales en desarrollo: `sendMail()` lanzará error (no rompe el flujo de compra).
+
+---
+
+## 7. WhatsApp (Meta Cloud API)
+
+1. Ve a [Meta for Developers](https://developers.facebook.com) y crea una app.
+2. Añade el producto **WhatsApp**.
+3. Configura el **Business Account** y obtén un **Phone Number ID**.
+4. Genera un **Access Token** permanente (Settings → Permanent Token).
+5. (Opcional) Configura webhook para recibir mensajes entrantes — en este proyecto solo se envían mensajes salientes automáticos.
+
+```env
+WHATSAPP_ACCESS_TOKEN=EAAT...
+WHATSAPP_PHONE_NUMBER_ID=123456789
+WHATSAPP_VERIFY_TOKEN=tu_token_para_webhook
+```
+
+Los mensajes se envían al formato `+593XXXXXXXXX`.  
+Si WhatsApp falla, el checkout NO se rompe — solo se registra el error y el email se envía igual.
+
+---
+
+## 8. Endpoints API
+
+| Método | Ruta | Uso |
+|--------|------|-----|
+| GET | `/api/payphone/config` | Estado gateway + demo |
+| POST | `/api/payphone/prepare` | Iniciar compra |
+| POST | `/api/payphone/confirm` | Confirmar tras PayPhone |
+| POST | `/api/payphone/demo-complete` | Solo si `PAYPHONE_DEMO_MODE=true` |
+| POST | `/api/payphone/webhook` | Webhook PayPhone |
+| POST | `/api/access-drop/resend` | Reenviar ticket |
+| GET | `/api/tickets/[serial]/pass.png` | Imagen QR firmada |
+| POST | `/api/passes/validate` | Staff scanner |
+| POST | `/api/admin/generate-ticket` | Ticket manual admin |
+| POST | `/api/staff/login` | Login staff/admin |
+| GET | `/api/giveaway/status` | Fases countdown/open/drawing |
+| POST | `/api/giveaway/register` | Registro sorteo |
+| GET | `/api/giveaway/participants` | Lista en vivo |
+
+---
+
+## 9. Deploy (Vercel)
+
+```bash
+npm run build
+```
+
+1. Conecta repo en Vercel.
+2. Añade todas las variables de `.env.example`.
+3. `NEXT_PUBLIC_SITE_URL=https://tu-dominio.vercel.app`
+4. Ejecuta `supabase/schema.sql` en tu proyecto.
+5. `PAYPHONE_DEMO_MODE=false` cuando PayPhone esté listo.
+
+---
+
+## 10. Archivos creados / editados
+
+### Crear
+
+- `lib/persistence/clientState.ts`
+- `lib/db/giveawayStore.ts`
+- `lib/db/adminLogs.ts`
+- `app/api/payphone/demo-complete/route.ts`
+- `app/api/payphone/webhook/route.ts`
+- `SETUP_PRODUCTION.md`
+
+### Editar
+
+- `supabase/schema.sql` — `giveaway_entries`, `admin_logs`
+- `lib/payments/payphoneEnv.ts` — demo mode
+- `app/api/payphone/*` — prepare, config, confirm
+- `app/api/giveaway/register`, `participants`
+- `frontend/features/access-drop/AccessDrop.tsx`
+- `frontend/features/giveaway/LiveGiveaway.tsx`
+- `app/checkout/result/page.tsx`
+- `frontend/components/AIChatbot.tsx`
+- `frontend/components/IntroCinematic.tsx`
+- `.env.example`
+
+### Eliminar
+
+- `app/api/kushki/*`
+- `lib/payments/kushki*`
+
+---
+
+## 11. Persistencia anti-reload
+
+El cliente guarda en `localStorage` / `sessionStorage`:
+
+- Ticket comprado (`dawgs_ticket_pass`)
+- Token de transacción
+- Borrador del formulario de compra
+- Estado del giveaway
+- Modal activo (access/giveaway)
+
+Al recargar, el usuario continúa donde estaba.
+
+---
+
+## 12. Flujo de compra
+
+1. Usuario completa datos → **Comprar ticket**
+2. `POST /api/payphone/prepare` → redirect PayPhone (o demo)
+3. Pago aprobado → `POST /api/payphone/confirm`
+4. `activateTicket` → QR único en Supabase
+5. Gmail SMTP + Meta WhatsApp
+6. Pantalla: *"Tu acceso fue enviado correctamente"*
+
+---
+
+## 13. Desarrollo local
+
+```bash
+cp .env.example .env.local
+# PAYPHONE_DEMO_MODE=true + SUPABASE_URL + keys
+
+npm run dev
+```
+
+Abre `http://localhost:3000`.

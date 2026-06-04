@@ -1,0 +1,80 @@
+/**
+ * Autor: Brandon Medina
+ * Fecha: 11/05/2026
+ * Descripción: Configuración Next.js para assets remotos y seguridad DAWGS.
+ */
+
+import type { NextConfig } from "next";
+
+const isDev = process.env.NODE_ENV !== "production";
+const csp = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' blob: data: https://images.unsplash.com",
+  "font-src 'self'",
+  "connect-src 'self' https://pay.payphonetodoesposible.com https://*.supabase.co https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://graph.facebook.com https://in-v3.mailjet.com",
+  "media-src 'self' data:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  ...(isDev ? [] : ["upgrade-insecure-requests"]),
+].join("; ");
+
+const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_PAYPHONE_ENV: process.env.NEXT_PUBLIC_PAYPHONE_ENV || process.env.PAYPHONE_ENV || "",
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+    ],
+  },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "X-DNS-Prefetch-Control",
+            value: "off",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "origin-when-cross-origin",
+          },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(self), microphone=(), geolocation=()",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: csp,
+          },
+          ...(isDev
+            ? []
+            : [
+                {
+                  key: "Strict-Transport-Security",
+                  value: "max-age=63072000; includeSubDomains; preload",
+                },
+              ]),
+        ],
+      },
+    ];
+  },
+};
+
+export default nextConfig;

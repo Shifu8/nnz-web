@@ -1,0 +1,287 @@
+"use client";
+
+import { useState, FormEvent, type CSSProperties } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ChevronLeft,
+  ShieldAlert,
+  Ticket,
+  Send,
+  Loader2,
+  CheckCircle2,
+  Mail,
+  Smartphone,
+  Layers,
+} from "lucide-react";
+
+type DeliveryChannel = "email" | "whatsapp" | "both";
+
+const CHANNEL_OPTIONS: {
+  id: DeliveryChannel;
+  label: string;
+  sub: string;
+  icon: typeof Mail;
+}[] = [
+  { id: "email", label: "Gmail", sub: "Correo + QR adjunto", icon: Mail },
+  { id: "whatsapp", label: "Móvil", sub: "WhatsApp + imagen QR", icon: Smartphone },
+  { id: "both", label: "Ambos", sub: "Gmail y WhatsApp", icon: Layers },
+];
+
+function channelSuccessLabel(channel: DeliveryChannel) {
+  if (channel === "email") return "enviado por Gmail con la imagen del QR";
+  if (channel === "whatsapp") return "enviado por WhatsApp con la imagen del QR";
+  return "enviado por Gmail y WhatsApp con la imagen del QR";
+}
+
+export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const [password, setPassword] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "" });
+  const [deliveryChannel, setDeliveryChannel] = useState<DeliveryChannel>("both");
+  const [success, setSuccess] = useState(false);
+  const [lastSerial, setLastSerial] = useState("");
+  const [lastChannel, setLastChannel] = useState<DeliveryChannel>("both");
+
+  async function handleLogin(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/staff/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password, role: "admin" }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Error de validación");
+        return;
+      }
+
+      setIsAuthenticated(true);
+    } catch {
+      setError("Error de red");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleGenerate(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/admin/generate-ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, deliveryChannel }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "No se pudo generar el ticket");
+        return;
+      }
+
+      setLastSerial(data.serialNumber || "");
+      setLastChannel((data.deliveryChannel as DeliveryChannel) || deliveryChannel);
+      setSuccess(true);
+    } catch {
+      setError("Error generando ticket");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleNext = () => {
+    setSuccess(false);
+    setLastSerial("");
+    setForm({ firstName: "", lastName: "", email: "", phone: "" });
+    setDeliveryChannel("both");
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[150] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+        >
+          <motion.div
+            initial={{ scale: 0.95, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.95, y: 20 }}
+            className="relative flex w-full max-w-md flex-col items-center rounded-[34px] border border-[#C8FF00]/30 bg-black/80 p-6 shadow-[0_0_80px_rgba(200,255,0,0.15)] backdrop-blur-xl md:p-10"
+          >
+            <button
+              onClick={() => {
+                if (!isAuthenticated) onClose();
+                else setIsAuthenticated(false);
+              }}
+              className="glass-pill absolute top-4 left-4"
+            >
+              <ChevronLeft className="h-3 w-3" /> VOLVER
+            </button>
+
+            {!isAuthenticated ? (
+              <>
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#C8FF00]/20 text-[#C8FF00]">
+                  <ShieldAlert className="h-6 w-6" />
+                </div>
+                <h2 className="text-2xl font-black uppercase tracking-[0.15em] text-white">Tickets Admin</h2>
+                <p className="mt-2 text-center text-xs text-zinc-400">
+                  Panel privado. Genera tickets VIP gratis y envíalos por Gmail o WhatsApp.
+                </p>
+
+                <form onSubmit={handleLogin} className="mt-8 w-full space-y-4">
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="ADMIN PASSWORD"
+                    className="w-full rounded-2xl border border-white/10 bg-black/40 px-5 py-4 text-center text-lg font-bold tracking-[0.2em] text-white outline-none focus:border-[#C8FF00]/50 focus:ring-1 focus:ring-[#C8FF00]/50"
+                  />
+                  {error && <p className="text-center text-xs font-bold text-red-400">{error}</p>}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="glass-action-lime w-full"
+                    style={{ "--glass-action-height": "52px", "--glass-action-text": "0.65rem" } as CSSProperties}
+                  >
+                    {loading ? "VALIDANDO..." : "ENTRAR AL PANEL"}
+                  </button>
+                </form>
+              </>
+            ) : success ? (
+              <div className="flex w-full flex-col items-center text-center">
+                <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20 text-green-500">
+                  <CheckCircle2 className="h-8 w-8" />
+                </div>
+                <h2 className="text-2xl font-black uppercase tracking-widest text-white">ENVIADO</h2>
+                <p className="mt-2 text-[10px] leading-loose tracking-widest text-zinc-400 uppercase">
+                  Ticket VIP para {form.firstName} {form.lastName} {channelSuccessLabel(lastChannel)}.
+                </p>
+                {lastSerial && (
+                  <p className="mt-3 rounded-xl border border-[#C8FF00]/20 bg-[#C8FF00]/5 px-4 py-2 font-mono text-[11px] text-[#C8FF00]">
+                    {lastSerial}
+                  </p>
+                )}
+                <button
+                  onClick={handleNext}
+                  className="glass-action-quiet w-full mt-8"
+                  style={{ "--glass-action-height": "52px", "--glass-action-text": "0.65rem" } as CSSProperties}
+                >
+                  ¿SEGUIR ENVIANDO ENTRADAS?
+                </button>
+              </div>
+            ) : (
+              <div className="w-full">
+                <div className="mb-6 text-center">
+                  <h2 className="flex items-center justify-center gap-2 text-xl font-black uppercase tracking-widest text-white">
+                    <Ticket className="h-5 w-5 text-[#C8FF00]" /> TICKET GRATIS VIP
+                  </h2>
+                  <p className="mt-1 text-[9px] uppercase tracking-[0.2em] text-zinc-500">
+                    Elige canal y envía la foto del QR
+                  </p>
+                </div>
+
+                <form onSubmit={handleGenerate} className="w-full space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      required
+                      type="text"
+                      placeholder="NOMBRE"
+                      className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-600 outline-none focus:border-[#C8FF00]/50"
+                      value={form.firstName}
+                      onChange={(e) => setForm({ ...form, firstName: e.target.value.toUpperCase() })}
+                    />
+                    <input
+                      required
+                      type="text"
+                      placeholder="APELLIDO"
+                      className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-600 outline-none focus:border-[#C8FF00]/50"
+                      value={form.lastName}
+                      onChange={(e) => setForm({ ...form, lastName: e.target.value.toUpperCase() })}
+                    />
+                  </div>
+
+                  <input
+                    required={deliveryChannel !== "whatsapp"}
+                    type="email"
+                    placeholder="CORREO (Gmail)"
+                    className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-600 outline-none focus:border-[#C8FF00]/50 disabled:opacity-40"
+                    value={form.email}
+                    disabled={deliveryChannel === "whatsapp"}
+                    onChange={(e) => setForm({ ...form, email: e.target.value.toLowerCase() })}
+                  />
+
+                  <input
+                    required={deliveryChannel !== "email"}
+                    type="tel"
+                    maxLength={10}
+                    placeholder="TELÉFONO (09XXXXXXXX)"
+                    className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-600 outline-none focus:border-[#C8FF00]/50 disabled:opacity-40"
+                    value={form.phone}
+                    disabled={deliveryChannel === "email"}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^\d]/g, "") })}
+                  />
+
+                  <div className="space-y-2">
+                    <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">
+                      Enviar ticket por
+                    </p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {CHANNEL_OPTIONS.map((opt) => {
+                        const Icon = opt.icon;
+                        const active = deliveryChannel === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => setDeliveryChannel(opt.id)}
+                            className={`glass-select-tile flex flex-col items-center gap-1 px-2 py-3 ${
+                              active ? "glass-select-tile-active-lime text-[#C8FF00]" : "text-zinc-500"
+                            }`}
+                          >
+                            <Icon className="h-4 w-4" />
+                            <span className="text-[9px] font-black uppercase tracking-wider">{opt.label}</span>
+                            <span className="text-[7px] leading-tight text-center opacity-70">{opt.sub}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {error && (
+                    <p className="rounded border border-red-500/30 bg-red-950/40 p-2 text-[10px] font-bold text-red-400">
+                      {error}
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="glass-action-lime w-full mt-2"
+                    style={{ "--glass-action-height": "52px", "--glass-action-text": "0.65rem" } as CSSProperties}
+                  >
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    ENVIAR ACCESO
+                  </button>
+                </form>
+              </div>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}

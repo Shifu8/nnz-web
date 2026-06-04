@@ -1,0 +1,115 @@
+[
+  {
+    "title": "TRAP LOUD",
+    "subtitle": "YAN BLOCK EXPERIENCE",
+    "location": "San Juan",
+    "date": "2026-06-18",
+    "time": "21:00",
+    "countdownDate": "",
+    "price": 10,
+    "imageUrl": "/images/trap_loud_trio_artists.png",
+    "description": "La escena subterranea cobra vida. Trap latino oscuro, bajo retumbante y energia inagotable. Luces rojas, beats pesados y acceso estricto.",
+    "lineup": [
+      "YAN BLOCK",
+      "ROA",
+      "OMAR COURTZ",
+      "y mas"
+    ],
+    "status": "active",
+    "isFeatured": false,
+    "slug": "trap-loud",
+    "id": "d0ef37cf-6781-4515-aff5-7c0db6f1036e",
+    "createdAt": "2026-05-30T23:41:19.326Z",
+    "updatedAt": "2026-06-03T23:58:28.823Z",
+    "position": 0
+  },
+  {
+    "title": "TRAP LOUD",
+    "subtitle": "ANUEL EFFECT",
+    "location": "Miami",
+    "date": "2026-08-15",
+    "time": "22:00",
+    "countdownDate": "",
+    "price": 10,
+    "imageUrl": "/images/trap_loud_anuel_1778966415162.png",
+    "description": "El lado mas agresivo del trap. Una experiencia imponente, oscura y cinematica con el pionero del genero dictando el .",
+    "lineup": [
+      "ANUEL AA",
+      "y mas"
+    ],
+    "status": "active",
+    "isFeatured": false,
+    "slug": "trap-loud-anuel",
+    "id": "67d5ee1e-ad15-4fab-b00c-240fdb6444f4",
+    "createdAt": "2026-05-31T00:11:20.083Z",
+    "updatedAt": "2026-06-03T23:58:28.823Z",
+    "position": 1
+  },
+  {
+    "title": "LA CASITA",
+    "subtitle": "LATIN LOUD",
+    "location": "Loja",
+    "date": "2026-07-04",
+    "time": "21:00",
+    "countdownDate": "2026-07-04",
+    "price": 6,
+    "imageUrl": "",
+    "description": "FUll party",
+    "lineup": [
+      "yanblock"
+    ],
+    "position": 2,
+    "slug": "latin-loud1",
+    "status": "active",
+    "isFeatured": false,
+    "id": "6d04d71f-7c76-4c5b-8b3e-afabb68b79eb",
+    "createdAt": "2026-06-03T23:57:02.581Z",
+    "updatedAt": "2026-06-03T23:58:28.823Z"
+  },
+  {
+    "title": "RNB LOUD",
+    "subtitle": "NIGHT VISIONS",
+    "location": "Los Angeles",
+    "date": "2026-10-24",
+    "time": "22:00",
+    "countdownDate": "",
+    "price": 10,
+    "imageUrl": "/images/rnb_loud_brent_1778966427864.png",
+    "description": "Vibras lujosas y nocturnas. R&B sensual y futurista en una atmosfera envolvente donde el estilo y el sonido marcan la pauta.",
+    "lineup": [
+      "BRENT FAIYAZ",
+      "DRAKE",
+      "y mas"
+    ],
+    "position": 3,
+    "status": "inactive",
+    "isFeatured": false,
+    "slug": "rnb-loud",
+    "id": "dff89ef9-bae4-4c5b-a969-c7eb19b36276",
+    "createdAt": "2026-06-01T03:33:09.936Z",
+    "updatedAt": "2026-06-03T23:58:28.823Z"
+  },
+  {
+    "title": "LATIN LOUD",
+    "subtitle": "GLOBAL WAVE",
+    "location": "Medellin",
+    "date": "2026-12-10",
+    "time": "20:00",
+    "countdownDate": "",
+    "price": 10,
+    "imageUrl": "/images/latin_loud_bad_bunny_1778966469259.png",
+    "description": "Energia sin limites y orgullo latino. Una experiencia masiva, brillante y premium que redefine la fiesta underground a gran escala.",
+    "lineup": [
+      "BAD BUNNY",
+      "RAUW ALEJANDRO",
+      "y mas"
+    ],
+    "position": 4,
+    "status": "inactive",
+    "isFeatured": false,
+    "slug": "latin-loud",
+    "id": "a8d9d481-4ef4-4421-a538-0f9ecd9af8fc",
+    "createdAt": "2026-06-01T03:34:06.333Z",
+    "updatedAt": "2026-06-03T23:58:28.823Z"
+  }
+]
