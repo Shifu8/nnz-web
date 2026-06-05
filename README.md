@@ -7,7 +7,7 @@ Next.js 16 app with PayPhone checkout, one-use QR validation, staff scanner, adm
 1. Copy `.env.example` to `.env.local`.
 2. Configure PayPhone (`PAYPHONE_TOKEN`, `PAYPHONE_STORE_ID`).
 3. Add Supabase or Firebase Admin credentials.
-4. Configure Gmail SMTP (App Password) + Meta WhatsApp Cloud API for ticket delivery.
+4. Configure Gmail API for ticket delivery. WhatsApp/Baileys sends confirmation only.
 5. Run:
 
 ```bash
@@ -23,7 +23,7 @@ Flow:
 2. Backend calls PayPhone `Prepare` and redirects to PayPhone checkout (card or PayPhone balance).
 3. PayPhone redirects to `/checkout/result?id=...&clientTransactionId=...`.
 4. Backend calls PayPhone `Confirm` within 5 minutes (required by PayPhone).
-5. On approval: ticket + unique QR saved, email/SMS sent.
+5. On approval: ticket + unique QR saved, Gmail API sends the PDF; WhatsApp/Baileys sends a short confirmation.
 
 PayPhone Developer app type must be **WEB** with:
 
@@ -59,6 +59,6 @@ Required env:
 - `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (or Firebase Admin)
 - `DATA_ENCRYPTION_KEY`, `JWT_SECRET`, `QR_HASH_SECRET`
 - `STAFF_PASSWORD_HASH_B64`, `ADMIN_PASSWORD_HASH_B64` (generar con `node scripts/gen-password-hashes.mjs`)
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` (Gmail SMTP)
-- `SMTP_FROM`
+- `GMAIL_USER=soporte.dawgs@gmail.com`, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`
+- `GMAIL_DAILY_LIMIT=100`
 - `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`

@@ -11,13 +11,17 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
+  CalendarDays,
   ChevronLeft,
+  Clock3,
   Disc3,
   LockKeyhole,
+  MapPin,
   MessageCircle,
   Music2,
   Radio,
   ShieldCheck,
+  Sparkles,
   Ticket,
   Zap,
 } from "lucide-react";
@@ -26,6 +30,7 @@ import Atmosphere from "@/frontend/components/Atmosphere";
 import AnimatedHeading from "@/frontend/components/AnimatedHeading";
 import AIChatbot from "@/frontend/components/AIChatbot";
 import AccessDrop from "@/frontend/features/access-drop/AccessDrop";
+import TicketRecovery from "@/frontend/features/access-drop/TicketRecovery";
 import MerchTeaser from "@/frontend/features/merch/MerchTeaser";
 import StaffModal from "@/frontend/features/staff/StaffModal";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
@@ -55,66 +60,57 @@ const ARTISTS = [
   { first: "ROA", second: "", gradient: "from-amber-200 via-amber-400 to-orange-600" },
 ];
 
+const FEATURED_SPONSORS = [
+  { initials: "KS", name: "Kyoto Sushi" },
+  { initials: "IA", name: "Iron Athletics" },
+] as const;
+
 const SHOW_COVERS: Record<string, Cover[]> = {
   "trap-loud": [
     {
       src: "/images/covers/que-vas-hacer-hoy.jpg",
       label: "Qué Vas Hacer Hoy",
-      className: "left-[1%] top-[12%] w-16 sm:w-20 lg:-left-[10%] lg:top-[16%] lg:w-24",
+      className: "left-[1%] top-[12%] w-[4.7rem] sm:w-24 lg:-left-[10%] lg:top-[16%] lg:w-28",
       rotation: -12,
       delay: 0,
     },
     {
       src: "/images/covers/me-gustas-cc.jpg",
       label: "Me Gustas CC",
-      className: "right-[1%] top-[20%] w-14 sm:w-20 lg:-right-[6%] lg:top-[12%] lg:w-24",
+      className: "right-[1%] top-[20%] w-[4.4rem] sm:w-24 lg:-right-[6%] lg:top-[12%] lg:w-28",
       rotation: 10,
       delay: 0.3,
     },
     {
       src: "/images/covers/666.jpg",
       label: "666",
-      className: "right-[3%] top-[52%] w-16 sm:w-20 lg:-right-[11%] lg:top-[48%] lg:w-28",
+      className: "right-[3%] top-[52%] w-20 sm:w-24 lg:-right-[11%] lg:top-[48%] lg:w-32",
       rotation: 13,
       delay: 0.55,
     },
     {
       src: "/images/covers/talento.jpg",
       label: "Talento",
-      className: "left-[2%] top-[55%] w-14 sm:w-20 lg:-left-[13%] lg:top-[50%] lg:w-24",
+      className: "left-[2%] top-[55%] w-[4.4rem] sm:w-24 lg:-left-[13%] lg:top-[50%] lg:w-28",
       rotation: -8,
       delay: 0.8,
     },
     {
       src: "/images/covers/444.jpg",
       label: "444",
-      className: "right-[19%] bottom-[4%] w-14 sm:w-16 lg:right-[4%] lg:bottom-[1%] lg:w-20",
+      className: "right-[19%] bottom-[4%] w-[4.4rem] sm:w-20 lg:right-[4%] lg:bottom-[1%] lg:w-24",
       rotation: -9,
       delay: 1.05,
     },
     {
       src: "/images/covers/vacile.jpg",
       label: "Vacile",
-      className: "left-[18%] bottom-[5%] w-14 sm:w-16 lg:left-[2%] lg:bottom-[3%] lg:w-20",
+      className: "left-[18%] bottom-[5%] w-[4.4rem] sm:w-20 lg:left-[2%] lg:bottom-[3%] lg:w-24",
       rotation: 11,
       delay: 1.3,
     },
   ],
 };
-
-function getEventTimeLabel(startsAt: string) {
-  const time = startsAt.split("T")[1]?.slice(0, 5);
-  if (!time) return "";
-
-  const [hourRaw, minuteRaw] = time.split(":");
-  const hour = Number(hourRaw);
-  const minute = Number(minuteRaw);
-  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return "";
-
-  const suffix = hour >= 12 ? "PM" : "AM";
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${String(minute).padStart(2, "0")} ${suffix}`;
-}
 
 export default function HomePage() {
   const router = useRouter();
@@ -125,6 +121,8 @@ export default function HomePage() {
   const [showHiddenMenu, setShowHiddenMenu] = useState(false);
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
+  const [isHowToBuyOpen, setIsHowToBuyOpen] = useState(false);
+  const [isTicketPulse, setIsTicketPulse] = useState(false);
   const [artistIndex, setArtistIndex] = useState(0);
 
   useEffect(() => {
@@ -136,7 +134,7 @@ export default function HomePage() {
 
   const featuredEvent = events[0] ?? fallbackEvents[0];
   const featuredCovers = SHOW_COVERS[featuredEvent.id] ?? [];
-  const countdown = useCountdown(featuredEvent.startsAt);
+  const ticketCountdown = useCountdown(featuredEvent.startsAt);
 
   useEffect(() => {
     fetch("/api/events")
@@ -258,39 +256,53 @@ export default function HomePage() {
     }
   };
 
-  const countdownItems = [
-    { label: "días", value: countdown.days },
-    { label: "horas", value: countdown.hours },
-    { label: "min", value: countdown.minutes },
-    { label: "seg", value: countdown.seconds },
-  ];
+  const scrollToTicketCard = () => {
+    setIsHowToBuyOpen(false);
+    document.getElementById("tickets")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => {
+      setIsTicketPulse(true);
+      window.setTimeout(() => setIsTicketPulse(false), 2600);
+    }, 650);
+  };
 
   return (
     <main ref={scope} className="relative min-h-screen overflow-x-hidden bg-black text-white">
       <Atmosphere />
 
       <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] bg-black/35 backdrop-blur-2xl">
-        <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between px-4 py-3.5 sm:px-6 md:px-12 lg:px-16">
-          <button
-            type="button"
-            onMouseDown={handleTouchStart}
-            onMouseUp={handleTouchEnd}
-            onMouseLeave={handleTouchEnd}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            className="select-none text-sm font-black uppercase tracking-[0.38em] text-white outline-none transition hover:text-pink-300"
-            style={{ WebkitTapHighlightColor: "transparent" }}
-          >
-            <AnimatedHeading
-              text="DAWGS"
-              as="span"
-              staggerMs={55}
-              durationMs={420}
-              className="block text-sm font-black uppercase tracking-[0.38em] text-white"
-            />
-          </button>
+        <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-3 px-4 py-3 sm:px-6 md:px-12 lg:px-16">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onMouseDown={handleTouchStart}
+              onMouseUp={handleTouchEnd}
+              onMouseLeave={handleTouchEnd}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              className="group flex shrink-0 select-none items-center gap-2 text-sm font-black uppercase tracking-[0.38em] text-white outline-none transition hover:text-pink-300"
+              style={{ WebkitTapHighlightColor: "transparent" }}
+              aria-label="DAWGS"
+            >
+              <span className="relative h-10 w-10 overflow-hidden rounded-full border border-pink-300/25 bg-black shadow-[0_0_28px_rgba(255,0,102,0.18)] sm:h-11 sm:w-11">
+                <Image
+                  src="/images/dawgs-logo-hd.png"
+                  alt=""
+                  fill
+                  sizes="44px"
+                  className="object-cover transition duration-500 group-hover:scale-105"
+                />
+              </span>
+              <AnimatedHeading
+                text="DAWGS"
+                as="span"
+                staggerMs={55}
+                durationMs={420}
+                className="hidden text-sm font-black uppercase tracking-[0.38em] text-white sm:block"
+              />
+            </button>
+          </div>
 
-          <nav className="hidden items-center gap-7 md:flex">
+          <nav className="hidden items-center gap-7 lg:flex">
             {HOME_NAV_ITEMS.map((item) => (
               <a
                 key={item.id}
@@ -309,13 +321,14 @@ export default function HomePage() {
             ))}
           </nav>
 
-          <a
-            href="#tickets"
+          <button
+            type="button"
+            onClick={() => setIsHowToBuyOpen(true)}
             className="inline-flex h-10 items-center gap-2 rounded-full border border-pink-300/25 bg-pink-500/10 px-4 text-[9px] font-black uppercase tracking-[0.18em] text-pink-100 transition hover:border-pink-300/45 hover:bg-pink-500/20"
           >
             <Ticket className="h-3.5 w-3.5" />
             Comprar
-          </a>
+          </button>
         </div>
       </header>
 
@@ -325,7 +338,6 @@ export default function HomePage() {
       >
         <div aria-hidden className="absolute inset-0 -z-20 overflow-hidden rounded-b-[44px] border-x border-b border-white/[0.05] bg-[#08070b]">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(255,31,111,0.24),transparent_29%),radial-gradient(circle_at_16%_56%,rgba(120,0,70,0.20),transparent_30%),radial-gradient(circle_at_88%_40%,rgba(0,183,255,0.08),transparent_24%),linear-gradient(180deg,#09070d_0%,#10050d_52%,#060607_100%)]" />
-          <div className="absolute inset-0 opacity-40 [background-image:radial-gradient(circle,rgba(255,255,255,0.5)_0_1px,transparent_1.5px)] [background-size:84px_84px]" />
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px)] [background-size:72px_72px] [mask-image:linear-gradient(to_bottom,black,transparent_78%)]" />
           <div className="absolute inset-x-[10%] top-[18%] h-[48%] rounded-full border border-pink-300/[0.06] shadow-[0_0_120px_rgba(255,0,102,0.16),inset_0_0_120px_rgba(255,0,102,0.05)]" />
         </div>
@@ -338,7 +350,7 @@ export default function HomePage() {
         </p>
 
         <div className="relative grid flex-1 items-center gap-8 lg:grid-cols-12 lg:gap-4">
-          <div className="hero-reveal relative z-30 order-1 pt-4 text-center lg:col-span-3 lg:pt-0 lg:text-left">
+          <div className="hero-reveal relative z-30 order-1 pt-4 text-center lg:col-span-4 lg:pt-0 lg:text-left">
             <p className="inline-flex items-center gap-2 rounded-full border border-pink-300/20 bg-pink-500/[0.08] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.28em] text-pink-200 backdrop-blur-xl">
               <Radio className="h-3 w-3 text-pink-400" />
               Próxima señal en vivo
@@ -376,16 +388,128 @@ export default function HomePage() {
                 </span>
               ))}
             </div>
-            <button
-              onClick={() => setIsTicketModalOpen(true)}
-              className="mx-auto mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[8px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-pink-200 lg:hidden"
+            <div
+              id="tickets"
+              className={`relative mx-auto mt-7 w-full max-w-[420px] overflow-hidden rounded-[26px] border border-pink-300/25 bg-black/60 p-4 text-left shadow-[0_24px_80px_rgba(255,0,102,0.14)] backdrop-blur-2xl transition sm:p-5 lg:mx-0 ${
+                isTicketPulse ? "ticket-card-pulse" : ""
+              }`}
             >
-              <Ticket className="h-3.5 w-3.5" />
-              Comprar entrada · ${TICKET_PRICE}
-            </button>
+              <div className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full bg-pink-500/20 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-16 left-8 h-44 w-44 rounded-full bg-[#C8FF00]/10 blur-3xl" />
+
+              <div className="relative z-10">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="inline-flex items-center gap-2 rounded-full border border-pink-300/20 bg-pink-500/[0.08] px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.2em] text-pink-200">
+                      <Ticket className="h-3 w-3" />
+                      Entrada oficial
+                      <span className="h-1 w-1 rounded-full bg-pink-300/60" />
+                      <Sparkles className="h-3 w-3" />
+                      Proximo evento
+                    </p>
+                  </div>
+                  <div className="rounded-[18px] border border-[#C8FF00]/30 bg-[#C8FF00]/10 px-3 py-2 text-center shadow-[0_0_28px_rgba(200,255,0,0.1)]">
+                    <p className="text-2xl font-black leading-none text-[#C8FF00]">${TICKET_PRICE}</p>
+                    <p className="mt-1 text-[6px] font-black uppercase tracking-widest text-zinc-500">USD</p>
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <h3 className="text-3xl font-black uppercase leading-[0.88] tracking-[-0.05em] text-white sm:text-4xl">
+                    {featuredEvent.title}
+                  </h3>
+                  <p className="mt-1 text-[8px] font-black uppercase tracking-[0.24em] text-pink-300">
+                    {featuredEvent.subtitle}
+                  </p>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.18em] text-zinc-300">
+                    <MapPin className="h-3 w-3 text-pink-300" />
+                    {featuredEvent.city}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.18em] text-zinc-300">
+                    <CalendarDays className="h-3 w-3 text-pink-300" />
+                    {featuredEvent.dateLabel}
+                  </span>
+                </div>
+
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  {featuredEvent.lineup.map((artist) => (
+                    <span
+                      key={artist}
+                      className="rounded-full border border-pink-300/15 bg-pink-500/[0.07] px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.17em] text-pink-100"
+                    >
+                      {artist}
+                    </span>
+                  ))}
+                </div>
+
+                <p className="mt-2.5 text-[10px] leading-5 text-zinc-400">
+                  Tu entrada empieza aqui: diseno, registro, Gmail y pago. Si no llega, recuperala con tu correo.
+                </p>
+
+                {!ticketCountdown.expired && (
+                  <div className="mt-3 rounded-[22px] border border-white/10 bg-white/[0.035] p-2.5">
+                    <p className="mb-2 flex items-center gap-2 text-[7px] font-black uppercase tracking-[0.22em] text-zinc-500">
+                      <Clock3 className="h-3 w-3 text-pink-300" />
+                      Tiempo para el evento
+                    </p>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {[
+                        ["days", ticketCountdown.days],
+                        ["hours", ticketCountdown.hours],
+                        ["minutes", ticketCountdown.minutes],
+                        ["seconds", ticketCountdown.seconds],
+                      ].map(([label, value]) => (
+                        <div
+                          key={label}
+                          className="rounded-xl border border-white/[0.06] bg-black/45 px-1 py-1.5 text-center"
+                        >
+                          <p className="text-sm font-black leading-none text-white">{value}</p>
+                          <p className="mt-0.5 text-[5px] font-black uppercase tracking-wider text-zinc-600">
+                            {label}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                  <p className="mr-1 text-[7px] font-black uppercase tracking-[0.2em] text-zinc-500">
+                    Con apoyo de
+                  </p>
+                  {FEATURED_SPONSORS.map((sponsor) => (
+                    <span
+                      key={sponsor.name}
+                      className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-pink-300/15 bg-pink-500/[0.06] px-2 py-1"
+                    >
+                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-pink-300/20 bg-black/40 text-[6px] font-black text-pink-100">
+                        {sponsor.initials}
+                      </span>
+                      <span className="truncate text-[6.5px] font-black uppercase tracking-[0.1em] text-white">
+                        {sponsor.name}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsTicketModalOpen(true)}
+                  className={`ticket-buy-button mt-3 inline-flex h-[50px] w-full items-center justify-between rounded-2xl bg-white px-5 text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-pink-200 ${
+                    isTicketPulse ? "ticket-button-pulse" : ""
+                  }`}
+                >
+                  Comprar entrada
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="order-2 lg:col-span-6">
+          <div className="order-2 lg:col-span-8">
             <div className="relative mx-auto h-[390px] w-full max-w-[640px] sm:h-[520px] lg:h-[620px]">
               <div className="hero-ring absolute left-1/2 top-1/2 h-[78%] w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-pink-200/[0.09]" />
               <div className="absolute left-1/2 top-1/2 h-[60%] w-[60%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-pink-500/20 blur-[90px]" />
@@ -400,16 +524,16 @@ export default function HomePage() {
                     animationDelay: `${cover.delay}s`,
                   }}
                 >
-                  <div className="group relative aspect-square overflow-hidden rounded-[16px] border border-white/15 bg-black shadow-[0_14px_40px_rgba(0,0,0,0.65),0_0_24px_rgba(255,0,102,0.12)]">
+                  <div className="group relative aspect-square overflow-hidden rounded-[18px] border border-white/15 bg-black shadow-[0_18px_46px_rgba(0,0,0,0.68),0_0_28px_rgba(255,0,102,0.14)]">
                     <Image
                       src={cover.src}
                       alt={cover.label}
                       fill
-                      sizes="112px"
+                      sizes="132px"
                       className="object-cover transition duration-500 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
-                    <p className="absolute inset-x-1 bottom-1.5 truncate text-center text-[5px] font-black uppercase tracking-[0.12em] text-white/90 sm:text-[6px]">
+                    <p className="absolute inset-x-1 bottom-2 truncate text-center text-[5.5px] font-black uppercase tracking-[0.12em] text-white/90 sm:text-[6.5px]">
                       {cover.label}
                     </p>
                   </div>
@@ -418,7 +542,7 @@ export default function HomePage() {
 
               <div className="mascot-float absolute inset-0 z-10">
                 <Image
-                  src="/images/dawgs-mascot-3d.png"
+                  src="/images/dawgs-mascot-drink-v2.png"
                   alt="Mascota 3D de DAWGS"
                   fill
                   priority
@@ -430,35 +554,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        <a
-          href="#tickets"
-          className="mx-auto mt-10 hidden h-12 w-full max-w-sm items-center justify-between rounded-2xl bg-white px-4 text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-pink-200 lg:inline-flex"
-        >
-          Comprar entrada
-          <ArrowRight className="h-4 w-4" />
-        </a>
-      </section>
-
-      <section
-        id="tickets"
-        className="relative z-10 mx-auto w-full max-w-[1600px] px-4 pt-6 pb-20 sm:px-6 md:px-12 lg:px-16 lg:pt-10 lg:pb-28"
-      >
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-[9px] font-black uppercase tracking-[0.42em] text-pink-300">Entradas oficiales</p>
-          <h2 className="mt-4 text-4xl font-black uppercase leading-[0.9] tracking-[-0.05em] text-white sm:text-6xl">
-            Tu noche empieza
-            <br />
-            <span className="text-pink-400">aquí.</span>
-          </h2>
-          <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-zinc-400">
-            Elige tu diseño, registra tus datos y sube el comprobante. Todo el proceso está en la
-            homepage, sin ventanas que te saquen del show.
-          </p>
-        </div>
-
-        <div className="mt-10 overflow-hidden rounded-[34px] border border-white/[0.08] bg-black/30 shadow-[0_30px_120px_rgba(0,0,0,0.5),0_0_100px_rgba(255,0,102,0.05)] backdrop-blur-2xl">
-          <AccessDrop />
-        </div>
       </section>
 
       <section
@@ -468,15 +563,19 @@ export default function HomePage() {
         <div className="overflow-hidden rounded-[34px] border border-white/[0.08] bg-white/[0.025] p-6 shadow-[0_30px_100px_rgba(0,0,0,0.45)] backdrop-blur-2xl sm:p-8 lg:p-12">
           <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             <div>
-              <p className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.36em] text-pink-300">
-                <LockKeyhole className="h-3.5 w-3.5" />
-                Acceso protegido
+              <p className="inline-flex items-center gap-2 rounded-full border border-pink-300/20 bg-pink-500/[0.08] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.3em] text-pink-300">
+                <Ticket className="h-3.5 w-3.5" />
+                Tu entrada empieza aqui
               </p>
               <h2 className="mt-4 text-4xl font-black uppercase leading-[0.9] tracking-[-0.05em] text-white sm:text-5xl">
-                Un QR.
+                Acceso
                 <br />
-                Una entrada.
+                protegido.
               </h2>
+              <p className="mt-5 inline-flex items-center gap-2 text-xl font-black uppercase tracking-[-0.03em] text-white">
+                <LockKeyhole className="h-5 w-5 text-pink-300" />
+                Un QR. Una entrada.
+              </p>
               <p className="mt-5 max-w-lg text-sm leading-7 text-zinc-400">
                 Tu pase se valida una sola vez en puerta. No compartas capturas ni reenvíes el
                 código antes del show.
@@ -495,7 +594,7 @@ export default function HomePage() {
                   icon: MessageCircle,
                   step: "02",
                   title: "Recibe",
-                  copy: "Tu acceso confirmado llega por WhatsApp.",
+                  copy: "Tu entrada llega por Gmail y WhatsApp confirma la compra.",
                 },
                 {
                   icon: ShieldCheck,
@@ -520,6 +619,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <TicketRecovery />
 
       {events.length > 1 && (
         <section className="relative z-10 mx-auto w-full max-w-[1600px] px-4 pb-20 sm:px-6 md:px-12 lg:px-16 lg:pb-28">
@@ -581,6 +682,75 @@ export default function HomePage() {
       <StaffModal isOpen={isStaffModalOpen} onClose={() => setIsStaffModalOpen(false)} />
 
       <AnimatePresence>
+        {isHowToBuyOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[145] flex items-center justify-center bg-black/75 p-4 backdrop-blur-xl"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 18 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 18 }}
+              className="relative w-full max-w-md overflow-hidden rounded-[32px] border border-white/[0.08] bg-[#070508] p-6 shadow-[0_30px_120px_rgba(255,0,102,0.12)]"
+            >
+              <button
+                type="button"
+                onClick={() => setIsHowToBuyOpen(false)}
+                aria-label="Cerrar guia"
+                className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-xs font-black text-white/60 transition hover:text-white"
+              >
+                X
+              </button>
+
+              <div className="relative z-10">
+                <p className="inline-flex items-center gap-2 rounded-full border border-pink-300/20 bg-pink-500/[0.08] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.28em] text-pink-200">
+                  <Ticket className="h-3 w-3" />
+                  Como comprar
+                </p>
+                <h2 className="mt-5 text-3xl font-black uppercase leading-[0.9] tracking-[-0.04em] text-white">
+                  Tres pasos
+                  <br />
+                  y listo.
+                </h2>
+
+                <div className="mt-6 space-y-3">
+                  {[
+                    ["01", "Baja al boton", "Busca la tarjeta Entrada oficial."],
+                    ["02", "Elige diseno", "Escoge el estilo de tu entrada."],
+                    ["03", "Sube el pago", "Registra tus datos y comprobante."],
+                  ].map(([step, title, copy]) => (
+                    <div
+                      key={step}
+                      className="flex items-center gap-4 rounded-2xl border border-white/[0.07] bg-black/40 px-4 py-3"
+                    >
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-pink-300/20 bg-pink-500/[0.08] text-[9px] font-black text-pink-200">
+                        {step}
+                      </span>
+                      <span>
+                        <span className="block text-sm font-black uppercase text-white">{title}</span>
+                        <span className="mt-0.5 block text-[10px] leading-4 text-zinc-500">{copy}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={scrollToTicketCard}
+                  className="mt-6 inline-flex h-12 w-full items-center justify-between rounded-2xl bg-white px-4 text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-pink-200"
+                >
+                  Ir a comprar
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {isTicketModalOpen && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -592,13 +762,14 @@ export default function HomePage() {
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
-              className="relative max-h-[90vh] w-full max-w-[450px] overflow-y-auto rounded-[34px] border border-white/[0.08] bg-black shadow-[0_30px_120px_rgba(0,0,0,0.7)]"
+              className="relative max-h-[92vh] w-full max-w-[980px] overflow-y-auto rounded-[34px] border border-white/[0.08] bg-black shadow-[0_30px_120px_rgba(0,0,0,0.7)]"
             >
               <button
                 onClick={() => setIsTicketModalOpen(false)}
-                className="fixed top-4 right-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/60 text-white/60 hover:text-white"
+                aria-label="Cerrar compra"
+                className="absolute right-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/70 text-xs font-black text-white/60 transition hover:text-white"
               >
-                ✕
+                X
               </button>
               <AccessDrop />
             </motion.div>
@@ -673,6 +844,34 @@ export default function HomePage() {
         }
         @keyframes albumFloat { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-12px) rotate(2deg); } }
         @keyframes albumFloatEven { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(12px) rotate(-2deg); } }
+        .ticket-card-pulse {
+          animation: ticketCardPulse 1.25s ease-in-out 2;
+        }
+        .ticket-button-pulse {
+          animation: ticketButtonPulse 1.25s ease-in-out 2;
+        }
+        @keyframes ticketCardPulse {
+          0%, 100% {
+            border-color: rgba(249, 168, 212, 0.25);
+            box-shadow: 0 28px 100px rgba(255, 0, 102, 0.16);
+          }
+          50% {
+            border-color: rgba(255, 111, 188, 0.9);
+            box-shadow: 0 0 0 5px rgba(255, 79, 163, 0.15), 0 30px 120px rgba(255, 0, 128, 0.34);
+          }
+        }
+        @keyframes ticketButtonPulse {
+          0%, 100% {
+            background: #ffffff;
+            color: #000000;
+            box-shadow: none;
+          }
+          50% {
+            background: #ff6fbc;
+            color: #12020b;
+            box-shadow: 0 0 0 6px rgba(255, 79, 163, 0.18), 0 0 46px rgba(255, 79, 163, 0.34);
+          }
+        }
       `}} />
     </main>
   );

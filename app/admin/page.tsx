@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Zap, LayoutDashboard, Ticket, Calendar, TrendingUp, Users, Settings,
   LogOut, Bell, Search, ChevronRight, ChevronLeft, ShieldCheck,
   ShieldAlert, FileCheck, FileX, Clock, Ban, Check, Eye, Loader2,
-  ArrowUpRight, Menu, Palette, QrCode, RefreshCw, DollarSign,
-  Activity, Sparkles, CircleDollarSign, WalletCards, ReceiptText,
+  ArrowUpRight, Menu, Palette, QrCode, RefreshCw,
+  Activity, Sparkles, CircleDollarSign, WalletCards,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -32,6 +32,18 @@ import ClientsSection from "./components/ClientsSection";
 import VentasSection from "./components/VentasSection";
 import SettingsSection from "./components/SettingsSection";
 import QrControlSection from "./components/QrControlSection";
+
+type ChartTooltipProps = {
+  active?: boolean;
+  payload?: readonly { value?: unknown }[];
+  label?: ReactNode;
+};
+
+const tooltipNumber = (value: unknown) => {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") return Number(value) || 0;
+  return 0;
+};
 
 const ADMIN_CREDENTIALS = { user: "admin", pass: "dawgs2026" };
 
@@ -511,10 +523,10 @@ function DashboardContent({ receipts, events, onRefresh }: { receipts: ReceiptRe
                     <YAxis hide />
                     <Tooltip
                       cursor={{ fill: "rgba(255,255,255,0.04)" }}
-                      content={({ active, payload, label }: any) => active && payload?.length ? (
+                      content={({ active, payload, label }: ChartTooltipProps) => active && payload?.length ? (
                         <div className="rounded-2xl border border-white/10 bg-[#161018]/[0.9] px-3 py-2 text-xs shadow-xl backdrop-blur-xl">
                           <p className="font-black text-white">{label}</p>
-                          <p className="mt-1 font-bold text-[#ffd36a]">{currency(payload[0]?.value || 0)}</p>
+                          <p className="mt-1 font-bold text-[#ffd36a]">{currency(tooltipNumber(payload[0]?.value))}</p>
                         </div>
                       ) : null}
                     />
@@ -538,10 +550,10 @@ function DashboardContent({ receipts, events, onRefresh }: { receipts: ReceiptRe
                       <YAxis hide />
                       <Tooltip
                         cursor={{ fill: "rgba(255,255,255,0.04)" }}
-                        content={({ active, payload, label }: any) => active && payload?.length ? (
+                        content={({ active, payload, label }: ChartTooltipProps) => active && payload?.length ? (
                           <div className="rounded-xl border border-white/10 bg-[#161018]/[0.9] px-3 py-2 text-xs shadow-xl backdrop-blur-xl">
                             <p className="font-black text-white">{label}</p>
-                            <p className="font-bold text-[#ffd36a]">{payload[0]?.value || 0}</p>
+                            <p className="font-bold text-[#ffd36a]">{tooltipNumber(payload[0]?.value)}</p>
                           </div>
                         ) : null}
                       />
@@ -563,10 +575,10 @@ function DashboardContent({ receipts, events, onRefresh }: { receipts: ReceiptRe
                       <YAxis hide />
                       <Tooltip
                         cursor={{ stroke: "rgba(255,255,255,0.1)" }}
-                        content={({ active, payload, label }: any) => active && payload?.length ? (
+                        content={({ active, payload, label }: ChartTooltipProps) => active && payload?.length ? (
                           <div className="rounded-xl border border-white/10 bg-[#161018]/[0.9] px-3 py-2 text-xs shadow-xl backdrop-blur-xl">
                             <p className="font-black text-white">{label}</p>
-                            <p className="font-bold text-[#ffb0bd]">{payload[0]?.value || 0} tickets</p>
+                            <p className="font-bold text-[#ffb0bd]">{tooltipNumber(payload[0]?.value)} tickets</p>
                           </div>
                         ) : null}
                       />
@@ -728,6 +740,7 @@ function DashboardContent({ receipts, events, onRefresh }: { receipts: ReceiptRe
                                     ["Entradas", `${receipt.quantity}`],
                                     ["Metodo", receipt.paymentMethod],
                                     ["Serial", receipt.serialNumber || "-"],
+                                    ["Envio", receipt.deliveryChannel ? `${receipt.deliveryChannel} / ${receipt.deliveryStatus || "-"}` : "-"],
                                   ].map(([label, value]) => (
                                     <div key={label} className="rounded-2xl border border-white/[0.08] bg-white/[0.05] px-3 py-2">
                                       <p className="text-[7px] font-black uppercase tracking-[0.16em] text-white/[0.32]">{label}</p>
@@ -845,7 +858,12 @@ function AdminDashboardInner({ onLogout, onOpenDesigner }: { onLogout: () => voi
     }
   }, [toast]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadData();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadData]);
 
   useEffect(() => {
     const update = () => {

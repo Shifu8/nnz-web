@@ -12,6 +12,7 @@ import {
   Plus,
   Building2,
   CreditCard,
+  Mail,
   Upload,
   FileCheck,
   Loader2,
@@ -27,13 +28,13 @@ const EVENT = events[0];
 const PRICE_PER_TICKET = 10;
 
 const SPONSORS = [
-  { name: "Kyoto Sushi", color: "text-red-500", border: "border-red-500/20", emoji: "🍣" },
+  { name: "Kyoto Sushi", color: "text-pink-400", border: "border-pink-400/20", emoji: "🍣" },
   { name: "Iron Athletics", color: "text-zinc-300", border: "border-zinc-500/20", emoji: "💪" },
   { name: "Zen Fisio", color: "text-blue-400", border: "border-blue-500/20", emoji: "🧘" },
 ];
 
 const TICKET_DESIGNS = [
-  { id: 1, name: "BLOCK CARD", gradient: "from-red-900 via-red-950 to-black", accent: "red", label: "TRAP LOUD · YAN BLOCK", serial: "DAWGS-0001-A" },
+  { id: 1, name: "BLOCK CARD", gradient: "from-pink-950 via-fuchsia-950 to-black", accent: "red", label: "TRAP LOUD · YAN BLOCK", serial: "DAWGS-0001-A" },
   { id: 2, name: "BELLAKITA CARD", gradient: "from-[#C8FF00]/20 via-black to-black", accent: "lime", label: "VIP ACCESS · YAN BLOCK", serial: "DAWGS-0002-B" },
 ];
 
@@ -59,7 +60,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
   const introPanelRef = useRef<HTMLDivElement>(null);
 
   const [dropState, setDropState] = useState<DropState>("intro");
-  const [formData, setFormData] = useState({ firstName: "", lastName: "", phone: "" });
+  const [formData, setFormData] = useState({ firstName: "", lastName: "", phone: "", email: "" });
   const [quantity, setQuantity] = useState(1);
   const [selectedBank, setSelectedBank] = useState("banco-loja");
   const [selectedDesign, setSelectedDesign] = useState(1);
@@ -148,6 +149,11 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
       setErrorMsg("LENGUAJE INAPROPIADO DETECTADO.");
       return;
     }
+    const email = formData.email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setErrorMsg("CORREO INVALIDO. USA UN GMAIL O EMAIL ACTIVO.");
+      return;
+    }
     if (!selectedFile) {
       setErrorMsg("SELECCIONA UN COMPROBANTE.");
       return;
@@ -160,6 +166,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
       body.append("firstName", formData.firstName);
       body.append("lastName", formData.lastName);
       body.append("phone", `+593 ${formData.phone}`);
+      body.append("email", email);
       body.append("quantity", quantity.toString());
       body.append("paymentMethod", selectedBank);
 
@@ -183,7 +190,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
   const renderIntro = () => (
     <div ref={introPanelRef} className="relative z-10 w-full max-w-lg mx-auto">
       {onClose && (
-        <button onClick={onClose} className="glass-pill glass-pill-red absolute -top-8 -right-8 z-50">
+        <button onClick={onClose} className="glass-pill glass-pill-red absolute right-3 top-3 z-50">
           <ChevronLeft className="h-3 w-3" /> SALIR
         </button>
       )}
@@ -193,13 +200,13 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
         </div>
         <div className="relative p-6 md:p-8">
-          <div className="flex items-center gap-2 rounded-full border border-red-500/30 bg-red-950/40 px-3 py-1.5 w-fit text-[9px] font-black uppercase tracking-[0.3em] text-red-200">
-            <Zap className="h-3 w-3 text-red-500" /> DAWGS ACCESS
+          <div className="flex items-center gap-2 rounded-full border border-pink-400/30 bg-pink-950/40 px-3 py-1.5 w-fit text-[9px] font-black uppercase tracking-[0.3em] text-pink-100">
+            <Zap className="h-3 w-3 text-pink-300" /> DAWGS ACCESS
           </div>
           <div className="mt-5 flex items-start justify-between gap-4">
             <div>
               <h2 className="text-4xl md:text-5xl font-black text-white uppercase leading-none">{EVENT.title}</h2>
-              <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.35em] text-red-400">{EVENT.subtitle}</p>
+              <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.35em] text-pink-300">{EVENT.subtitle}</p>
             </div>
             <div className="shrink-0 rounded-xl border border-white/10 bg-black/60 px-4 py-2.5 text-center">
               <p className="text-xl font-black text-[#C8FF00]">${PRICE_PER_TICKET}</p>
@@ -208,15 +215,15 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
           </div>
           <div className="mt-4 flex flex-wrap gap-2 text-[9px] font-black uppercase tracking-widest text-zinc-400">
             <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1">
-              <MapPin className="h-3 w-3 text-red-400" /> {EVENT.city}
+              <MapPin className="h-3 w-3 text-pink-300" /> {EVENT.city}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1">
-              <Calendar className="h-3 w-3 text-red-400" /> {EVENT.dateLabel}
+              <Calendar className="h-3 w-3 text-pink-300" /> {EVENT.dateLabel}
             </span>
           </div>
           <div className="mt-4 flex flex-wrap gap-1.5">
             {EVENT.lineup.map((artist) => (
-              <span key={artist} className="rounded border border-red-500/20 bg-red-950/30 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-red-100">
+              <span key={artist} className="rounded border border-pink-400/20 bg-pink-950/30 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-pink-100">
                 {artist}
               </span>
             ))}
@@ -276,7 +283,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
               ].map((s) => (
                 <div key={s.num} className="flex items-center gap-1.5 sm:gap-4">
                   <div className="flex items-center gap-2">
-                    <div className={`h-8 w-8 rounded-full flex items-center justify-center transition-all duration-500 ${step === s.num ? "bg-red-500 shadow-[0_0_20px_rgba(255,0,24,0.3)]" : step > s.num ? "bg-green-500/80" : "border border-white/10 bg-white/[0.04]"}`}>
+                    <div className={`h-8 w-8 rounded-full flex items-center justify-center transition-all duration-500 ${step === s.num ? "bg-pink-500 shadow-[0_0_20px_rgba(255,79,163,0.32)]" : step > s.num ? "bg-green-500/80" : "border border-white/10 bg-white/[0.04]"}`}>
                       {step > s.num ? <CheckCircle className="h-4 w-4 text-black" /> : <span className={`text-xs font-black ${step === s.num ? "text-white" : "text-zinc-600"}`}>{s.num}</span>}
                     </div>
                     <span className={`text-[7px] font-black uppercase tracking-[0.15em] transition-all duration-500 sm:text-[9px] sm:tracking-[0.3em] ${step === s.num ? "text-white" : "text-zinc-600"}`}>{s.label}</span>
@@ -294,24 +301,24 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                     const isSelected = selectedDesign === t.id;
                     return (
                       <button key={t.id} type="button" onClick={() => setSelectedDesign(t.id)} className={`ticket-float w-full max-w-[260px] text-left transition-all duration-500 ${isSelected ? "scale-105" : "opacity-60 hover:opacity-90 hover:scale-[1.02]"}`} style={{ animationDelay: t.id === 1 ? "0s" : "0.5s" }}>
-                        <div className={`relative overflow-hidden rounded-2xl border-2 ${isSelected ? t.id === 1 ? "border-red-500/50 shadow-[0_0_30px_rgba(255,0,24,0.15)]" : "border-[#C8FF00]/50 shadow-[0_0_30px_rgba(200,255,0,0.15)]" : "border-white/10"} bg-gradient-to-br ${t.gradient}`}>
+                        <div className={`relative overflow-hidden rounded-2xl border-2 ${isSelected ? t.id === 1 ? "border-pink-400/50 shadow-[0_0_30px_rgba(255,79,163,0.16)]" : "border-[#C8FF00]/50 shadow-[0_0_30px_rgba(200,255,0,0.15)]" : "border-white/10"} bg-gradient-to-br ${t.gradient}`}>
                           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.08),transparent_60%)]" />
                           <div className="relative p-5 flex flex-col min-h-[280px]">
                             <div className="flex items-center justify-between">
-                              <div className={`flex items-center gap-1.5 ${t.accent === "red" ? "text-red-400" : "text-[#C8FF00]"}`}>
+                              <div className={`flex items-center gap-1.5 ${t.accent === "red" ? "text-pink-300" : "text-[#C8FF00]"}`}>
                                 <Zap className="h-3 w-3" />
-                                <span className={`text-[8px] font-black uppercase tracking-[0.3em] ${t.accent === "red" ? "text-red-400" : "text-[#C8FF00]"}`}>DAWGS</span>
+                                <span className={`text-[8px] font-black uppercase tracking-[0.3em] ${t.accent === "red" ? "text-pink-300" : "text-[#C8FF00]"}`}>DAWGS</span>
                               </div>
-                              <div className={`h-5 w-5 rounded-full border ${t.accent === "red" ? "border-red-500/40" : "border-[#C8FF00]/40"} flex items-center justify-center ${isSelected ? (t.accent === "red" ? "bg-red-500/20" : "bg-[#C8FF00]/20") : ""}`}>
-                                {isSelected && <div className={`h-2.5 w-2.5 rounded-full ${t.accent === "red" ? "bg-red-500" : "bg-[#C8FF00]"}`} />}
+                              <div className={`h-5 w-5 rounded-full border ${t.accent === "red" ? "border-pink-400/40" : "border-[#C8FF00]/40"} flex items-center justify-center ${isSelected ? (t.accent === "red" ? "bg-pink-500/20" : "bg-[#C8FF00]/20") : ""}`}>
+                                {isSelected && <div className={`h-2.5 w-2.5 rounded-full ${t.accent === "red" ? "bg-pink-400" : "bg-[#C8FF00]"}`} />}
                               </div>
                             </div>
                             <div className="flex-1 flex flex-col justify-center">
                               <p className="text-sm font-black text-white uppercase tracking-wider leading-relaxed">{t.label}</p>
-                              <div className={`mt-3 h-px w-3/4 ${t.accent === "red" ? "bg-red-500/30" : "bg-[#C8FF00]/30"}`} />
+                              <div className={`mt-3 h-px w-3/4 ${t.accent === "red" ? "bg-pink-400/30" : "bg-[#C8FF00]/30"}`} />
                             </div>
                             <div className="flex items-center justify-between">
-                              <p className={`text-[7px] font-mono font-bold ${t.accent === "red" ? "text-red-300" : "text-[#C8FF00]/70"}`}>{t.serial}</p>
+                              <p className={`text-[7px] font-mono font-bold ${t.accent === "red" ? "text-pink-200" : "text-[#C8FF00]/70"}`}>{t.serial}</p>
                               <div className="rounded border border-white/10 bg-white/[0.04] px-2 py-0.5">
                                 <p className="text-[6px] font-black uppercase tracking-wider text-zinc-500">VIP</p>
                               </div>
@@ -340,17 +347,17 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
               <div className="w-full max-w-xl mx-auto space-y-6">
                 <div className="text-center">
                   <h2 className="text-3xl font-black text-white tracking-widest uppercase italic">tus datos</h2>
-                  <p className="text-xs uppercase tracking-[0.4em] text-red-500 font-bold">completa el formulario</p>
+                  <p className="text-xs uppercase tracking-[0.4em] text-pink-400 font-bold">completa el formulario</p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <p className="ml-2 text-xs uppercase tracking-widest text-zinc-500 font-bold">nombre</p>
-                    <input required type="text" placeholder="AXEL" className="w-full rounded-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "") })} />
+                    <input required type="text" placeholder="AXEL" className="w-full rounded-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-pink-400/50 transition" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "") })} />
                   </div>
                   <div className="space-y-1.5">
                     <p className="ml-2 text-xs uppercase tracking-widest text-zinc-500 font-bold">apellido</p>
-                    <input required type="text" placeholder="PEREZ" className="w-full rounded-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "") })} />
+                    <input required type="text" placeholder="PEREZ" className="w-full rounded-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-pink-400/50 transition" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "") })} />
                   </div>
                 </div>
 
@@ -358,13 +365,32 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                   <p className="ml-2 text-xs uppercase tracking-widest text-zinc-500 font-bold">teléfono</p>
                   <div className="flex">
                     <span className="inline-flex items-center rounded-l-xl border border-r-0 border-white/10 bg-white/[0.04] px-4 text-sm font-bold text-zinc-400">+593</span>
-                    <input required type="tel" maxLength={10} placeholder="0988888888" className="w-full rounded-r-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-red-500/50 transition" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, "") })} />
+                    <input required type="tel" maxLength={10} placeholder="0988888888" className="w-full rounded-r-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-pink-400/50 transition" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, "") })} />
                   </div>
                 </div>
 
+                <div className="space-y-1.5">
+                  <p className="ml-2 text-xs uppercase tracking-widest text-zinc-500 font-bold">correo</p>
+                  <div className="flex items-center rounded-xl border border-white/10 bg-black/50 px-4 transition focus-within:border-pink-400/50">
+                    <Mail className="h-4 w-4 shrink-0 text-pink-300/80" />
+                    <input
+                      required
+                      type="email"
+                      maxLength={120}
+                      placeholder="tu@gmail.com"
+                      className="w-full bg-transparent px-4 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value.trim().toLowerCase() })}
+                    />
+                  </div>
+                  <p className="ml-2 text-[8px] font-bold uppercase tracking-wider text-zinc-600">
+                    Tu entrada se envia al correo. WhatsApp solo confirma la compra.
+                  </p>
+                </div>
+
                 <div className="rounded-xl border border-white/10 bg-black/40 p-4 flex items-center gap-4">
-                  <div className={`h-10 w-10 rounded-lg bg-gradient-to-br ${selectedDesign === 1 ? "from-red-900 via-red-950 to-black" : "from-[#C8FF00]/20 via-black to-black"} flex items-center justify-center`}>
-                    <Zap className={`h-4 w-4 ${selectedDesign === 1 ? "text-red-400" : "text-[#C8FF00]"}`} />
+                  <div className={`h-10 w-10 rounded-lg bg-gradient-to-br ${selectedDesign === 1 ? "from-pink-950 via-fuchsia-950 to-black" : "from-[#C8FF00]/20 via-black to-black"} flex items-center justify-center`}>
+                    <Zap className={`h-4 w-4 ${selectedDesign === 1 ? "text-pink-300" : "text-[#C8FF00]"}`} />
                   </div>
                   <div className="flex-1">
                     <p className="text-[9px] font-black uppercase tracking-wider text-zinc-500">diseño seleccionado</p>
@@ -409,7 +435,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="text-center">
                     <h2 className="text-3xl font-black text-white tracking-widest uppercase italic">pago</h2>
-                    <p className="text-xs uppercase tracking-[0.4em] text-red-500 font-bold">elige tu método</p>
+                    <p className="text-xs uppercase tracking-[0.4em] text-pink-400 font-bold">elige tu método</p>
                   </div>
 
                   <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-5">
@@ -419,7 +445,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                         <button key={bank.id} type="button" onClick={() => setSelectedBank(bank.id)} className={`glass-select-tile p-4 text-center transition-all duration-300 ${selectedBank === bank.id ? "glass-select-tile-active scale-[1.02]" : "hover:border-white/25"}`}>
                           {selectedBank === bank.id && <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,0,24,.08),transparent_60%)]" />}
                           <div className="relative">
-                            <Building2 className={`mx-auto h-6 w-6 ${selectedBank === bank.id ? "text-red-400" : "text-zinc-500"}`} />
+                            <Building2 className={`mx-auto h-6 w-6 ${selectedBank === bank.id ? "text-pink-300" : "text-zinc-500"}`} />
                             <p className={`mt-1.5 text-[10px] font-black uppercase tracking-wider ${selectedBank === bank.id ? "text-white" : "text-zinc-400"}`}>{bank.name}</p>
                             <p className={`mt-0.5 text-sm font-black tracking-widest ${selectedBank === bank.id ? "text-[#C8FF00]" : "text-zinc-600"}`}>{bank.label}</p>
                           </div>
@@ -432,14 +458,14 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                     <div className="space-y-4">
                       <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-5">
                         <div className="flex items-center gap-2 mb-3">
-                          <CreditCard className="h-4 w-4 text-red-400" />
-                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-red-400">cuenta</p>
+                          <CreditCard className="h-4 w-4 text-pink-300" />
+                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-pink-300">cuenta</p>
                         </div>
                         <div className="rounded-xl border border-white/[0.06] bg-black/40 p-4">
                           <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-1">a nombre de:</p>
                           <div className="flex items-center gap-2">
                             <p className="text-base font-black text-white tracking-wider">MEDINA BRANDON</p>
-                            <span className="rounded-full border border-red-500/20 bg-red-950/40 px-2 py-0.5 text-[7px] font-black uppercase tracking-widest text-red-300">miembro dawgs</span>
+                            <span className="rounded-full border border-pink-400/20 bg-pink-950/40 px-2 py-0.5 text-[7px] font-black uppercase tracking-widest text-pink-200">miembro dawgs</span>
                           </div>
                         </div>
                       </div>
@@ -508,7 +534,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
             </div>
             <h2 className="text-3xl font-black text-white uppercase italic tracking-widest drop-shadow-[0_0_20px_rgba(200,255,0,0.3)]">compra realizada</h2>
             <p className="mt-4 text-[11px] font-bold text-zinc-400 uppercase tracking-wider leading-relaxed max-w-sm">
-              HEMOS RECIBIDO TU COMPROBANTE. UN ADMINISTRADOR LO REVISARÁ Y RECIBIRÁS TU ACCESO POR WHATSAPP.
+              HEMOS RECIBIDO TU COMPROBANTE. UN ADMINISTRADOR LO REVISARA Y RECIBIRAS TU ACCESO POR CORREO. SI GMAIL LLEGA AL LIMITE, LO ENVIAMOS POR WHATSAPP.
             </p>
             {receiptId && (
               <div className="mt-6 rounded-xl border border-[#C8FF00]/20 bg-black/50 px-6 py-4 shadow-[0_0_30px_rgba(200,255,0,0.05)]">

@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-type ChatMessage = { sender: string; text: string };
-
 const replies: [RegExp, string][] = [
   [/^(hola|hey|buenas|que tal|q tal|hi|buenos|saludos|buen[oa])\b/i,
     "Hola. Bienvenido a DAWGS. Pregunta lo que necesites: entradas, precio, fecha, giveaway, acceso o soporte."],
@@ -14,7 +12,7 @@ const replies: [RegExp, string][] = [
 
   // Precio
   [/precio|cuanto|costo|valor|money|d[oó]lares|cuesta|price/i,
-    "El ticket para TRAP LOUD cuesta $10 USD. El pago se hace con PayPhone (tarjeta de credito, debito o saldo PayPhone). Al aprobar el pago, el sistema genera tu QR y te lo envia por WhatsApp al numero que registres."],
+    "El ticket para TRAP LOUD cuesta $10 USD. Al aprobar el pago, la entrada se envia por Gmail. WhatsApp solo confirma la compra."],
   [/10\s*dolares|10\s*usd/i,
     "Correcto. Son $10 USD por entrada general. Un solo pago via PayPhone."],
 
@@ -26,15 +24,15 @@ const replies: [RegExp, string][] = [
 
   // Evento general
   [/evento|trap.?loud|concierto|show|presentaci[oó]n|que\s*hay|que\s*es/i,
-    "TRAP LOUD es el evento activo de DAWGS. Es un concierto de trap con artistas locales y sorpresas. Puedes comprar tu ticket en la seccion Access por $10. Incluye QR de entrada unico y envio por WhatsApp."],
+    "TRAP LOUD es el evento activo de DAWGS. Puedes comprar tu ticket por $10. Incluye QR unico enviado por Gmail y confirmacion por WhatsApp."],
 
   // Comprar ticket
   [/comprar|ticket|acceso|entrada|boleta|como\s*obtengo|quiero\s*ir/i,
-    "Para comprar: ve a la seccion Access, haz clic en COMPRAR TICKET, completa tus datos (nombre, apellido, telefono, email y cedula) y paga con PayPhone. Al aprobar el pago, el sistema te genera un QR unico y te lo envia por WhatsApp al numero que registraste."],
+    "Para comprar: abre COMPRAR ENTRADA, elige el diseno, completa nombre, telefono y correo, sube el comprobante y espera aprobacion. La entrada llega por Gmail. Si no aparece, usa Recuperar entrada."],
 
   // PayPhone / pago
   [/payphone|pago|pagar|metodo\s*pago|tarjeta|credito|debito|saldo/i,
-    "El unico metodo de pago disponible es PayPhone. Acepta tarjeta de credito, debito y saldo PayPhone. Son $10 USD. Al completar el pago, el QR se genera automaticamente y se envia por WhatsApp."],
+    "El flujo actual usa comprobante bancario dentro del modal de compra. Son $10 USD. Al aprobarse, el QR se genera y se envia por Gmail."],
 
   // Giveaway / sorteo
   [/giveaway|sorteo|regalo|gratis|participar|rifa/i,
@@ -42,11 +40,11 @@ const replies: [RegExp, string][] = [
 
   // Reenviar ticket
   [/reenvi[aeo]|correo|sms|whatsapp.*qr|cambio\s*n[uú]mero|cambio\s*correo|perd[ií]|recuperar/i,
-    "Si ya compraste y necesitas reenviar tu QR a otro numero o correo, usa la opcion REENVIAR TICKET que aparece en tu pase. Puedes actualizar el telefono o email y el sistema reenvia el QR."],
+    "Si ya compraste y no encuentras tu QR, usa Recuperar entrada. Escribes tu correo, validas el codigo y descargas el PDF con un link temporal."],
 
   // QR
   [/qr|c[oód]igo|escane[oa]r|validar|scanner|unico|replica/i,
-    "Cada QR es unico y de un solo uso. Se genera al aprobar el pago y se envia por WhatsApp. Si alguien intenta duplicarlo, el sistema lo bloquea al instante (anti replicacion). Presentalo en puerta para canjearlo por tu pase fisico."],
+    "Cada QR es unico y de un solo uso. Se genera al aprobar el pago y se envia por Gmail. Si alguien intenta duplicarlo, el sistema lo bloquea al instante."],
 
   // DAWGS Wear / ropa
   [/ropa|wear|merch|streetwear|camiseta|polera|gorra|buso|sudadera|talla|vestimenta|moda/i,
@@ -78,7 +76,7 @@ const replies: [RegExp, string][] = [
 
   // Teléfono
   [/tel[eé]fono|numero|cell|celular|movil|whatsapp/i,
-    "El numero que registres debe ser ecuatoriano, formato 09XXXXXXXX. A ese numero llegara tu QR por WhatsApp cuando apruebes el pago."],
+    "El numero que registres debe ser ecuatoriano, formato 09XXXXXXXX. WhatsApp solo confirma la compra; la entrada llega al correo."],
 
   // Cupo / disponibles
   [/cupo|disponible|stock|limite|agotado|entradas|vendidas/i,

@@ -20,10 +20,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DAWGS | Underground Access",
+  title: "DAWGS",
   description:
     "Eventos underground, streetwear premium y Party Pass sin login para la comunidad DAWGS.",
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icons/dawgs-icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/dawgs-icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   appleWebApp: { capable: true, title: "DAWGS", statusBarStyle: "black-translucent" },
   other: {
     "mobile-web-app-capable": "yes",
@@ -49,7 +57,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+        <link rel="apple-touch-icon" href="/apple-icon.png" />
       </head>
       <body className="min-h-full flex flex-col">
         {children}

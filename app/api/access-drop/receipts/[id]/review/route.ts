@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getReceiptById, updateReceiptStatus, loadAllReceipts, saveAllReceipts } from "@/lib/access-drop/storage";
-import type { ReceiptStatus } from "@/lib/access-drop/types";
+import type { ReceiptRecord, ReceiptStatus } from "@/lib/access-drop/types";
 import { REJECTION_REASONS } from "@/lib/access-drop/types";
 import { generateTicketPdf } from "@/lib/tickets/ticketPdf";
-import { sendTicketPdfViaWhatsApp, sendRejectionViaWhatsApp } from "@/lib/whatsapp";
+import { sendRejectionViaWhatsApp, sendWhatsAppText } from "@/lib/whatsapp";
+import { sendTicketPdfViaGmailWithLimit } from "@/lib/gmailDelivery";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
@@ -23,6 +24,15 @@ function generateQrPayload(serialNumber: string): string {
     issuedAt: new Date().toISOString(),
     v: 1,
   });
+}
+
+function patchReceipt(id: string, patch: Partial<ReceiptRecord>): ReceiptRecord | null {
+  const receipts = loadAllReceipts();
+  const idx = receipts.findIndex((r) => r.id === id);
+  if (idx === -1) return null;
+  receipts[idx] = { ...receipts[idx], ...patch };
+  saveAllReceipts(receipts);
+  return receipts[idx];
 }
 
 export async function POST(
@@ -94,22 +104,37 @@ export async function POST(
         const pdfPath = path.join(ticketsDir, pdfFileName);
         fs.writeFileSync(pdfPath, pdfBuffer);
 
-        const receipts = loadAllReceipts();
-        const idx = receipts.findIndex((r) => r.id === id);
-        if (idx !== -1) {
-          receipts[idx].serialNumber = serialNumber;
-          receipts[idx].qrPayload = qrPayload;
-          saveAllReceipts(receipts);
-        }
-
-        const waResult = await sendTicketPdfViaWhatsApp(
-          existing.phone,
-          existing.firstName,
+        patchReceipt(id, {
           serialNumber,
-          pdfPath,
+          qrPayload,
+          deliveryChannel: "none",
+          deliveryStatus: "ticket-generated",
+        });
+
+        const gmailResult = await sendTicketPdfViaGmailWithLimit({
+          to: existing.email,
+          firstName: existing.firstName,
+          lastName: existing.lastName,
+          serialNumber,
+          quantity: existing.quantity,
+          pdfBuffer,
+        });
+
+        const waResult = await sendWhatsAppText(
+          existing.phone,
+          `DAWGS TRAP LOUD\n\nHola ${existing.firstName}, compra aprobada. Revisa tu Gmail para guardar tu entrada.\n\nSi no aparece, puede que el correo este mal escrito: entra a Recuperar entrada en la web.`,
         );
 
-        console.log(`[TICKET] ${serialNumber} generado. WA: ${waResult?.success}, error: ${waResult?.error || "ninguno"}`);
+        patchReceipt(id, {
+          deliveryChannel: gmailResult.success ? "gmail" : "none",
+          deliveryStatus: `gmail:${gmailResult.success ? gmailResult.messageId || "ok" : gmailResult.reason || "failed"}; whatsapp-confirm:${waResult?.success ? "ok" : waResult?.error || "failed"}`,
+          emailSentAt: gmailResult.success ? new Date().toISOString() : undefined,
+          whatsappSentAt: waResult?.success ? new Date().toISOString() : undefined,
+        });
+
+        console.log(
+          `[TICKET] ${serialNumber} generado. Gmail: ${gmailResult.success ? "ok" : gmailResult.reason || "no enviado"}. WA confirm: ${waResult?.success}.`,
+        );
       } catch (ticketErr) {
         console.error("[TICKET] Error generando o enviando ticket:", ticketErr);
       }

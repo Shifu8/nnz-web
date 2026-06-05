@@ -36,6 +36,10 @@ export type ReceiptRecord = {
   reviewedBy?: string;
   serialNumber?: string;
   qrPayload?: string;
+  deliveryChannel?: "gmail" | "whatsapp" | "none";
+  deliveryStatus?: string;
+  emailSentAt?: string;
+  whatsappSentAt?: string;
   passScannedAt?: string;
   passScannedBy?: string;
   passScanCount?: number;

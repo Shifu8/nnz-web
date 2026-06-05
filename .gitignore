@@ -9,3 +9,5 @@ build/
 tsconfig.tsbuildinfo
 wa_session/
 auth_info*/
+data/gmail-usage.json
+data/ticket-recovery.json

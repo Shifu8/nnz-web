@@ -1,6 +1,6 @@
 # DAWGS — Guía de producción
 
-Sistema completo: PayPhone, Supabase, tickets QR, giveaway realtime, staff scanner, admin, Gmail SMTP, Meta WhatsApp Cloud API.
+Sistema completo: PayPhone, Supabase, tickets QR, giveaway realtime, staff scanner, admin, Gmail API y WhatsApp/Baileys.
 
 ---
 
@@ -30,7 +30,7 @@ cp .env.example .env.local
 | `PAYPHONE_STORE_ID` | Store ID de tu app WEB |
 | `SUPABASE_URL` | Proyecto Supabase |
 | `SUPABASE_SERVICE_ROLE_KEY` | Solo servidor (nunca en cliente) |
-| `SMTP_*` | Gmail SMTP (email + QR) |
+| `GMAIL_*` | Gmail API (email + PDF de entrada) |
 | `WHATSAPP_*` | Meta WhatsApp Cloud API |
 | `STAFF_PASSWORD_HASH_B64` | Hash bcrypt staff |
 | `ADMIN_PASSWORD_HASH_B64` | Hash bcrypt admin |
@@ -111,7 +111,7 @@ PAYPHONE_DEMO_MODE=true
 NEXT_PUBLIC_PAYPHONE_DEMO_MODE=true
 ```
 
-Flujo: formulario → `/api/payphone/prepare` → redirect demo → `/api/payphone/demo-complete` → ticket + email/WhatsApp.
+Flujo: formulario → `/api/payphone/prepare` → redirect demo → `/api/payphone/demo-complete` → ticket por Gmail + confirmacion WhatsApp.
 
 ### 5.4 Producción
 
@@ -127,22 +127,22 @@ PAYPHONE_DEMO_MODE=false
 
 ---
 
-## 6. Gmail SMTP (email + tickets QR)
+## 6. Gmail API (email + entradas PDF)
 
-1. Activa **2-factor authentication** en tu cuenta Google.
-2. Ve a [App Passwords](https://myaccount.google.com/apppasswords).
-3. Selecciona **Mail** y genera una contraseña de 16 caracteres.
-4. Variables:
+Canal principal: `soporte.dawgs@gmail.com`. El sistema cuenta envios diarios exitosos en `data/gmail-usage.json`. WhatsApp/Baileys solo confirma la compra y dirige al usuario a Gmail o Recuperar entrada.
+
+Variables:
 
 ```env
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=mrshifu879@gmail.com
-SMTP_PASS=xxxx_xxxx_xxxx_xxxx
-SMTP_FROM=DAWGS <mrshifu879@gmail.com>
+GMAIL_USER=soporte.dawgs@gmail.com
+GMAIL_FROM=DAWGS <soporte.dawgs@gmail.com>
+GMAIL_CLIENT_ID=...
+GMAIL_CLIENT_SECRET=...
+GMAIL_REFRESH_TOKEN=...
+GMAIL_DAILY_LIMIT=100
 ```
 
-Sin credenciales en desarrollo: `sendMail()` lanzará error (no rompe el flujo de compra).
+Sin credenciales en desarrollo: Gmail se omite y el flujo cae a WhatsApp si Baileys esta disponible.
 
 ---
 
@@ -161,7 +161,7 @@ WHATSAPP_VERIFY_TOKEN=tu_token_para_webhook
 ```
 
 Los mensajes se envían al formato `+593XXXXXXXXX`.  
-Si WhatsApp falla, el checkout NO se rompe — solo se registra el error y el email se envía igual.
+WhatsApp/Baileys no adjunta entradas: solo confirma la compra y pide revisar Gmail.
 
 ---
 
@@ -250,7 +250,7 @@ Al recargar, el usuario continúa donde estaba.
 2. `POST /api/payphone/prepare` → redirect PayPhone (o demo)
 3. Pago aprobado → `POST /api/payphone/confirm`
 4. `activateTicket` → QR único en Supabase
-5. Gmail SMTP + Meta WhatsApp
+5. Gmail API + confirmacion por WhatsApp/Baileys
 6. Pantalla: *"Tu acceso fue enviado correctamente"*
 
 ---

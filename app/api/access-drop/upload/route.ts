@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import {
   validateFile,
   validatePhone,
+  validateEmail,
   validateName,
   validateQuantity,
   sanitizeString,
@@ -19,6 +20,7 @@ export async function POST(request: NextRequest) {
     const firstName = (formData.get("firstName") as string) || "";
     const lastName = (formData.get("lastName") as string) || "";
     const phone = (formData.get("phone") as string) || "";
+    const email = ((formData.get("email") as string) || "").trim().toLowerCase();
     const quantityRaw = (formData.get("quantity") as string) || "1";
     const paymentMethod = (formData.get("paymentMethod") as PaymentMethod) || "banco-loja";
 
@@ -34,6 +36,9 @@ export async function POST(request: NextRequest) {
 
     const phoneErr = validatePhone(phone);
     if (phoneErr) errors.push(phoneErr);
+
+    const emailErr = validateEmail(email);
+    if (emailErr) errors.push(emailErr);
 
     const qtyErr = validateQuantity(quantity);
     if (qtyErr) errors.push(qtyErr);
@@ -72,7 +77,7 @@ export async function POST(request: NextRequest) {
       firstName: sanitizeString(firstName.toUpperCase()),
       lastName: sanitizeString(lastName.toUpperCase()),
       phone: phone.replace(/\D/g, ""),
-      email: "",
+      email: sanitizeString(email),
       documentNumber: "",
       quantity,
       paymentMethod,
