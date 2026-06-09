@@ -5,15 +5,19 @@
  */
 
 import type { NextConfig } from "next";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const isDev = process.env.NODE_ENV !== "production";
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data: https://images.unsplash.com",
   "font-src 'self'",
-  "connect-src 'self' https://pay.payphonetodoesposible.com https://*.supabase.co https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://graph.facebook.com https://in-v3.mailjet.com",
+  "connect-src 'self' https://challenges.cloudflare.com https://pay.payphonetodoesposible.com https://*.supabase.co https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://graph.facebook.com https://in-v3.mailjet.com",
+  "frame-src 'self' https://challenges.cloudflare.com",
   "media-src 'self' data:",
   "object-src 'none'",
   "base-uri 'self'",
@@ -23,6 +27,9 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: projectRoot,
+  },
   env: {
     NEXT_PUBLIC_PAYPHONE_ENV: process.env.NEXT_PUBLIC_PAYPHONE_ENV || process.env.PAYPHONE_ENV || "",
   },

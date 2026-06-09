@@ -4,7 +4,7 @@ import { normalizeRecoveryEmail, verifyRecoveryOtp } from "@/lib/access-drop/rec
 export const runtime = "nodejs";
 
 function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  return email.length <= 80 && /^[a-z0-9._%+\-]{1,48}@[a-z0-9.\-]{2,40}\.[a-z]{2,12}$/.test(email);
 }
 
 function errorMessage(reason?: string): string {

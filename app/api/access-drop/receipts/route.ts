@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { loadAllReceipts } from "@/lib/access-drop/storage";
+import { loadAllReceipts } from "@/lib/access-drop/receiptStore";
 import type { ReceiptStatus } from "@/lib/access-drop/types";
 
 export async function GET(request: NextRequest) {

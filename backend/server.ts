@@ -22,6 +22,7 @@ import { initWhatsApp } from "./services/whatsappService";
 
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
+const whatsappEnabled = process.env.WHATSAPP_ENABLED === "true";
 const rewardRepository = new InMemoryRewardRepository();
 const rewardService = new RewardService(rewardRepository);
 const eventService = new EventService();
@@ -65,5 +66,9 @@ app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`DAWGS backend running on http://localhost:${port}`);
+  if (!whatsappEnabled) {
+    console.log("[SERVER] WhatsApp/Baileys disabled. Set WHATSAPP_ENABLED=true to enable it.");
+    return;
+  }
   initWhatsApp().catch((err) => console.error("[SERVER] WhatsApp init failed:", err));
 });

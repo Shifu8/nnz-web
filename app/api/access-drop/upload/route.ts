@@ -8,9 +8,12 @@ import {
   validateQuantity,
   sanitizeString,
 } from "@/lib/access-drop/validation";
-import { saveFile, addReceipt, getBankList } from "@/lib/access-drop/storage";
+import { addReceipt, getBankList } from "@/lib/access-drop/receiptStore";
+import { saveFile } from "@/lib/access-drop/storage";
 import { processReceiptImage } from "@/lib/access-drop/ocr";
 import type { PaymentMethod, ReceiptRecord } from "@/lib/access-drop/types";
+import { verifyTurnstileToken } from "@/lib/turnstile";
+import { ApiError } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,6 +26,12 @@ export async function POST(request: NextRequest) {
     const email = ((formData.get("email") as string) || "").trim().toLowerCase();
     const quantityRaw = (formData.get("quantity") as string) || "1";
     const paymentMethod = (formData.get("paymentMethod") as PaymentMethod) || "banco-loja";
+    const turnstileToken = (formData.get("cf-turnstile-response") as string) || "";
+
+    await verifyTurnstileToken(request, turnstileToken, {
+      variant: "visible",
+      action: "ticket_upload",
+    });
 
     const quantity = parseInt(quantityRaw, 10);
 
@@ -107,6 +116,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     console.error("Upload error:", err);
+    if (err instanceof ApiError) {
+      return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
+    }
     return NextResponse.json({ error: "ERROR INTERNO AL PROCESAR LA SOLICITUD." }, { status: 500 });
   }
 }

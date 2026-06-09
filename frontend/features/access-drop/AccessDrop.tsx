@@ -23,6 +23,14 @@ import { events } from "@/frontend/services/dawgsData";
 import { useCountdown } from "@/frontend/hooks/useCountdown";
 import { isBadWord } from "@/lib/badWords";
 import { loadCheckoutDraft, saveCheckoutDraft } from "@/lib/persistence/clientState";
+import TurnstileWidget, { hasTurnstileSiteKey } from "@/frontend/components/TurnstileWidget";
+import {
+  applyEmailSuggestion,
+  cleanEmailInput,
+  emailDomains,
+  getEmailHint,
+  getEmailSuggestion,
+} from "@/frontend/utils/emailInput";
 
 const EVENT = events[0];
 const PRICE_PER_TICKET = 10;
@@ -72,10 +80,19 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
 
   const [receiptId, setReceiptId] = useState<string | null>(null);
 
   const countdown = useCountdown(EVENT.startsAt);
+  const emailHint = getEmailHint(formData.email);
+  const emailSuggestion = getEmailSuggestion(formData.email);
+
+  const resetTurnstile = () => {
+    setTurnstileToken("");
+    setTurnstileResetKey((key) => key + 1);
+  };
 
   useEffect(() => {
     const draft = loadCheckoutDraft();
@@ -158,6 +175,10 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
       setErrorMsg("SELECCIONA UN COMPROBANTE.");
       return;
     }
+    if (hasTurnstileSiteKey("visible") && !turnstileToken) {
+      setErrorMsg("COMPLETA EL CAPTCHA DE SEGURIDAD.");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -169,6 +190,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
       body.append("email", email);
       body.append("quantity", quantity.toString());
       body.append("paymentMethod", selectedBank);
+      body.append("cf-turnstile-response", turnstileToken);
 
       const res = await fetch("/api/access-drop/upload", { method: "POST", body });
       const data = await res.json();
@@ -177,9 +199,11 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
 
       setReceiptId(data.receiptId);
       setDropState("success");
+      resetTurnstile();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error al subir comprobante";
       setErrorMsg(message.toUpperCase());
+      resetTurnstile();
     } finally {
       setIsSubmitting(false);
     }
@@ -353,11 +377,11 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <p className="ml-2 text-xs uppercase tracking-widest text-zinc-500 font-bold">nombre</p>
-                    <input required type="text" placeholder="AXEL" className="w-full rounded-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-pink-400/50 transition" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "") })} />
+                    <input required type="text" maxLength={24} autoComplete="given-name" placeholder="AXEL" className="w-full rounded-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-pink-400/50 transition" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "").slice(0, 24) })} />
                   </div>
                   <div className="space-y-1.5">
                     <p className="ml-2 text-xs uppercase tracking-widest text-zinc-500 font-bold">apellido</p>
-                    <input required type="text" placeholder="PEREZ" className="w-full rounded-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-pink-400/50 transition" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "") })} />
+                    <input required type="text" maxLength={24} autoComplete="family-name" placeholder="PEREZ" className="w-full rounded-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-pink-400/50 transition" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "").slice(0, 24) })} />
                   </div>
                 </div>
 
@@ -376,16 +400,44 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                     <input
                       required
                       type="email"
-                      maxLength={120}
+                      maxLength={80}
+                      inputMode="email"
+                      autoComplete="email"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      list="ticket-email-domains"
                       placeholder="tu@gmail.com"
                       className="w-full bg-transparent px-4 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none"
                       value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value.trim().toLowerCase() })}
+                      onChange={(e) => setFormData({ ...formData, email: cleanEmailInput(e.target.value) })}
                     />
                   </div>
-                  <p className="ml-2 text-[8px] font-bold uppercase tracking-wider text-zinc-600">
-                    Tu entrada se envia al correo. WhatsApp solo confirma la compra.
-                  </p>
+                  <datalist id="ticket-email-domains">
+                    {emailDomains.map((domain) => {
+                      const local = formData.email.split("@")[0] || "tu";
+                      return <option key={domain} value={`${local}@${domain}`} />;
+                    })}
+                  </datalist>
+                  <div className="ml-2 flex flex-wrap items-center gap-2">
+                    <p className={`text-[8px] font-bold uppercase tracking-wider ${
+                      emailHint.tone === "ok"
+                        ? "text-[#C8FF00]"
+                        : emailHint.tone === "warn"
+                          ? "text-pink-300"
+                          : "text-zinc-600"
+                    }`}>
+                      {emailHint.text}
+                    </p>
+                    {emailSuggestion && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, email: applyEmailSuggestion(formData.email) })}
+                        className="rounded-full border border-pink-300/20 bg-pink-500/10 px-2 py-1 text-[7px] font-black uppercase tracking-wider text-pink-100"
+                      >
+                        usar {emailSuggestion}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="rounded-xl border border-white/10 bg-black/40 p-4 flex items-center gap-4">
@@ -507,6 +559,16 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                     </div>
                   )}
 
+                  <TurnstileWidget
+                    action="ticket_upload"
+                    variant="visible"
+                    label="Captcha de registro"
+                    resetKey={turnstileResetKey}
+                    onVerify={setTurnstileToken}
+                    onExpire={() => setTurnstileToken("")}
+                    onError={() => setTurnstileToken("")}
+                  />
+
                   <button type="submit" disabled={isSubmitting} className="glass-action glass-action-primary w-full" style={{ "--glass-action-height": "56px", "--glass-action-text": "0.95rem" } as CSSProperties}>
                     {isSubmitting ? <><Loader2 className="h-5 w-5 animate-spin" /> ENVIANDO...</> : <>COMPRAR — ${totalPrice.toFixed(2)}</>}
                   </button>
@@ -534,7 +596,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
             </div>
             <h2 className="text-3xl font-black text-white uppercase italic tracking-widest drop-shadow-[0_0_20px_rgba(200,255,0,0.3)]">compra realizada</h2>
             <p className="mt-4 text-[11px] font-bold text-zinc-400 uppercase tracking-wider leading-relaxed max-w-sm">
-              HEMOS RECIBIDO TU COMPROBANTE. UN ADMINISTRADOR LO REVISARA Y RECIBIRAS TU ACCESO POR CORREO. SI GMAIL LLEGA AL LIMITE, LO ENVIAMOS POR WHATSAPP.
+              HEMOS RECIBIDO TU COMPROBANTE. UN ADMINISTRADOR LO REVISARA Y RECIBIRAS TU ACCESO POR GMAIL. WHATSAPP SOLO CONFIRMA LA COMPRA.
             </p>
             {receiptId && (
               <div className="mt-6 rounded-xl border border-[#C8FF00]/20 bg-black/50 px-6 py-4 shadow-[0_0_30px_rgba(200,255,0,0.05)]">

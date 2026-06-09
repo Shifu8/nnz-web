@@ -13,6 +13,7 @@ import {
   Smartphone,
   Layers,
 } from "lucide-react";
+import TurnstileWidget, { hasTurnstileSiteKey } from "@/frontend/components/TurnstileWidget";
 
 type DeliveryChannel = "email" | "whatsapp" | "both";
 
@@ -38,6 +39,8 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
 
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "" });
   const [deliveryChannel, setDeliveryChannel] = useState<DeliveryChannel>("both");
@@ -48,25 +51,35 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
   async function handleLogin(e: FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (hasTurnstileSiteKey("invisible") && !turnstileToken) {
+      setError("Verificacion segura cargando. Intenta otra vez.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await fetch("/api/staff/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password, role: "admin" }),
+        body: JSON.stringify({ password, role: "admin", turnstileToken }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
         setError(data.error || "Error de validación");
+        setTurnstileToken("");
+        setTurnstileResetKey((key) => key + 1);
         return;
       }
 
       setIsAuthenticated(true);
     } catch {
       setError("Error de red");
+      setTurnstileToken("");
+      setTurnstileResetKey((key) => key + 1);
     } finally {
       setLoading(false);
     }
@@ -145,10 +158,20 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
                 <form onSubmit={handleLogin} className="mt-8 w-full space-y-4">
                   <input
                     type="password"
+                    name="password"
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="ADMIN PASSWORD"
                     className="w-full rounded-2xl border border-white/10 bg-black/40 px-5 py-4 text-center text-lg font-bold tracking-[0.2em] text-white outline-none focus:border-[#C8FF00]/50 focus:ring-1 focus:ring-[#C8FF00]/50"
+                  />
+                  <TurnstileWidget
+                    action="admin_login"
+                    variant="invisible"
+                    resetKey={turnstileResetKey}
+                    onVerify={setTurnstileToken}
+                    onExpire={() => setTurnstileToken("")}
+                    onError={() => setTurnstileToken("")}
                   />
                   {error && <p className="text-center text-xs font-bold text-red-400">{error}</p>}
                   <button

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Zap, LayoutDashboard, Ticket, Calendar, TrendingUp, Users, Settings,
@@ -32,6 +32,7 @@ import ClientsSection from "./components/ClientsSection";
 import VentasSection from "./components/VentasSection";
 import SettingsSection from "./components/SettingsSection";
 import QrControlSection from "./components/QrControlSection";
+import TurnstileWidget, { hasTurnstileSiteKey } from "@/frontend/components/TurnstileWidget";
 
 type ChartTooltipProps = {
   active?: boolean;
@@ -176,18 +177,54 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
 }
 
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
-  const [user, setUser] = useState("");
+  const [user, setUser] = useState("admin");
   const [pass, setPass] = useState("");
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const resetTurnstile = () => {
+    setTurnstileToken("");
+    setTurnstileResetKey((key) => key + 1);
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (user === ADMIN_CREDENTIALS.user && pass === ADMIN_CREDENTIALS.pass) {
-      onLogin();
+    setError("");
+
+    if (user.trim().toLowerCase() !== ADMIN_CREDENTIALS.user || pass !== ADMIN_CREDENTIALS.pass) {
+      setError("Credenciales incorrectas");
       return;
     }
-    setError(true);
-    setTimeout(() => setError(false), 2000);
+
+    if (hasTurnstileSiteKey("invisible") && !turnstileToken) {
+      setError("Verificacion segura cargando. Intenta otra vez.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/turnstile/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "admin_login", variant: "invisible", turnstileToken }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setError(data.error || "Verificacion invalida");
+        resetTurnstile();
+        return;
+      }
+      onLogin();
+      return;
+    } catch {
+      setError("Error de red");
+      resetTurnstile();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -223,6 +260,8 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
               <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/50">Usuario</span>
               <input
                 required
+                name="username"
+                autoComplete="username"
                 value={user}
                 onChange={(e) => setUser(e.target.value)}
                 placeholder="admin"
@@ -232,24 +271,43 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
             <label className="block space-y-1.5">
               <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/50">Contrasena</span>
               <input
+                ref={passwordRef}
                 required
+                name="password"
                 type="password"
+                autoComplete="current-password"
                 value={pass}
                 onChange={(e) => setPass(e.target.value)}
                 placeholder="********"
                 className="h-[52px] w-full rounded-2xl border border-white/[0.12] bg-black/[0.28] px-5 text-sm font-bold text-white outline-none transition placeholder:text-white/25 focus:border-[#ffd36a]/[0.45]"
               />
             </label>
+            <button
+              type="button"
+              onClick={() => passwordRef.current?.focus()}
+              className="flex h-10 w-full items-center justify-center rounded-2xl border border-[#ffd36a]/20 bg-[#ffd36a]/10 text-[9px] font-black uppercase tracking-[0.16em] text-[#ffe1a1] md:hidden"
+            >
+              Face ID / contrasena guardada
+            </button>
             {error && (
               <motion.p initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="text-[10px] font-bold text-[#ff8a9d]">
-                Credenciales incorrectas
+                {error}
               </motion.p>
             )}
+            <TurnstileWidget
+              action="admin_login"
+              variant="invisible"
+              resetKey={turnstileResetKey}
+              onVerify={setTurnstileToken}
+              onExpire={() => setTurnstileToken("")}
+              onError={() => setTurnstileToken("")}
+            />
             <button
               type="submit"
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#ffd36a] text-[11px] font-black uppercase tracking-[0.18em] text-[#1d130a] shadow-[0_18px_42px_rgba(255,179,82,0.22)] transition hover:bg-[#ffe19a]"
+              disabled={loading}
+              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#ffd36a] text-[11px] font-black uppercase tracking-[0.18em] text-[#1d130a] shadow-[0_18px_42px_rgba(255,179,82,0.22)] transition hover:bg-[#ffe19a] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Ingresar <ArrowUpRight className="h-4 w-4" />
+              {loading ? "Validando..." : "Ingresar"} <ArrowUpRight className="h-4 w-4" />
             </button>
           </form>
         </div>

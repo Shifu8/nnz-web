@@ -20,7 +20,7 @@ export function validateFile(file: {
   }
 
   const ext = "." + file.name.split(".").pop()?.toLowerCase();
-  if (!ALLOWED_EXTENSIONS.includes(ext as any)) {
+  if (!ALLOWED_EXTENSIONS.includes(ext as (typeof ALLOWED_EXTENSIONS)[number])) {
     return { field: "file", message: `FORMATO NO SOPORTADO. PERMITIDOS: ${ALLOWED_EXTENSIONS.join(", ")}` };
   }
 
@@ -42,7 +42,8 @@ export function validatePhone(phone: string): ValidationError | null {
 }
 
 export function validateEmail(email: string): ValidationError | null {
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim().toLowerCase())) {
+  const clean = email.trim().toLowerCase();
+  if (clean.length > 80 || !/^[a-z0-9._%+\-]{1,48}@[a-z0-9.\-]{2,40}\.[a-z]{2,12}$/.test(clean)) {
     return { field: "email", message: "EMAIL INVÁLIDO." };
   }
   return null;

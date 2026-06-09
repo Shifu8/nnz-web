@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
-import { getReceiptById } from "@/lib/access-drop/storage";
+import { getReceiptById } from "@/lib/access-drop/receiptStore";
 import { consumeRecoveryDownloadToken } from "@/lib/access-drop/recoveryStore";
 import { generateTicketPdf } from "@/lib/tickets/ticketPdf";
 

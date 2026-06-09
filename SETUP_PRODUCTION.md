@@ -31,6 +31,7 @@ cp .env.example .env.local
 | `SUPABASE_URL` | Proyecto Supabase |
 | `SUPABASE_SERVICE_ROLE_KEY` | Solo servidor (nunca en cliente) |
 | `GMAIL_*` | Gmail API (email + PDF de entrada) |
+| `TURNSTILE_*` | Cloudflare Turnstile visible/invisible |
 | `WHATSAPP_*` | Meta WhatsApp Cloud API |
 | `STAFF_PASSWORD_HASH_B64` | Hash bcrypt staff |
 | `ADMIN_PASSWORD_HASH_B64` | Hash bcrypt admin |
@@ -142,11 +143,32 @@ GMAIL_REFRESH_TOKEN=...
 GMAIL_DAILY_LIMIT=100
 ```
 
-Sin credenciales en desarrollo: Gmail se omite y el flujo cae a WhatsApp si Baileys esta disponible.
+Sin credenciales en desarrollo: Gmail se omite. En produccion configura Gmail para enviar el PDF y usa WhatsApp solo como confirmacion.
 
 ---
 
-## 7. WhatsApp (Meta Cloud API)
+## 7. Cloudflare Turnstile
+
+Turnstile protege compra, carga de comprobante, recuperacion por Gmail y login admin.
+
+1. Entra a Cloudflare Dashboard -> Turnstile.
+2. Crea un widget `DAWGS Visible` en modo **Managed** para compra/admin.
+3. Crea un widget `DAWGS Invisible` en modo **Invisible** para recuperacion por Gmail.
+4. Agrega tus hostnames: dominio real, preview de Vercel si aplica, y `localhost` para pruebas.
+5. Copia Sitekey y Secret de cada widget en el entorno:
+
+```env
+NEXT_PUBLIC_TURNSTILE_SITE_KEY_VISIBLE=...
+TURNSTILE_SECRET_KEY_VISIBLE=...
+NEXT_PUBLIC_TURNSTILE_SITE_KEY_INVISIBLE=...
+TURNSTILE_SECRET_KEY_INVISIBLE=...
+```
+
+En desarrollo sin claves, el backend no bloquea para que puedas trabajar. En produccion las claves son obligatorias.
+
+---
+
+## 8. WhatsApp (Meta Cloud API)
 
 1. Ve a [Meta for Developers](https://developers.facebook.com) y crea una app.
 2. Añade el producto **WhatsApp**.

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getReceiptById, getFileBuffer } from "@/lib/access-drop/storage";
+import { getReceiptById } from "@/lib/access-drop/receiptStore";
+import { getFileBuffer } from "@/lib/access-drop/storage";
 
 export async function GET(
   _request: NextRequest,

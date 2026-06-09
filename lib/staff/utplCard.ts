@@ -24,7 +24,10 @@ export type UtplQrValidationResult =
       valid: false;
       error: string;
       reason:
-        | "qr_too_large";
+        | "qr_too_large"
+        | "career_missing"
+        | "career_not_allowed"
+        | "gender_not_allowed";
       student: UtplStudentInfo;
     };
 
@@ -303,15 +306,43 @@ export function validateUtplQrPayload(qrPayload: string, visualText = ""): UtplQ
   }
   const normalizedPayload = normalizeText([qrPayload, visualText, ...bag.text, ...bag.values].join(" "));
   const career = extractCareer(bag, normalizedPayload);
+  const gender = extractGender(bag);
   const student: UtplStudentInfo = {
     fullName: extractName(bag),
     documentNumber: extractDocument(bag, qrPayload),
     career: career?.label,
     careerId: career?.id,
     modality: extractModality(bag),
-    gender: extractGender(bag),
+    gender,
     institutionConfidence: getInstitutionConfidence(bag, normalizedPayload),
   };
+
+  if (!career) {
+    return {
+      valid: false,
+      error: "CARRERA NO DETECTADA",
+      reason: "career_missing",
+      student,
+    };
+  }
+
+  if (!isAllowedCareer(career)) {
+    return {
+      valid: false,
+      error: "CARRERA NO PERMITIDA",
+      reason: "career_not_allowed",
+      student,
+    };
+  }
+
+  if (gender === "male") {
+    return {
+      valid: false,
+      error: "CARNET NO HABILITADO PARA ESTE ACCESO",
+      reason: "gender_not_allowed",
+      student,
+    };
+  }
 
   return {
     valid: true,
@@ -319,8 +350,8 @@ export function validateUtplQrPayload(qrPayload: string, visualText = ""): UtplQ
     student: {
       fullName: student.fullName,
       documentNumber: student.documentNumber,
-      career: career?.label || "NO DETECTADA",
-      careerId: career?.id || "desconocida",
+      career: career.label,
+      careerId: career.id,
       modality: student.modality,
       gender: student.gender === "female" ? "female" : "unknown",
       institutionConfidence: student.institutionConfidence || "partial",

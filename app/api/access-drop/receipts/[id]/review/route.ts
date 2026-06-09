@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getReceiptById, updateReceiptStatus, loadAllReceipts, saveAllReceipts } from "@/lib/access-drop/storage";
+import { getReceiptById, updateReceiptStatus, loadAllReceipts, saveAllReceipts } from "@/lib/access-drop/receiptStore";
 import type { ReceiptRecord, ReceiptStatus } from "@/lib/access-drop/types";
 import { REJECTION_REASONS } from "@/lib/access-drop/types";
 import { generateTicketPdf } from "@/lib/tickets/ticketPdf";

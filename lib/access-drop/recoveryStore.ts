@@ -2,7 +2,6 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 
-const RECOVERY_PATH = path.join(process.cwd(), "data", "ticket-recovery.json");
 const OTP_TTL_MS = 10 * 60_000;
 const DOWNLOAD_TTL_MS = 15 * 60_000;
 const MAX_ATTEMPTS = 3;
@@ -36,6 +35,10 @@ function hash(value: string): string {
   return crypto.createHmac("sha256", secret()).update(value).digest("hex");
 }
 
+function recoveryPath(): string {
+  return path.join(/*turbopackIgnore: true*/ process.cwd(), "data", "ticket-recovery.json");
+}
+
 export function normalizeRecoveryEmail(email: string): string {
   return email.trim().toLowerCase();
 }
@@ -45,7 +48,7 @@ export function recoveryEmailHash(email: string): string {
 }
 
 function ensureDir() {
-  const dir = path.dirname(RECOVERY_PATH);
+  const dir = path.dirname(recoveryPath());
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
@@ -54,9 +57,10 @@ function emptyFile(): RecoveryFile {
 }
 
 function loadRecoveryFile(): RecoveryFile {
-  if (!fs.existsSync(RECOVERY_PATH)) return emptyFile();
+  const filePath = recoveryPath();
+  if (!fs.existsSync(filePath)) return emptyFile();
   try {
-    const parsed = JSON.parse(fs.readFileSync(RECOVERY_PATH, "utf-8")) as Partial<RecoveryFile>;
+    const parsed = JSON.parse(fs.readFileSync(filePath, "utf-8")) as Partial<RecoveryFile>;
     return {
       otps: parsed.otps || {},
       downloads: parsed.downloads || {},
@@ -68,7 +72,7 @@ function loadRecoveryFile(): RecoveryFile {
 
 function saveRecoveryFile(file: RecoveryFile) {
   ensureDir();
-  fs.writeFileSync(RECOVERY_PATH, JSON.stringify(file, null, 2), "utf-8");
+  fs.writeFileSync(recoveryPath(), JSON.stringify(file, null, 2), "utf-8");
 }
 
 function cleanup(file: RecoveryFile, now = Date.now()): RecoveryFile {

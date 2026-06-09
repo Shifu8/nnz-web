@@ -9,6 +9,6 @@
     "rootDir": ".",
     "target": "ES2020"
   },
-  "include": ["backend/**/*.ts"],
+  "include": ["backend/**/*.ts", "types/**/*.d.ts"],
   "exclude": ["node_modules", ".next", "dist"]
 }

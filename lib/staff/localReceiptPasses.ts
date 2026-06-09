@@ -1,6 +1,6 @@
 import "server-only";
 
-import { loadAllReceipts, saveAllReceipts } from "@/lib/access-drop/storage";
+import { loadAllReceipts, saveAllReceipts } from "@/lib/access-drop/receiptStore";
 import type { PassValidationResult } from "@/lib/db/passStore";
 import { hashLookup, parseSecureQrPayload } from "@/lib/security";
 
