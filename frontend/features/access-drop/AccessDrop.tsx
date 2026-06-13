@@ -13,15 +13,18 @@ import {
   Mail,
   Upload,
   FileCheck,
+  ImagePlus,
   Loader2,
   CheckCircle,
+  ScanSearch,
+  Trash2,
+  MapPin,
   Navigation,
   Share2,
   X,
 } from "lucide-react";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
 import { events } from "@/frontend/services/dawgsData";
-import { useCountdown } from "@/frontend/hooks/useCountdown";
 import { isBadWord } from "@/lib/badWords";
 import { loadCheckoutDraft, saveCheckoutDraft } from "@/lib/persistence/clientState";
 import TurnstileWidget, { hasTurnstileSiteKey } from "@/frontend/components/TurnstileWidget";
@@ -32,6 +35,7 @@ import {
   getEmailHint,
   getEmailSuggestion,
 } from "@/frontend/utils/emailInput";
+import { validateReceiptFileMetadata } from "@/lib/access-drop/fileValidation";
 
 const EVENT = events[0];
 const PRICE_PER_TICKET = 10;
@@ -64,6 +68,10 @@ const BANKS = [
 
 type DropState = "register" | "success";
 
+function formatFileSize(bytes: number): string {
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+}
+
 export default function AccessDrop({ onClose }: { onClose?: () => void }) {
   const scope = useRef<HTMLElement>(null);
 
@@ -80,13 +88,14 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewUrlRef = useRef<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const [receiptId, setReceiptId] = useState<string | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
   const [eventPhotoIndex, setEventPhotoIndex] = useState(0);
+  const [uploadMessage, setUploadMessage] = useState("");
 
-  const countdown = useCountdown(EVENT.startsAt);
   const emailHint = getEmailHint(formData.email);
   const emailSuggestion = getEmailSuggestion(formData.email);
 
@@ -118,6 +127,12 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
     saveCheckoutDraft({ ...formData, quantity: quantity.toString(), selectedDesign: selectedDesign.toString() });
   }, [formData, quantity, selectedDesign]);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    };
+  }, []);
+
   useGSAP(
     () => {
       if (dropState === "success") {
@@ -129,31 +144,36 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
     { scope, dependencies: [dropState] },
   );
 
+  const clearSelectedFile = () => {
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
+    }
+    setSelectedFile(null);
+    setPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const handleFileSelect = (file: File | null) => {
     setErrorMsg("");
+    setUploadMessage("");
     if (!file) {
-      setSelectedFile(null);
-      setPreview(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      clearSelectedFile();
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg("ARCHIVO MUY GRANDE. MÁXIMO 5MB.");
+
+    const validationError = validateReceiptFileMetadata(file);
+    if (validationError) {
+      clearSelectedFile();
+      setErrorMsg(validationError.message);
       return;
     }
-    const ext = "." + file.name.split(".").pop()?.toLowerCase();
-    if (![".jpg", ".jpeg", ".png", ".pdf"].includes(ext)) {
-      setErrorMsg("FORMATO NO SOPORTADO. USA JPG, PNG O PDF.");
-      return;
-    }
+
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    const previewUrl = URL.createObjectURL(file);
+    previewUrlRef.current = previewUrl;
     setSelectedFile(file);
-    if (file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onload = (e) => setPreview(e.target?.result as string);
-      reader.readAsDataURL(file);
-    } else {
-      setPreview(null);
-    }
+    setPreview(previewUrl);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -184,6 +204,7 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
     }
 
     setIsSubmitting(true);
+    setUploadMessage("REVISANDO COMPROBANTE...");
     try {
       const body = new FormData();
       body.append("comprobante", selectedFile);
@@ -196,16 +217,27 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
       body.append("cf-turnstile-response", turnstileToken);
 
       const res = await fetch("/api/access-drop/upload", { method: "POST", body });
-      const data = await res.json();
+      const data = await res.json() as {
+        error?: string;
+        code?: string;
+        message?: string;
+        receiptId?: string;
+      };
 
-      if (!res.ok) throw new Error(data.error || "Error al subir comprobante");
+      if (!res.ok) {
+        if (data.code === "RECEIPT_REJECTED") clearSelectedFile();
+        throw new Error(data.error || "Error al subir comprobante");
+      }
 
-      setReceiptId(data.receiptId);
+      setReceiptId(data.receiptId || null);
+      setUploadMessage(data.message || "COMPROBANTE VALIDADO.");
+      clearSelectedFile();
       setDropState("success");
       resetTurnstile();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error al subir comprobante";
       setErrorMsg(message.toUpperCase());
+      setUploadMessage("");
       resetTurnstile();
     } finally {
       setIsSubmitting(false);
@@ -445,25 +477,102 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                         </div>
                       </div>
 
-                      <div className="space-y-1">
-                        <p className="ml-2 text-[7px] uppercase tracking-widest text-zinc-500 font-bold">sube tu comprobante (JPG, PNG, PDF)</p>
-                        <div onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFileSelect(e.dataTransfer.files?.[0] || null); }} onClick={() => fileInputRef.current?.click()} className={`relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 transition ${dragOver ? "border-red-500 bg-red-950/20" : selectedFile ? "border-green-500/40 bg-green-950/10" : "border-white/10 bg-black/40 hover:border-white/20"}`}>
-                          <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png,.pdf" className="hidden" onChange={(e) => handleFileSelect(e.target.files?.[0] || null)} />
-                          {selectedFile && preview ? (
-                            <div className="w-full">
-                              <img src={preview} alt="" className="mx-auto max-h-32 rounded-lg object-contain" />
-                              <p className="mt-2 text-center text-[8px] font-bold text-green-400 uppercase tracking-wider"><FileCheck className="mr-1 inline h-3 w-3" /> {selectedFile.name}</p>
-                              <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedFile(null); setPreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="glass-action glass-action-danger mx-auto mt-2" style={{ "--glass-action-height": "28px", "--glass-action-px": "0.75rem", "--glass-action-text": "0.44rem" } as CSSProperties}>eliminar</button>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-3 px-1">
+                          <div>
+                            <p className="text-[9px] font-black uppercase tracking-[0.22em] text-white">comprobante de pago</p>
+                            <p className="mt-1 text-[7px] font-bold uppercase tracking-widest text-zinc-500">solo JPG, JPEG o PNG · máximo 5 MB</p>
+                          </div>
+                          <div className="rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-2.5 py-1 text-[7px] font-black uppercase tracking-wider text-[#C8FF00]">
+                            revisión segura
+                          </div>
+                        </div>
+
+                        <input
+                          ref={fileInputRef}
+                          id="receipt-file-input"
+                          type="file"
+                          accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                          className="sr-only"
+                          disabled={isSubmitting}
+                          onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
+                        />
+
+                        {selectedFile && preview ? (
+                          <div className="overflow-hidden rounded-2xl border border-emerald-400/30 bg-emerald-950/10">
+                            <div className="relative flex min-h-56 items-center justify-center bg-black/70 p-3 sm:min-h-64">
+                              <img
+                                src={preview}
+                                alt={`Vista previa de ${selectedFile.name}`}
+                                className="max-h-72 w-full rounded-xl object-contain"
+                              />
+                              <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-300/20 bg-black/80 px-2.5 py-1 text-[7px] font-black uppercase tracking-wider text-emerald-300 backdrop-blur">
+                                <FileCheck className="h-3 w-3" /> lista para enviar
+                              </div>
                             </div>
-                          ) : selectedFile ? (
-                            <div className="text-center">
-                              <FileCheck className="mx-auto h-8 w-8 text-green-400" />
-                              <p className="mt-2 text-[8px] font-bold text-green-400 uppercase tracking-wider">{selectedFile.name}</p>
-                              <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedFile(null); setPreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="glass-action glass-action-danger mx-auto mt-2" style={{ "--glass-action-height": "28px", "--glass-action-px": "0.75rem", "--glass-action-text": "0.44rem" } as CSSProperties}>eliminar</button>
+                            <div className="flex flex-col gap-3 border-t border-white/[0.06] p-3 sm:flex-row sm:items-center sm:justify-between">
+                              <div className="min-w-0">
+                                <p className="truncate text-[9px] font-black text-white">{selectedFile.name}</p>
+                                <p className="mt-1 text-[7px] font-bold uppercase tracking-wider text-zinc-500">
+                                  {formatFileSize(selectedFile.size)} · {selectedFile.type}
+                                </p>
+                              </div>
+                              <div className="flex shrink-0 gap-2">
+                                <button
+                                  type="button"
+                                  disabled={isSubmitting}
+                                  onClick={() => fileInputRef.current?.click()}
+                                  className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-[7px] font-black uppercase tracking-wider text-zinc-200 transition hover:border-white/20 disabled:opacity-50"
+                                >
+                                  <ImagePlus className="h-3.5 w-3.5" /> cambiar
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={isSubmitting}
+                                  onClick={clearSelectedFile}
+                                  className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-red-400/20 bg-red-500/10 px-3 text-[7px] font-black uppercase tracking-wider text-red-300 transition hover:bg-red-500/15 disabled:opacity-50"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" /> eliminar
+                                </button>
+                              </div>
                             </div>
-                          ) : (
-                            <><Upload className="mb-2 h-7 w-7 text-zinc-600" /><p className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider">ARRASTRA O SELECCIONA</p><p className="mt-1 text-[6px] text-zinc-700 uppercase tracking-widest">JPG, PNG o PDF — 5MB máx</p></>
-                          )}
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={isSubmitting}
+                            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                            onDragLeave={() => setDragOver(false)}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              setDragOver(false);
+                              handleFileSelect(e.dataTransfer.files?.[0] || null);
+                            }}
+                            onClick={() => fileInputRef.current?.click()}
+                            className={`flex min-h-56 w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center transition ${
+                              dragOver
+                                ? "border-pink-400 bg-pink-500/10"
+                                : "border-white/10 bg-black/40 hover:border-pink-300/30 hover:bg-white/[0.03]"
+                            }`}
+                          >
+                            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-pink-300/15 bg-pink-500/10">
+                              <Upload className="h-6 w-6 text-pink-200" />
+                            </div>
+                            <p className="text-xs font-black uppercase tracking-[0.18em] text-white">selecciona tu comprobante</p>
+                            <p className="mt-2 max-w-xs text-[9px] font-medium leading-relaxed text-zinc-500">
+                              Toca para buscar una imagen o arrástrala aquí desde tu equipo.
+                            </p>
+                            <span className="mt-4 rounded-full border border-white/10 px-3 py-1.5 text-[7px] font-black uppercase tracking-widest text-zinc-400">
+                              JPG · JPEG · PNG
+                            </span>
+                          </button>
+                        )}
+
+                        <div className="flex items-start gap-2 rounded-xl border border-sky-400/10 bg-sky-500/[0.04] px-3 py-2.5">
+                          <ScanSearch className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-300" />
+                          <p className="text-[7px] font-bold uppercase leading-relaxed tracking-wider text-zinc-400">
+                            Aceptamos capturas y fotos claras de depósitos. Evita sombras, reflejos, bordes cortados o movimiento. Las imágenes rechazadas no se guardan.
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -477,8 +586,15 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                   </div>
 
                   {errorMsg && (
-                    <div className="flex items-center gap-3 text-sm font-bold text-red-400 bg-red-950/40 p-4 rounded-xl border border-red-500/30">
+                    <div role="alert" aria-live="assertive" className="flex items-center gap-3 text-sm font-bold text-red-400 bg-red-950/40 p-4 rounded-xl border border-red-500/30">
                       <ShieldAlert className="h-4 w-4 shrink-0" /> {errorMsg}
+                    </div>
+                  )}
+
+                  {isSubmitting && uploadMessage && (
+                    <div aria-live="polite" className="flex items-center justify-center gap-2 py-1 text-[8px] font-bold uppercase tracking-[0.16em] text-zinc-500">
+                      <Loader2 className="h-3 w-3 shrink-0 animate-spin" />
+                      <span>{uploadMessage}</span>
                     </div>
                   )}
 
@@ -492,8 +608,8 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                     onError={() => setTurnstileToken("")}
                   />
 
-                  <button type="submit" disabled={isSubmitting} className="glass-action glass-action-primary w-full" style={{ "--glass-action-height": "56px", "--glass-action-text": "0.95rem" } as CSSProperties}>
-                    {isSubmitting ? <><Loader2 className="h-5 w-5 animate-spin" /> ENVIANDO...</> : <>COMPRAR — ${totalPrice.toFixed(2)}</>}
+                  <button type="submit" disabled={isSubmitting || !selectedFile} className="glass-action glass-action-primary w-full" style={{ "--glass-action-height": "56px", "--glass-action-text": "0.95rem" } as CSSProperties}>
+                    {isSubmitting ? <><Loader2 className="h-5 w-5 animate-spin" /> REVISANDO...</> : <>ENVIAR COMPROBANTE — ${totalPrice.toFixed(2)}</>}
                   </button>
 
                   <div className="flex items-center justify-center">
@@ -509,11 +625,12 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
 
         {/* Event info modal */}
         {showEventModal && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md">
-            <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[28px] border border-white/[0.08] bg-black shadow-[0_30px_120px_rgba(0,0,0,0.7)]">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[28px] border border-white/[0.10] bg-gradient-to-b from-zinc-900 to-black shadow-[0_40px_150px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-300">
+              {/* Close button */}
               <button
                 onClick={() => setShowEventModal(false)}
-                className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/70 text-white/60 transition hover:text-white"
+                className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white/50 backdrop-blur-md transition-all hover:bg-pink-500 hover:text-white hover:shadow-[0_0_20px_rgba(236,72,153,0.5)]"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -523,61 +640,96 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                 <img
                   src={VENUE_PHOTOS[eventPhotoIndex]}
                   alt="Lugar del evento"
-                  className="h-full w-full object-cover transition-opacity duration-700"
+                  className="h-full w-full object-cover transition-all duration-700 scale-105 hover:scale-100"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
+                <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-zinc-900/80 to-transparent h-16" />
+                <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
                   {VENUE_PHOTOS.map((_, i) => (
                     <button
                       key={i}
                       onClick={() => setEventPhotoIndex(i)}
-                      className={`h-1.5 rounded-full transition-all ${i === eventPhotoIndex ? "w-6 bg-pink-300" : "w-1.5 bg-white/40 hover:bg-white/60"}`}
+                      className={`rounded-full transition-all duration-300 ${
+                        i === eventPhotoIndex
+                          ? "h-2.5 w-8 bg-pink-400 shadow-[0_0_12px_rgba(236,72,153,0.6)]"
+                          : "h-2.5 w-2.5 bg-white/30 hover:bg-white/60"
+                      }`}
                     />
                   ))}
                 </div>
               </div>
 
               <div className="p-6 space-y-5">
-                <div>
-                  <h3 className="text-lg font-black uppercase tracking-wider text-white">San Juan, Ecuador</h3>
-                  <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-400">Casa privada · Dirección confirmada al comprar</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
-                    <p className="text-lg">📸</p>
-                    <p className="mt-1 text-[7px] font-black uppercase tracking-wider text-zinc-300">Photo spot</p>
-                  </div>
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
-                    <p className="text-lg">🎧</p>
-                    <p className="mt-1 text-[7px] font-black uppercase tracking-wider text-zinc-300">Sonido envolvente</p>
-                  </div>
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
-                    <p className="text-lg">🍸</p>
-                    <p className="mt-1 text-[7px] font-black uppercase tracking-wider text-zinc-300">Barra libre</p>
-                  </div>
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
-                    <p className="text-lg">🔒</p>
-                    <p className="mt-1 text-[7px] font-black uppercase tracking-wider text-zinc-300">Acceso controlado</p>
+                {/* Location header with neon card */}
+                <div className="relative overflow-hidden rounded-2xl border border-pink-500/20 bg-gradient-to-br from-pink-500/[0.08] to-fuchsia-500/[0.04] p-4">
+                  <div className="absolute top-0 right-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-pink-500/10 blur-3xl" />
+                  <div className="relative flex items-start gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 shadow-[0_0_20px_rgba(236,72,153,0.3)]">
+                      <MapPin className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-black uppercase tracking-wider text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.15)]">
+                        San Juan, Ecuador
+                      </h3>
+                      <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.25em] text-pink-200/70">
+                        Casa privada · Dirección confirmada al comprar
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
+                {/* Features grid — glass cards */}
+                <div className="grid grid-cols-2 gap-2.5">
+                  {[
+                    { icon: "📸", label: "Photo spot", desc: "Captura el momento", gradient: "from-yellow-500/10 to-orange-500/5", border: "border-yellow-500/15", hoverBorder: "hover:border-yellow-400/30" },
+                    { icon: "🎧", label: "Sonido envolvente", desc: "Ecosistema Dolby", gradient: "from-blue-500/10 to-cyan-500/5", border: "border-blue-500/15", hoverBorder: "hover:border-blue-400/30" },
+                    { icon: "🍸", label: "Barra libre", desc: "Premium selection", gradient: "from-emerald-500/10 to-green-500/5", border: "border-emerald-500/15", hoverBorder: "hover:border-emerald-400/30" },
+                    { icon: "🔒", label: "Acceso controlado", desc: "Entrada garantizada", gradient: "from-violet-500/10 to-purple-500/5", border: "border-violet-500/15", hoverBorder: "hover:border-violet-400/30" },
+                  ].map((feat) => (
+                    <div
+                      key={feat.label}
+                      className={`group relative overflow-hidden rounded-2xl border ${feat.border} bg-gradient-to-br ${feat.gradient} px-4 py-3.5 text-center transition-all duration-300 ${feat.hoverBorder} hover:shadow-[0_0_25px_rgba(255,255,255,0.04)]`}
+                    >
+                      <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent_30%,rgba(255,255,255,0.03)_50%,transparent_70%)] translate-x-[-200%] transition-transform duration-700 group-hover:translate-x-[200%]" />
+                      <p className="relative text-2xl transition-transform duration-300 group-hover:scale-110">{feat.icon}</p>
+                      <p className="relative mt-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-white/80">{feat.label}</p>
+                      <p className="relative mt-0.5 text-[7px] font-medium text-white/40">{feat.desc}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex flex-col gap-2.5">
                   <a
                     href="https://maps.google.com/?q=San+Juan+Ecuador"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-pink-500 text-[9px] font-black uppercase tracking-[0.2em] text-white transition hover:bg-pink-400"
+                    className="group relative inline-flex h-13 items-center justify-center gap-2.5 overflow-hidden rounded-2xl bg-gradient-to-r from-pink-600 to-rose-500 text-[9px] font-black uppercase tracking-[0.2em] text-white transition-all duration-300 hover:from-pink-500 hover:to-rose-400 hover:shadow-[0_0_40px_rgba(236,72,153,0.4)] hover:scale-[1.02] active:scale-[0.98]"
                   >
-                    <Navigation className="h-4 w-4" /> Abrir en Google Maps
+                    <span className="absolute inset-0 bg-[linear-gradient(120deg,transparent_30%,rgba(255,255,255,0.15)_50%,transparent_70%)] translate-x-[-200%] transition-transform duration-700 group-hover:translate-x-[200%]" />
+                    <Navigation className="h-4 w-4 relative z-10" />
+                    <span className="relative z-10">Abrir en Google Maps</span>
                   </a>
                   <button
                     onClick={() => {
                       navigator.share?.({ title: "DAWGS - TRAP LOUD", text: `${EVENT.title} · ${EVENT.dateLabel} · ${EVENT.city}`, url: window.location.href });
                     }}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300 transition hover:border-pink-400/30 hover:text-pink-300"
+                    className="group relative inline-flex h-12 items-center justify-center gap-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300 transition-all duration-300 hover:border-pink-400/30 hover:bg-pink-500/[0.08] hover:text-pink-300 hover:shadow-[0_0_30px_rgba(236,72,153,0.12)] hover:scale-[1.01] active:scale-[0.98]"
                   >
-                    <Share2 className="h-3.5 w-3.5" /> Compartir evento
+                    <span className="absolute inset-0 bg-[linear-gradient(120deg,transparent_30%,rgba(236,72,153,0.06)_50%,transparent_70%)] translate-x-[-200%] transition-transform duration-700 group-hover:translate-x-[200%]" />
+                    <div className="relative z-10 flex items-center gap-2.5">
+                      <span className="flex -space-x-1.5">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 text-[#25D366] drop-shadow-[0_0_6px_rgba(37,211,102,0.3)]">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                        </svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 text-[#E4405F] drop-shadow-[0_0_6px_rgba(228,64,95,0.3)]">
+                          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                        </svg>
+                      </span>
+                      <span className="h-3.5 w-px bg-white/10" />
+                      <Share2 className="h-3.5 w-3.5" />
+                    </div>
+                    <span className="relative z-10">Compartir</span>
                   </button>
                 </div>
               </div>
@@ -595,9 +747,9 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                 </div>
               </div>
             </div>
-            <h2 className="text-3xl font-black text-white uppercase italic tracking-widest drop-shadow-[0_0_20px_rgba(200,255,0,0.3)]">compra realizada</h2>
+            <h2 className="text-3xl font-black text-white uppercase italic tracking-widest drop-shadow-[0_0_20px_rgba(200,255,0,0.3)]">comprobante recibido</h2>
             <p className="mt-4 text-[11px] font-bold text-zinc-400 uppercase tracking-wider leading-relaxed max-w-sm">
-              HEMOS RECIBIDO TU COMPROBANTE. UN ADMINISTRADOR LO REVISARA Y RECIBIRAS TU ACCESO POR GMAIL. WHATSAPP SOLO CONFIRMA LA COMPRA.
+              TU COMPROBANTE FUE RECIBIDO CORRECTAMENTE. AHORA UN ADMINISTRADOR CONFIRMARA EL PAGO Y RECIBIRAS TU ACCESO POR GMAIL.
             </p>
             {receiptId && (
               <div className="mt-6 rounded-xl border border-[#C8FF00]/20 bg-black/50 px-6 py-4 shadow-[0_0_30px_rgba(200,255,0,0.05)]">

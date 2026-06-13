@@ -11,6 +11,7 @@ import {
   Building2,
   Zap,
 } from "lucide-react";
+import { validateReceiptFileMetadata } from "@/lib/access-drop/fileValidation";
 
 const TICKET_DESIGNS = [
   { id: 1, gradient: "from-red-900 via-red-950 to-black", accent: "red", label: "TRAP LOUD · YAN BLOCK", serial: "DAWGS-0001-A", name: "BLOCK CARD" },
@@ -89,23 +90,15 @@ export default function BankTransferInfo({
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg("ARCHIVO MUY GRANDE. MÁXIMO 5MB.");
-      return;
-    }
-    const ext = "." + file.name.split(".").pop()?.toLowerCase();
-    if (![".jpg", ".jpeg", ".png", ".pdf"].includes(ext)) {
-      setErrorMsg("FORMATO NO SOPORTADO. USA JPG, PNG O PDF.");
+    const validationError = validateReceiptFileMetadata(file);
+    if (validationError) {
+      setErrorMsg(validationError.message);
       return;
     }
     setSelectedFile(file);
-    if (file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onload = (e) => setPreview(e.target?.result as string);
-      reader.readAsDataURL(file);
-    } else {
-      setPreview(null);
-    }
+    const reader = new FileReader();
+    reader.onload = (e) => setPreview(e.target?.result as string);
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async () => {
@@ -288,12 +281,25 @@ export default function BankTransferInfo({
 
           <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
             <div className="space-y-1">
-              <p className="ml-2 text-[7px] uppercase tracking-widest text-zinc-500 font-bold">sube tu comprobante (JPG, PNG, PDF)</p>
+              <p className="ml-2 text-[7px] uppercase tracking-widest text-zinc-500 font-bold">sube tu comprobante (JPG, JPEG o PNG)</p>
+              <p className="ml-2 text-[7px] leading-relaxed text-zinc-600">
+                También puedes tomar una foto clara de un depósito físico, sin sombras ni reflejos.
+              </p>
               <div
+                role="button"
+                tabIndex={0}
+                aria-label="Seleccionar comprobante"
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
                 onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFileSelect(e.dataTransfer.files?.[0] || null); }}
                 onClick={() => fileInputRef.current?.click()}
+                onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget) return;
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    fileInputRef.current?.click();
+                  }
+                }}
                 className={`relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 transition ${
                   dragOver
                     ? "border-red-500 bg-red-950/20"
@@ -302,10 +308,10 @@ export default function BankTransferInfo({
                       : "border-white/10 bg-black/40 hover:border-white/20"
                 }`}
               >
-                <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png,.pdf" className="hidden" onChange={(e) => handleFileSelect(e.target.files?.[0] || null)} />
+                <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" className="hidden" onChange={(e) => handleFileSelect(e.target.files?.[0] || null)} />
                 {selectedFile && preview ? (
                   <div className="w-full">
-                    <img src={preview} alt="" className="mx-auto max-h-32 rounded-lg object-contain" />
+                    <img src={preview} alt={`Vista previa de ${selectedFile.name}`} className="mx-auto max-h-32 rounded-lg object-contain" />
                     <p className="mt-2 text-center text-[8px] font-bold text-green-400 uppercase tracking-wider">
                       <FileCheck className="mr-1 inline h-3 w-3" /> {selectedFile.name}
                     </p>
@@ -325,7 +331,7 @@ export default function BankTransferInfo({
                   <>
                     <Upload className="mb-2 h-7 w-7 text-zinc-600" />
                     <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider">ARRASTRA O SELECCIONA</p>
-                    <p className="mt-1 text-[6px] text-zinc-700 uppercase tracking-widest">JPG, PNG o PDF — 5MB máx</p>
+                    <p className="mt-1 text-[6px] text-zinc-700 uppercase tracking-widest">JPG, JPEG o PNG — 5MB máx</p>
                   </>
                 )}
               </div>

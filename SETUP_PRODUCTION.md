@@ -32,12 +32,23 @@ cp .env.example .env.local
 | `SUPABASE_SERVICE_ROLE_KEY` | Solo servidor (nunca en cliente) |
 | `GMAIL_*` | Gmail API (email + PDF de entrada) |
 | `TURNSTILE_*` | Cloudflare Turnstile visible/invisible |
+| `OPENAI_API_KEY` | Opcional; añade análisis visual al OCR y perfiles locales |
+| `OPENAI_RECEIPT_MODEL` | Modelo visual complementario; por defecto `gpt-5.5` |
+| `RECEIPT_AI_MIN_CONFIDENCE` | Umbral del análisis visual; recomendado `0.72` |
 | `WHATSAPP_*` | Meta WhatsApp Cloud API |
 | `STAFF_PASSWORD_HASH_B64` | Hash bcrypt staff |
 | `ADMIN_PASSWORD_HASH_B64` | Hash bcrypt admin |
 | `GIVEAWAY_OPEN_HOUR` | 19 = 7:30 PM Ecuador |
 | `GIVEAWAY_OPEN_MINUTE` | 30 |
 | `GIVEAWAY_DURATION_MINUTES` | 10 |
+
+### Referencias válidas de comprobantes
+
+Coloca ejemplos curados JPG/JPEG/PNG en `public/uploads/example-transfers/`.
+El analizador usa hasta tres imágenes recientes como referencia visual, pero no
+exige que el banco o diseño coincidan exactamente. También incluye perfiles para
+Banco de Loja, Banco Pichincha/Deuna y depósitos físicos. El endpoint para agregar
+ejemplos requiere una sesión de administrador y token CSRF.
 
 ---
 
