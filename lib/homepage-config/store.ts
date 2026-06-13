@@ -12,12 +12,30 @@ function ensureDataDir() {
   }
 }
 
+function mergeDeep(defaults: HomepageConfig, overrides: Partial<HomepageConfig>): HomepageConfig {
+  const result = { ...defaults };
+  for (const key of Object.keys(defaults) as (keyof HomepageConfig)[]) {
+    const d = defaults[key];
+    const o = (overrides as any)[key];
+    if (o === undefined || o === null) continue;
+    if (Array.isArray(d) && Array.isArray(o)) {
+      (result as any)[key] = o;
+    } else if (typeof d === "object" && !Array.isArray(d) && typeof o === "object") {
+      (result as any)[key] = { ...d as any, ...o as any };
+    } else {
+      (result as any)[key] = o;
+    }
+  }
+  return result;
+}
+
 export function loadConfig(): HomepageConfig {
   try {
     ensureDataDir();
     if (fs.existsSync(CONFIG_PATH)) {
       const raw = fs.readFileSync(CONFIG_PATH, "utf-8");
-      return JSON.parse(raw) as HomepageConfig;
+      const saved = JSON.parse(raw) as Partial<HomepageConfig>;
+      return mergeDeep(DEFAULT_HOMEPAGE_CONFIG, saved);
     }
   } catch {
     // fall through to default
