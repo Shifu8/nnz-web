@@ -21,34 +21,47 @@ const GREEN = rgb(200 / 255, 255 / 255, 0);
 const WHITE = rgb(1, 1, 1);
 const GRAY = rgb(136 / 255, 136 / 255, 136 / 255);
 
-function cx(w: number): number {
-  return (W - w) / 2;
+function cx(width: number): number {
+  return (W - width) / 2;
 }
 
 export async function generateTicketPdf(ticket: TicketInfo): Promise<Buffer> {
   const qrPng = await generateTicketQrPng(ticket.qrPayload);
-
   const doc = await PDFDocument.create();
   const page = doc.addPage([W, H]);
-
   const bold = await doc.embedStandardFont(StandardFonts.HelveticaBold);
   const regular = await doc.embedStandardFont(StandardFonts.Helvetica);
 
   page.drawRectangle({ x: 0, y: 0, width: W, height: H, color: BLACK });
-
   page.drawText("DAWGS", { x: 24, y: H - 44, size: 32, font: bold, color: WHITE });
-  page.drawText("ACCESO · ENTRADA ÚNICA", { x: 24, y: H - 62, size: 8, font: regular, color: GRAY });
-
-  page.drawLine({ start: { x: 24, y: H - 74 }, end: { x: W - 24, y: H - 74 }, thickness: 1, color: RED });
+  page.drawText("ACCESO - ENTRADA UNICA", {
+    x: 24,
+    y: H - 62,
+    size: 8,
+    font: regular,
+    color: GRAY,
+  });
+  page.drawLine({
+    start: { x: 24, y: H - 74 },
+    end: { x: W - 24, y: H - 74 },
+    thickness: 1,
+    color: RED,
+  });
 
   const eventTitle = ticket.eventTitle || "TRAP LOUD";
-  const eventSub = ticket.eventSubtitle || "YAN BLOCK EXPERIENCE";
+  const eventSubtitle = ticket.eventSubtitle || "YAN BLOCK EXPERIENCE";
   const eventDate = ticket.eventDate || "18 JUN 2026";
   const eventCity = ticket.eventCity || "San Juan";
 
   page.drawText(eventTitle, { x: 24, y: H - 104, size: 22, font: bold, color: WHITE });
-  page.drawText(eventSub, { x: 24, y: H - 122, size: 12, font: regular, color: GREEN });
-  page.drawText(`${eventDate} · ${eventCity}`, { x: 24, y: H - 140, size: 9, font: regular, color: GRAY });
+  page.drawText(eventSubtitle, { x: 24, y: H - 122, size: 12, font: regular, color: GREEN });
+  page.drawText(`${eventDate} - ${eventCity}`, {
+    x: 24,
+    y: H - 140,
+    size: 9,
+    font: regular,
+    color: GRAY,
+  });
 
   const qrSize = 180;
   const qrX = (W - qrSize) / 2;
@@ -58,19 +71,44 @@ export async function generateTicketPdf(ticket: TicketInfo): Promise<Buffer> {
 
   const serialY = qrY - 20;
   page.drawText("SERIAL", { x: cx(40), y: serialY, size: 7, font: regular, color: GRAY });
-  page.drawText(ticket.serialNumber, { x: cx(bold.widthOfTextAtSize(ticket.serialNumber, 10)), y: serialY - 14, size: 10, font: bold, color: WHITE });
+  page.drawText(ticket.serialNumber, {
+    x: cx(bold.widthOfTextAtSize(ticket.serialNumber, 10)),
+    y: serialY - 14,
+    size: 10,
+    font: bold,
+    color: WHITE,
+  });
 
   const holderY = serialY - 42;
-  const holderName = `${ticket.firstName} ${ticket.lastName}`;
+  const holderName = `${ticket.firstName} ${ticket.lastName}`.trim();
   page.drawText("TITULAR", { x: cx(36), y: holderY, size: 7, font: regular, color: GRAY });
-  page.drawText(holderName, { x: cx(bold.widthOfTextAtSize(holderName, 14)), y: holderY - 16, size: 14, font: bold, color: WHITE });
+  page.drawText(holderName, {
+    x: cx(bold.widthOfTextAtSize(holderName, 14)),
+    y: holderY - 16,
+    size: 14,
+    font: bold,
+    color: WHITE,
+  });
 
-  const qtyStr = `${ticket.quantity} entrada(s)`;
-  const qtyY = holderY - 48;
-  page.drawText("CANTIDAD", { x: cx(48), y: qtyY, size: 7, font: regular, color: GRAY });
-  page.drawText(qtyStr, { x: cx(bold.widthOfTextAtSize(qtyStr, 14)), y: qtyY - 16, size: 14, font: bold, color: GREEN });
+  const quantity = `${ticket.quantity} entrada(s)`;
+  const quantityY = holderY - 48;
+  page.drawText("CANTIDAD", { x: cx(48), y: quantityY, size: 7, font: regular, color: GRAY });
+  page.drawText(quantity, {
+    x: cx(bold.widthOfTextAtSize(quantity, 14)),
+    y: quantityY - 16,
+    size: 14,
+    font: bold,
+    color: GREEN,
+  });
 
-  page.drawText("VÁLIDO POR UNA SOLA OCASIÓN · DAWGS", { x: cx(170), y: 20, size: 6, font: regular, color: GRAY });
+  const warning = "Entrada valida para un solo uso. No compartas capturas.";
+  page.drawText(warning, {
+    x: cx(regular.widthOfTextAtSize(warning, 7)),
+    y: 22,
+    size: 7,
+    font: regular,
+    color: GRAY,
+  });
 
   const pdfBytes = await doc.save();
   return Buffer.from(pdfBytes);

@@ -1,11 +1,13 @@
-import { Router } from "express";
+import { Router, type NextFunction, type Request, type Response } from "express";
 import fs from "fs";
 import * as whatsappService from "../services/whatsappService";
 import { waLogger } from "../whatsapp/logger";
+import { queueStats } from "../whatsapp/messageQueue";
+import { normalizeEcuadorWhatsAppJid } from "../whatsapp/phone";
 
 const ADMIN_KEY = process.env.WHATSAPP_API_KEY || process.env.ADMIN_API_KEY || "";
 
-function requireApiKey(req: any, res: any, next: any) {
+function requireApiKey(req: Request, res: Response, next: NextFunction) {
   const key = req.headers["x-api-key"] || req.query.api_key;
   if (!ADMIN_KEY) return next();
   if (key !== ADMIN_KEY) {
@@ -14,19 +16,12 @@ function requireApiKey(req: any, res: any, next: any) {
   next();
 }
 
-function normalizeJid(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("593")) return `${digits}@s.whatsapp.net`;
-  if (digits.startsWith("0")) return `593${digits.slice(1)}@s.whatsapp.net`;
-  return `593${digits}@s.whatsapp.net`;
-}
-
 export function createWhatsAppRoutes() {
   const router = Router();
 
   router.get("/whatsapp/status", (_req, res) => {
     const status = whatsappService.getStatus();
-    res.json({ success: true, ...status });
+    res.json({ success: true, ...status, queue: queueStats() });
   });
 
   router.get("/whatsapp/qr", (_req, res) => {
@@ -46,22 +41,42 @@ export function createWhatsAppRoutes() {
       waLogger.warn("ROUTES", "Send rejected: connection not ready yet");
       return res.status(503).json({ error: "CONNECTION_NOT_READY", message: "WhatsApp connection still stabilizing. Try again in a moment." });
     }
-    const jid = normalizeJid(phone as string);
+    const jid = normalizeEcuadorWhatsAppJid(phone as string);
+    if (!jid) {
+      return res.status(400).json({
+        error: "INVALID_ECUADOR_MOBILE",
+        message: "Use un celular ecuatoriano como 0988831372 o +593988831372.",
+      });
+    }
+
+    let queueId: string;
     if (filePath) {
       try {
         const buffer = fs.readFileSync(filePath);
-        whatsappService.sendTicketDocumentWithTextFirst(jid, buffer, fileName || "ticket.pdf", text);
-      } catch (err) {
+        queueId = whatsappService.sendTicketDocumentWithTextFirst(
+          jid,
+          buffer,
+          fileName || "ticket.pdf",
+          text,
+        );
+      } catch {
         return res.status(500).json({ error: "FILE_READ_ERROR", message: `Cannot read file: ${filePath}` });
       }
     } else if (documentUrl) {
-      whatsappService.sendTicketDocument(jid, documentUrl, fileName || "ticket.pdf", text);
+      queueId = whatsappService.sendTicketDocument(jid, documentUrl, fileName || "ticket.pdf", text);
     } else if (imageUrl) {
-      whatsappService.sendTicketImage(jid, imageUrl, text);
+      queueId = whatsappService.sendTicketImage(jid, imageUrl, text);
     } else {
-      whatsappService.sendTicketMessage(jid, text);
+      queueId = whatsappService.sendTicketMessage(jid, text);
     }
-    res.json({ success: true, message: "Queued", queueLength: undefined });
+    res.status(202).json({
+      success: true,
+      status: "queued",
+      message: "Queued",
+      queueId,
+      normalizedPhone: jid.replace("@s.whatsapp.net", ""),
+      queueLength: queueStats().pending,
+    });
   });
 
   router.post("/whatsapp/logout", requireApiKey, async (_req, res) => {

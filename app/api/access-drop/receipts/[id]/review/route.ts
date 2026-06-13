@@ -8,6 +8,7 @@ import { sendTicketPdfViaGmailWithLimit } from "@/lib/gmailDelivery";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
+import { getActiveTicketEvent } from "@/lib/tickets/activeEvent";
 
 export const runtime = "nodejs";
 
@@ -15,12 +16,12 @@ function generateSerial(): string {
   return `DAWGS-${crypto.randomInt(1000, 9999)}-${crypto.randomUUID().split("-")[0].toUpperCase()}`;
 }
 
-function generateQrPayload(serialNumber: string): string {
+function generateQrPayload(serialNumber: string, eventId: string): string {
   return JSON.stringify({
     type: "DAWGS_PASS",
     serialNumber,
     token: crypto.randomUUID(),
-    eventId: "trap-loud",
+    eventId,
     issuedAt: new Date().toISOString(),
     v: 1,
   });
@@ -82,8 +83,10 @@ export async function POST(
 
     if (status === "aprobado") {
       try {
+        const event = getActiveTicketEvent();
+        const eventId = existing.eventId || event.id;
         const serialNumber = generateSerial();
-        const qrPayload = generateQrPayload(serialNumber);
+        const qrPayload = generateQrPayload(serialNumber, eventId);
 
         const pdfBuffer = await generateTicketPdf({
           firstName: existing.firstName,
@@ -91,10 +94,10 @@ export async function POST(
           serialNumber,
           qrPayload,
           quantity: existing.quantity,
-          eventTitle: "TRAP LOUD",
-          eventSubtitle: "YAN BLOCK EXPERIENCE",
-          eventDate: "18 JUN 2026",
-          eventCity: "San Juan",
+          eventTitle: event.title,
+          eventSubtitle: event.eventName,
+          eventDate: event.dateLabel,
+          eventCity: event.venue,
         });
 
         const ticketsDir = path.join(process.cwd(), "public", "uploads", "tickets");
@@ -105,6 +108,7 @@ export async function POST(
         fs.writeFileSync(pdfPath, pdfBuffer);
 
         patchReceipt(id, {
+          eventId,
           serialNumber,
           qrPayload,
           deliveryChannel: "none",
@@ -118,6 +122,10 @@ export async function POST(
           serialNumber,
           quantity: existing.quantity,
           pdfBuffer,
+          eventTitle: event.title,
+          eventName: event.eventName,
+          eventDate: event.dateLabel,
+          eventVenue: event.venue,
         });
 
         const waResult = await sendWhatsAppText(
@@ -127,9 +135,9 @@ export async function POST(
 
         patchReceipt(id, {
           deliveryChannel: gmailResult.success ? "gmail" : "none",
-          deliveryStatus: `gmail:${gmailResult.success ? gmailResult.messageId || "ok" : gmailResult.reason || "failed"}; whatsapp-confirm:${waResult?.success ? "ok" : waResult?.error || "failed"}`,
+          deliveryStatus: `email:${gmailResult.success ? gmailResult.messageId || "ok" : gmailResult.reason || "failed"}; whatsapp:${waResult?.success ? `queued:${waResult.messageId || "ok"}` : waResult?.error || "failed"}`,
           emailSentAt: gmailResult.success ? new Date().toISOString() : undefined,
-          whatsappSentAt: waResult?.success ? new Date().toISOString() : undefined,
+          whatsappQueuedAt: waResult?.success ? new Date().toISOString() : undefined,
         });
 
         console.log(

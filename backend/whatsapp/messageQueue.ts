@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { waLogger } from "./logger";
 
 export interface QueuedMessage {
@@ -39,7 +40,14 @@ export interface QueuedTextThenDocumentMessage {
   type: "text-then-document";
 }
 
-type QueueItem = QueuedMessage | QueuedImageMessage | QueuedDocumentMessage | QueuedDocumentBufferMessage | QueuedTextThenDocumentMessage;
+type BaseQueueItem =
+  | QueuedMessage
+  | QueuedImageMessage
+  | QueuedDocumentMessage
+  | QueuedDocumentBufferMessage
+  | QueuedTextThenDocumentMessage;
+
+type QueueItem = BaseQueueItem & { queueId: string };
 
 interface SendFn {
   (jid: string, content: { text: string }): Promise<void>;
@@ -50,7 +58,7 @@ interface SendFn {
 
 const queue: QueueItem[] = [];
 let processing = false;
-let stats = { sent: 0, failed: 0, queueSize: 0 };
+const stats = { sent: 0, failed: 0, queueSize: 0 };
 
 const MIN_DELAY_MS = Number(process.env.WHATSAPP_MIN_DELAY_MS) || 20_000;
 const MAX_DELAY_MS = Number(process.env.WHATSAPP_MAX_DELAY_MS) || 40_000;
@@ -59,10 +67,12 @@ function randomDelay(): number {
   return MIN_DELAY_MS + Math.random() * (MAX_DELAY_MS - MIN_DELAY_MS);
 }
 
-export function enqueueMessage(item: QueueItem) {
-  queue.push(item);
+export function enqueueMessage(item: BaseQueueItem): string {
+  const queueId = randomUUID();
+  queue.push({ ...item, queueId } as QueueItem);
   stats.queueSize = queue.length;
-  waLogger.info("QUEUE", `Enqueued ${item.type}. Queue length: ${queue.length}`);
+  waLogger.info("QUEUE", `Enqueued ${item.type} (${queueId}). Queue length: ${queue.length}`);
+  return queueId;
 }
 
 export function queueStats() {
@@ -151,9 +161,10 @@ export function startQueue(send: SendFn) {
   }, 5000);
 }
 
-export function addToQueue(item: QueueItem) {
-  enqueueMessage(item);
+export function addToQueue(item: BaseQueueItem): string {
+  const queueId = enqueueMessage(item);
   if (sendImpl && !processing) {
     processQueue(sendImpl);
   }
+  return queueId;
 }

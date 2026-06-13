@@ -4,10 +4,10 @@ import { existsSync } from "fs";
 import { join } from "path";
 import qrcode from "qrcode-terminal";
 import { waLogger } from "./logger";
-import { useFileAuthState, clearSession } from "./sessionStore";
+import { useFileAuthState as getFileAuthState, clearSession } from "./sessionStore";
 
 const SESSION_DIR = process.env.BAILEYS_SESSION_DIR || "wa_session";
-const CONNECTION_READY_DELAY_MS = Number(process.env.CONNECTION_READY_DELAY_MS) || 90_000;
+const CONNECTION_READY_DELAY_MS = Number(process.env.CONNECTION_READY_DELAY_MS) || 15_000;
 
 export type ConnectionStatus = "connecting" | "open" | "closing" | "closed" | "error";
 export type QREventHandler = (qr: string) => void;
@@ -62,7 +62,7 @@ export async function startBaileys() {
   const { version, isLatest } = await fetchLatestBaileysVersion();
   waLogger.info("BAILEYS", `Using WA v${version.join(".")}, latest: ${isLatest}`);
 
-  const { state, saveCreds } = useFileAuthState();
+  const { state, saveCreds } = getFileAuthState();
   const hasSession = existsSync(join(SESSION_DIR, "creds.json"));
 
   waLogger.info("BAILEYS", `Session found: ${hasSession}`);
@@ -90,6 +90,8 @@ export async function startBaileys() {
     markOnlineOnConnect: false,
     generateHighQualityLinkPreview: false,
     syncFullHistory: false,
+    fireInitQueries: false,
+    shouldSyncHistoryMessage: () => false,
     emitOwnEvents: false,
   });
 

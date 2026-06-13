@@ -43,6 +43,13 @@ declare global {
 }
 
 function siteKeyForVariant(variant: TurnstileVariant): string {
+  if (
+    process.env.NODE_ENV !== "production" &&
+    process.env.NEXT_PUBLIC_TURNSTILE_IN_DEVELOPMENT !== "true"
+  ) {
+    return "";
+  }
+
   if (variant === "invisible") {
     return (
       process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY_INVISIBLE ||

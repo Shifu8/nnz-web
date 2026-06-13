@@ -20,10 +20,13 @@ import {
   MapPin,
   MessageCircle,
   Music2,
+  Navigation,
   Radio,
+  Share2,
   ShieldCheck,
   Sparkles,
   Ticket,
+  X,
   Zap,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -67,6 +70,14 @@ const FEATURED_SPONSORS = [
   { initials: "KS", name: "Kyoto Sushi" },
   { initials: "IA", name: "Iron Athletics" },
 ] as const;
+
+const DAWG_DJ = { name: "DAWG DJ", instagram: "brandon.mdna" };
+
+const VENUE_PHOTOS = [
+  "/images/trap_loud_trio_artists.png",
+  "/images/trap_loud_trio_artists.png",
+  "/images/trap_loud_trio_artists.png",
+];
 
 const SHOW_COVERS: Record<string, Cover[]> = {
   "trap-loud": [
@@ -128,6 +139,8 @@ export default function HomePage() {
   const [isTicketPulse, setIsTicketPulse] = useState(false);
   const [isRecoveryPulse, setIsRecoveryPulse] = useState(false);
   const [artistIndex, setArtistIndex] = useState(0);
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [eventPhotoIndex, setEventPhotoIndex] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -135,6 +148,14 @@ export default function HomePage() {
     }, 7000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!showEventModal) return;
+    const timer = setInterval(() => {
+      setEventPhotoIndex((i) => (i + 1) % VENUE_PHOTOS.length);
+    }, 3500);
+    return () => clearInterval(timer);
+  }, [showEventModal]);
 
   const featuredEvent = events[0] ?? fallbackEvents[0];
   const featuredCovers = SHOW_COVERS[featuredEvent.id] ?? [];
@@ -394,10 +415,7 @@ export default function HomePage() {
         <div className="relative grid flex-1 items-center gap-8 lg:grid-cols-12 lg:gap-4">
           <div className="contents lg:relative lg:z-30 lg:order-1 lg:col-span-5 lg:block">
             <div className="hero-reveal relative z-30 order-1 flex flex-col pt-1 text-center lg:block lg:pt-0 lg:text-left">
-              <p className="inline-flex items-center gap-2 rounded-full border border-pink-300/20 bg-pink-500/[0.08] px-4 py-2 text-[9px] font-black uppercase tracking-[0.3em] text-pink-200 backdrop-blur-xl sm:text-[10px]">
-                <Radio className="h-3 w-3 text-pink-400" />
-                Evento principal
-              </p>
+
               <p className="mt-6 text-[11px] font-black uppercase tracking-[0.52em] text-zinc-400 sm:text-xs">
                 DAWGS presenta
               </p>
@@ -497,6 +515,14 @@ export default function HomePage() {
                       {artist}
                     </span>
                   ))}
+                  <a
+                    href={`https://instagram.com/${DAWG_DJ.instagram}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 rounded-full border border-blue-400/30 bg-blue-950/40 px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.17em] text-blue-200 transition hover:bg-blue-900/50"
+                  >
+                    <Music2 className="h-2.5 w-2.5" /> {DAWG_DJ.name}
+                  </a>
                 </div>
 
                 <p className="mt-2.5 text-[9px] leading-5 text-zinc-200/90 sm:text-[10px]">
@@ -549,16 +575,25 @@ export default function HomePage() {
                   ))}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setIsTicketModalOpen(true)}
-                  className={`ticket-buy-button mt-3 inline-flex h-[50px] w-full items-center justify-between rounded-2xl bg-white px-5 text-[9px] font-black uppercase tracking-[0.2em] text-black shadow-[0_12px_34px_rgba(255,255,255,0.12)] transition hover:bg-pink-100 sm:h-[52px] ${
-                    isTicketPulse ? "ticket-button-pulse" : ""
-                  }`}
-                >
-                  Comprar entrada
-                  <ArrowRight className="h-4 w-4" />
-                </button>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowEventModal(true)}
+                    className="inline-flex h-[50px] items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-[8px] font-black uppercase tracking-[0.2em] text-white transition hover:border-pink-400/30 hover:bg-pink-500/10 hover:text-pink-300 sm:h-[52px]"
+                  >
+                    <MapPin className="h-3.5 w-3.5" /> Ver evento
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsTicketModalOpen(true)}
+                    className={`ticket-buy-button inline-flex h-[50px] items-center justify-between rounded-2xl bg-white px-5 text-[9px] font-black uppercase tracking-[0.2em] text-black shadow-[0_12px_34px_rgba(255,255,255,0.12)] transition hover:bg-pink-100 sm:h-[52px] ${
+                      isTicketPulse ? "ticket-button-pulse" : ""
+                    }`}
+                  >
+                    Comprar entrada
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -617,7 +652,7 @@ export default function HomePage() {
             <div className="relative z-10">
               <p className="inline-flex items-center gap-2 rounded-full border border-pink-300/20 bg-pink-500/[0.08] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.3em] text-pink-300">
                 <Ticket className="h-3.5 w-3.5" />
-                Tu entrada empieza aqui
+                Access info
               </p>
               <h2 className="mt-4 text-4xl font-black uppercase leading-[0.9] tracking-[-0.05em] text-white sm:text-5xl">
                 Acceso
@@ -756,6 +791,95 @@ export default function HomePage() {
                 X
               </button>
               <AccessDrop />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Event info modal */}
+      <AnimatePresence>
+        {showEventModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[28px] border border-white/[0.08] bg-black shadow-[0_30px_120px_rgba(0,0,0,0.7)]"
+            >
+              <button
+                onClick={() => setShowEventModal(false)}
+                className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/70 text-white/60 transition hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+
+              <div className="relative aspect-[4/3] overflow-hidden rounded-t-[28px] bg-zinc-900">
+                <img
+                  src={VENUE_PHOTOS[eventPhotoIndex]}
+                  alt="Lugar del evento"
+                  className="h-full w-full object-cover transition-opacity duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
+                  {VENUE_PHOTOS.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setEventPhotoIndex(i)}
+                      className={`h-1.5 rounded-full transition-all ${i === eventPhotoIndex ? "w-6 bg-pink-300" : "w-1.5 bg-white/40 hover:bg-white/60"}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-6 space-y-5">
+                <div>
+                  <h3 className="text-lg font-black uppercase tracking-wider text-white">San Juan, Ecuador</h3>
+                  <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-400">Casa privada · Dirección confirmada al comprar</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
+                    <p className="text-lg">📸</p>
+                    <p className="mt-1 text-[7px] font-black uppercase tracking-wider text-zinc-300">Photo spot</p>
+                  </div>
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
+                    <p className="text-lg">🎧</p>
+                    <p className="mt-1 text-[7px] font-black uppercase tracking-wider text-zinc-300">Sonido envolvente</p>
+                  </div>
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
+                    <p className="text-lg">🍸</p>
+                    <p className="mt-1 text-[7px] font-black uppercase tracking-wider text-zinc-300">Barra libre</p>
+                  </div>
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
+                    <p className="text-lg">🔒</p>
+                    <p className="mt-1 text-[7px] font-black uppercase tracking-wider text-zinc-300">Acceso controlado</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <a
+                    href="https://maps.google.com/?q=San+Juan+Ecuador"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-pink-500 text-[9px] font-black uppercase tracking-[0.2em] text-white transition hover:bg-pink-400"
+                  >
+                    <Navigation className="h-4 w-4" /> Abrir en Google Maps
+                  </a>
+                  <button
+                    onClick={() => {
+                      navigator.share?.({ title: "DAWGS - TRAP LOUD", text: `${featuredEvent.title} · ${featuredEvent.dateLabel} · ${featuredEvent.city}`, url: window.location.href });
+                    }}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300 transition hover:border-pink-400/30 hover:text-pink-300"
+                  >
+                    <Share2 className="h-3.5 w-3.5" /> Compartir evento
+                  </button>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         )}

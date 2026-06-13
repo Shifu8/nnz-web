@@ -1,5 +1,6 @@
+import type { AnyMessageContent } from "@whiskeysockets/baileys";
 import { waLogger } from "../whatsapp/logger";
-import { getSocket, startBaileys, logoutBaileys, getConnectionInfo, waitForConnection, waitForConnectionReady, validateNumber, isReady } from "../whatsapp/baileys";
+import { getSocket, startBaileys, logoutBaileys, getConnectionInfo, waitForConnectionReady, validateNumber, isReady } from "../whatsapp/baileys";
 import { addToQueue, startQueue } from "../whatsapp/messageQueue";
 
 let initialized = false;
@@ -17,7 +18,7 @@ export async function initWhatsApp() {
     return;
   }
 
-  startQueue(async (jid: string, content: any) => {
+  startQueue(async (jid: string, content: AnyMessageContent) => {
     const s = getSocket();
     if (!s) throw new Error("Socket not available");
     await s.sendMessage(jid, content, { mediaUploadTimeoutMs: 120_000 });
@@ -52,19 +53,19 @@ export async function logout() {
 }
 
 export function sendTicketMessage(jid: string, text: string) {
-  addToQueue({ jid, text, type: "text" });
+  return addToQueue({ jid, text, type: "text" });
 }
 
 export function sendTicketImage(jid: string, imageUrl: string, caption: string) {
-  addToQueue({ jid, text: caption, imageUrl, type: "image" });
+  return addToQueue({ jid, text: caption, imageUrl, type: "image" });
 }
 
 export function sendTicketDocument(jid: string, documentUrl: string, fileName: string, caption: string) {
-  addToQueue({ jid, text: caption, documentUrl, fileName, type: "document" });
+  return addToQueue({ jid, text: caption, documentUrl, fileName, type: "document" });
 }
 
 export function sendTicketDocumentBuffer(jid: string, documentBuffer: Buffer, fileName: string, caption: string) {
-  addToQueue({ jid, text: caption, documentBuffer, fileName, type: "document-buffer" });
+  return addToQueue({ jid, text: caption, documentBuffer, fileName, type: "document-buffer" });
 }
 
 export function sendTicketDocumentWithTextFirst(
@@ -74,8 +75,8 @@ export function sendTicketDocumentWithTextFirst(
   caption: string,
   preamble = "📄 Preparando tu entrada digital...",
   preambleDelayMs = 8_000,
-) {
-  addToQueue({
+): string {
+  return addToQueue({
     jid,
     text: caption,
     preamble,

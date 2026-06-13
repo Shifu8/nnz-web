@@ -7,20 +7,34 @@ export type WhatsAppResult = {
   success: boolean;
   error?: string;
   messageId?: string;
+  queued?: boolean;
+  normalizedPhone?: string;
 };
 
-function ecuadorPhoneE164(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (phone.startsWith("+")) return phone;
-  if (digits.startsWith("593")) return `+${digits}`;
-  if (digits.startsWith("0")) return `+593${digits.slice(1)}`;
-  return `+593${digits}`;
+export function normalizeEcuadorMobile(phone: string): string | null {
+  let digits = phone.replace(/\D/g, "");
+
+  if (digits.startsWith("5930")) {
+    digits = `593${digits.slice(4)}`;
+  } else if (digits.startsWith("0")) {
+    digits = `593${digits.slice(1)}`;
+  } else if (!digits.startsWith("593")) {
+    digits = `593${digits}`;
+  }
+
+  if (!/^5939\d{8}$/.test(digits)) return null;
+  return `+${digits}`;
 }
 
 async function sendViaBaileysBackend(phone: string, text: string, imageUrl?: string): Promise<WhatsAppResult | null> {
   if (!BACKEND_URL) return null;
+  const normalizedPhone = normalizeEcuadorMobile(phone);
+  if (!normalizedPhone) {
+    return { success: false, error: "Numero celular ecuatoriano invalido" };
+  }
+
   try {
-    const body: Record<string, unknown> = { phone: ecuadorPhoneE164(phone), text };
+    const body: Record<string, unknown> = { phone: normalizedPhone, text };
     if (imageUrl) body.imageUrl = imageUrl;
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (BACKEND_API_KEY) headers["x-api-key"] = BACKEND_API_KEY;
@@ -31,12 +45,31 @@ async function sendViaBaileysBackend(phone: string, text: string, imageUrl?: str
       signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) {
-      secureLog("[WHATSAPP] Baileys backend error", { status: res.status, phone });
-      return null;
+      const data = (await res.json().catch(() => ({}))) as { message?: string; error?: string };
+      const error = data.message || data.error || `Baileys backend error: ${res.status}`;
+      secureLog("[WHATSAPP] Baileys backend error", {
+        status: res.status,
+        phone: normalizedPhone,
+        error,
+      });
+      return { success: false, error, normalizedPhone };
     }
-    const data = await res.json();
-    secureLog("[WHATSAPP] Baileys backend queued", { phone, queueLength: data.queueLength });
-    return { success: true, messageId: `baileys-queue-${Date.now()}` };
+    const data = (await res.json()) as {
+      queueId?: string;
+      normalizedPhone?: string;
+      queueLength?: number;
+    };
+    secureLog("[WHATSAPP] Baileys backend queued", {
+      phone: normalizedPhone,
+      queueId: data.queueId,
+      queueLength: data.queueLength,
+    });
+    return {
+      success: true,
+      queued: true,
+      messageId: data.queueId || `baileys-queue-${Date.now()}`,
+      normalizedPhone: data.normalizedPhone || normalizedPhone.replace(/^\+/, ""),
+    };
   } catch {
     secureLog("[WHATSAPP] Baileys backend unreachable", { phone });
     return null;
@@ -45,21 +78,42 @@ async function sendViaBaileysBackend(phone: string, text: string, imageUrl?: str
 
 async function sendDocumentViaBaileysBackend(phone: string, text: string, filePath: string, fileName: string): Promise<WhatsAppResult | null> {
   if (!BACKEND_URL) return null;
+  const normalizedPhone = normalizeEcuadorMobile(phone);
+  if (!normalizedPhone) {
+    return { success: false, error: "Numero celular ecuatoriano invalido" };
+  }
+
   try {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (BACKEND_API_KEY) headers["x-api-key"] = BACKEND_API_KEY;
     const res = await fetch(`${BACKEND_URL}/api/whatsapp/send`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ phone: ecuadorPhoneE164(phone), text, filePath, fileName }),
+      body: JSON.stringify({ phone: normalizedPhone, text, filePath, fileName }),
       signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) {
-      secureLog("[WHATSAPP] Baileys document backend error", { status: res.status, phone });
-      return { success: false, error: `Baileys backend error: ${res.status}` };
+      const data = (await res.json().catch(() => ({}))) as { message?: string; error?: string };
+      const error = data.message || data.error || `Baileys backend error: ${res.status}`;
+      secureLog("[WHATSAPP] Baileys document backend error", {
+        status: res.status,
+        phone: normalizedPhone,
+        error,
+      });
+      return { success: false, error, normalizedPhone };
     }
-    secureLog("[WHATSAPP] Baileys document queued", { phone, fileName });
-    return { success: true, messageId: `baileys-doc-${Date.now()}` };
+    const data = (await res.json()) as { queueId?: string; normalizedPhone?: string };
+    secureLog("[WHATSAPP] Baileys document queued", {
+      phone: normalizedPhone,
+      fileName,
+      queueId: data.queueId,
+    });
+    return {
+      success: true,
+      queued: true,
+      messageId: data.queueId || `baileys-doc-${Date.now()}`,
+      normalizedPhone: data.normalizedPhone || normalizedPhone.replace(/^\+/, ""),
+    };
   } catch {
     secureLog("[WHATSAPP] Baileys backend unreachable for document", { phone });
     return { success: false, error: "Baileys backend unreachable" };
@@ -95,7 +149,7 @@ export async function sendWhatsAppText(phone: string, message: string): Promise<
 }
 
 export function createWhatsAppLink(phone: string, text?: string): string {
-  const to = ecuadorPhoneE164(phone).replace(/^\+/, "");
+  const to = normalizeEcuadorMobile(phone)?.replace(/^\+/, "") || "";
   const url = `https://wa.me/${to}`;
   if (text) return `${url}?text=${encodeURIComponent(text)}`;
   return url;

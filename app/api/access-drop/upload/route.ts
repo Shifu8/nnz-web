@@ -14,6 +14,7 @@ import { processReceiptImage } from "@/lib/access-drop/ocr";
 import type { PaymentMethod, ReceiptRecord } from "@/lib/access-drop/types";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { ApiError } from "@/lib/security";
+import { getActiveTicketEvent } from "@/lib/tickets/activeEvent";
 
 export async function POST(request: NextRequest) {
   try {
@@ -83,6 +84,7 @@ export async function POST(request: NextRequest) {
 
     const record: ReceiptRecord = {
       id: uuidv4(),
+      eventId: getActiveTicketEvent().id,
       firstName: sanitizeString(firstName.toUpperCase()),
       lastName: sanitizeString(lastName.toUpperCase()),
       phone: phone.replace(/\D/g, ""),

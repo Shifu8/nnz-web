@@ -13,6 +13,13 @@ type TurnstileResponse = {
 
 const SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
+function shouldVerifyTurnstile(): boolean {
+  return (
+    process.env.NODE_ENV === "production" ||
+    process.env.TURNSTILE_IN_DEVELOPMENT === "true"
+  );
+}
+
 function secretForVariant(variant: TurnstileVariant): string {
   if (variant === "invisible") {
     return (
@@ -42,6 +49,10 @@ export async function verifyTurnstileToken(
   token: string | null | undefined,
   options: { variant: TurnstileVariant; action: string },
 ): Promise<TurnstileResponse> {
+  if (!shouldVerifyTurnstile()) {
+    return { success: true, action: options.action };
+  }
+
   const secret = secretForVariant(options.variant);
 
   if (!secret) {

@@ -25,9 +25,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: result.error }, { status: 500 });
     }
 
-    secureLog("[TEST-WHATSAPP] Sent", { messageId: result.messageId });
+    secureLog("[TEST-WHATSAPP] Queued", {
+      messageId: result.messageId,
+      normalizedPhone: result.normalizedPhone,
+    });
 
-    return NextResponse.json({ success: true, messageId: result.messageId, backend: "baileys" });
+    return NextResponse.json({
+      success: true,
+      status: "queued",
+      messageId: result.messageId,
+      normalizedPhone: result.normalizedPhone,
+      backend: "baileys",
+    });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Error desconocido";
     secureLog("[TEST-WHATSAPP] Error", { error: msg });

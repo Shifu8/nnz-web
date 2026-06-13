@@ -16,6 +16,7 @@ export type OcrResult = {
 
 export type ReceiptRecord = {
   id: string;
+  eventId?: string;
   firstName: string;
   lastName: string;
   phone: string;
@@ -39,6 +40,7 @@ export type ReceiptRecord = {
   deliveryChannel?: "gmail" | "whatsapp" | "none";
   deliveryStatus?: string;
   emailSentAt?: string;
+  whatsappQueuedAt?: string;
   whatsappSentAt?: string;
   passScannedAt?: string;
   passScannedBy?: string;

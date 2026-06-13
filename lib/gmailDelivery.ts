@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
+import { createTransport } from "nodemailer";
 import { secureLog } from "./security";
 
 const GMAIL_USAGE_PATH = path.join(process.cwd(), "data", "gmail-usage.json");
@@ -31,6 +32,10 @@ type TicketPdfEmailInput = {
   serialNumber: string;
   quantity: number;
   pdfBuffer: Buffer;
+  eventTitle?: string;
+  eventName?: string;
+  eventDate?: string;
+  eventVenue?: string;
 };
 
 type GmailAttachment = {
@@ -48,7 +53,14 @@ type GmailMessageInput = {
 };
 
 function gmailUser(): string {
-  return (process.env.GMAIL_USER || process.env.SMTP_USER || DEFAULT_GMAIL_USER).trim().toLowerCase();
+  return (
+    process.env.SMTP_USER ||
+    process.env.GMAIL_USER ||
+    process.env.GMAIL_SENDER_EMAIL ||
+    DEFAULT_GMAIL_USER
+  )
+    .trim()
+    .toLowerCase();
 }
 
 function gmailFrom(): string {
@@ -143,6 +155,10 @@ function ticketHtml(input: TicketPdfEmailInput): string {
   const fullName = escapeHtml(`${input.firstName} ${input.lastName}`.trim());
   const serial = escapeHtml(input.serialNumber);
   const quantity = Math.max(1, Number(input.quantity) || 1);
+  const eventTitle = escapeHtml(input.eventTitle || "TRAP LOUD");
+  const eventName = escapeHtml(input.eventName || "YAN BLOCK EXPERIENCE");
+  const eventDate = escapeHtml(input.eventDate || "18 JUN 2026");
+  const eventVenue = escapeHtml(input.eventVenue || "San Juan");
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -160,7 +176,7 @@ function ticketHtml(input: TicketPdfEmailInput): string {
             <td style="padding:30px 24px 18px;text-align:center;">
               <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:#ff8acb;">DAWGS</p>
               <h1 style="margin:12px 0 0;font-size:26px;line-height:1;font-weight:900;letter-spacing:-1px;text-transform:uppercase;color:#ffffff;">Tu entrada esta lista</h1>
-              <p style="margin:10px 0 0;font-size:12px;color:#b8a9b4;">TRAP LOUD - YAN BLOCK EXPERIENCE</p>
+              <p style="margin:10px 0 0;font-size:12px;color:#b8a9b4;">${eventTitle} - ${eventName}</p>
             </td>
           </tr>
           <tr>
@@ -180,7 +196,7 @@ function ticketHtml(input: TicketPdfEmailInput): string {
                       <tr>
                         <td style="padding:8px 0;border-top:1px solid rgba(255,255,255,0.06);">
                           <p style="margin:0;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#725d6b;">Evento</p>
-                          <p style="margin:4px 0 0;font-size:13px;font-weight:800;color:#ffffff;">18 JUN 2026 - San Juan - ${quantity} entrada${quantity === 1 ? "" : "s"}</p>
+                          <p style="margin:4px 0 0;font-size:13px;font-weight:800;color:#ffffff;">${eventDate} - ${eventVenue} - ${quantity} entrada${quantity === 1 ? "" : "s"}</p>
                         </td>
                       </tr>
                     </table>
@@ -240,6 +256,19 @@ function isGmailApiConfigured(): boolean {
   );
 }
 
+function isSmtpConfigured(): boolean {
+  return Boolean(
+    (process.env.SMTP_USER || process.env.GMAIL_USER)?.trim() &&
+      (process.env.SMTP_PASS || process.env.GMAIL_PASS)?.trim(),
+  );
+}
+
+function emailProvider(): "gmail-api" | "smtp" | "none" {
+  if (isGmailApiConfigured()) return "gmail-api";
+  if (isSmtpConfigured()) return "smtp";
+  return "none";
+}
+
 async function getAccessToken(): Promise<string> {
   const clientId = process.env.GMAIL_CLIENT_ID?.trim();
   const clientSecret = process.env.GMAIL_CLIENT_SECRET?.trim();
@@ -267,12 +296,64 @@ async function getAccessToken(): Promise<string> {
   return data.access_token;
 }
 
+async function sendViaGmailApi(input: GmailMessageInput): Promise<string | undefined> {
+  const accessToken = await getAccessToken();
+  const raw = toBase64Url(buildMimeMessage(input));
+  const response = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ raw }),
+  });
+  const data = (await response.json().catch(() => ({}))) as {
+    id?: string;
+    error?: { message?: string };
+  };
+
+  if (!response.ok) {
+    throw new Error(data.error?.message || `GMAIL_SEND_${response.status}`);
+  }
+
+  return data.id;
+}
+
+async function sendViaSmtp(input: GmailMessageInput): Promise<string | undefined> {
+  const user = (process.env.SMTP_USER || process.env.GMAIL_USER || "").trim();
+  const pass = (process.env.SMTP_PASS || process.env.GMAIL_PASS || "").trim();
+  if (!user || !pass) throw new Error("SMTP_NOT_CONFIGURED");
+
+  const port = Number.parseInt(process.env.SMTP_PORT || "465", 10);
+  const transport = createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: Number.isFinite(port) ? port : 465,
+    secure: (Number.isFinite(port) ? port : 465) === 465,
+    auth: { user, pass },
+  });
+
+  const result = await transport.sendMail({
+    from: gmailFrom(),
+    to: input.to,
+    subject: cleanHeader(input.subject),
+    html: input.html,
+    attachments: (input.attachments || []).map((attachment) => ({
+      filename: cleanHeader(attachment.filename),
+      contentType: cleanHeader(attachment.contentType),
+      content: attachment.content,
+    })),
+  });
+
+  return result.messageId;
+}
+
 async function sendGmailMessageWithLimit(input: GmailMessageInput): Promise<GmailDeliveryResult> {
   const account = gmailUser();
   const limit = dailyLimit();
   const dateKey = ecuadorDateKey();
   const sentToday = getSentToday(account, dateKey);
   const to = input.to.trim().toLowerCase();
+  const provider = emailProvider();
 
   if (!isValidEmail(to)) {
     return { attempted: false, success: false, reason: "missing-email", sentToday, dailyLimit: limit };
@@ -282,46 +363,47 @@ async function sendGmailMessageWithLimit(input: GmailMessageInput): Promise<Gmai
     return { attempted: false, success: false, reason: "daily-limit", sentToday, dailyLimit: limit };
   }
 
-  if (!isGmailApiConfigured()) {
-    return { attempted: false, success: false, reason: "gmail-api-not-configured", sentToday, dailyLimit: limit };
+  if (provider === "none") {
+    return {
+      attempted: false,
+      success: false,
+      reason: "email-provider-not-configured",
+      sentToday,
+      dailyLimit: limit,
+    };
   }
 
   try {
-    const accessToken = await getAccessToken();
-    const raw = toBase64Url(buildMimeMessage({ ...input, to }));
-    const response = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ raw }),
-    });
-    const data = (await response.json().catch(() => ({}))) as { id?: string; error?: { message?: string } };
-
-    if (!response.ok) {
-      throw new Error(data.error?.message || `GMAIL_SEND_${response.status}`);
-    }
+    const messageId =
+      provider === "gmail-api"
+        ? await sendViaGmailApi({ ...input, to })
+        : await sendViaSmtp({ ...input, to });
 
     const nextCount = incrementSentToday(account, dateKey);
-    secureLog("[GMAIL_API] Message sent", {
+    secureLog("[EMAIL] Message sent", {
       email: to,
+      provider,
       label: input.logLabel || "message",
       sentToday: nextCount,
       dailyLimit: limit,
-      messageId: data.id,
+      messageId,
     });
 
     return {
       attempted: true,
       success: true,
-      messageId: data.id,
+      messageId,
       sentToday: nextCount,
       dailyLimit: limit,
     };
   } catch (error) {
-    const reason = error instanceof Error ? error.message : "gmail-api-error";
-    secureLog("[GMAIL_API] Message send failed", { email: to, label: input.logLabel || "message", reason });
+    const reason = error instanceof Error ? error.message : "email-provider-error";
+    secureLog("[EMAIL] Message send failed", {
+      email: to,
+      provider,
+      label: input.logLabel || "message",
+      reason,
+    });
     return { attempted: true, success: false, reason, sentToday, dailyLimit: limit };
   }
 }
@@ -330,7 +412,7 @@ export async function sendTicketPdfViaGmailWithLimit(input: TicketPdfEmailInput)
   const serial = cleanHeader(input.serialNumber);
   return sendGmailMessageWithLimit({
     to: input.to,
-    subject: "Tu entrada DAWGS - TRAP LOUD",
+    subject: `Tu entrada DAWGS - ${cleanHeader(input.eventTitle || "TRAP LOUD")}`,
     html: ticketHtml(input),
     logLabel: "ticket-pdf",
     attachments: [
@@ -377,7 +459,7 @@ function recoveryOtpHtml(code: string): string {
 export async function sendRecoveryOtpViaGmail(to: string, code: string): Promise<GmailDeliveryResult> {
   return sendGmailMessageWithLimit({
     to,
-    subject: "Codigo DAWGS para recuperar tu entrada",
+    subject: "Codigo para recuperar tu entrada DAWGS",
     html: recoveryOtpHtml(code),
     logLabel: "recovery-otp",
   });
@@ -387,9 +469,16 @@ export function getGmailDeliveryDiagnostics() {
   const account = gmailUser();
   const dateKey = ecuadorDateKey();
   const limit = dailyLimit();
+  const provider = emailProvider();
   return {
-    configured: isGmailApiConfigured(),
+    configured: provider !== "none",
+    provider,
     account,
+    smtpHost: provider === "smtp" ? process.env.SMTP_HOST || "smtp.gmail.com" : undefined,
+    smtpPort:
+      provider === "smtp"
+        ? Number.parseInt(process.env.SMTP_PORT || "465", 10)
+        : undefined,
     sentToday: getSentToday(account, dateKey),
     dailyLimit: limit,
   };

@@ -6,8 +6,6 @@ import {
   ChevronLeft,
   Zap,
   ShieldAlert,
-  MapPin,
-  Calendar,
   Minus,
   Plus,
   Building2,
@@ -17,6 +15,9 @@ import {
   FileCheck,
   Loader2,
   CheckCircle,
+  Navigation,
+  Share2,
+  X,
 } from "lucide-react";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
 import { events } from "@/frontend/services/dawgsData";
@@ -35,10 +36,10 @@ import {
 const EVENT = events[0];
 const PRICE_PER_TICKET = 10;
 
-const SPONSORS = [
-  { name: "Kyoto Sushi", color: "text-pink-400", border: "border-pink-400/20", emoji: "🍣" },
-  { name: "Iron Athletics", color: "text-zinc-300", border: "border-zinc-500/20", emoji: "💪" },
-  { name: "Zen Fisio", color: "text-blue-400", border: "border-blue-500/20", emoji: "🧘" },
+const VENUE_PHOTOS = [
+  "/images/trap_loud_trio_artists.png",
+  "/images/trap_loud_trio_artists.png",
+  "/images/trap_loud_trio_artists.png",
 ];
 
 const TICKET_DESIGNS = [
@@ -61,13 +62,12 @@ const BANKS = [
   },
 ];
 
-type DropState = "intro" | "register" | "success";
+type DropState = "register" | "success";
 
 export default function AccessDrop({ onClose }: { onClose?: () => void }) {
   const scope = useRef<HTMLElement>(null);
-  const introPanelRef = useRef<HTMLDivElement>(null);
 
-  const [dropState, setDropState] = useState<DropState>("intro");
+  const [dropState, setDropState] = useState<DropState>("register");
   const [formData, setFormData] = useState({ firstName: "", lastName: "", phone: "", email: "" });
   const [quantity, setQuantity] = useState(1);
   const [selectedBank, setSelectedBank] = useState("banco-loja");
@@ -82,8 +82,9 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
-
   const [receiptId, setReceiptId] = useState<string | null>(null);
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [eventPhotoIndex, setEventPhotoIndex] = useState(0);
 
   const countdown = useCountdown(EVENT.startsAt);
   const emailHint = getEmailHint(formData.email);
@@ -106,6 +107,14 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
   }, []);
 
   useEffect(() => {
+    if (!showEventModal) return;
+    const timer = setInterval(() => {
+      setEventPhotoIndex((i) => (i + 1) % VENUE_PHOTOS.length);
+    }, 3500);
+    return () => clearInterval(timer);
+  }, [showEventModal]);
+
+  useEffect(() => {
     saveCheckoutDraft({ ...formData, quantity: quantity.toString(), selectedDesign: selectedDesign.toString() });
   }, [formData, quantity, selectedDesign]);
 
@@ -119,12 +128,6 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
     },
     { scope, dependencies: [dropState] },
   );
-
-  const goToRegister = () => {
-    setErrorMsg("");
-    setStep(1);
-    setDropState("register");
-  };
 
   const handleFileSelect = (file: File | null) => {
     setErrorMsg("");
@@ -211,85 +214,10 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
 
   const totalPrice = quantity * PRICE_PER_TICKET;
 
-  const renderIntro = () => (
-    <div ref={introPanelRef} className="relative z-10 w-full max-w-lg mx-auto">
-      {onClose && (
-        <button onClick={onClose} className="glass-pill glass-pill-red absolute right-3 top-3 z-50">
-          <ChevronLeft className="h-3 w-3" /> SALIR
-        </button>
-      )}
-      <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-black/60 shadow-[0_0_60px_rgba(255,0,24,.1)]">
-        <div className="absolute inset-0">
-          <img src={EVENT.poster} alt="" className="h-full w-full object-cover opacity-30 mix-blend-luminosity" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
-        </div>
-        <div className="relative p-6 md:p-8">
-          <div className="flex items-center gap-2 rounded-full border border-pink-400/30 bg-pink-950/40 px-3 py-1.5 w-fit text-[9px] font-black uppercase tracking-[0.3em] text-pink-100">
-            <Zap className="h-3 w-3 text-pink-300" /> DAWGS ACCESS
-          </div>
-          <div className="mt-5 flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-4xl md:text-5xl font-black text-white uppercase leading-none">{EVENT.title}</h2>
-              <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.35em] text-pink-300">{EVENT.subtitle}</p>
-            </div>
-            <div className="shrink-0 rounded-xl border border-white/10 bg-black/60 px-4 py-2.5 text-center">
-              <p className="text-xl font-black text-[#C8FF00]">${PRICE_PER_TICKET}</p>
-              <p className="text-[7px] font-bold uppercase tracking-widest text-zinc-500">USD</p>
-            </div>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2 text-[9px] font-black uppercase tracking-widest text-zinc-400">
-            <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1">
-              <MapPin className="h-3 w-3 text-pink-300" /> {EVENT.city}
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1">
-              <Calendar className="h-3 w-3 text-pink-300" /> {EVENT.dateLabel}
-            </span>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            {EVENT.lineup.map((artist) => (
-              <span key={artist} className="rounded border border-pink-400/20 bg-pink-950/30 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-pink-100">
-                {artist}
-              </span>
-            ))}
-          </div>
-          {!countdown.expired && (
-            <div className="mt-5 rounded-2xl border border-white/10 bg-black/60 p-5">
-              <p className="text-[8px] font-black uppercase tracking-[0.4em] text-zinc-500 mb-3 text-center">Tiempo para el evento</p>
-              <div className="grid grid-cols-4 gap-2">
-                {(["days", "hours", "minutes", "seconds"] as const).map((unit) => (
-                  <div key={unit} className="flex flex-col items-center rounded-xl border border-white/[0.06] bg-white/[0.03] py-2.5">
-                    <span className="text-xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,.15)]">{countdown[unit]}</span>
-                    <span className="text-[7px] font-bold uppercase tracking-widest text-zinc-600">{unit}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3">
-            <p className="text-[8px] font-black uppercase tracking-[0.4em] text-zinc-500 mb-2 text-center">Patrocinadores</p>
-            <div className="grid grid-cols-2 gap-2">
-              {SPONSORS.map((s) => (
-                <div key={s.name} className={`flex items-center gap-2 rounded-lg border ${s.border} bg-black/30 px-2.5 py-1.5`}>
-                  <span className="text-xs">{s.emoji}</span>
-                  <span className="text-[8px] font-black uppercase tracking-wider text-white">{s.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <button onClick={goToRegister} className="glass-action glass-action-primary mt-5 w-full justify-between" style={{ "--glass-action-height": "56px", "--glass-action-px": "1.5rem", "--glass-action-text": "0.82rem" } as CSSProperties}>
-            <span>COMPRAR ENTRADA</span>
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <section id="ticket-flow" ref={scope} className="relative z-10 mx-auto flex w-full justify-center px-3 py-8 sm:px-4 md:py-14">
       <div className="relative w-full max-w-6xl">
-        {dropState === "intro" && renderIntro()}
-
         {dropState === "register" && (
           <div className="relative z-10 w-full max-w-5xl mx-auto">
             {onClose && (
@@ -356,11 +284,6 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                 <div className="mt-8 flex justify-center">
                   <button type="button" onClick={() => setStep(2)} className="glass-action glass-action-primary" style={{ "--glass-action-height": "48px", "--glass-action-px": "2.5rem", "--glass-action-text": "0.82rem" } as CSSProperties}>
                     SIGUIENTE <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-                <div className="mt-4 flex justify-center">
-                  <button type="button" onClick={() => setDropState("intro")} className="glass-action glass-action-quiet text-zinc-400" style={{ "--glass-action-height": "36px", "--glass-action-px": "1.5rem", "--glass-action-text": "0.6rem" } as CSSProperties}>
-                    &larr; volver al evento
                   </button>
                 </div>
               </div>
@@ -581,6 +504,84 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
                 </form>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Event info modal */}
+        {showEventModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md">
+            <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[28px] border border-white/[0.08] bg-black shadow-[0_30px_120px_rgba(0,0,0,0.7)]">
+              <button
+                onClick={() => setShowEventModal(false)}
+                className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/70 text-white/60 transition hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+
+              {/* Photo slideshow */}
+              <div className="relative aspect-[4/3] overflow-hidden rounded-t-[28px] bg-zinc-900">
+                <img
+                  src={VENUE_PHOTOS[eventPhotoIndex]}
+                  alt="Lugar del evento"
+                  className="h-full w-full object-cover transition-opacity duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
+                  {VENUE_PHOTOS.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setEventPhotoIndex(i)}
+                      className={`h-1.5 rounded-full transition-all ${i === eventPhotoIndex ? "w-6 bg-pink-300" : "w-1.5 bg-white/40 hover:bg-white/60"}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-6 space-y-5">
+                <div>
+                  <h3 className="text-lg font-black uppercase tracking-wider text-white">San Juan, Ecuador</h3>
+                  <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-400">Casa privada · Dirección confirmada al comprar</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
+                    <p className="text-lg">📸</p>
+                    <p className="mt-1 text-[7px] font-black uppercase tracking-wider text-zinc-300">Photo spot</p>
+                  </div>
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
+                    <p className="text-lg">🎧</p>
+                    <p className="mt-1 text-[7px] font-black uppercase tracking-wider text-zinc-300">Sonido envolvente</p>
+                  </div>
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
+                    <p className="text-lg">🍸</p>
+                    <p className="mt-1 text-[7px] font-black uppercase tracking-wider text-zinc-300">Barra libre</p>
+                  </div>
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
+                    <p className="text-lg">🔒</p>
+                    <p className="mt-1 text-[7px] font-black uppercase tracking-wider text-zinc-300">Acceso controlado</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <a
+                    href="https://maps.google.com/?q=San+Juan+Ecuador"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-pink-500 text-[9px] font-black uppercase tracking-[0.2em] text-white transition hover:bg-pink-400"
+                  >
+                    <Navigation className="h-4 w-4" /> Abrir en Google Maps
+                  </a>
+                  <button
+                    onClick={() => {
+                      navigator.share?.({ title: "DAWGS - TRAP LOUD", text: `${EVENT.title} · ${EVENT.dateLabel} · ${EVENT.city}`, url: window.location.href });
+                    }}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300 transition hover:border-pink-400/30 hover:text-pink-300"
+                  >
+                    <Share2 className="h-3.5 w-3.5" /> Compartir evento
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
