@@ -40,9 +40,8 @@ import StaffModal from "@/frontend/features/staff/StaffModal";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
 import { events as fallbackEvents } from "@/frontend/services/dawgsData";
 import { useCountdown } from "@/frontend/hooks/useCountdown";
+import { useHomepageConfig } from "@/frontend/hooks/useHomepageConfig";
 import type { Event } from "@/frontend/types/domain";
-
-const TICKET_PRICE = 10;
 
 const HOME_NAV_ITEMS = [
   { id: "show", label: "Show" },
@@ -60,18 +59,11 @@ type Cover = {
   delay: number;
 };
 
-const ARTISTS = [
-  { first: "Yan", second: "Block", gradient: "from-pink-200 via-pink-500 to-fuchsia-700" },
-  { first: "Omar", second: "Courtz", gradient: "from-blue-200 via-blue-400 to-purple-600" },
-  { first: "ROA", second: "", gradient: "from-amber-200 via-amber-400 to-orange-600" },
-];
-
-const FEATURED_SPONSORS = [
-  { initials: "KS", name: "Kyoto Sushi" },
-  { initials: "IA", name: "Iron Athletics" },
-] as const;
-
-const DAWG_DJ = { name: "DAWG DJ", instagram: "brandon.mdna" };
+const ARTIST_GRADIENTS: Record<string, string> = {
+  "Yan": "from-pink-200 via-pink-500 to-fuchsia-700",
+  "Omar": "from-blue-200 via-blue-400 to-purple-600",
+  "ROA": "from-amber-200 via-amber-400 to-orange-600",
+};
 
 const VENUE_PHOTOS = [
   "/images/trap_loud_trio_artists.png",
@@ -141,13 +133,19 @@ export default function HomePage() {
   const [artistIndex, setArtistIndex] = useState(0);
   const [showEventModal, setShowEventModal] = useState(false);
   const [eventPhotoIndex, setEventPhotoIndex] = useState(0);
+  const { config } = useHomepageConfig();
+
+  const ARTISTS = config.hero.artistNames.map((a) => ({
+    ...a,
+    gradient: ARTIST_GRADIENTS[a.first] || "from-pink-200 via-pink-500 to-fuchsia-700",
+  }));
 
   useEffect(() => {
     const timer = setInterval(() => {
       setArtistIndex((i) => (i + 1) % ARTISTS.length);
     }, 7000);
     return () => clearInterval(timer);
-  }, []);
+  }, [ARTISTS.length]);
 
   useEffect(() => {
     if (!showEventModal) return;
@@ -417,7 +415,7 @@ export default function HomePage() {
             <div className="hero-reveal relative z-30 order-1 flex flex-col pt-1 text-center lg:block lg:pt-0 lg:text-left">
 
               <p className="mt-6 text-[11px] font-black uppercase tracking-[0.52em] text-zinc-400 sm:text-xs">
-                DAWGS presenta
+                {config.hero.tagline}
               </p>
               <div className="relative mt-3 h-[8.8rem] overflow-visible sm:h-[10.2rem] lg:h-[11.2rem] xl:h-[13.2rem]">
                 <AnimatePresence mode="wait">
@@ -448,7 +446,7 @@ export default function HomePage() {
                 </AnimatePresence>
               </div>
               <p className="mx-auto mt-5 max-w-sm text-xs leading-6 text-zinc-400 lg:hidden">
-                Trap latino, bajos pesados y una noche diseñada para sentirse cerca del artista.
+                {config.hero.mobileDescription}
               </p>
               <div className="mt-6 flex flex-wrap justify-center gap-2 lg:hidden">
                 {featuredEvent.lineup.slice(0, 4).map((artist) => (
@@ -474,24 +472,24 @@ export default function HomePage() {
                   <div>
                     <p className="inline-flex items-center gap-2 rounded-full border border-pink-200/35 bg-pink-500/18 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.2em] text-pink-50 shadow-[0_0_24px_rgba(255,72,170,0.12)]">
                       <Ticket className="h-3 w-3" />
-                      Entrada oficial
+                      {config.ticketCard.badge}
                       <span className="h-1 w-1 rounded-full bg-pink-300/60" />
                       <Sparkles className="h-3 w-3" />
-                      Proximo evento
+                      {config.ticketCard.badgeSub}
                     </p>
                   </div>
                   <div className="rounded-[16px] border border-[#C8FF00]/45 bg-[#C8FF00]/16 px-3 py-2 text-center shadow-[0_0_34px_rgba(200,255,0,0.18)]">
-                    <p className="text-xl font-black leading-none text-[#C8FF00] drop-shadow-[0_0_12px_rgba(200,255,0,0.38)] sm:text-2xl">${TICKET_PRICE}</p>
-                    <p className="mt-1 text-[6px] font-black uppercase tracking-widest text-[#C8FF00]/70">USD</p>
+                    <p className="text-xl font-black leading-none text-[#C8FF00] drop-shadow-[0_0_12px_rgba(200,255,0,0.38)] sm:text-2xl">${config.ticketCard.price}</p>
+                    <p className="mt-1 text-[6px] font-black uppercase tracking-widest text-[#C8FF00]/70">{config.ticketCard.currency}</p>
                   </div>
                 </div>
 
                 <div className="mt-3">
                   <h3 className="text-3xl font-black uppercase leading-[0.88] tracking-[-0.05em] text-white drop-shadow-[0_0_18px_rgba(255,255,255,0.16)] sm:text-4xl">
-                    {featuredEvent.title}
+                    {config.ticketCard.eventTitle}
                   </h3>
                   <p className="mt-1 text-[8px] font-black uppercase tracking-[0.24em] text-pink-200">
-                    {featuredEvent.subtitle}
+                    {config.ticketCard.eventSubtitle}
                   </p>
                 </div>
 
@@ -516,24 +514,24 @@ export default function HomePage() {
                     </span>
                   ))}
                   <a
-                    href={`https://instagram.com/${DAWG_DJ.instagram}`}
+                    href={`https://instagram.com/${config.ticketCard.daWgDj.instagram}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 rounded-full border border-blue-400/30 bg-blue-950/40 px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.17em] text-blue-200 transition hover:bg-blue-900/50"
                   >
-                    <Music2 className="h-2.5 w-2.5" /> {DAWG_DJ.name}
+                    <Music2 className="h-2.5 w-2.5" /> {config.ticketCard.daWgDj.name}
                   </a>
                 </div>
 
                 <p className="mt-2.5 text-[9px] leading-5 text-zinc-200/90 sm:text-[10px]">
-                  Tu entrada empieza aqui: diseno, registro, Gmail y pago. Si no llega, recuperala con tu correo.
+                  {config.ticketCard.description}
                 </p>
 
                 {!ticketCountdown.expired && (
                   <div className="mt-3 rounded-[22px] border border-pink-200/16 bg-black/55 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
                     <p className="mb-2 flex items-center gap-2 text-[7px] font-black uppercase tracking-[0.22em] text-zinc-300">
                       <Clock3 className="h-3 w-3 text-pink-300" />
-                      Tiempo para el evento
+                      {config.ticketCard.countdownLabel}
                     </p>
                     <div className="grid grid-cols-4 gap-1.5">
                       {[
@@ -560,7 +558,7 @@ export default function HomePage() {
                   <p className="mr-1 text-[7px] font-black uppercase tracking-[0.2em] text-zinc-300">
                     Con apoyo de
                   </p>
-                  {FEATURED_SPONSORS.map((sponsor) => (
+                  {config.ticketCard.sponsors.map((sponsor) => (
                     <span
                       key={sponsor.name}
                       className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-pink-200/20 bg-pink-500/14 px-2 py-1"
@@ -581,7 +579,7 @@ export default function HomePage() {
                     onClick={() => setShowEventModal(true)}
                     className="inline-flex h-[50px] items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-[8px] font-black uppercase tracking-[0.2em] text-white transition hover:border-pink-400/30 hover:bg-pink-500/10 hover:text-pink-300 sm:h-[52px]"
                   >
-                    <MapPin className="h-3.5 w-3.5" /> Ver evento
+                    <MapPin className="h-3.5 w-3.5" /> {config.ticketCard.verEventoText}
                   </button>
                   <button
                     type="button"
@@ -590,7 +588,7 @@ export default function HomePage() {
                       isTicketPulse ? "ticket-button-pulse" : ""
                     }`}
                   >
-                    Comprar entrada
+                    {config.ticketCard.comprarEntradaText}
                     <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>
@@ -652,54 +650,38 @@ export default function HomePage() {
             <div className="relative z-10">
               <p className="inline-flex items-center gap-2 rounded-full border border-pink-300/20 bg-pink-500/[0.08] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.3em] text-pink-300">
                 <Ticket className="h-3.5 w-3.5" />
-                Access info
+                {config.accessSection.badge}
               </p>
               <h2 className="mt-4 text-4xl font-black uppercase leading-[0.9] tracking-[-0.05em] text-white sm:text-5xl">
-                Acceso
+                {config.accessSection.headingLine1}
                 <br />
-                protegido.
+                {config.accessSection.headingLine2}
               </h2>
               <p className="mt-5 inline-flex items-center gap-2 text-xl font-black uppercase tracking-[-0.03em] text-white">
                 <LockKeyhole className="h-5 w-5 text-pink-300" />
-                Un QR. Una entrada.
+                {config.accessSection.qrSubtitle}
               </p>
               <p className="mt-5 max-w-lg text-sm leading-7 text-zinc-400">
-                Tu pase se valida una sola vez en puerta. No compartas capturas ni reenvíes el
-                código antes del show.
+                {config.accessSection.description}
               </p>
             </div>
 
             <div className="relative z-10 grid gap-3 sm:grid-cols-3">
               {[
-                {
-                  icon: Ticket,
-                  step: "01",
-                  title: "Compra",
-                  copy: "Completa el flujo y sube tu comprobante.",
-                },
-                {
-                  icon: MessageCircle,
-                  step: "02",
-                  title: "Recibe",
-                  copy: "Tu entrada llega por Gmail y WhatsApp confirma la compra.",
-                },
-                {
-                  icon: ShieldCheck,
-                  step: "03",
-                  title: "Entra",
-                  copy: "El staff escanea tu QR oficial una sola vez. Usado = bloqueado, así evitamos fraudes y reventa.",
-                },
-              ].map(({ icon: Icon, step, title, copy }) => (
+                { icon: Ticket, data: config.accessSection.steps[0] },
+                { icon: MessageCircle, data: config.accessSection.steps[1] },
+                { icon: ShieldCheck, data: config.accessSection.steps[2] },
+              ].map(({ icon: Icon, data }) => (
                 <article
-                  key={step}
+                  key={data.step}
                   className="rounded-[24px] border border-pink-300/[0.08] bg-black/45 p-5 shadow-[0_16px_46px_rgba(0,0,0,0.24)] transition hover:border-pink-300/25 hover:bg-pink-500/[0.055]"
                 >
                   <div className="flex items-center justify-between">
                     <Icon className="h-5 w-5 text-pink-400" />
-                    <span className="text-[8px] font-black tracking-[0.24em] text-zinc-600">{step}</span>
+                    <span className="text-[8px] font-black tracking-[0.24em] text-zinc-600">{data.step}</span>
                   </div>
-                  <h3 className="mt-8 text-lg font-black uppercase text-white">{title}</h3>
-                  <p className="mt-2 text-[10px] leading-5 text-zinc-500">{copy}</p>
+                  <h3 className="mt-8 text-lg font-black uppercase text-white">{data.title}</h3>
+                  <p className="mt-2 text-[10px] leading-5 text-zinc-500">{data.copy}</p>
                 </article>
               ))}
             </div>
@@ -713,8 +695,8 @@ export default function HomePage() {
           <div className="pointer-events-none absolute left-1/2 top-0 h-56 w-[70%] -translate-x-1/2 rounded-full bg-pink-500/12 blur-3xl" />
           <div className="relative z-10 mb-7 flex flex-col items-center justify-center gap-3 text-center">
             <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.36em] text-zinc-500">Después de Yan Block</p>
-              <h2 className="mt-2 text-2xl font-black uppercase text-white sm:text-3xl">Próximas señales</h2>
+              <p className="text-[9px] font-black uppercase tracking-[0.36em] text-zinc-500">{config.nextSignals.preHeading}</p>
+              <h2 className="mt-2 text-2xl font-black uppercase text-white sm:text-3xl">{config.nextSignals.heading}</h2>
             </div>
             <Disc3 className="h-6 w-6 text-pink-400" />
           </div>
@@ -751,17 +733,17 @@ export default function HomePage() {
 
       <footer id="support" className="relative z-10 scroll-mt-24 border-t border-white/[0.06] px-4 py-14 sm:px-6 md:px-12 lg:px-16">
         <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center text-center gap-4">
-          <p className="text-lg font-black uppercase tracking-[0.34em] text-white">DAWGS</p>
-          <p className="text-[9px] uppercase tracking-[0.24em] text-zinc-600">Live shows · official access · wear</p>
+          <p className="text-lg font-black uppercase tracking-[0.34em] text-white">{config.footer.brand}</p>
+          <p className="text-[9px] uppercase tracking-[0.24em] text-zinc-600">{config.footer.tagline}</p>
           <a
-            href="https://mail.google.com/mail/?view=cm&fs=1&to=soporte.dawgs@gmail.com"
+            href={`https://mail.google.com/mail/?view=cm&fs=1&to=${config.footer.email}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-zinc-400 transition hover:text-white"
           >
-            soporte.dawgs@gmail.com
+            {config.footer.email}
           </a>
-          <p className="mt-2 text-[8px] font-bold tracking-wider text-zinc-600">© 2026 DAWGS. Todos los derechos reservados.</p>
+          <p className="mt-2 text-[8px] font-bold tracking-wider text-zinc-600">{config.footer.copyright}</p>
         </div>
       </footer>
 

@@ -7,7 +7,7 @@ import {
   LogOut, Bell, Search, ChevronRight, ChevronLeft, ShieldCheck,
   ShieldAlert, FileCheck, FileX, Clock, Ban, Check, Eye, Loader2,
   ArrowUpRight, Menu, Palette, QrCode, RefreshCw,
-  Activity, Sparkles, CircleDollarSign, WalletCards,
+  Activity, Sparkles, CircleDollarSign, WalletCards, Globe,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -33,6 +33,7 @@ import VentasSection from "./components/VentasSection";
 import SettingsSection from "./components/SettingsSection";
 import QrControlSection from "./components/QrControlSection";
 import TurnstileWidget, { hasTurnstileSiteKey } from "@/frontend/components/TurnstileWidget";
+import HomepageEditor from "./components/HomepageEditor";
 
 type ChartTooltipProps = {
   active?: boolean;
@@ -55,6 +56,7 @@ const SIDEBAR_ITEMS = [
   { id: "qr-control", label: "QR Control", icon: QrCode },
   { id: "ventas", label: "Ventas", icon: TrendingUp },
   { id: "clientes", label: "Clientes", icon: Users },
+  { id: "homepage", label: "Homepage", icon: Globe },
   { id: "ajustes", label: "Ajustes", icon: Settings },
   { id: "cerrar-sesion", label: "Cerrar Sesion", icon: LogOut },
 ];
@@ -964,6 +966,8 @@ function AdminDashboardInner({ onLogout, onOpenDesigner }: { onLogout: () => voi
         return <VentasSection receipts={receipts} />;
       case "clientes":
         return <ClientsSection receipts={receipts} />;
+      case "homepage":
+        return <HomepageEditor />;
       case "ajustes":
         return <SettingsSection />;
       default:
