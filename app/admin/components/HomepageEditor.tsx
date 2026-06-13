@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Check } from "lucide-react";
 import type { HomepageConfig, Cover } from "@/lib/homepage-config/types";
 import { DEFAULT_HOMEPAGE_CONFIG, COVER_POSITIONS } from "@/lib/homepage-config/defaults";
+import { THEMES } from "@/lib/homepage-config/themes";
 
 const AUTH_HEADERS = {
   Authorization: `Bearer ${Buffer.from("admin:dawgs2026").toString("base64")}`,
@@ -31,10 +32,14 @@ export default function HomepageEditor() {
 
   const updateNested = useCallback(
     <K extends SectionKeys>(section: K, key: string, value: NestedValue) => {
-      setConfig((prev) => ({
-        ...prev,
-        [section]: { ...prev[section], [key]: value },
-      }));
+      setConfig((prev) => {
+        const sectionData = prev[section];
+        if (typeof sectionData !== "object" || sectionData === null) return prev;
+        return {
+          ...prev,
+          [section]: { ...sectionData, [key]: value },
+        };
+      });
     },
     [],
   );
@@ -195,12 +200,13 @@ export default function HomepageEditor() {
     }
   };
 
-  const tabs: { id: SectionKeys | "covers"; label: string }[] = [
+  const tabs: { id: SectionKeys | "covers" | "theme"; label: string }[] = [
     { id: "hero", label: "Hero" },
     { id: "covers", label: "Álbumes" },
     { id: "ticketCard", label: "Ticket Card" },
     { id: "accessSection", label: "Access" },
     { id: "nextSignals", label: "Próximas señales" },
+    { id: "theme", label: "Tema" },
     { id: "footer", label: "Footer" },
   ];
 
@@ -643,6 +649,43 @@ export default function HomepageEditor() {
           </>
         )}
 
+        {activeTab === "theme" && (
+          <>
+            <div>
+              <label className={labelClass}>Tema de color</label>
+              <p className="mt-1 mb-4 text-[8px] text-zinc-500">Elige la paleta de colores del homepage. Cambia el estilo visual al instante.</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {THEMES.map((t) => {
+                  const isActive = config.theme === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => setConfig((prev) => ({ ...prev, theme: t.id }))}
+                      className={`relative rounded-2xl border-2 p-4 text-left transition-all ${
+                        isActive
+                          ? "border-white/40 bg-white/[0.06] shadow-[0_0_30px_rgba(255,255,255,0.05)]"
+                          : "border-white/[0.06] bg-white/[0.02] hover:border-white/20"
+                      }`}
+                    >
+                      {isActive && (
+                        <div className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-white text-black">
+                          <Check className="h-3 w-3" />
+                        </div>
+                      )}
+                      <div className="flex gap-1.5 mb-2">
+                        <div className="h-6 w-6 rounded-full" style={{ backgroundColor: t.colors.primary }} />
+                        <div className="h-6 w-6 rounded-full" style={{ backgroundColor: t.colors.primaryLight }} />
+                        <div className="h-6 w-6 rounded-full" style={{ backgroundColor: t.colors.primaryDark }} />
+                      </div>
+                      <p className="text-[10px] font-bold text-white">{t.label}</p>
+                      <div className="mt-1.5 h-1.5 w-full rounded-full" style={{ background: `linear-gradient(90deg, ${t.colors.bgFrom}, ${t.colors.bgTo})` }} />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
         {activeTab === "footer" && (
           <>
             <div>

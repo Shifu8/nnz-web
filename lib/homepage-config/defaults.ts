@@ -21,6 +21,7 @@ const DEFAULT_COVERS = [
 export { COVER_POSITIONS };
 
 export const DEFAULT_HOMEPAGE_CONFIG: HomepageConfig = {
+  theme: "pink",
   hero: {
     tagline: "DAWGS presenta",
     artistNames: [

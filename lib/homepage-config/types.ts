@@ -7,6 +7,7 @@ export interface Cover {
 }
 
 export interface HomepageConfig {
+  theme: string;
   hero: {
     tagline: string;
     artistNames: { first: string; second: string }[];

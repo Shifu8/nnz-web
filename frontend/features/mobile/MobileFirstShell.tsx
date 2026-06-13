@@ -6,10 +6,10 @@
 
 "use client";
 
-import { useState, useEffect, type CSSProperties } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { Flame, Gem, Radio, Ticket } from "lucide-react";
 import type { Event } from "@/frontend/types/domain";
-import AccessDrop from "@/frontend/features/access-drop/AccessDrop";
+import AccessDrop, { type AccessDropHandle } from "@/frontend/features/access-drop/AccessDrop";
 import { motion, AnimatePresence } from "framer-motion";
 
 const tags = [
@@ -22,6 +22,8 @@ const tags = [
 export default function MobileFirstShell() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeModal, setActiveModal] = useState<"access" | null>(null);
+  const [showFarewell, setShowFarewell] = useState(false);
+  const accessDropRef = useRef<AccessDropHandle>(null);
   const [events, setEvents] = useState<Event[]>([]);
 
   useEffect(() => {
@@ -202,7 +204,7 @@ export default function MobileFirstShell() {
               transition={{ type: "spring", stiffness: 350, damping: 25 }}
               className="relative w-full max-w-lg"
             >
-              <AccessDrop onClose={() => setActiveModal(null)} />
+              <AccessDrop ref={accessDropRef} onClose={() => setActiveModal(null)} onFarewell={() => setShowFarewell(true)} />
             </motion.div>
           </motion.div>
         )}

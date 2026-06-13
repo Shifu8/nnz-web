@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, type CSSProperties } from "react";
+import { useState, useEffect, useRef, useImperativeHandle, forwardRef, type CSSProperties } from "react";
 import {
   ChevronRight,
   ChevronLeft,
@@ -72,7 +72,9 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 }
 
-export default function AccessDrop({ onClose }: { onClose?: () => void }) {
+export type AccessDropHandle = { isSuccess: boolean; firstName: string };
+
+const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewell?: (name: string) => void }>(({ onClose, onFarewell }, ref) => {
   const scope = useRef<HTMLElement>(null);
 
   const [dropState, setDropState] = useState<DropState>("register");
@@ -95,6 +97,14 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
   const [showEventModal, setShowEventModal] = useState(false);
   const [eventPhotoIndex, setEventPhotoIndex] = useState(0);
   const [uploadMessage, setUploadMessage] = useState("");
+
+  useImperativeHandle(ref, () => ({ isSuccess: dropState === "success", firstName: formData.firstName.trim() || "DAWGS" }));
+
+  const handleSuccessClose = () => {
+    const name = formData.firstName.trim() || "DAWGS";
+    onFarewell?.(name);
+    setTimeout(() => onClose?.(), 2500);
+  };
 
   const emailHint = getEmailHint(formData.email);
   const emailSuggestion = getEmailSuggestion(formData.email);
@@ -133,12 +143,40 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
     };
   }, []);
 
+  const successRef = useRef<HTMLDivElement>(null);
+  const sparklesRef = useRef<HTMLDivElement>(null);
+
   useGSAP(
     () => {
       if (dropState === "success") {
-        gsap.from(".success-reveal", { scale: 0.6, opacity: 0, y: 60, duration: 1, ease: "elastic.out(1, 0.6)" });
-        gsap.from(".success-ring", { scale: 0, opacity: 0, duration: 0.8, ease: "power3.out", delay: 0.2 });
-        gsap.from(".success-check", { scale: 0, rotate: -90, duration: 0.5, ease: "back.out(2)", delay: 0.5 });
+        const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+        tl.from(".success-reveal", { scale: 0.4, opacity: 0, y: 100, duration: 1, ease: "elastic.out(1, 0.4)" });
+
+        tl.fromTo(".success-energy-ring", { scale: 0, opacity: 0.6 }, { scale: 4, opacity: 0, duration: 1 }, "-=0.5");
+
+        tl.from(".success-ring-inner", { scale: 0, duration: 0.6, ease: "back.out(2.5)" }, "-=0.6");
+
+        const checkPath = scope.current?.querySelector<SVGPathElement>(".success-check-path");
+        if (checkPath) {
+          const length = checkPath.getTotalLength();
+          gsap.set(checkPath, { strokeDasharray: length, strokeDashoffset: length });
+          tl.to(checkPath, { strokeDashoffset: 0, duration: 0.5, ease: "power2.inOut" }, "-=0.3");
+        }
+
+        tl.from(".success-text", { y: 30, opacity: 0, duration: 0.5 }, "-=0.1");
+        tl.from(".success-msg", { y: 20, opacity: 0, duration: 0.4 }, "-=0.2");
+
+        if (sparklesRef.current) {
+          const sparkles = sparklesRef.current.querySelectorAll<HTMLDivElement>(".success-sparkle");
+          sparkles.forEach((s) => {
+            const x = (Math.random() - 0.5) * 80;
+            const y = -(60 + Math.random() * 80);
+            tl.to(s, { y, x, opacity: 0, duration: 1.5 + Math.random() * 0.5, ease: "power1.out" }, "-=0.4");
+          });
+        }
+
+        tl.from(".success-btn", { y: 15, opacity: 0, duration: 0.3 }, "-=0.2");
       }
     },
     { scope, dependencies: [dropState] },
@@ -738,27 +776,46 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
         )}
 
         {dropState === "success" && (
-          <div className="success-reveal relative z-10 flex flex-col items-center text-center max-w-md mx-auto py-12 mt-8">
+          <div ref={successRef} className="success-reveal relative z-10 flex flex-col items-center text-center max-w-md mx-auto py-12 mt-8">
             <div className="success-ring relative h-32 w-32 mb-8">
+              <div className="success-energy-ring absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="h-16 w-16 rounded-full border-2 border-[#C8FF00] opacity-0" />
+              </div>
               <div className="absolute inset-0 rounded-full border-4 border-[#C8FF00] shadow-[0_0_60px_rgba(200,255,0,0.3)] success-ring-pulse" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="success-check flex h-20 w-20 items-center justify-center rounded-full bg-[#C8FF00] shadow-[0_0_40px_rgba(200,255,0,0.4)]">
-                  <CheckCircle className="h-10 w-10 text-black" />
+              <div className="success-ring-inner absolute inset-0 flex items-center justify-center">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#C8FF00] shadow-[0_0_40px_rgba(200,255,0,0.4)]">
+                  <svg viewBox="0 0 48 48" className="h-10 w-10" fill="none">
+                    <path
+                      d="M14 24l6 6 14-14"
+                      stroke="black"
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="success-check-path"
+                    />
+                  </svg>
                 </div>
               </div>
-            </div>
-            <h2 className="text-3xl font-black text-white uppercase italic tracking-widest drop-shadow-[0_0_20px_rgba(200,255,0,0.3)]">comprobante recibido</h2>
-            <p className="mt-4 text-[11px] font-bold text-zinc-400 uppercase tracking-wider leading-relaxed max-w-sm">
-              TU COMPROBANTE FUE RECIBIDO CORRECTAMENTE. AHORA UN ADMINISTRADOR CONFIRMARA EL PAGO Y RECIBIRAS TU ACCESO POR GMAIL.
-            </p>
-            {receiptId && (
-              <div className="mt-6 rounded-xl border border-[#C8FF00]/20 bg-black/50 px-6 py-4 shadow-[0_0_30px_rgba(200,255,0,0.05)]">
-                <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider">ID DE REFERENCIA</p>
-                <p className="mt-1 text-sm font-mono font-bold text-[#C8FF00]">{receiptId}</p>
+              <div ref={sparklesRef} className="absolute inset-0 pointer-events-none overflow-hidden">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="success-sparkle absolute h-1 w-1 rounded-full bg-[#C8FF00] opacity-0"
+                    style={{
+                      left: `${15 + Math.random() * 70}%`,
+                      top: "55%",
+                      boxShadow: "0 0 6px rgba(200,255,0,0.9)",
+                    }}
+                  />
+                ))}
               </div>
-            )}
+            </div>
+            <h2 className="success-text text-3xl font-black text-white uppercase italic tracking-widest drop-shadow-[0_0_20px_rgba(200,255,0,0.3)]">comprobante recibido</h2>
+            <p className="success-msg mt-4 text-[11px] font-bold text-zinc-400 uppercase tracking-wider leading-relaxed max-w-sm">
+              TU COMPROBANTE FUE RECIBIDO CORRECTAMENTE. UN MIEMBRO DE VENTAS DAWG CONFIRMARA EL PAGO Y RECIBIRAS TU ACCESO POR GMAIL.
+            </p>
             {onClose && (
-              <button onClick={onClose} className="glass-action glass-action-primary mt-8" style={{ "--glass-action-height": "48px", "--glass-action-px": "2rem", "--glass-action-text": "0.72rem" } as CSSProperties}>
+              <button onClick={handleSuccessClose} className="success-btn glass-action glass-action-primary mt-8" style={{ "--glass-action-height": "48px", "--glass-action-px": "2rem", "--glass-action-text": "0.72rem" } as CSSProperties}>
                 CERRAR
               </button>
             )}
@@ -771,9 +828,11 @@ export default function AccessDrop({ onClose }: { onClose?: () => void }) {
         @keyframes ticketFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
         .album-float-inner { animation: albumFloat 3.5s ease-in-out infinite; }
         @keyframes albumFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
-        .success-ring-pulse { animation: ringPulse 2s ease-out 0.5s infinite; }
-        @keyframes ringPulse { 0% { transform: scale(0.8); opacity: 0; } 50% { opacity: 0.15; } 100% { transform: scale(1.3); opacity: 0; } }
+        .success-ring-pulse { animation: ringPulse 2.5s ease-out 0.8s infinite; }
+        @keyframes ringPulse { 0% { transform: scale(0.85); opacity: 0; } 50% { opacity: 0.12; } 100% { transform: scale(1.4); opacity: 0; } }
       `}</style>
     </section>
   );
-}
+});
+
+export default AccessDrop;

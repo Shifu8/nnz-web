@@ -33,7 +33,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Atmosphere from "@/frontend/components/Atmosphere";
 import AnimatedHeading from "@/frontend/components/AnimatedHeading";
 import AIChatbot from "@/frontend/components/AIChatbot";
-import AccessDrop from "@/frontend/features/access-drop/AccessDrop";
+import AccessDrop, { type AccessDropHandle } from "@/frontend/features/access-drop/AccessDrop";
 import TicketRecovery from "@/frontend/features/access-drop/TicketRecovery";
 import MerchTeaser from "@/frontend/features/merch/MerchTeaser";
 import StaffModal from "@/frontend/features/staff/StaffModal";
@@ -41,6 +41,8 @@ import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
 import { events as fallbackEvents } from "@/frontend/services/dawgsData";
 import { useCountdown } from "@/frontend/hooks/useCountdown";
 import { useHomepageConfig } from "@/frontend/hooks/useHomepageConfig";
+import { getTheme, hexToRgb } from "@/lib/homepage-config/themes";
+import type { ThemeColors } from "@/lib/homepage-config/themes";
 import type { Event } from "@/frontend/types/domain";
 
 const HOME_NAV_ITEMS = [
@@ -73,16 +75,77 @@ export default function HomePage() {
   const [showHiddenMenu, setShowHiddenMenu] = useState(false);
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
+  const [showFarewell, setShowFarewell] = useState(false);
+  const [farewellName, setFarewellName] = useState("");
+  const accessDropRef = useRef<AccessDropHandle>(null);
+  const farewellRef = useRef<HTMLDivElement>(null);
+  const farewellTimeline = useRef<gsap.core.Timeline | null>(null);
+
+  useEffect(() => {
+    if (!showFarewell || !farewellRef.current) return;
+    const bubble = farewellRef.current;
+    const rect = bubble.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const colors = ["#FF2200", "#FF4400", "#FF6600", "#FF8800", "#FFAA00", "#FFD700", "#C8FF00", "#00FFAA", "#FF3366", "#FF00FF", "#FFFFFF"];
+
+    function burst(originX: number, originY: number, count: number, hueOffset: number) {
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement("div");
+        const size = 1.5 + Math.random() * 4.5;
+        const ci = Math.floor((i / count) * colors.length + hueOffset) % colors.length;
+        const color = colors[ci];
+        const glow = 3 + Math.random() * 14;
+        el.style.cssText = `position:fixed;left:${originX}px;top:${originY}px;width:${size}px;height:${size}px;border-radius:50%;background:${color};pointer-events:none;z-index:200;box-shadow:0 0 ${glow}px ${color};`;
+        document.body.appendChild(el);
+
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.6;
+        const dist = 40 + Math.random() * 380;
+        const vy = -50 - Math.random() * 180;
+
+        gsap.to(el, {
+          x: Math.cos(angle) * dist + (Math.random() - 0.5) * 30,
+          y: Math.sin(angle) * dist + vy + (Math.random() - 0.5) * 30,
+          scale: 0,
+          opacity: 0,
+          rotation: Math.random() * 720 - 360,
+          duration: 1 + Math.random() * 0.8,
+          ease: "power2.out",
+          onComplete: () => el.remove(),
+        });
+      }
+    }
+
+    const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+    farewellTimeline.current = tl;
+
+    tl.from(bubble, { opacity: 0, y: 60, scale: 0.75, duration: 0.8, ease: "back.out(1.7)" });
+    tl.to(bubble, { y: -12, scale: 1.06, duration: 1.8, ease: "sine.inOut" });
+    tl.call(() => {
+      burst(cx, cy, 50, 0);
+      gsap.delayedCall(0.18, () => burst(cx - 60, cy - 40, 30, 2));
+      gsap.delayedCall(0.35, () => burst(cx + 65, cy + 25, 30, 4));
+      gsap.delayedCall(0.52, () => burst(cx - 35, cy + 55, 25, 6));
+      gsap.delayedCall(0.68, () => burst(cx + 50, cy - 50, 25, 1));
+      gsap.delayedCall(0.85, () => burst(cx, cy - 70, 20, 3));
+      gsap.to(bubble, { scale: 0, opacity: 0, duration: 0.4, ease: "power2.in", delay: 0.1 });
+    });
+    tl.call(() => { setShowFarewell(false); });
+
+    return () => { tl.kill(); };
+  }, [showFarewell]);
   const [isTicketPulse, setIsTicketPulse] = useState(false);
   const [isRecoveryPulse, setIsRecoveryPulse] = useState(false);
   const [artistIndex, setArtistIndex] = useState(0);
   const [showEventModal, setShowEventModal] = useState(false);
   const [eventPhotoIndex, setEventPhotoIndex] = useState(0);
   const { config } = useHomepageConfig();
+  const theme: ThemeColors = getTheme(config.theme);
+  const primaryRgb = hexToRgb(theme.primary);
 
   const ARTISTS = config.hero.artistNames.map((a) => ({
     ...a,
-    gradient: ARTIST_GRADIENTS[a.first] || "from-pink-200 via-pink-500 to-fuchsia-700",
+    gradient: ARTIST_GRADIENTS[a.first] || null,
   }));
 
   useEffect(() => {
@@ -276,7 +339,7 @@ export default function HomePage() {
               style={{ WebkitTapHighlightColor: "transparent" }}
               aria-label="DAWGS"
             >
-              <span className="relative h-10 w-10 overflow-hidden rounded-full border border-pink-300/25 bg-black shadow-[0_0_28px_rgba(255,0,102,0.18)] sm:h-11 sm:w-11">
+              <span className="relative h-10 w-10 overflow-hidden rounded-full border bg-black sm:h-11 sm:w-11" style={{ borderColor: "var(--theme-border-accent)", boxShadow: "0 0 28px rgba(var(--theme-primary-rgb), 0.18)" }}>
                 <Image
                   src="/images/dawgs-logo-hd.png"
                   alt=""
@@ -377,12 +440,12 @@ export default function HomePage() {
                         <>
                           {a.first}
                           <br />
-                          <span className={`inline-block pr-2 bg-gradient-to-r ${a.gradient} bg-clip-text text-transparent`}>
+                          <span className={a.gradient ? `inline-block pr-2 bg-gradient-to-r ${a.gradient} bg-clip-text text-transparent` : "inline-block pr-2 bg-clip-text text-transparent"} style={a.gradient ? {} : { backgroundImage: "linear-gradient(to right, var(--theme-primary-light), var(--theme-primary), var(--theme-primary-dark))" }}>
                             {a.second}
                           </span>
                         </>
                       ) : (
-                        <span className={`inline-block pr-2 bg-gradient-to-r ${a.gradient} bg-clip-text text-transparent`}>
+                        <span className={a.gradient ? `inline-block pr-2 bg-gradient-to-r ${a.gradient} bg-clip-text text-transparent` : "inline-block pr-2 bg-clip-text text-transparent"} style={a.gradient ? {} : { backgroundImage: "linear-gradient(to right, var(--theme-primary-light), var(--theme-primary), var(--theme-primary-dark))" }}>
                           {a.first}
                         </span>
                       )}
@@ -415,7 +478,7 @@ export default function HomePage() {
               <div className="relative z-10">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="inline-flex items-center gap-2 rounded-full border border-pink-200/35 bg-pink-500/18 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.2em] text-pink-50 shadow-[0_0_24px_rgba(255,72,170,0.12)]">
+                    <p className="theme-glow-sm inline-flex items-center gap-2 rounded-full border border-pink-200/35 bg-pink-500/18 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.2em] text-pink-50">
                       <Ticket className="h-3 w-3" />
                       {config.ticketCard.badge}
                       <span className="h-1 w-1 rounded-full bg-pink-300/60" />
@@ -555,7 +618,7 @@ export default function HomePage() {
                     animationDelay: `${cover.delay}s`,
                   }}
                 >
-                  <div className="group relative aspect-square overflow-hidden rounded-[18px] border border-white/15 bg-black shadow-[0_18px_46px_rgba(0,0,0,0.68),0_0_28px_rgba(255,0,102,0.14)]">
+                  <div className="group relative aspect-square overflow-hidden rounded-[18px] border border-white/15 bg-black" style={{ boxShadow: "0 18px 46px rgba(0,0,0,0.68), 0 0 28px rgba(var(--theme-primary-rgb), 0.14)" }}>
                     <Image
                       src={cover.src}
                       alt={cover.label}
@@ -587,7 +650,7 @@ export default function HomePage() {
 
         <div
           id="access"
-          className="hero-reveal relative z-20 mt-8 overflow-hidden rounded-[32px] border border-pink-300/15 bg-black/45 p-5 shadow-[0_24px_90px_rgba(255,0,102,0.12)] backdrop-blur-2xl sm:p-7 lg:mt-10 lg:p-9"
+          className="hero-reveal relative z-20 mt-8 overflow-hidden rounded-[32px] border border-pink-300/15 bg-black/45 p-5 backdrop-blur-2xl sm:p-7 lg:mt-10 lg:p-9" style={{ boxShadow: "0 24px 90px rgba(var(--theme-primary-rgb), 0.12)" }}
         >
           <div className="pointer-events-none absolute -left-20 top-1/2 h-56 w-56 -translate-y-1/2 rounded-full bg-pink-500/15 blur-3xl" />
           <div className="pointer-events-none absolute -right-24 bottom-0 h-64 w-64 rounded-full bg-[#C8FF00]/5 blur-3xl" />
@@ -636,7 +699,7 @@ export default function HomePage() {
         <TicketRecovery embedded pulse={isRecoveryPulse} className="hero-reveal mt-5 lg:mt-7" />
 
       {events.length > 1 && (
-        <div className="hero-reveal relative z-20 mt-5 overflow-hidden rounded-[32px] border border-pink-300/15 bg-black/45 p-5 shadow-[0_24px_90px_rgba(255,0,102,0.12)] backdrop-blur-2xl sm:p-7 lg:mt-7 lg:p-9">
+        <div className="hero-reveal relative z-20 mt-5 overflow-hidden rounded-[32px] border border-pink-300/15 bg-black/45 p-5 backdrop-blur-2xl sm:p-7 lg:mt-7 lg:p-9" style={{ boxShadow: "0 24px 90px rgba(var(--theme-primary-rgb), 0.12)" }}>
           <div className="pointer-events-none absolute left-1/2 top-0 h-56 w-[70%] -translate-x-1/2 rounded-full bg-pink-500/12 blur-3xl" />
           <div className="relative z-10 mb-7 flex flex-col items-center justify-center gap-3 text-center">
             <div>
@@ -693,6 +756,19 @@ export default function HomePage() {
       </footer>
 
       <MerchTeaser />
+
+      {showFarewell && (
+        <div ref={farewellRef} className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[200]">
+          <div className="relative rounded-2xl bg-gradient-to-r from-[#C8FF00]/20 to-[#C8FF00]/10 border-2 border-[#C8FF00]/40 px-8 py-4 shadow-[0_0_60px_rgba(200,255,0,0.2)] backdrop-blur-xl">
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#C8FF00] text-xs font-black text-black shadow-[0_0_20px_rgba(200,255,0,0.4)]">DW</div>
+              <p className="text-sm font-bold text-[#C8FF00]">gracias {farewellName} por tu compra <span className="inline-flex items-center gap-px"><span className="eye-wink inline-block">;</span><span className="inline-block">)</span></span></p>
+            </div>
+            <div className="absolute -top-1.5 left-7 h-3 w-3 rotate-45 border-l-2 border-t-2 border-[#C8FF00]/40 bg-[#C8FF00]/10" />
+          </div>
+        </div>
+      )}
+
       <AIChatbot />
       <StaffModal isOpen={isStaffModalOpen} onClose={() => setIsStaffModalOpen(false)} />
 
@@ -711,13 +787,16 @@ export default function HomePage() {
               className="relative max-h-[92vh] w-full max-w-[980px] overflow-y-auto rounded-[34px] border border-white/[0.08] bg-black shadow-[0_30px_120px_rgba(0,0,0,0.7)]"
             >
               <button
-                onClick={() => setIsTicketModalOpen(false)}
+                onClick={() => {
+                  if (accessDropRef.current?.isSuccess) { setShowFarewell(true); setFarewellName(accessDropRef.current.firstName); }
+                  setIsTicketModalOpen(false);
+                }}
                 aria-label="Cerrar compra"
                 className="absolute right-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/70 text-xs font-black text-white/60 transition hover:text-white"
               >
                 X
               </button>
-              <AccessDrop />
+              <AccessDrop ref={accessDropRef} onFarewell={(name) => { setFarewellName(name); setShowFarewell(true); }} />
             </motion.div>
           </motion.div>
         )}
@@ -824,7 +903,7 @@ export default function HomePage() {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="relative flex w-full max-w-sm flex-col items-center rounded-[40px] border border-white/[0.08] bg-white/[0.03] p-10 text-center shadow-[0_0_80px_rgba(255,0,102,0.08)] backdrop-blur-2xl"
+               className="relative flex w-full max-w-sm flex-col items-center rounded-[40px] border border-white/[0.08] bg-white/[0.03] p-10 text-center backdrop-blur-2xl" style={{ boxShadow: "0 0 80px rgba(var(--theme-primary-rgb), 0.08)" }}
             >
               <button
                 type="button"
@@ -870,6 +949,79 @@ export default function HomePage() {
       </AnimatePresence>
 
       <style dangerouslySetInnerHTML={{ __html: `
+        :root {
+          --theme-primary: ${theme.primary};
+          --theme-primary-rgb: ${primaryRgb};
+          --theme-primary-light: ${theme.primaryLight};
+          --theme-primary-dark: ${theme.primaryDark};
+          --theme-bg-tint: ${theme.glowRgba.replace("0.5", "0.12")};
+          --theme-bg-glow: ${theme.glowRgba.replace("0.5", "0.32")};
+          --theme-bg-glow-dark: ${theme.glowRgba.replace("0.5", "0.28")};
+          --theme-bg-accent: ${theme.hoverGlow.replace("0.4", "0.13")};
+          --theme-bg-grid: ${theme.glowRgba.replace("0.5", "0.05")};
+          --theme-btn-from: ${theme.btnFrom};
+          --theme-btn-to: ${theme.btnTo};
+          --theme-btn-shadow: ${theme.btnShadow};
+          --theme-glow-intense: ${theme.glowIntense};
+          --theme-border-accent: ${theme.borderRgba};
+          --theme-border-accent-light: ${theme.borderRgba.replace("0.3", "0.18")};
+          --theme-border-accent-xlight: ${theme.borderRgba.replace("0.3", "0.08")};
+          --theme-glow-rgba: ${theme.glowRgba};
+          --theme-text-accent: ${theme.textAccent};
+          --theme-text-rgb: ${primaryRgb};
+          --theme-badge-bg: ${theme.badgeBg};
+          --theme-card-border: ${theme.cardBorder};
+          --theme-card-shadow: ${theme.cardShadow};
+          --theme-hover-glow: ${theme.hoverGlow};
+          --theme-bg-pink-500: rgba(var(--theme-primary-rgb), 0.18);
+          --theme-bg-pink-500-hover: rgba(var(--theme-primary-rgb), 0.3);
+          --theme-tag-bg: ${theme.tagBg};
+        }
+        .theme-btn { background: linear-gradient(135deg, var(--theme-btn-from), var(--theme-btn-to)); }
+        .theme-btn:hover { box-shadow: 0 0 40px var(--theme-btn-shadow); }
+        .theme-text { color: var(--theme-text-accent); }
+        .theme-border { border-color: var(--theme-border-accent); }
+        .theme-border-light { border-color: var(--theme-border-accent-light); }
+        .theme-border-xlight { border-color: var(--theme-border-accent-xlight); }
+        .theme-glow { box-shadow: 0 0 40px var(--theme-glow-rgba); }
+        .theme-badge { background: var(--theme-badge-bg); }
+        .theme-tag { background: var(--theme-tag-bg); }
+        .theme-glow-sm { box-shadow: 0 0 24px rgba(var(--theme-primary-rgb), 0.12); }
+        .theme-ring { box-shadow: 0 0 28px rgba(var(--theme-primary-rgb), 0.18); }
+        .text-pink-100, .text-pink-50 { color: var(--theme-text-accent) !important; }
+        .text-pink-300 { color: var(--theme-primary-light) !important; }
+        .hover\\:text-pink-300:hover { color: var(--theme-primary-light) !important; }
+        .border-pink-300\\/25 { border-color: var(--theme-border-accent) !important; }
+        .border-pink-200\\/35, .border-pink-200\\/25, .border-pink-200\\/20, .border-pink-200\\/18, .border-pink-200\\/16 { border-color: rgba(var(--theme-primary-rgb), 0.16) !important; }
+        .border-pink-300\\/35 { border-color: rgba(var(--theme-primary-rgb), 0.35) !important; }
+        .border-pink-300\\/20 { border-color: var(--theme-border-accent) !important; }
+        .border-pink-300\\/[0.08] { border-color: rgba(var(--theme-primary-rgb), 0.08) !important; }
+        .hover\\:border-pink-300\\/45:hover { border-color: rgba(var(--theme-primary-rgb), 0.45) !important; }
+        .hover\\:border-pink-400\\/30:hover, .hover\\:border-pink-300\\/25:hover, .hover\\:border-pink-500\\/30:hover { border-color: rgba(var(--theme-primary-rgb), 0.3) !important; }
+        .bg-pink-500\\/10 { background: rgba(var(--theme-primary-rgb), 0.1) !important; }
+        .bg-pink-500\\/15 { background: rgba(var(--theme-primary-rgb), 0.15) !important; }
+        .bg-pink-500\\/18 { background: rgba(var(--theme-primary-rgb), 0.18) !important; }
+        .bg-pink-500\\/20 { background: rgba(var(--theme-primary-rgb), 0.2) !important; }
+        .bg-pink-500\\/14, .bg-pink-500\\/16 { background: rgba(var(--theme-primary-rgb), 0.16) !important; }
+        .bg-pink-500\\/[0.08] { background: rgba(var(--theme-primary-rgb), 0.08) !important; }
+        .bg-pink-500\\/[0.055] { background: rgba(var(--theme-primary-rgb), 0.055) !important; }
+        .bg-pink-500\\/12 { background: rgba(var(--theme-primary-rgb), 0.12) !important; }
+        .bg-pink-500 { background: var(--theme-primary) !important; }
+        .hover\\:bg-pink-500\\/15:hover { background: rgba(var(--theme-primary-rgb), 0.15) !important; }
+        .hover\\:bg-pink-500\\/20:hover { background: rgba(var(--theme-primary-rgb), 0.2) !important; }
+        .hover\\:bg-pink-500\\/10:hover { background: rgba(var(--theme-primary-rgb), 0.1) !important; }
+        .hover\\:bg-pink-400:hover { background: var(--theme-primary-light) !important; }
+        .bg-pink-400 { background: var(--theme-primary) !important; }
+        .text-pink-200 { color: rgba(var(--theme-primary-rgb), 0.6) !important; }
+        .text-pink-400 { color: var(--theme-primary) !important; }
+        .hover\\:bg-pink-100:hover { background: rgba(var(--theme-primary-rgb), 0.12) !important; }
+        .bg-pink-600\\/20 { background: rgba(var(--theme-primary-rgb), 0.12) !important; }
+        .bg-pink-300 { background: var(--theme-primary-light) !important; }
+        .bg-pink-300\\/60 { background: rgba(var(--theme-primary-rgb), 0.35) !important; }
+        .ring-pink-200\\/\\[0\\.05\\] { --tw-ring-color: rgba(var(--theme-primary-rgb), 0.05) !important; }
+        .border-pink-300\\/15 { border-color: rgba(var(--theme-primary-rgb), 0.15) !important; }
+        .border-pink-300\\/\\[0\\.12\\] { border-color: rgba(var(--theme-primary-rgb), 0.12) !important; }
+        .bg-white\\/\\[0.04\\] { background: rgba(255,255,255,0.04) !important; }
         .album-orbit {
           animation: albumFloat 3.7s ease-in-out infinite;
         }
@@ -888,6 +1040,8 @@ export default function HomePage() {
         .recovery-card-pulse {
           animation: recoveryCardPulse 1.25s ease-in-out 2;
         }
+        .eye-wink { animation: wink 4s ease-in-out infinite; }
+        @keyframes wink { 0%, 90%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.15); } }
         .recovery-button-pulse {
           animation: ticketButtonPulse 1.25s ease-in-out 2;
         }
@@ -896,12 +1050,12 @@ export default function HomePage() {
         }
         @keyframes ticketCardPulse {
           0%, 100% {
-            border-color: rgba(249, 168, 212, 0.25);
-            box-shadow: 0 28px 100px rgba(255, 0, 102, 0.16);
+            border-color: var(--theme-border-accent-light);
+            box-shadow: 0 28px 100px var(--theme-card-shadow);
           }
           50% {
-            border-color: rgba(255, 111, 188, 0.9);
-            box-shadow: 0 0 0 5px rgba(255, 79, 163, 0.15), 0 30px 120px rgba(255, 0, 128, 0.34);
+            border-color: var(--theme-primary-light);
+            box-shadow: 0 0 0 5px var(--theme-border-accent), 0 30px 120px var(--theme-glow-rgba);
           }
         }
         @keyframes ticketButtonPulse {
@@ -911,33 +1065,34 @@ export default function HomePage() {
             box-shadow: none;
           }
           50% {
-            background: #ff6fbc;
+            background: rgba(var(--theme-primary-rgb), 0.7);
             color: #12020b;
-            box-shadow: 0 0 0 6px rgba(255, 79, 163, 0.18), 0 0 46px rgba(255, 79, 163, 0.34);
+            box-shadow: 0 0 0 6px var(--theme-border-accent), 0 0 46px var(--theme-glow-rgba);
           }
         }
         @keyframes recoveryCardPulse {
           0%, 100% {
-            border-color: rgba(249, 168, 212, 0.15);
-            box-shadow: 0 24px 90px rgba(255, 0, 102, 0.12);
+            border-color: var(--theme-border-accent-xlight);
+            box-shadow: 0 24px 90px var(--theme-card-shadow);
           }
           50% {
-            border-color: rgba(255, 111, 188, 0.8);
-            box-shadow: 0 0 0 5px rgba(255, 79, 163, 0.12), 0 28px 110px rgba(255, 0, 128, 0.28);
+            border-color: var(--theme-primary-light);
+            box-shadow: 0 0 0 5px var(--theme-border-accent-light), 0 28px 110px var(--theme-glow-rgba);
           }
         }
         @keyframes recoveryButtonPulse {
           0%, 100% {
             background: rgba(255, 255, 255, 0.04);
-            color: rgb(255, 228, 241);
+            color: var(--theme-text-accent);
             box-shadow: none;
           }
           50% {
-            background: rgba(255, 111, 188, 0.26);
+            background: var(--theme-tag-bg);
             color: #ffffff;
-            box-shadow: 0 0 0 6px rgba(255, 79, 163, 0.16), 0 0 42px rgba(255, 79, 163, 0.34);
+            box-shadow: 0 0 0 6px var(--theme-border-accent), 0 0 42px var(--theme-glow-rgba);
           }
         }
+
       `}} />
     </main>
   );

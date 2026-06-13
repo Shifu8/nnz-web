@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, ShieldAlert, FileCheck, Loader2 } from "lucide-react";
+import { Upload, ShieldAlert, FileCheck, Loader2, BadgeCheck } from "lucide-react";
 import { validateReceiptFileMetadata } from "@/lib/access-drop/fileValidation";
 
 type ReceiptUploadProps = {
@@ -12,19 +12,38 @@ export default function ReceiptUpload({ onUpload }: ReceiptUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [validated, setValidated] = useState(false);
   const [refNumber, setRefNumber] = useState("");
   const [loading, setLoading] = useState(false);
+  const [validating, setValidating] = useState(false);
   const [error, setError] = useState("");
 
-  const handleFile = (f: File | null) => {
+  const handleFile = async (f: File | null) => {
     setError("");
-    if (!f) { setFile(null); setPreview(null); return; }
+    if (!f) { setFile(null); setPreview(null); setValidated(false); return; }
     const validationError = validateReceiptFileMetadata(f);
     if (validationError) { setError(validationError.message); return; }
-    setFile(f);
-    const r = new FileReader();
-    r.onload = (e) => setPreview(e.target?.result as string);
-    r.readAsDataURL(f);
+
+    setValidating(true);
+    try {
+      const formData = new FormData();
+      formData.append("comprobante", f);
+      const res = await fetch("/api/access-drop/validate-receipt", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!data.isValid) {
+        setError(data.rejectionReason || "LA IMAGEN NO PARECE UN COMPROBANTE DE PAGO VALIDO.");
+        return;
+      }
+      setFile(f);
+      setValidated(true);
+      const r = new FileReader();
+      r.onload = (e) => setPreview(e.target?.result as string);
+      r.readAsDataURL(f);
+    } catch {
+      setError("ERROR AL VALIDAR LA IMAGEN. INTENTA DE NUEVO.");
+    } finally {
+      setValidating(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,20 +70,25 @@ export default function ReceiptUpload({ onUpload }: ReceiptUploadProps) {
         role="button"
         tabIndex={0}
         aria-label="Seleccionar comprobante"
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => { if (!validating) fileInputRef.current?.click(); }}
         onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
+          if ((e.key === "Enter" || e.key === " ") && !validating) {
             e.preventDefault();
             fileInputRef.current?.click();
           }
         }}
         className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-white/10 bg-black/40 p-6 hover:border-white/20 transition"
       >
-        <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" className="hidden" onChange={(e) => handleFile(e.target.files?.[0] || null)} />
-        {file && preview ? (
+        <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" className="hidden" disabled={validating} onChange={(e) => handleFile(e.target.files?.[0] || null)} />
+        {validating ? (
+          <div className="text-center">
+            <Loader2 className="mx-auto h-7 w-7 animate-spin text-zinc-400" />
+            <p className="mt-2 text-[8px] font-bold text-zinc-400">VALIDANDO...</p>
+          </div>
+        ) : file && preview && validated ? (
           <div className="w-full text-center">
             <img src={preview} alt={`Vista previa de ${file.name}`} className="mx-auto max-h-32 rounded-lg object-contain" />
-            <p className="mt-2 text-[8px] font-bold text-green-400"><FileCheck className="mr-1 inline h-3 w-3" />{file.name}</p>
+            <p className="mt-2 text-[8px] font-bold text-green-400"><BadgeCheck className="mr-1 inline h-3 w-3" />{file.name} — VALIDADO</p>
           </div>
         ) : file ? (
           <div className="text-center"><FileCheck className="mx-auto h-8 w-8 text-green-400" /><p className="mt-2 text-[8px] font-bold text-green-400">{file.name}</p></div>
@@ -78,7 +102,7 @@ export default function ReceiptUpload({ onUpload }: ReceiptUploadProps) {
 
       {error && <div className="text-[9px] font-bold text-red-400 bg-red-950/40 p-3 rounded-xl"><ShieldAlert className="inline h-3 w-3 mr-1" />{error}</div>}
 
-      <button disabled={loading || !file} type="submit" className="flex h-12 w-full items-center justify-center rounded-xl bg-red-600 text-xs font-black uppercase tracking-wider text-white disabled:opacity-50">
+      <button disabled={loading || !file || validating} type="submit" className="flex h-12 w-full items-center justify-center rounded-xl bg-red-600 text-xs font-black uppercase tracking-wider text-white disabled:opacity-50">
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "SUBIR COMPROBANTE"}
       </button>
     </form>
