@@ -20,13 +20,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DAWGS",
+  title: "Dawgs Web",
   description:
     "Eventos underground, streetwear premium y Party Pass sin login para la comunidad DAWGS.",
   manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/favicon.ico" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
       { url: "/icons/dawgs-icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icons/dawgs-icon-512.png", sizes: "512x512", type: "image/png" },
     ],
