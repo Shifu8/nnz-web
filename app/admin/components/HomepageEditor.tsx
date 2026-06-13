@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import type { HomepageConfig } from "@/lib/homepage-config/types";
-import { DEFAULT_HOMEPAGE_CONFIG } from "@/lib/homepage-config/defaults";
+import type { HomepageConfig, Cover } from "@/lib/homepage-config/types";
+import { DEFAULT_HOMEPAGE_CONFIG, COVER_POSITIONS } from "@/lib/homepage-config/defaults";
 
 const AUTH_HEADERS = {
   Authorization: `Bearer ${Buffer.from("admin:dawgs2026").toString("base64")}`,
@@ -120,6 +120,57 @@ export default function HomepageEditor() {
     }));
   };
 
+  const updateCover = (index: number, field: keyof Cover, value: string | number) => {
+    setConfig((prev) => {
+      const covers = [...prev.covers];
+      covers[index] = { ...covers[index], [field]: value };
+      return { ...prev, covers };
+    });
+  };
+
+  const addCover = () => {
+    setConfig((prev) => ({
+      ...prev,
+      covers: [
+        ...prev.covers,
+        {
+          src: "/images/trap_loud_trio_artists.png",
+          label: "Nuevo álbum",
+          className: COVER_POSITIONS[prev.covers.length % COVER_POSITIONS.length],
+          rotation: 0,
+          delay: prev.covers.length * 0.25,
+        },
+      ],
+    }));
+  };
+
+  const removeCover = (index: number) => {
+    setConfig((prev) => ({
+      ...prev,
+      covers: prev.covers.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleCoverUpload = async (index: number, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch("/api/admin/homepage-config/upload", {
+        method: "POST",
+        headers: AUTH_HEADERS,
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        updateCover(index, "src", data.url);
+      } else {
+        alert("Error al subir imagen");
+      }
+    } catch {
+      alert("Error de red al subir");
+    }
+  };
+
   const btnClass =
     "inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.15em] text-zinc-400 transition hover:border-pink-400/30 hover:text-pink-300";
 
@@ -144,13 +195,16 @@ export default function HomepageEditor() {
     }
   };
 
-  const tabs: { id: SectionKeys; label: string }[] = [
+  const tabs: { id: SectionKeys | "covers"; label: string }[] = [
     { id: "hero", label: "Hero" },
+    { id: "covers", label: "Álbumes" },
     { id: "ticketCard", label: "Ticket Card" },
     { id: "accessSection", label: "Access" },
     { id: "nextSignals", label: "Próximas señales" },
     { id: "footer", label: "Footer" },
   ];
+
+  const activeTabId = activeTab;
 
   const inputClass =
     "w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none transition focus:border-pink-400/50 focus:bg-white/[0.06]";
@@ -185,6 +239,108 @@ export default function HomepageEditor() {
 
       {/* Form sections */}
       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-5">
+        {activeTab === "covers" && (
+          <>
+            <div className="space-y-3">
+              {config.covers.map((cover, i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-3"
+                >
+                  <div className="flex items-start justify-between">
+                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500">
+                      Álbum {i + 1}
+                    </p>
+                    <button
+                      onClick={() => removeCover(i)}
+                      className="rounded-lg border border-white/10 bg-white/[0.04] p-1.5 text-zinc-500 transition hover:border-red-400/30 hover:bg-red-500/10 hover:text-red-300"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+
+                  {/* Image preview + upload */}
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-zinc-900">
+                      <img
+                        src={cover.src}
+                        alt={cover.label}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <label className="cursor-pointer rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[8px] font-black uppercase tracking-[0.15em] text-zinc-400 transition hover:border-pink-400/30 hover:text-pink-300">
+                      Cambiar imagen
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleCoverUpload(i, file);
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  <input
+                    className={inputClass}
+                    placeholder="Label"
+                    value={cover.label}
+                    onChange={(e) => updateCover(i, "label", e.target.value)}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[7px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1">
+                        Rotación
+                      </label>
+                      <input
+                        type="number"
+                        className={inputClass}
+                        value={cover.rotation}
+                        onChange={(e) =>
+                          updateCover(i, "rotation", Number(e.target.value))
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[7px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1">
+                        Delay (s)
+                      </label>
+                      <input
+                        type="number"
+                        step={0.05}
+                        className={inputClass}
+                        value={cover.delay}
+                        onChange={(e) =>
+                          updateCover(i, "delay", Number(e.target.value))
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[7px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1">
+                      Posición
+                    </label>
+                    <select
+                      className={inputClass}
+                      value={cover.className}
+                      onChange={(e) => updateCover(i, "className", e.target.value)}
+                    >
+                      {COVER_POSITIONS.map((pos, pi) => (
+                        <option key={pi} value={pos} className="bg-zinc-900 text-white">
+                          Posición {pi + 1}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ))}
+              <button onClick={addCover} className={btnClass}>
+                <Plus className="h-3 w-3" /> Agregar álbum
+              </button>
+            </div>
+          </>
+        )}
         {activeTab === "hero" && (
           <>
             <div>

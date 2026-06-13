@@ -1,9 +1,18 @@
+export interface Cover {
+  src: string;
+  label: string;
+  className: string;
+  rotation: number;
+  delay: number;
+}
+
 export interface HomepageConfig {
   hero: {
     tagline: string;
     artistNames: { first: string; second: string }[];
     mobileDescription: string;
   };
+  covers: Cover[];
   ticketCard: {
     badge: string;
     badgeSub: string;

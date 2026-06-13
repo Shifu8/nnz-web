@@ -51,14 +51,6 @@ const HOME_NAV_ITEMS = [
 
 type HomeNavId = (typeof HOME_NAV_ITEMS)[number]["id"];
 
-type Cover = {
-  src: string;
-  label: string;
-  className: string;
-  rotation: number;
-  delay: number;
-};
-
 const ARTIST_GRADIENTS: Record<string, string> = {
   "Yan": "from-pink-200 via-pink-500 to-fuchsia-700",
   "Omar": "from-blue-200 via-blue-400 to-purple-600",
@@ -70,53 +62,6 @@ const VENUE_PHOTOS = [
   "/images/trap_loud_trio_artists.png",
   "/images/trap_loud_trio_artists.png",
 ];
-
-const SHOW_COVERS: Record<string, Cover[]> = {
-  "trap-loud": [
-    {
-      src: "/images/covers/que-vas-hacer-hoy.jpg",
-      label: "Qué Vas Hacer Hoy",
-      className: "left-[1%] top-[12%] w-[4.95rem] sm:w-[6.35rem] lg:-left-[10%] lg:top-[16%] lg:w-[7.35rem]",
-      rotation: -12,
-      delay: 0,
-    },
-    {
-      src: "/images/covers/me-gustas-cc.jpg",
-      label: "Me Gustas CC",
-      className: "right-[1%] top-[20%] w-[4.65rem] sm:w-[6.35rem] lg:-right-[6%] lg:top-[12%] lg:w-[7.35rem]",
-      rotation: 10,
-      delay: 0.3,
-    },
-    {
-      src: "/images/covers/666.jpg",
-      label: "666",
-      className: "right-[3%] top-[52%] w-[5.25rem] sm:w-[6.35rem] lg:-right-[11%] lg:top-[48%] lg:w-[8.4rem]",
-      rotation: 13,
-      delay: 0.55,
-    },
-    {
-      src: "/images/covers/talento.jpg",
-      label: "Talento",
-      className: "left-[2%] top-[55%] w-[4.65rem] sm:w-[6.35rem] lg:-left-[13%] lg:top-[50%] lg:w-[7.35rem]",
-      rotation: -8,
-      delay: 0.8,
-    },
-    {
-      src: "/images/covers/444.jpg",
-      label: "444",
-      className: "right-[19%] bottom-[4%] w-[4.65rem] sm:w-[5.35rem] lg:right-[4%] lg:bottom-[1%] lg:w-[6.35rem]",
-      rotation: -9,
-      delay: 1.05,
-    },
-    {
-      src: "/images/covers/vacile.jpg",
-      label: "Vacile",
-      className: "left-[18%] bottom-[5%] w-[4.65rem] sm:w-[5.35rem] lg:left-[2%] lg:bottom-[3%] lg:w-[6.35rem]",
-      rotation: 11,
-      delay: 1.3,
-    },
-  ],
-};
 
 export default function HomePage() {
   const router = useRouter();
@@ -156,7 +101,7 @@ export default function HomePage() {
   }, [showEventModal]);
 
   const featuredEvent = events[0] ?? fallbackEvents[0];
-  const featuredCovers = SHOW_COVERS[featuredEvent.id] ?? [];
+  const featuredCovers = config.covers;
   const ticketCountdown = useCountdown(featuredEvent.startsAt);
 
   useEffect(() => {
