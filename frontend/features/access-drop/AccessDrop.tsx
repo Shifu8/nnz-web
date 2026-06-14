@@ -153,7 +153,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
 
         tl.from(".success-reveal", { scale: 0.4, opacity: 0, y: 100, duration: 1, ease: "elastic.out(1, 0.4)" });
 
-        tl.fromTo(".success-energy-ring", { scale: 0, opacity: 0.6 }, { scale: 4, opacity: 0, duration: 1 }, "-=0.5");
+        tl.fromTo(".success-energy-ring", { scale: 0, opacity: 0.7 }, { scale: 5, opacity: 0, duration: 1.2 }, "-=0.5");
 
         tl.from(".success-ring-inner", { scale: 0, duration: 0.6, ease: "back.out(2.5)" }, "-=0.6");
 
@@ -164,19 +164,26 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
           tl.to(checkPath, { strokeDashoffset: 0, duration: 0.5, ease: "power2.inOut" }, "-=0.3");
         }
 
-        tl.from(".success-text", { y: 30, opacity: 0, duration: 0.5 }, "-=0.1");
-        tl.from(".success-msg", { y: 20, opacity: 0, duration: 0.4 }, "-=0.2");
+        tl.from(".success-check-fill", { opacity: 0, duration: 0.3 }, "-=0.15");
+
+        tl.from(".success-name", { y: 30, opacity: 0, duration: 0.5 }, "-=0.1");
+        tl.from(".success-text", { y: 20, opacity: 0, duration: 0.4 }, "-=0.15");
+        tl.from(".success-msg", { y: 15, opacity: 0, duration: 0.35 }, "-=0.15");
+
+        tl.to(".success-ring-pulse", { borderWidth: 6, duration: 0.3, ease: "power2.out" }, "-=0.3");
 
         if (sparklesRef.current) {
           const sparkles = sparklesRef.current.querySelectorAll<HTMLDivElement>(".success-sparkle");
           sparkles.forEach((s) => {
-            const x = (Math.random() - 0.5) * 80;
-            const y = -(60 + Math.random() * 80);
-            tl.to(s, { y, x, opacity: 0, duration: 1.5 + Math.random() * 0.5, ease: "power1.out" }, "-=0.4");
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 70 + Math.random() * 120;
+            const x = Math.cos(angle) * dist;
+            const y = Math.sin(angle) * dist - 40;
+            tl.to(s, { x, y, opacity: 0, scale: 0.3, duration: 1.2 + Math.random() * 0.8, ease: "power2.out" }, "-=0.3");
           });
         }
 
-        tl.from(".success-btn", { y: 15, opacity: 0, duration: 0.3 }, "-=0.2");
+        tl.from(".success-btn", { y: 15, opacity: 0, duration: 0.3 }, "-=0.1");
       }
     },
     { scope, dependencies: [dropState] },
@@ -777,41 +784,56 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
 
         {dropState === "success" && (
           <div ref={successRef} className="success-reveal relative z-10 flex flex-col items-center text-center max-w-md mx-auto py-12 mt-8">
-            <div className="success-ring relative h-32 w-32 mb-8">
+            <div className="success-ring relative mb-8">
               <div className="success-energy-ring absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="h-16 w-16 rounded-full border-2 border-[#C8FF00] opacity-0" />
+                <div className="h-20 w-20 rounded-full border-[3px] border-[#FFD700] opacity-0" />
               </div>
-              <div className="absolute inset-0 rounded-full border-4 border-[#C8FF00] shadow-[0_0_60px_rgba(200,255,0,0.3)] success-ring-pulse" />
-              <div className="success-ring-inner absolute inset-0 flex items-center justify-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#C8FF00] shadow-[0_0_40px_rgba(200,255,0,0.4)]">
-                  <svg viewBox="0 0 48 48" className="h-10 w-10" fill="none">
+              <div className="success-ring-pulse absolute -inset-4 rounded-full border-[3px] border-[#FFD700] shadow-[0_0_60px_rgba(255,215,0,0.25)]" />
+              <div className="success-ring-inner relative flex items-center justify-center">
+                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#FFD700] to-[#FFA500] shadow-[0_0_50px_rgba(255,215,0,0.35)]">
+                  <svg viewBox="0 0 48 48" className="h-11 w-11" fill="none">
                     <path
                       d="M14 24l6 6 14-14"
-                      stroke="black"
-                      strokeWidth="3.5"
+                      stroke="#1a1a1a"
+                      strokeWidth="4"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       className="success-check-path"
                     />
+                    <path
+                      d="M14 24l6 6 14-14"
+                      fill="#1a1a1a"
+                      className="success-check-fill"
+                      opacity="0"
+                    />
                   </svg>
                 </div>
               </div>
-              <div ref={sparklesRef} className="absolute inset-0 pointer-events-none overflow-hidden">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="success-sparkle absolute h-1 w-1 rounded-full bg-[#C8FF00] opacity-0"
-                    style={{
-                      left: `${15 + Math.random() * 70}%`,
-                      top: "55%",
-                      boxShadow: "0 0 6px rgba(200,255,0,0.9)",
-                    }}
-                  />
-                ))}
+              <div ref={sparklesRef} className="absolute inset-0 pointer-events-none overflow-visible">
+                {Array.from({ length: 16 }).map((_, i) => {
+                  const colors = ["#FFD700", "#FFA500", "#FF6B6B", "#00E5FF", "#FF4081", "#FFFFFF"];
+                  return (
+                    <div
+                      key={i}
+                      className="success-sparkle absolute h-1.5 w-1.5 rounded-full opacity-0"
+                      style={{
+                        left: "50%",
+                        top: "50%",
+                        background: colors[i % colors.length],
+                        boxShadow: `0 0 6px ${colors[i % colors.length]}`,
+                      }}
+                    />
+                  );
+                })}
               </div>
             </div>
-            <h2 className="success-text text-3xl font-black text-white uppercase italic tracking-widest drop-shadow-[0_0_20px_rgba(200,255,0,0.3)]">comprobante recibido</h2>
-            <p className="success-msg mt-4 text-[11px] font-bold text-zinc-400 uppercase tracking-wider leading-relaxed max-w-sm">
+            {formData.firstName.trim() && (
+              <h2 className="success-name text-3xl font-black text-white uppercase italic tracking-widest drop-shadow-[0_0_20px_rgba(255,215,0,0.25)]">
+                ¡GRACIAS, {formData.firstName.trim().toUpperCase()}!
+              </h2>
+            )}
+            <h3 className="success-text mt-2 text-lg font-bold text-[#FFD700] uppercase tracking-widest">comprobante recibido</h3>
+            <p className="success-msg mt-3 text-[10.5px] font-bold text-zinc-400 uppercase tracking-wider leading-relaxed max-w-sm">
               TU COMPROBANTE FUE RECIBIDO CORRECTAMENTE. UN MIEMBRO DE VENTAS DAWG CONFIRMARA EL PAGO Y RECIBIRAS TU ACCESO POR GMAIL.
             </p>
             {onClose && (
@@ -828,8 +850,8 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
         @keyframes ticketFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
         .album-float-inner { animation: albumFloat 3.5s ease-in-out infinite; }
         @keyframes albumFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
-        .success-ring-pulse { animation: ringPulse 2.5s ease-out 0.8s infinite; }
-        @keyframes ringPulse { 0% { transform: scale(0.85); opacity: 0; } 50% { opacity: 0.12; } 100% { transform: scale(1.4); opacity: 0; } }
+        .success-ring-pulse { animation: ringPulse 2.8s ease-out 0.6s infinite; }
+        @keyframes ringPulse { 0% { transform: scale(0.8); opacity: 0; } 40% { opacity: 0.15; } 100% { transform: scale(1.6); opacity: 0; } }
       `}</style>
     </section>
   );
