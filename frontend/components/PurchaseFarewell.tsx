@@ -84,6 +84,7 @@ export default function PurchaseFarewell({ name, onComplete }: PurchaseFarewellP
               "-=0.28",
             )
             .from(".farewell-copy", { autoAlpha: 0, x: 10, duration: 0.25 }, "-=0.2")
+            .fromTo(".farewell-glow-ring", { scale: 0.5, opacity: 0.6 }, { scale: 2, opacity: 0, duration: 0.6, ease: "power2.out" }, "-=0.15")
             .to(
               ".farewell-wink-eye",
               {
@@ -160,57 +161,71 @@ export default function PurchaseFarewell({ name, onComplete }: PurchaseFarewellP
     >
       <div className="relative">
         <div
-          className="farewell-card relative flex min-h-16 max-w-[380px] transform-gpu items-center overflow-hidden rounded-[20px] border pr-5 shadow-2xl will-change-transform"
+          className="farewell-card relative flex min-h-16 max-w-[380px] transform-gpu items-center overflow-hidden rounded-[22px] pr-5 shadow-2xl will-change-transform"
           style={{
-            borderColor: "rgba(var(--theme-primary-rgb), 0.5)",
+            border: "1px solid rgba(var(--theme-primary-rgb), 0.35)",
             background:
-              "linear-gradient(135deg, rgba(var(--theme-primary-rgb),0.24), rgba(8,8,10,0.98) 48%, rgba(var(--theme-primary-rgb),0.12))",
+              "linear-gradient(135deg, rgba(var(--theme-primary-rgb),0.18), rgba(6,6,10,0.96) 50%, rgba(var(--theme-primary-rgb),0.08))",
             boxShadow:
-              "0 18px 45px rgba(0,0,0,0.62), 0 0 28px rgba(var(--theme-primary-rgb),0.22), inset 0 1px 0 rgba(var(--theme-primary-rgb),0.2)",
+              "0 20px 50px rgba(0,0,0,0.7), 0 0 30px rgba(var(--theme-primary-rgb),0.18), inset 0 1px 0 rgba(255,255,255,0.06)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
           }}
         >
           <span
-            className="farewell-accent self-stretch w-1.5 shrink-0"
-            style={{ background: "var(--theme-primary)" }}
+            className="farewell-accent self-stretch w-[3px] shrink-0"
+            style={{
+              background: `linear-gradient(180deg, var(--theme-primary-light), var(--theme-primary), var(--theme-primary-dark))`,
+              boxShadow: "0 0 12px rgba(var(--theme-primary-rgb),0.5)",
+            }}
           />
           <span
             aria-hidden
-            className="mx-3 h-2.5 w-2.5 shrink-0 rounded-full"
+            className="mx-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
             style={{
-              background: "var(--theme-primary-light)",
-              boxShadow: "0 0 14px rgba(var(--theme-primary-rgb),0.7)",
+              background: `radial-gradient(circle, rgba(var(--theme-primary-rgb),0.3), transparent)`,
             }}
-          />
-          <p className="farewell-copy py-4 text-sm font-black uppercase tracking-[0.045em] text-[var(--theme-primary-light)] sm:text-[15px]">
+          >
+            <span className="farewell-glow-ring absolute h-7 w-7 rounded-full border border-[var(--theme-primary-light)] opacity-0" />
+            <span
+              className="h-2.5 w-2.5 rounded-full"
+              style={{
+                background: "var(--theme-primary-light)",
+                boxShadow: "0 0 18px rgba(var(--theme-primary-rgb),0.8), 0 0 40px rgba(var(--theme-primary-rgb),0.3)",
+              }}
+            />
+          </span>
+          <p
+            className="farewell-copy py-4 pr-1 text-sm font-black uppercase tracking-[0.06em] sm:text-[15px]"
+            style={{
+              background: `linear-gradient(90deg, var(--theme-primary-light), rgba(255,255,255,0.9))`,
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
             {message}{" "}
-            <span className="ml-1 inline-flex items-center gap-px text-lg leading-none">
+            <span className="ml-1 inline-flex items-center gap-px text-lg leading-none" style={{ WebkitTextFillColor: "var(--theme-primary-light)" }}>
               <span className="farewell-wink-eye inline-block">;</span>
               <span className="farewell-smile inline-block">)</span>
             </span>
           </p>
         </div>
 
-        <div aria-hidden className="absolute right-10 top-1/2 -translate-y-1/2">
+        <div aria-hidden className="absolute right-[52px] top-1/2 -translate-y-1/2">
           {PARTICLES.map((particle, index) => (
             <span
               key={index}
-              className={`farewell-particle absolute block will-change-transform ${
-                particle.shape === 0
-                  ? "rounded-full"
-                  : particle.shape === 1
-                    ? "rounded-full"
-                    : particle.shape === 2
-                      ? "rounded-sm"
-                      : ""
-              }`}
+              className={`farewell-particle absolute block will-change-transform`}
               style={{
                 width: `${particle.size * 3}px`,
                 height: `${particle.size * 3}px`,
                 background: particle.color,
-                boxShadow: `0 0 8px ${particle.color}`,
+                boxShadow: `0 0 10px ${particle.color}`,
                 left: "0",
                 top: "0",
-                borderRadius: particle.shape === 0 ? "50%" : particle.shape === 1 ? "40%" : particle.shape === 2 ? "2px" : "50%",
+                borderRadius:
+                  particle.shape === 0 ? "50%" : particle.shape === 1 ? "3px" : particle.shape === 2 ? "50% 0 50% 0" : "2px",
               }}
             />
           ))}
