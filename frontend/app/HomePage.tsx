@@ -33,6 +33,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Atmosphere from "@/frontend/components/Atmosphere";
 import AnimatedHeading from "@/frontend/components/AnimatedHeading";
 import AIChatbot from "@/frontend/components/AIChatbot";
+import PurchaseFarewell from "@/frontend/components/PurchaseFarewell";
 import AccessDrop, { type AccessDropHandle } from "@/frontend/features/access-drop/AccessDrop";
 import TicketRecovery from "@/frontend/features/access-drop/TicketRecovery";
 import MerchTeaser from "@/frontend/features/merch/MerchTeaser";
@@ -53,12 +54,6 @@ const HOME_NAV_ITEMS = [
 
 type HomeNavId = (typeof HOME_NAV_ITEMS)[number]["id"];
 
-const ARTIST_GRADIENTS: Record<string, string> = {
-  "Yan": "from-pink-200 via-pink-500 to-fuchsia-700",
-  "Omar": "from-blue-200 via-blue-400 to-purple-600",
-  "ROA": "from-amber-200 via-amber-400 to-orange-600",
-};
-
 const VENUE_PHOTOS = [
   "/images/trap_loud_trio_artists.png",
   "/images/trap_loud_trio_artists.png",
@@ -78,62 +73,6 @@ export default function HomePage() {
   const [showFarewell, setShowFarewell] = useState(false);
   const [farewellName, setFarewellName] = useState("");
   const accessDropRef = useRef<AccessDropHandle>(null);
-  const farewellRef = useRef<HTMLDivElement>(null);
-  const farewellTimeline = useRef<gsap.core.Timeline | null>(null);
-
-  useEffect(() => {
-    if (!showFarewell || !farewellRef.current) return;
-    const bubble = farewellRef.current;
-    const rect = bubble.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const colors = ["#FF2200", "#FF4400", "#FF6600", "#FF8800", "#FFAA00", "#FFD700", "#C8FF00", "#00FFAA", "#FF3366", "#FF00FF", "#FFFFFF"];
-
-    function burst(originX: number, originY: number, count: number, hueOffset: number) {
-      for (let i = 0; i < count; i++) {
-        const el = document.createElement("div");
-        const size = 1.5 + Math.random() * 4.5;
-        const ci = Math.floor((i / count) * colors.length + hueOffset) % colors.length;
-        const color = colors[ci];
-        const glow = 3 + Math.random() * 14;
-        el.style.cssText = `position:fixed;left:${originX}px;top:${originY}px;width:${size}px;height:${size}px;border-radius:50%;background:${color};pointer-events:none;z-index:200;box-shadow:0 0 ${glow}px ${color};`;
-        document.body.appendChild(el);
-
-        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.6;
-        const dist = 40 + Math.random() * 380;
-        const vy = -50 - Math.random() * 180;
-
-        gsap.to(el, {
-          x: Math.cos(angle) * dist + (Math.random() - 0.5) * 30,
-          y: Math.sin(angle) * dist + vy + (Math.random() - 0.5) * 30,
-          scale: 0,
-          opacity: 0,
-          rotation: Math.random() * 720 - 360,
-          duration: 1 + Math.random() * 0.8,
-          ease: "power2.out",
-          onComplete: () => el.remove(),
-        });
-      }
-    }
-
-    const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-    farewellTimeline.current = tl;
-
-    tl.from(bubble, { opacity: 0, y: 60, scale: 0.75, duration: 0.8, ease: "back.out(1.7)" });
-    tl.to(bubble, { y: -12, scale: 1.06, duration: 1.8, ease: "sine.inOut" });
-    tl.call(() => {
-      burst(cx, cy, 50, 0);
-      gsap.delayedCall(0.18, () => burst(cx - 60, cy - 40, 30, 2));
-      gsap.delayedCall(0.35, () => burst(cx + 65, cy + 25, 30, 4));
-      gsap.delayedCall(0.52, () => burst(cx - 35, cy + 55, 25, 6));
-      gsap.delayedCall(0.68, () => burst(cx + 50, cy - 50, 25, 1));
-      gsap.delayedCall(0.85, () => burst(cx, cy - 70, 20, 3));
-      gsap.to(bubble, { scale: 0, opacity: 0, duration: 0.4, ease: "power2.in", delay: 0.1 });
-    });
-    tl.call(() => { setShowFarewell(false); });
-
-    return () => { tl.kill(); };
-  }, [showFarewell]);
   const [isTicketPulse, setIsTicketPulse] = useState(false);
   const [isRecoveryPulse, setIsRecoveryPulse] = useState(false);
   const [artistIndex, setArtistIndex] = useState(0);
@@ -143,10 +82,7 @@ export default function HomePage() {
   const theme: ThemeColors = getTheme(config.theme);
   const primaryRgb = hexToRgb(theme.primary);
 
-  const ARTISTS = config.hero.artistNames.map((a) => ({
-    ...a,
-    gradient: ARTIST_GRADIENTS[a.first] || null,
-  }));
+  const ARTISTS = config.hero.artistNames;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -322,7 +258,14 @@ export default function HomePage() {
   };
 
   return (
-    <main ref={scope} className="relative min-h-screen overflow-x-hidden bg-black text-white">
+    <main
+      ref={scope}
+      className="relative min-h-screen overflow-x-hidden bg-black text-white"
+      style={{
+        background:
+          "linear-gradient(180deg, rgba(var(--theme-primary-rgb), 0.18), #040404 22%, rgba(var(--theme-primary-rgb), 0.16) 58%, #050505)",
+      }}
+    >
       <Atmosphere />
 
       <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] bg-black/35 backdrop-blur-2xl">
@@ -408,7 +351,13 @@ export default function HomePage() {
         className="relative z-10 flex min-h-[100svh] w-full flex-col overflow-hidden px-4 pb-8 pt-24 sm:px-8 md:px-14 lg:px-20 lg:pb-10"
       >
         <div aria-hidden className="absolute inset-0 -z-20 overflow-hidden border-b border-white/[0.05] bg-[#08070b]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(255,31,111,0.24),transparent_29%),radial-gradient(circle_at_16%_56%,rgba(120,0,70,0.20),transparent_30%),radial-gradient(circle_at_88%_40%,rgba(0,183,255,0.08),transparent_24%),linear-gradient(180deg,#09070d_0%,#10050d_52%,#060607_100%)]" />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(circle at 50% 38%, rgba(var(--theme-primary-rgb), 0.34), transparent 31%), radial-gradient(circle at 16% 56%, rgba(var(--theme-primary-rgb), 0.22), transparent 32%), radial-gradient(circle at 88% 40%, rgba(var(--theme-primary-rgb), 0.16), transparent 26%), linear-gradient(180deg, #08070b 0%, rgba(var(--theme-primary-rgb), 0.14) 52%, #060607 100%)",
+            }}
+          />
         </div>
 
         <p
@@ -440,12 +389,24 @@ export default function HomePage() {
                         <>
                           {a.first}
                           <br />
-                          <span className={a.gradient ? `inline-block pr-2 bg-gradient-to-r ${a.gradient} bg-clip-text text-transparent` : "inline-block pr-2 bg-clip-text text-transparent"} style={a.gradient ? {} : { backgroundImage: "linear-gradient(to right, var(--theme-primary-light), var(--theme-primary), var(--theme-primary-dark))" }}>
+                          <span
+                            className="inline-block bg-clip-text pr-2 text-transparent"
+                            style={{
+                              backgroundImage:
+                                "linear-gradient(to right, var(--theme-primary-light), var(--theme-primary), var(--theme-primary-dark))",
+                            }}
+                          >
                             {a.second}
                           </span>
                         </>
                       ) : (
-                        <span className={a.gradient ? `inline-block pr-2 bg-gradient-to-r ${a.gradient} bg-clip-text text-transparent` : "inline-block pr-2 bg-clip-text text-transparent"} style={a.gradient ? {} : { backgroundImage: "linear-gradient(to right, var(--theme-primary-light), var(--theme-primary), var(--theme-primary-dark))" }}>
+                        <span
+                          className="inline-block bg-clip-text pr-2 text-transparent"
+                          style={{
+                            backgroundImage:
+                              "linear-gradient(to right, var(--theme-primary-light), var(--theme-primary), var(--theme-primary-dark))",
+                          }}
+                        >
                           {a.first}
                         </span>
                       )}
@@ -469,9 +430,15 @@ export default function HomePage() {
             </div>
             <div
               id="tickets"
-              className={`relative order-3 z-30 mx-auto mt-0 w-full max-w-[420px] overflow-hidden rounded-[26px] border border-pink-300/35 bg-[#1b0613] p-4 text-left opacity-100 shadow-[0_18px_58px_rgba(0,0,0,0.42),inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-pink-200/[0.05] transition sm:max-w-[500px] sm:p-5 lg:order-none lg:mx-0 lg:mt-8 lg:max-w-[540px] ${
+              className={`relative order-3 z-30 mx-auto mt-0 w-full max-w-[420px] overflow-hidden rounded-[26px] border border-pink-300/35 p-4 text-left opacity-100 ring-1 ring-pink-200/[0.05] transition sm:max-w-[500px] sm:p-5 lg:order-none lg:mx-0 lg:mt-8 lg:max-w-[540px] ${
                 isTicketPulse ? "ticket-card-pulse" : ""
               }`}
+              style={{
+                background:
+                  "linear-gradient(145deg, rgba(var(--theme-primary-rgb), 0.28), rgba(7,7,9,0.96) 54%, rgba(var(--theme-primary-rgb), 0.16))",
+                boxShadow:
+                  "0 18px 58px rgba(0,0,0,0.42), 0 0 54px rgba(var(--theme-primary-rgb),0.15), inset 0 1px 0 rgba(255,255,255,0.12)",
+              }}
             >
               <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),transparent_42%)]" />
 
@@ -486,9 +453,20 @@ export default function HomePage() {
                       {config.ticketCard.badgeSub}
                     </p>
                   </div>
-                  <div className="rounded-[16px] border border-[#C8FF00]/45 bg-[#C8FF00]/16 px-3 py-2 text-center shadow-[0_0_34px_rgba(200,255,0,0.18)]">
-                    <p className="text-xl font-black leading-none text-[#C8FF00] drop-shadow-[0_0_12px_rgba(200,255,0,0.38)] sm:text-2xl">${config.ticketCard.price}</p>
-                    <p className="mt-1 text-[6px] font-black uppercase tracking-widest text-[#C8FF00]/70">{config.ticketCard.currency}</p>
+                  <div
+                    className="rounded-[16px] border px-3 py-2 text-center"
+                    style={{
+                      borderColor: "rgba(var(--theme-primary-rgb), 0.48)",
+                      background: "rgba(var(--theme-primary-rgb), 0.18)",
+                      boxShadow: "0 0 34px rgba(var(--theme-primary-rgb), 0.24)",
+                    }}
+                  >
+                    <p className="text-xl font-black leading-none text-[var(--theme-primary-light)] drop-shadow-[0_0_12px_var(--theme-primary)] sm:text-2xl">
+                      ${config.ticketCard.price}
+                    </p>
+                    <p className="mt-1 text-[6px] font-black uppercase tracking-widest text-[var(--theme-primary-light)] opacity-70">
+                      {config.ticketCard.currency}
+                    </p>
                   </div>
                 </div>
 
@@ -606,8 +584,14 @@ export default function HomePage() {
 
           <div className="order-2 lg:order-2 lg:col-span-7">
             <div className="relative mx-auto h-[365px] w-full max-w-[680px] sm:h-[545px] lg:h-[650px]">
-              <div className="absolute left-1/2 top-1/2 h-[60%] w-[60%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-pink-500/20 blur-[90px]" />
-              <div className="absolute inset-x-[16%] bottom-[8%] h-[14%] rounded-full bg-pink-600/20 blur-[50px]" />
+              <div
+                className="absolute left-1/2 top-1/2 h-[64%] w-[64%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[90px]"
+                style={{ background: "rgba(var(--theme-primary-rgb), 0.32)" }}
+              />
+              <div
+                className="absolute inset-x-[12%] bottom-[6%] h-[18%] rounded-full blur-[55px]"
+                style={{ background: "rgba(var(--theme-primary-rgb), 0.28)" }}
+              />
 
               {featuredCovers.map((cover) => (
                 <div
@@ -641,7 +625,11 @@ export default function HomePage() {
                   fill
                   priority
                   sizes="(max-width: 1024px) 100vw, 680px"
-                  className="object-contain object-bottom drop-shadow-[0_0_42px_rgba(255,39,132,0.28)]"
+                  className="object-contain object-bottom"
+                  style={{
+                    filter:
+                      "drop-shadow(0 0 46px rgba(var(--theme-primary-rgb), 0.38))",
+                  }}
                 />
               </div>
             </div>
@@ -653,7 +641,10 @@ export default function HomePage() {
           className="hero-reveal relative z-20 mt-8 overflow-hidden rounded-[32px] border border-pink-300/15 bg-black/45 p-5 backdrop-blur-2xl sm:p-7 lg:mt-10 lg:p-9" style={{ boxShadow: "0 24px 90px rgba(var(--theme-primary-rgb), 0.12)" }}
         >
           <div className="pointer-events-none absolute -left-20 top-1/2 h-56 w-56 -translate-y-1/2 rounded-full bg-pink-500/15 blur-3xl" />
-          <div className="pointer-events-none absolute -right-24 bottom-0 h-64 w-64 rounded-full bg-[#C8FF00]/5 blur-3xl" />
+          <div
+            className="pointer-events-none absolute -right-24 bottom-0 h-64 w-64 rounded-full blur-3xl"
+            style={{ background: "rgba(var(--theme-primary-rgb), 0.08)" }}
+          />
           <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             <div className="relative z-10">
               <p className="inline-flex items-center gap-2 rounded-full border border-pink-300/20 bg-pink-500/[0.08] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.3em] text-pink-300">
@@ -758,15 +749,7 @@ export default function HomePage() {
       <MerchTeaser />
 
       {showFarewell && (
-        <div ref={farewellRef} className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[200]">
-          <div className="relative rounded-2xl bg-gradient-to-r from-[#C8FF00]/20 to-[#C8FF00]/10 border-2 border-[#C8FF00]/40 px-8 py-4 shadow-[0_0_60px_rgba(200,255,0,0.2)] backdrop-blur-xl">
-            <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#C8FF00] text-xs font-black text-black shadow-[0_0_20px_rgba(200,255,0,0.4)]">DW</div>
-              <p className="text-sm font-bold text-[#C8FF00]">gracias {farewellName} por tu compra <span className="inline-flex items-center gap-px"><span className="eye-wink inline-block">;</span><span className="inline-block">)</span></span></p>
-            </div>
-            <div className="absolute -top-1.5 left-7 h-3 w-3 rotate-45 border-l-2 border-t-2 border-[#C8FF00]/40 bg-[#C8FF00]/10" />
-          </div>
-        </div>
+        <PurchaseFarewell name={farewellName} onComplete={() => { setShowFarewell(false); setFarewellName(""); }} />
       )}
 
       <AIChatbot />
@@ -788,7 +771,10 @@ export default function HomePage() {
             >
               <button
                 onClick={() => {
-                  if (accessDropRef.current?.isSuccess) { setShowFarewell(true); setFarewellName(accessDropRef.current.firstName); }
+                  if (accessDropRef.current?.isSuccess) {
+                    setFarewellName(accessDropRef.current.firstName);
+                    setShowFarewell(true);
+                  }
                   setIsTicketModalOpen(false);
                 }}
                 aria-label="Cerrar compra"
@@ -796,7 +782,13 @@ export default function HomePage() {
               >
                 X
               </button>
-              <AccessDrop ref={accessDropRef} onFarewell={(name) => { setFarewellName(name); setShowFarewell(true); }} />
+              <AccessDrop
+                ref={accessDropRef}
+                onFarewell={(name) => {
+                  setFarewellName(name);
+                  setShowFarewell(true);
+                }}
+              />
             </motion.div>
           </motion.div>
         )}
@@ -954,11 +946,11 @@ export default function HomePage() {
           --theme-primary-rgb: ${primaryRgb};
           --theme-primary-light: ${theme.primaryLight};
           --theme-primary-dark: ${theme.primaryDark};
-          --theme-bg-tint: ${theme.glowRgba.replace("0.5", "0.12")};
-          --theme-bg-glow: ${theme.glowRgba.replace("0.5", "0.32")};
-          --theme-bg-glow-dark: ${theme.glowRgba.replace("0.5", "0.28")};
-          --theme-bg-accent: ${theme.hoverGlow.replace("0.4", "0.13")};
-          --theme-bg-grid: ${theme.glowRgba.replace("0.5", "0.05")};
+          --theme-bg-tint: rgba(${primaryRgb}, 0.34);
+          --theme-bg-glow: rgba(${primaryRgb}, 0.64);
+          --theme-bg-glow-dark: rgba(${primaryRgb}, 0.5);
+          --theme-bg-accent: rgba(${primaryRgb}, 0.3);
+          --theme-bg-grid: rgba(${primaryRgb}, 0.12);
           --theme-btn-from: ${theme.btnFrom};
           --theme-btn-to: ${theme.btnTo};
           --theme-btn-shadow: ${theme.btnShadow};
@@ -1040,8 +1032,6 @@ export default function HomePage() {
         .recovery-card-pulse {
           animation: recoveryCardPulse 1.25s ease-in-out 2;
         }
-        .eye-wink { animation: wink 4s ease-in-out infinite; }
-        @keyframes wink { 0%, 90%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.15); } }
         .recovery-button-pulse {
           animation: ticketButtonPulse 1.25s ease-in-out 2;
         }

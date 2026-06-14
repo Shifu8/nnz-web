@@ -23,6 +23,7 @@ export default function MobileFirstShell() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeModal, setActiveModal] = useState<"access" | null>(null);
   const [showFarewell, setShowFarewell] = useState(false);
+  const [farewellName, setFarewellName] = useState("");
   const accessDropRef = useRef<AccessDropHandle>(null);
   const [events, setEvents] = useState<Event[]>([]);
 
