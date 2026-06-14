@@ -106,11 +106,15 @@ export default function MerchTeaser() {
     >
       <div
         ref={cardRef}
-        className={`pointer-events-auto relative overflow-hidden border border-white/15 bg-black/90 shadow-[0_20px_70px_rgba(0,0,0,0.72),0_0_45px_rgba(255,0,72,0.14)] backdrop-blur-2xl transition-all duration-500 ${
+        className={`pointer-events-auto relative overflow-hidden border border-white/15 bg-black/90 backdrop-blur-2xl transition-all duration-500 ${
           isExpanded
             ? "w-[430px] rounded-[28px] p-3"
             : "flex w-[268px] gap-2.5 rounded-[20px] p-2"
         }`}
+        style={{
+          boxShadow:
+            "0 20px 70px rgba(0,0,0,0.72), 0 0 45px rgba(var(--theme-primary-rgb),0.18)",
+        }}
       >
         <button
           type="button"
@@ -173,9 +177,14 @@ export default function MerchTeaser() {
                   onClick={() => setActive(index)}
                   className={`relative h-16 overflow-hidden rounded-2xl border bg-zinc-950 transition ${
                     active === index
-                      ? "border-pink-300/60 shadow-[0_0_24px_rgba(255,0,102,0.18)]"
+                      ? "border-pink-300/60"
                       : "border-white/10 opacity-65 hover:opacity-100"
                   }`}
+                  style={
+                    active === index
+                      ? { boxShadow: "0 0 24px rgba(var(--theme-primary-rgb),0.22)" }
+                      : undefined
+                  }
                   aria-label={`Ver ${merch.name}`}
                 >
                   <Image

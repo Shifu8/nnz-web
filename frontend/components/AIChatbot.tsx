@@ -84,8 +84,13 @@ export default function AIChatbot() {
       {/* Botón flotante */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 z-50 flex items-center justify-center rounded-full border border-pink-300/30 bg-pink-500/20 text-pink-300 shadow-[0_0_30px_rgba(236,72,153,0.2)] backdrop-blur-xl transition-all duration-500 hover:bg-pink-500/30 hover:shadow-[0_0_40px_rgba(236,72,153,0.3)] ${isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"}`}
-        style={{ width: "56px", height: "56px", position: "fixed" } as CSSProperties}
+        className={`fixed bottom-6 right-6 z-50 flex items-center justify-center rounded-full border border-pink-300/30 bg-pink-500/20 text-pink-300 backdrop-blur-xl transition-all duration-500 hover:bg-pink-500/30 ${isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"}`}
+        style={{
+          width: "56px",
+          height: "56px",
+          position: "fixed",
+          boxShadow: "0 0 34px rgba(var(--theme-primary-rgb),0.3)",
+        } as CSSProperties}
       >
         <Bot className="h-6 w-6 animate-pulse" />
       </button>
@@ -170,7 +175,7 @@ export default function AIChatbot() {
               {/* Sleek branded watermark logo */}
               <div className="mt-4 flex items-center justify-center gap-1.5 text-[8px] font-black uppercase tracking-[0.3em] text-zinc-600">
                 <span>DAWGS</span>
-                <div className="h-1 w-1 rounded-full bg-red-500 animate-pulse" />
+                <div className="h-1 w-1 animate-pulse rounded-full bg-[var(--theme-primary)]" />
                 <span>AI CONCIERGE v2.0</span>
               </div>
             </div>

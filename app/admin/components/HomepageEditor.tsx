@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Plus, Trash2, Check } from "lucide-react";
 import type { HomepageConfig, Cover } from "@/lib/homepage-config/types";
 import { DEFAULT_HOMEPAGE_CONFIG, COVER_POSITIONS } from "@/lib/homepage-config/defaults";
-import { THEMES } from "@/lib/homepage-config/themes";
+import { hexToRgb, THEMES } from "@/lib/homepage-config/themes";
 
 const AUTH_HEADERS = {
   Authorization: `Bearer ${Buffer.from("admin:dawgs2026").toString("base64")}`,
@@ -210,7 +210,8 @@ export default function HomepageEditor() {
     { id: "footer", label: "Footer" },
   ];
 
-  const activeTabId = activeTab;
+  const selectedTheme = THEMES.find((theme) => theme.id === config.theme) ?? THEMES[0];
+  const selectedThemeRgb = hexToRgb(selectedTheme.colors.primary);
 
   const inputClass =
     "w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none transition focus:border-pink-400/50 focus:bg-white/[0.06]";
@@ -518,7 +519,7 @@ export default function HomepageEditor() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelClass}>Botón "Ver evento"</label>
+                <label className={labelClass}>Botón &quot;Ver evento&quot;</label>
                 <input
                   className={inputClass}
                   value={config.ticketCard.verEventoText}
@@ -526,7 +527,7 @@ export default function HomepageEditor() {
                 />
               </div>
               <div>
-                <label className={labelClass}>Botón "Comprar entrada"</label>
+                <label className={labelClass}>Botón &quot;Comprar entrada&quot;</label>
                 <input
                   className={inputClass}
                   value={config.ticketCard.comprarEntradaText}
@@ -651,34 +652,127 @@ export default function HomepageEditor() {
 
         {activeTab === "theme" && (
           <>
-            <div>
+            <div className="space-y-5">
               <label className={labelClass}>Tema de color</label>
-              <p className="mt-1 mb-4 text-[8px] text-zinc-500">Elige la paleta de colores del homepage. Cambia el estilo visual al instante.</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <p className="text-[9px] leading-4 text-zinc-500">
+                Elige la energía visual del homepage. La vista previa cambia al instante y se aplica al guardar.
+              </p>
+
+              <div
+                className="relative overflow-hidden rounded-[28px] border p-5 sm:p-6"
+                style={{
+                  borderColor: `rgba(${selectedThemeRgb}, 0.38)`,
+                  background: `radial-gradient(circle at 18% 20%, rgba(${selectedThemeRgb}, 0.36), transparent 34%), linear-gradient(135deg, rgba(${selectedThemeRgb}, 0.18), rgba(6,6,6,0.96) 52%, rgba(${selectedThemeRgb}, 0.1))`,
+                  boxShadow: `0 20px 70px rgba(0,0,0,0.42), 0 0 55px rgba(${selectedThemeRgb}, 0.16)`,
+                }}
+              >
+                <div
+                  className="absolute -right-12 -top-14 h-40 w-40 rounded-full blur-3xl"
+                  style={{ backgroundColor: `rgba(${selectedThemeRgb}, 0.3)` }}
+                />
+                <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{
+                          backgroundColor: selectedTheme.colors.primaryLight,
+                          boxShadow: `0 0 14px ${selectedTheme.colors.primary}`,
+                        }}
+                      />
+                      <p className="text-[8px] font-black uppercase tracking-[0.25em] text-white/60">
+                        Atmósfera activa
+                      </p>
+                    </div>
+                    <h3 className="mt-2 text-2xl font-black uppercase italic tracking-tight text-white">
+                      {selectedTheme.label}
+                    </h3>
+                    <p className="mt-1 text-[9px] uppercase tracking-[0.16em] text-zinc-400">
+                      Fondos, luces, botones y destellos
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {[selectedTheme.colors.primaryDark, selectedTheme.colors.primary, selectedTheme.colors.primaryLight].map((color, index) => (
+                      <span
+                        key={color}
+                        className={`rounded-2xl border border-white/15 ${index === 1 ? "h-14 w-14" : "h-10 w-10"}`}
+                        style={{
+                          backgroundColor: color,
+                          boxShadow: index === 1 ? `0 0 30px rgba(${selectedThemeRgb}, 0.45)` : "none",
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="relative mt-5 flex items-center gap-3">
+                  <div
+                    className="h-2 flex-1 rounded-full"
+                    style={{
+                      background: `linear-gradient(90deg, ${selectedTheme.colors.bgFrom}, ${selectedTheme.colors.primaryLight}, ${selectedTheme.colors.bgTo})`,
+                      boxShadow: `0 0 20px rgba(${selectedThemeRgb}, 0.36)`,
+                    }}
+                  />
+                  <span
+                    className="rounded-full px-4 py-2 text-[8px] font-black uppercase tracking-[0.18em] text-white"
+                    style={{
+                      background: `linear-gradient(135deg, ${selectedTheme.colors.btnFrom}, ${selectedTheme.colors.btnTo})`,
+                      boxShadow: `0 0 24px ${selectedTheme.colors.btnShadow}`,
+                    }}
+                  >
+                    Ver tickets
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {THEMES.map((t) => {
                   const isActive = config.theme === t.id;
+                  const rgb = hexToRgb(t.colors.primary);
                   return (
                     <button
+                      type="button"
                       key={t.id}
                       onClick={() => setConfig((prev) => ({ ...prev, theme: t.id }))}
-                      className={`relative rounded-2xl border-2 p-4 text-left transition-all ${
-                        isActive
-                          ? "border-white/40 bg-white/[0.06] shadow-[0_0_30px_rgba(255,255,255,0.05)]"
-                          : "border-white/[0.06] bg-white/[0.02] hover:border-white/20"
-                      }`}
+                      aria-pressed={isActive}
+                      className="group relative min-h-36 overflow-hidden rounded-2xl border p-4 text-left transition duration-300 hover:-translate-y-1"
+                      style={{
+                        borderColor: `rgba(${rgb}, ${isActive ? "0.7" : "0.2"})`,
+                        background: `radial-gradient(circle at 20% 8%, rgba(${rgb}, ${isActive ? "0.34" : "0.14"}), transparent 46%), rgba(255,255,255,${isActive ? "0.055" : "0.02"})`,
+                        boxShadow: isActive
+                          ? `0 0 0 1px rgba(${rgb}, 0.25), 0 16px 44px rgba(${rgb}, 0.2)`
+                          : "0 12px 30px rgba(0,0,0,0.18)",
+                      }}
                     >
+                      <div
+                        className="absolute inset-x-0 bottom-0 h-1 transition-all duration-300 group-hover:h-1.5"
+                        style={{ background: `linear-gradient(90deg, ${t.colors.bgFrom}, ${t.colors.primaryLight}, ${t.colors.bgTo})` }}
+                      />
                       {isActive && (
-                        <div className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-white text-black">
-                          <Check className="h-3 w-3" />
+                        <div
+                          className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full text-black"
+                          style={{
+                            backgroundColor: t.colors.primaryLight,
+                            boxShadow: `0 0 18px rgba(${rgb}, 0.7)`,
+                          }}
+                        >
+                          <Check className="h-3.5 w-3.5 stroke-[3]" />
                         </div>
                       )}
-                      <div className="flex gap-1.5 mb-2">
-                        <div className="h-6 w-6 rounded-full" style={{ backgroundColor: t.colors.primary }} />
-                        <div className="h-6 w-6 rounded-full" style={{ backgroundColor: t.colors.primaryLight }} />
-                        <div className="h-6 w-6 rounded-full" style={{ backgroundColor: t.colors.primaryDark }} />
+                      <div
+                        className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15"
+                        style={{
+                          background: `linear-gradient(145deg, ${t.colors.primaryLight}, ${t.colors.primaryDark})`,
+                          boxShadow: `0 0 26px rgba(${rgb}, 0.34)`,
+                        }}
+                      >
+                        <span className="h-2 w-2 rounded-full bg-white/90 shadow-[0_0_10px_white]" />
                       </div>
-                      <p className="text-[10px] font-bold text-white">{t.label}</p>
-                      <div className="mt-1.5 h-1.5 w-full rounded-full" style={{ background: `linear-gradient(90deg, ${t.colors.bgFrom}, ${t.colors.bgTo})` }} />
+                      <p className="text-[10px] font-black uppercase tracking-[0.08em] text-white">{t.label}</p>
+                      <p className="mt-1 text-[8px] uppercase tracking-[0.14em] text-white/40">
+                        {isActive ? "Seleccionado" : "Elegir paleta"}
+                      </p>
                     </button>
                   );
                 })}
