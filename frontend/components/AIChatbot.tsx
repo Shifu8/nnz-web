@@ -26,9 +26,11 @@ const quickReplies = [
 
 export default function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputText, setInputText] = useState("");
   const chatRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,14 +40,72 @@ export default function AIChatbot() {
   }, [messages, isOpen]);
 
   useEffect(() => {
-    if (isOpen && chatRef.current) {
+    if (isOpen && !isClosing && chatRef.current) {
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      gsap.killTweensOf([chatRef.current, backdropRef.current]);
+      gsap.fromTo(
+        backdropRef.current,
+        { autoAlpha: 0 },
+        { autoAlpha: 1, duration: reduceMotion ? 0 : 0.24, ease: "power2.out" },
+      );
       gsap.fromTo(
         chatRef.current,
-        { opacity: 0, y: 50, scale: 0.9 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "power3.out" }
+        {
+          opacity: 0,
+          y: 18,
+          scale: reduceMotion ? 1 : 1.14,
+          filter: reduceMotion ? "none" : "blur(8px)",
+          transformOrigin: "center bottom",
+        },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          filter: "blur(0px)",
+          duration: reduceMotion ? 0 : 0.48,
+          ease: "power3.out",
+        },
       );
     }
-  }, [isOpen]);
+  }, [isOpen, isClosing]);
+
+  const openChat = () => {
+    setIsClosing(false);
+    setIsOpen(true);
+  };
+
+  const closeChat = () => {
+    if (isClosing) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion || !chatRef.current) {
+      setIsOpen(false);
+      setIsClosing(false);
+      return;
+    }
+
+    setIsClosing(true);
+    gsap.killTweensOf([chatRef.current, backdropRef.current]);
+    gsap.to(backdropRef.current, {
+      autoAlpha: 0,
+      duration: 0.24,
+      ease: "power2.inOut",
+    });
+    gsap.to(chatRef.current, {
+      opacity: 0,
+      y: 18,
+      scale: 0.82,
+      filter: "blur(8px)",
+      transformOrigin: "center bottom",
+      duration: 0.34,
+      ease: "power3.in",
+      onComplete: () => {
+        setIsOpen(false);
+        setIsClosing(false);
+      },
+    });
+  };
 
   const handleSend = async (text: string) => {
     if (!text.trim()) return;
@@ -83,7 +143,7 @@ export default function AIChatbot() {
     <>
       {/* Botón flotante */}
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={openChat}
         className={`fixed bottom-6 right-6 z-50 flex items-center justify-center rounded-full border border-pink-300/30 bg-pink-500/20 text-pink-300 backdrop-blur-xl transition-all duration-500 hover:bg-pink-500/30 ${isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"}`}
         style={{
           width: "56px",
@@ -98,7 +158,7 @@ export default function AIChatbot() {
       {/* Interfaz de Chat */}
       {isOpen && (
         <div className="fixed inset-0 z-[110] flex items-end justify-center p-4 sm:items-center sm:p-0">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
+          <div ref={backdropRef} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeChat} />
 
           <div
             ref={chatRef}
@@ -116,7 +176,7 @@ export default function AIChatbot() {
                 </div>
               </div>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={closeChat}
                 className="flex h-[34px] w-[34px] items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-zinc-400 backdrop-blur-xl transition hover:border-pink-300/30 hover:bg-pink-500/20 hover:text-pink-300"
               >
                 <X className="h-4 w-4" />

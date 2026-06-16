@@ -7,6 +7,7 @@
 "use client";
 
 import Image from "next/image";
+import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -44,6 +45,7 @@ import { useCountdown } from "@/frontend/hooks/useCountdown";
 import { useHomepageConfig } from "@/frontend/hooks/useHomepageConfig";
 import { getTheme, hexToRgb } from "@/lib/homepage-config/themes";
 import type { ThemeColors } from "@/lib/homepage-config/themes";
+import type { HomepageConfig } from "@/lib/homepage-config/types";
 import type { Event } from "@/frontend/types/domain";
 
 const HOME_NAV_ITEMS = [
@@ -54,13 +56,17 @@ const HOME_NAV_ITEMS = [
 
 type HomeNavId = (typeof HOME_NAV_ITEMS)[number]["id"];
 
+interface HomePageProps {
+  initialConfig: HomepageConfig;
+}
+
 const VENUE_PHOTOS = [
   "/images/trap_loud_trio_artists.png",
   "/images/trap_loud_trio_artists.png",
   "/images/trap_loud_trio_artists.png",
 ];
 
-export default function HomePage() {
+export default function HomePage({ initialConfig }: HomePageProps) {
   const router = useRouter();
   const scope = useRef<HTMLElement>(null);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
@@ -78,9 +84,39 @@ export default function HomePage() {
   const [artistIndex, setArtistIndex] = useState(0);
   const [showEventModal, setShowEventModal] = useState(false);
   const [eventPhotoIndex, setEventPhotoIndex] = useState(0);
-  const { config } = useHomepageConfig();
+  const { config } = useHomepageConfig(initialConfig);
   const theme: ThemeColors = getTheme(config.theme);
   const primaryRgb = hexToRgb(theme.primary);
+  const themeStyle = {
+    "--theme-primary": theme.primary,
+    "--theme-primary-rgb": primaryRgb,
+    "--theme-primary-light": theme.primaryLight,
+    "--theme-primary-dark": theme.primaryDark,
+    "--theme-bg-tint": `rgba(${primaryRgb}, 0.34)`,
+    "--theme-bg-glow": `rgba(${primaryRgb}, 0.64)`,
+    "--theme-bg-glow-dark": `rgba(${primaryRgb}, 0.5)`,
+    "--theme-bg-accent": `rgba(${primaryRgb}, 0.3)`,
+    "--theme-bg-grid": `rgba(${primaryRgb}, 0.12)`,
+    "--theme-btn-from": theme.btnFrom,
+    "--theme-btn-to": theme.btnTo,
+    "--theme-btn-shadow": theme.btnShadow,
+    "--theme-glow-intense": theme.glowIntense,
+    "--theme-border-accent": theme.borderRgba,
+    "--theme-border-accent-light": theme.borderRgba.replace("0.3", "0.18"),
+    "--theme-border-accent-xlight": theme.borderRgba.replace("0.3", "0.08"),
+    "--theme-glow-rgba": theme.glowRgba,
+    "--theme-text-accent": theme.textAccent,
+    "--theme-text-rgb": primaryRgb,
+    "--theme-badge-bg": theme.badgeBg,
+    "--theme-card-border": theme.cardBorder,
+    "--theme-card-shadow": theme.cardShadow,
+    "--theme-hover-glow": theme.hoverGlow,
+    "--theme-bg-pink-500": `rgba(${primaryRgb}, 0.18)`,
+    "--theme-bg-pink-500-hover": `rgba(${primaryRgb}, 0.3)`,
+    "--theme-tag-bg": theme.tagBg,
+    background:
+      "linear-gradient(180deg, rgba(var(--theme-primary-rgb), 0.18), #040404 22%, rgba(var(--theme-primary-rgb), 0.16) 58%, #050505)",
+  } as CSSProperties;
 
   const ARTISTS = config.hero.artistNames;
 
@@ -261,10 +297,7 @@ export default function HomePage() {
     <main
       ref={scope}
       className="relative min-h-screen overflow-x-hidden bg-black text-white"
-      style={{
-        background:
-          "linear-gradient(180deg, rgba(var(--theme-primary-rgb), 0.18), #040404 22%, rgba(var(--theme-primary-rgb), 0.16) 58%, #050505)",
-      }}
+      style={themeStyle}
     >
       <Atmosphere />
 

@@ -5,7 +5,11 @@
  */
 
 import DawgsHomePage from "@/frontend/app/HomePage";
+import { loadConfig } from "@/lib/homepage-config/store";
+
+export const dynamic = "force-dynamic";
 
 export default function HomePage() {
-  return <DawgsHomePage />;
+  const config = loadConfig();
+  return <DawgsHomePage initialConfig={config} />;
 }
