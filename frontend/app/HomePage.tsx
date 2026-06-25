@@ -15,7 +15,6 @@ import {
   CalendarDays,
   ChevronLeft,
   Clock3,
-  Disc3,
   KeyRound,
   LockKeyhole,
   MapPin,
@@ -37,7 +36,7 @@ import AIChatbot from "@/frontend/components/AIChatbot";
 import PurchaseFarewell from "@/frontend/components/PurchaseFarewell";
 import AccessDrop, { type AccessDropHandle } from "@/frontend/features/access-drop/AccessDrop";
 import TicketRecovery from "@/frontend/features/access-drop/TicketRecovery";
-import MerchTeaser from "@/frontend/features/merch/MerchTeaser";
+import OutfitBuilderSection from "@/frontend/features/merch/OutfitBuilderSection";
 import StaffModal from "@/frontend/features/staff/StaffModal";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
 import { events as fallbackEvents } from "@/frontend/services/dawgsData";
@@ -722,48 +721,19 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
         <TicketRecovery embedded pulse={isRecoveryPulse} className="hero-reveal mt-5 lg:mt-7" />
 
-      {events.length > 1 && (
-        <div className="hero-reveal relative z-20 mt-5 overflow-hidden rounded-[32px] border border-pink-300/15 bg-black/45 p-5 backdrop-blur-2xl sm:p-7 lg:mt-7 lg:p-9" style={{ boxShadow: "0 24px 90px rgba(var(--theme-primary-rgb), 0.12)" }}>
-          <div className="pointer-events-none absolute left-1/2 top-0 h-56 w-[70%] -translate-x-1/2 rounded-full bg-pink-500/12 blur-3xl" />
-          <div className="relative z-10 mb-7 flex flex-col items-center justify-center gap-3 text-center">
-            <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.36em] text-zinc-500">{config.nextSignals.preHeading}</p>
-              <h2 className="mt-2 text-2xl font-black uppercase text-white sm:text-3xl">{config.nextSignals.heading}</h2>
-            </div>
-            <Disc3 className="h-6 w-6 text-pink-400" />
-          </div>
 
-          <div className="relative z-10 grid gap-4 md:grid-cols-3">
-            {events.slice(1, 4).map((event) => (
-              <article
-                key={event.id}
-                className="group relative min-h-[260px] overflow-hidden rounded-[26px] border border-pink-300/[0.12] bg-black shadow-[0_18px_70px_rgba(0,0,0,0.35)]"
-              >
-                <Image
-                  src={event.poster || "/images/trap_loud_trio_artists.png"}
-                  alt={event.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                  className="object-cover object-top opacity-78 transition duration-700 group-hover:scale-105 group-hover:opacity-95"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-5">
-                  <p className="text-[8px] font-black uppercase tracking-[0.28em] text-pink-300">
-                    {event.dateLabel} · {event.city}
-                  </p>
-                  <h3 className="mt-2 text-2xl font-black uppercase text-white">{event.title}</h3>
-                  <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-zinc-400">
-                    {event.subtitle}
-                  </p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      )}
       </section>
 
-      <footer id="support" className="relative z-10 scroll-mt-24 border-t border-white/[0.06] px-4 py-14 sm:px-6 md:px-12 lg:px-16">
+      <OutfitBuilderSection />
+
+      {showFarewell && (
+        <PurchaseFarewell name={farewellName} onComplete={() => { setShowFarewell(false); setFarewellName(""); }} />
+      )}
+
+      <AIChatbot />
+      <StaffModal isOpen={isStaffModalOpen} onClose={() => setIsStaffModalOpen(false)} />
+
+      <footer id="support" className="relative z-10 border-t border-white/[0.06] px-4 py-14 sm:px-6 md:px-12 lg:px-16">
         <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center text-center gap-4">
           <p className="text-lg font-black uppercase tracking-[0.34em] text-white">{config.footer.brand}</p>
           <p className="text-[9px] uppercase tracking-[0.24em] text-zinc-600">{config.footer.tagline}</p>
@@ -778,15 +748,6 @@ export default function HomePage({ initialConfig }: HomePageProps) {
           <p className="mt-2 text-[8px] font-bold tracking-wider text-zinc-600">{config.footer.copyright}</p>
         </div>
       </footer>
-
-      <MerchTeaser />
-
-      {showFarewell && (
-        <PurchaseFarewell name={farewellName} onComplete={() => { setShowFarewell(false); setFarewellName(""); }} />
-      )}
-
-      <AIChatbot />
-      <StaffModal isOpen={isStaffModalOpen} onClose={() => setIsStaffModalOpen(false)} />
 
       <AnimatePresence>
         {isTicketModalOpen && (

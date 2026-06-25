@@ -205,7 +205,6 @@ export default function HomepageEditor() {
     { id: "covers", label: "Álbumes" },
     { id: "ticketCard", label: "Ticket Card" },
     { id: "accessSection", label: "Access" },
-    { id: "nextSignals", label: "Próximas señales" },
     { id: "theme", label: "Tema" },
     { id: "footer", label: "Footer" },
   ];
@@ -625,27 +624,6 @@ export default function HomepageEditor() {
               <button onClick={addStep} className={btnClass}>
                 <Plus className="h-3 w-3" /> Agregar step
               </button>
-            </div>
-          </>
-        )}
-
-        {activeTab === "nextSignals" && (
-          <>
-            <div>
-              <label className={labelClass}>Pre-heading</label>
-              <input
-                className={inputClass}
-                value={config.nextSignals.preHeading}
-                onChange={(e) => updateNested("nextSignals", "preHeading", e.target.value)}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Heading</label>
-              <input
-                className={inputClass}
-                value={config.nextSignals.heading}
-                onChange={(e) => updateNested("nextSignals", "heading", e.target.value)}
-              />
             </div>
           </>
         )}

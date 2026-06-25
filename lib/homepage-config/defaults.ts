@@ -76,10 +76,6 @@ export const DEFAULT_HOMEPAGE_CONFIG: HomepageConfig = {
       },
     ],
   },
-  nextSignals: {
-    preHeading: "Después de Yan Block",
-    heading: "Próximas señales",
-  },
   footer: {
     brand: "DAWGS",
     tagline: "Live shows · official access · wear",

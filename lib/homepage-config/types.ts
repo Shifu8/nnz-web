@@ -36,10 +36,6 @@ export interface HomepageConfig {
     description: string;
     steps: { step: string; title: string; copy: string }[];
   };
-  nextSignals: {
-    preHeading: string;
-    heading: string;
-  };
   footer: {
     brand: string;
     tagline: string;

@@ -1,5 +1,5 @@
 {
-  "theme": "red",
+  "theme": "pink",
   "hero": {
     "tagline": "DAWGS presenta",
     "artistNames": [
@@ -115,10 +115,6 @@
         "copy": "El staff escanea tu QR oficial una sola vez. Usado = bloqueado, así evitamos fraudes y reventa."
       }
     ]
-  },
-  "nextSignals": {
-    "preHeading": "Después de Yan Block",
-    "heading": "Próximas señales"
   },
   "footer": {
     "brand": "DAWGS",
