@@ -36,9 +36,9 @@ import AIChatbot from "@/frontend/components/AIChatbot";
 import PurchaseFarewell from "@/frontend/components/PurchaseFarewell";
 import AccessDrop, { type AccessDropHandle } from "@/frontend/features/access-drop/AccessDrop";
 import TicketRecovery from "@/frontend/features/access-drop/TicketRecovery";
+import OutfitBuilderSection from "@/frontend/features/merch/OutfitBuilderSection";
 import StaffModal from "@/frontend/features/staff/StaffModal";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
-import EventTicketCarousel, { CAROUSEL_EVENTS } from "@/frontend/components/EventTicketCarousel";
 import { events as fallbackEvents } from "@/frontend/services/dawgsData";
 import { useCountdown } from "@/frontend/hooks/useCountdown";
 import { useHomepageConfig } from "@/frontend/hooks/useHomepageConfig";
@@ -83,7 +83,6 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   const [artistIndex, setArtistIndex] = useState(0);
   const [showEventModal, setShowEventModal] = useState(false);
   const [eventPhotoIndex, setEventPhotoIndex] = useState(0);
-  const [selectedCarouselEvent, setSelectedCarouselEvent] = useState<Event>(CAROUSEL_EVENTS[0]);
   const { config } = useHomepageConfig(initialConfig);
   const theme: ThemeColors = getTheme(config.theme);
   const primaryRgb = hexToRgb(theme.primary);
@@ -463,19 +462,155 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             </div>
             <div
               id="tickets"
-              className="relative order-3 z-30 mx-auto mt-0 w-full max-w-[420px] transition sm:max-w-[500px] lg:order-none lg:mx-0 lg:mt-8 lg:max-w-[540px]"
+              className={`relative order-3 z-30 mx-auto mt-0 w-full max-w-[420px] overflow-hidden rounded-[26px] border border-pink-300/35 p-4 text-left opacity-100 ring-1 ring-pink-200/[0.05] transition sm:max-w-[500px] sm:p-5 lg:order-none lg:mx-0 lg:mt-8 lg:max-w-[540px] ${
+                isTicketPulse ? "ticket-card-pulse" : ""
+              }`}
+              style={{
+                background:
+                  "linear-gradient(145deg, rgba(var(--theme-primary-rgb), 0.28), rgba(7,7,9,0.96) 54%, rgba(var(--theme-primary-rgb), 0.16))",
+                boxShadow:
+                  "0 18px 58px rgba(0,0,0,0.42), 0 0 54px rgba(var(--theme-primary-rgb),0.15), inset 0 1px 0 rgba(255,255,255,0.12)",
+              }}
             >
-              <EventTicketCarousel
-                isTicketPulse={isTicketPulse}
-                onBuy={(event) => {
-                  setSelectedCarouselEvent(event);
-                  setIsTicketModalOpen(true);
-                }}
-                onViewDetails={(event) => {
-                  setSelectedCarouselEvent(event);
-                  setShowEventModal(true);
-                }}
-              />
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),transparent_42%)]" />
+
+              <div className="relative z-10">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="theme-glow-sm inline-flex items-center gap-2 rounded-full border border-pink-200/35 bg-pink-500/18 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.2em] text-pink-50">
+                      <Ticket className="h-3 w-3" />
+                      {config.ticketCard.badge}
+                      <span className="h-1 w-1 rounded-full bg-pink-300/60" />
+                      <Sparkles className="h-3 w-3" />
+                      {config.ticketCard.badgeSub}
+                    </p>
+                  </div>
+                  <div
+                    className="rounded-[16px] border px-3 py-2 text-center"
+                    style={{
+                      borderColor: "rgba(var(--theme-primary-rgb), 0.48)",
+                      background: "rgba(var(--theme-primary-rgb), 0.18)",
+                      boxShadow: "0 0 34px rgba(var(--theme-primary-rgb), 0.24)",
+                    }}
+                  >
+                    <p className="text-xl font-black leading-none text-[var(--theme-primary-light)] drop-shadow-[0_0_12px_var(--theme-primary)] sm:text-2xl">
+                      ${config.ticketCard.price}
+                    </p>
+                    <p className="mt-1 text-[6px] font-black uppercase tracking-widest text-[var(--theme-primary-light)] opacity-70">
+                      {config.ticketCard.currency}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-3">
+                  <h3 className="text-3xl font-black uppercase leading-[0.88] tracking-[-0.05em] text-white drop-shadow-[0_0_18px_rgba(255,255,255,0.16)] sm:text-4xl">
+                    {config.ticketCard.eventTitle}
+                  </h3>
+                  <p className="mt-1 text-[8px] font-black uppercase tracking-[0.24em] text-pink-200">
+                    {config.ticketCard.eventSubtitle}
+                  </p>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-200/18 bg-white/[0.08] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.18em] text-zinc-100">
+                    <MapPin className="h-3 w-3 text-pink-300" />
+                    {featuredEvent.city}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-200/18 bg-white/[0.08] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.18em] text-zinc-100">
+                    <CalendarDays className="h-3 w-3 text-pink-300" />
+                    {featuredEvent.dateLabel}
+                  </span>
+                </div>
+
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  {featuredEvent.lineup.map((artist) => (
+                    <span
+                      key={artist}
+                      className="rounded-full border border-pink-200/25 bg-pink-500/16 px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.17em] text-pink-50"
+                    >
+                      {artist}
+                    </span>
+                  ))}
+                  <a
+                    href={`https://instagram.com/${config.ticketCard.daWgDj.instagram}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 rounded-full border border-blue-400/30 bg-blue-950/40 px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.17em] text-blue-200 transition hover:bg-blue-900/50"
+                  >
+                    <Music2 className="h-2.5 w-2.5" /> {config.ticketCard.daWgDj.name}
+                  </a>
+                </div>
+
+                <p className="mt-2.5 text-[9px] leading-5 text-zinc-200/90 sm:text-[10px]">
+                  {config.ticketCard.description}
+                </p>
+
+                {!ticketCountdown.expired && (
+                  <div className="mt-3 rounded-[22px] border border-pink-200/16 bg-black/55 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+                    <p className="mb-2 flex items-center gap-2 text-[7px] font-black uppercase tracking-[0.22em] text-zinc-300">
+                      <Clock3 className="h-3 w-3 text-pink-300" />
+                      {config.ticketCard.countdownLabel}
+                    </p>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {[
+                        ["days", ticketCountdown.days],
+                        ["hours", ticketCountdown.hours],
+                        ["minutes", ticketCountdown.minutes],
+                        ["seconds", ticketCountdown.seconds],
+                      ].map(([label, value]) => (
+                        <div
+                          key={label}
+                          className="rounded-xl border border-white/[0.08] bg-black/70 px-1 py-1.5 text-center"
+                        >
+                          <p className="text-sm font-black leading-none text-white">{value}</p>
+                          <p className="mt-0.5 text-[5px] font-black uppercase tracking-wider text-zinc-600">
+                            {label}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                  <p className="mr-1 text-[7px] font-black uppercase tracking-[0.2em] text-zinc-300">
+                    Con apoyo de
+                  </p>
+                  {config.ticketCard.sponsors.map((sponsor) => (
+                    <span
+                      key={sponsor.name}
+                      className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-pink-200/20 bg-pink-500/14 px-2 py-1"
+                    >
+                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-pink-300/20 bg-black/40 text-[6px] font-black text-pink-100">
+                        {sponsor.initials}
+                      </span>
+                      <span className="truncate text-[6.5px] font-black uppercase tracking-[0.1em] text-white">
+                        {sponsor.name}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowEventModal(true)}
+                    className="inline-flex h-[50px] items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-[8px] font-black uppercase tracking-[0.2em] text-white transition hover:border-pink-400/30 hover:bg-pink-500/10 hover:text-pink-300 sm:h-[52px]"
+                  >
+                    <MapPin className="h-3.5 w-3.5" /> {config.ticketCard.verEventoText}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsTicketModalOpen(true)}
+                    className={`ticket-buy-button inline-flex h-[50px] items-center justify-between rounded-2xl bg-white px-5 text-[9px] font-black uppercase tracking-[0.2em] text-black shadow-[0_12px_34px_rgba(255,255,255,0.12)] transition hover:bg-pink-100 sm:h-[52px] ${
+                      isTicketPulse ? "ticket-button-pulse" : ""
+                    }`}
+                  >
+                    {config.ticketCard.comprarEntradaText}
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -589,6 +724,8 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
       </section>
 
+      <OutfitBuilderSection />
+
       {showFarewell && (
         <PurchaseFarewell name={farewellName} onComplete={() => { setShowFarewell(false); setFarewellName(""); }} />
       )}
@@ -645,7 +782,6 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                   setFarewellName(name);
                   setShowFarewell(true);
                 }}
-                event={selectedCarouselEvent}
               />
             </motion.div>
           </motion.div>
@@ -676,17 +812,13 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
               <div className="relative aspect-[4/3] overflow-hidden rounded-t-[28px] bg-zinc-900">
                 <img
-                  src={[
-                    selectedCarouselEvent.poster,
-                    (selectedCarouselEvent as any).miniImage || selectedCarouselEvent.poster,
-                    selectedCarouselEvent.poster
-                  ][eventPhotoIndex] || VENUE_PHOTOS[0]}
+                  src={VENUE_PHOTOS[eventPhotoIndex]}
                   alt="Lugar del evento"
                   className="h-full w-full object-cover transition-opacity duration-700"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                 <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
-                  {[0, 1, 2].map((i) => (
+                  {VENUE_PHOTOS.map((_, i) => (
                     <button
                       key={i}
                       onClick={() => setEventPhotoIndex(i)}
@@ -698,12 +830,8 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
               <div className="p-6 space-y-5">
                 <div>
-                  <h3 className="text-lg font-black uppercase tracking-wider text-white">
-                    {selectedCarouselEvent.city}, {selectedCarouselEvent.id === 'trap-loud' ? 'Ecuador' : selectedCarouselEvent.id === 'dawg-night' ? 'EUA' : 'Colombia'}
-                  </h3>
-                  <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-400">
-                    Casa privada · Dirección confirmada al comprar
-                  </p>
+                  <h3 className="text-lg font-black uppercase tracking-wider text-white">San Juan, Ecuador</h3>
+                  <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-400">Casa privada · Dirección confirmada al comprar</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
@@ -736,7 +864,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                   </a>
                   <button
                     onClick={() => {
-                      navigator.share?.({ title: `DAWGS - ${selectedCarouselEvent.title}`, text: `${selectedCarouselEvent.title} · ${selectedCarouselEvent.dateLabel} · ${selectedCarouselEvent.city}`, url: window.location.href });
+                      navigator.share?.({ title: "DAWGS - TRAP LOUD", text: `${featuredEvent.title} · ${featuredEvent.dateLabel} · ${featuredEvent.city}`, url: window.location.href });
                     }}
                     className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300 transition hover:border-pink-400/30 hover:text-pink-300"
                   >
@@ -948,13 +1076,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             box-shadow: 0 0 0 6px var(--theme-border-accent), 0 0 42px var(--theme-glow-rgba);
           }
         }
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
+
       `}} />
     </main>
   );

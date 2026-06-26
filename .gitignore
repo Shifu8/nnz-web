@@ -11,3 +11,5 @@ wa_session/
 auth_info*/
 data/gmail-usage.json
 data/ticket-recovery.json
+get-gmail-token.mjs
+.verification/
