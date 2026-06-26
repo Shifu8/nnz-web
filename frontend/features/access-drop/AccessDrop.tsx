@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
 import { events } from "@/frontend/services/dawgsData";
+import type { Event } from "@/frontend/types/domain";
 import { isBadWord } from "@/lib/badWords";
 import { loadCheckoutDraft, saveCheckoutDraft } from "@/lib/persistence/clientState";
 import TurnstileWidget, { hasTurnstileSiteKey } from "@/frontend/components/TurnstileWidget";
@@ -74,8 +75,16 @@ function formatFileSize(bytes: number): string {
 
 export type AccessDropHandle = { isSuccess: boolean; firstName: string };
 
-const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewell?: (name: string) => void }>(({ onClose, onFarewell }, ref) => {
+const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewell?: (name: string) => void; event?: Event }>(({ onClose, onFarewell, event }, ref) => {
   const scope = useRef<HTMLElement>(null);
+
+  const currentEvent = event || events[0];
+  const pricePerTicket = currentEvent.id === "trap-loud" ? 10 : currentEvent.id === "dawg-night" ? 15 : 20;
+
+  const ticketDesigns = [
+    { id: 1, name: "BLOCK CARD", gradient: "from-pink-950 via-fuchsia-950 to-black", accent: "red", label: `${currentEvent.title} · ${currentEvent.subtitle}`, serial: "DAWGS-0001-A" },
+    { id: 2, name: "BELLAKITA CARD", gradient: "from-[#C8FF00]/20 via-black to-black", accent: "lime", label: `VIP ACCESS · ${currentEvent.title}`, serial: "DAWGS-0002-B" },
+  ];
 
   const [dropState, setDropState] = useState<DropState>("register");
   const [formData, setFormData] = useState({ firstName: "", lastName: "", phone: "", email: "" });
@@ -289,7 +298,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
     }
   };
 
-  const totalPrice = quantity * PRICE_PER_TICKET;
+  const totalPrice = quantity * pricePerTicket;
 
 
   return (
@@ -326,7 +335,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
             {step === 1 && (
               <div className="w-full max-w-3xl mx-auto">
                 <div className="relative flex flex-col items-center justify-center gap-6 sm:flex-row">
-                  {TICKET_DESIGNS.map((t) => {
+                  {ticketDesigns.map((t) => {
                     const isSelected = selectedDesign === t.id;
                     return (
                       <button key={t.id} type="button" onClick={() => setSelectedDesign(t.id)} className={`ticket-float w-full max-w-[260px] text-left transition-all duration-500 ${isSelected ? "scale-105" : "opacity-60 hover:opacity-90 hover:scale-[1.02]"}`} style={{ animationDelay: t.id === 1 ? "0s" : "0.5s" }}>
@@ -446,7 +455,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                   </div>
                   <div className="flex-1">
                     <p className="text-[9px] font-black uppercase tracking-wider text-zinc-500">diseño seleccionado</p>
-                    <p className="text-sm font-black text-white uppercase tracking-wider">{TICKET_DESIGNS[selectedDesign - 1].name}</p>
+                    <p className="text-sm font-black text-white uppercase tracking-wider">{ticketDesigns[selectedDesign - 1].name}</p>
                   </div>
                 </div>
 
@@ -757,7 +766,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                   </a>
                   <button
                     onClick={() => {
-                      navigator.share?.({ title: "DAWGS - TRAP LOUD", text: `${EVENT.title} · ${EVENT.dateLabel} · ${EVENT.city}`, url: window.location.href });
+                      navigator.share?.({ title: `DAWGS - ${currentEvent.title}`, text: `${currentEvent.title} · ${currentEvent.dateLabel} · ${currentEvent.city}`, url: window.location.href });
                     }}
                     className="group relative inline-flex h-12 items-center justify-center gap-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300 transition-all duration-300 hover:border-pink-400/30 hover:bg-pink-500/[0.08] hover:text-pink-300 hover:shadow-[0_0_30px_rgba(236,72,153,0.12)] hover:scale-[1.01] active:scale-[0.98]"
                   >
