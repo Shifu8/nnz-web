@@ -15,6 +15,7 @@ export function validateFile(file: ReceiptFileMetadata): ValidationError | null 
 }
 
 export function validatePhone(phone: string): ValidationError | null {
+  if (!phone || phone.trim() === "") return null;
   const digits = phone.replace(/\D/g, "");
   if (!/^59309\d{8}$/.test(digits) || digits.length !== 13) {
     return { field: "phone", message: "NUMERO INVALIDO. DEBE SER +593 09XXXXXXXX." };

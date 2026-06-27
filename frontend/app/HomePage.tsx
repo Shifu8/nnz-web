@@ -28,6 +28,10 @@ import {
   Ticket,
   X,
   Zap,
+  Camera,
+  Headphones,
+  Wine,
+  Mail
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Atmosphere from "@/frontend/components/Atmosphere";
@@ -38,6 +42,7 @@ import AccessDrop, { type AccessDropHandle } from "@/frontend/features/access-dr
 import TicketRecovery from "@/frontend/features/access-drop/TicketRecovery";
 import OutfitBuilderSection from "@/frontend/features/merch/OutfitBuilderSection";
 import StaffModal from "@/frontend/features/staff/StaffModal";
+import EventTicketCarousel, { CAROUSEL_EVENTS } from "@/frontend/components/EventTicketCarousel";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
 import { events as fallbackEvents } from "@/frontend/services/dawgsData";
 import { useCountdown } from "@/frontend/hooks/useCountdown";
@@ -50,6 +55,7 @@ import type { Event } from "@/frontend/types/domain";
 const HOME_NAV_ITEMS = [
   { id: "show", label: "Show" },
   { id: "access", label: "Access" },
+  { id: "wear", label: "Merch" },
   { id: "support", label: "Support" },
 ] as const;
 
@@ -83,6 +89,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   const [artistIndex, setArtistIndex] = useState(0);
   const [showEventModal, setShowEventModal] = useState(false);
   const [eventPhotoIndex, setEventPhotoIndex] = useState(0);
+  const [selectedCarouselEvent, setSelectedCarouselEvent] = useState<Event>(CAROUSEL_EVENTS[0]);
   const { config } = useHomepageConfig(initialConfig);
   const theme: ThemeColors = getTheme(config.theme);
   const primaryRgb = hexToRgb(theme.primary);
@@ -164,23 +171,32 @@ export default function HomePage({ initialConfig }: HomePageProps) {
       if (window.performance.now() < manualActiveUntil.current) return;
 
       const supportSection = document.getElementById("support");
-      const supportRect = supportSection?.getBoundingClientRect();
       const isNearBottom =
-        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 24;
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 120;
 
-      if (supportRect && (supportRect.top <= window.innerHeight * 0.82 || isNearBottom)) {
+      if (supportSection && isNearBottom) {
         setActiveSection("support");
         return;
       }
 
-      const scrollPosition = window.scrollY + Math.min(window.innerHeight * 0.38, 320);
-      let currentSection: HomeNavId = "show";
+      const showSection = document.getElementById("show");
+      const accessSection = document.getElementById("access");
+      const wearSection = document.getElementById("wear");
 
-      for (const item of HOME_NAV_ITEMS.filter((item) => item.id !== "support")) {
-        const section = document.getElementById(item.id);
-        if (section && scrollPosition >= section.offsetTop) {
-          currentSection = item.id;
-        }
+      const showTop = showSection ? showSection.getBoundingClientRect().top + window.scrollY : 0;
+      const accessTop = accessSection ? accessSection.getBoundingClientRect().top + window.scrollY : 0;
+      const wearTop = wearSection ? wearSection.getBoundingClientRect().top + window.scrollY : 0;
+
+      // Línea de activación al 45% de la altura de la pantalla
+      const scrollPosition = window.scrollY + window.innerHeight * 0.45;
+
+      let currentSection: HomeNavId = "show";
+      if (scrollPosition >= wearTop) {
+        currentSection = "wear";
+      } else if (scrollPosition >= accessTop) {
+        currentSection = "access";
+      } else {
+        currentSection = "show";
       }
 
       setActiveSection(currentSection);
@@ -400,7 +416,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         </p>
 
         <div className="relative grid flex-1 items-center gap-8 lg:grid-cols-12 lg:gap-4">
-          <div className="contents lg:relative lg:z-30 lg:order-1 lg:col-span-5 lg:block">
+          <div className="contents lg:relative lg:z-30 lg:order-1 lg:col-span-6 lg:block">
             <div className="hero-reveal relative z-30 order-1 flex flex-col pt-1 text-center lg:block lg:pt-0 lg:text-left">
 
               <p className="mt-6 text-[11px] font-black uppercase tracking-[0.52em] text-zinc-400 sm:text-xs">
@@ -462,159 +478,23 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             </div>
             <div
               id="tickets"
-              className={`relative order-3 z-30 mx-auto mt-0 w-full max-w-[420px] overflow-hidden rounded-[26px] border border-pink-300/35 p-4 text-left opacity-100 ring-1 ring-pink-200/[0.05] transition sm:max-w-[500px] sm:p-5 lg:order-none lg:mx-0 lg:mt-8 lg:max-w-[540px] ${
-                isTicketPulse ? "ticket-card-pulse" : ""
-              }`}
-              style={{
-                background:
-                  "linear-gradient(145deg, rgba(var(--theme-primary-rgb), 0.28), rgba(7,7,9,0.96) 54%, rgba(var(--theme-primary-rgb), 0.16))",
-                boxShadow:
-                  "0 18px 58px rgba(0,0,0,0.42), 0 0 54px rgba(var(--theme-primary-rgb),0.15), inset 0 1px 0 rgba(255,255,255,0.12)",
-              }}
+              className="relative order-3 z-30 mx-auto mt-0 w-full max-w-[420px] transition sm:max-w-[500px] lg:order-none lg:mx-0 lg:mt-8 lg:max-w-[650px]"
             >
-              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),transparent_42%)]" />
-
-              <div className="relative z-10">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="theme-glow-sm inline-flex items-center gap-2 rounded-full border border-pink-200/35 bg-pink-500/18 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.2em] text-pink-50">
-                      <Ticket className="h-3 w-3" />
-                      {config.ticketCard.badge}
-                      <span className="h-1 w-1 rounded-full bg-pink-300/60" />
-                      <Sparkles className="h-3 w-3" />
-                      {config.ticketCard.badgeSub}
-                    </p>
-                  </div>
-                  <div
-                    className="rounded-[16px] border px-3 py-2 text-center"
-                    style={{
-                      borderColor: "rgba(var(--theme-primary-rgb), 0.48)",
-                      background: "rgba(var(--theme-primary-rgb), 0.18)",
-                      boxShadow: "0 0 34px rgba(var(--theme-primary-rgb), 0.24)",
-                    }}
-                  >
-                    <p className="text-xl font-black leading-none text-[var(--theme-primary-light)] drop-shadow-[0_0_12px_var(--theme-primary)] sm:text-2xl">
-                      ${config.ticketCard.price}
-                    </p>
-                    <p className="mt-1 text-[6px] font-black uppercase tracking-widest text-[var(--theme-primary-light)] opacity-70">
-                      {config.ticketCard.currency}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-3">
-                  <h3 className="text-3xl font-black uppercase leading-[0.88] tracking-[-0.05em] text-white drop-shadow-[0_0_18px_rgba(255,255,255,0.16)] sm:text-4xl">
-                    {config.ticketCard.eventTitle}
-                  </h3>
-                  <p className="mt-1 text-[8px] font-black uppercase tracking-[0.24em] text-pink-200">
-                    {config.ticketCard.eventSubtitle}
-                  </p>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-200/18 bg-white/[0.08] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.18em] text-zinc-100">
-                    <MapPin className="h-3 w-3 text-pink-300" />
-                    {featuredEvent.city}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-200/18 bg-white/[0.08] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.18em] text-zinc-100">
-                    <CalendarDays className="h-3 w-3 text-pink-300" />
-                    {featuredEvent.dateLabel}
-                  </span>
-                </div>
-
-                <div className="mt-2.5 flex flex-wrap gap-1.5">
-                  {featuredEvent.lineup.map((artist) => (
-                    <span
-                      key={artist}
-                      className="rounded-full border border-pink-200/25 bg-pink-500/16 px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.17em] text-pink-50"
-                    >
-                      {artist}
-                    </span>
-                  ))}
-                  <a
-                    href={`https://instagram.com/${config.ticketCard.daWgDj.instagram}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 rounded-full border border-blue-400/30 bg-blue-950/40 px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.17em] text-blue-200 transition hover:bg-blue-900/50"
-                  >
-                    <Music2 className="h-2.5 w-2.5" /> {config.ticketCard.daWgDj.name}
-                  </a>
-                </div>
-
-                <p className="mt-2.5 text-[9px] leading-5 text-zinc-200/90 sm:text-[10px]">
-                  {config.ticketCard.description}
-                </p>
-
-                {!ticketCountdown.expired && (
-                  <div className="mt-3 rounded-[22px] border border-pink-200/16 bg-black/55 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-                    <p className="mb-2 flex items-center gap-2 text-[7px] font-black uppercase tracking-[0.22em] text-zinc-300">
-                      <Clock3 className="h-3 w-3 text-pink-300" />
-                      {config.ticketCard.countdownLabel}
-                    </p>
-                    <div className="grid grid-cols-4 gap-1.5">
-                      {[
-                        ["days", ticketCountdown.days],
-                        ["hours", ticketCountdown.hours],
-                        ["minutes", ticketCountdown.minutes],
-                        ["seconds", ticketCountdown.seconds],
-                      ].map(([label, value]) => (
-                        <div
-                          key={label}
-                          className="rounded-xl border border-white/[0.08] bg-black/70 px-1 py-1.5 text-center"
-                        >
-                          <p className="text-sm font-black leading-none text-white">{value}</p>
-                          <p className="mt-0.5 text-[5px] font-black uppercase tracking-wider text-zinc-600">
-                            {label}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                  <p className="mr-1 text-[7px] font-black uppercase tracking-[0.2em] text-zinc-300">
-                    Con apoyo de
-                  </p>
-                  {config.ticketCard.sponsors.map((sponsor) => (
-                    <span
-                      key={sponsor.name}
-                      className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-pink-200/20 bg-pink-500/14 px-2 py-1"
-                    >
-                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-pink-300/20 bg-black/40 text-[6px] font-black text-pink-100">
-                        {sponsor.initials}
-                      </span>
-                      <span className="truncate text-[6.5px] font-black uppercase tracking-[0.1em] text-white">
-                        {sponsor.name}
-                      </span>
-                    </span>
-                  ))}
-                </div>
-
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowEventModal(true)}
-                    className="inline-flex h-[50px] items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-[8px] font-black uppercase tracking-[0.2em] text-white transition hover:border-pink-400/30 hover:bg-pink-500/10 hover:text-pink-300 sm:h-[52px]"
-                  >
-                    <MapPin className="h-3.5 w-3.5" /> {config.ticketCard.verEventoText}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsTicketModalOpen(true)}
-                    className={`ticket-buy-button inline-flex h-[50px] items-center justify-between rounded-2xl bg-white px-5 text-[9px] font-black uppercase tracking-[0.2em] text-black shadow-[0_12px_34px_rgba(255,255,255,0.12)] transition hover:bg-pink-100 sm:h-[52px] ${
-                      isTicketPulse ? "ticket-button-pulse" : ""
-                    }`}
-                  >
-                    {config.ticketCard.comprarEntradaText}
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
+              <EventTicketCarousel
+                isTicketPulse={isTicketPulse}
+                onBuy={(event) => {
+                  setSelectedCarouselEvent(event);
+                  setIsTicketModalOpen(true);
+                }}
+                onViewDetails={(event) => {
+                  setSelectedCarouselEvent(event);
+                  setShowEventModal(true);
+                }}
+              />
             </div>
           </div>
 
-          <div className="order-2 lg:order-2 lg:col-span-7">
+          <div className="order-2 lg:order-2 lg:col-span-6">
             <div className="relative mx-auto h-[365px] w-full max-w-[680px] sm:h-[545px] lg:h-[650px]">
               <div
                 className="absolute left-1/2 top-1/2 h-[64%] w-[64%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[90px]"
@@ -733,19 +613,29 @@ export default function HomePage({ initialConfig }: HomePageProps) {
       <AIChatbot />
       <StaffModal isOpen={isStaffModalOpen} onClose={() => setIsStaffModalOpen(false)} />
 
-      <footer id="support" className="relative z-10 border-t border-white/[0.06] px-4 py-14 sm:px-6 md:px-12 lg:px-16">
+      <footer
+        id="support"
+        className="relative z-10 -mx-4 border-t border-white/[0.06] bg-[#050404] px-4 py-16 sm:-mx-8 sm:px-6 md:-mx-14 md:px-12 lg:-mx-20 lg:px-16"
+      >
         <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center text-center gap-4">
-          <p className="text-lg font-black uppercase tracking-[0.34em] text-white">{config.footer.brand}</p>
-          <p className="text-[9px] uppercase tracking-[0.24em] text-zinc-600">{config.footer.tagline}</p>
+          <p className="text-xl font-black uppercase tracking-[0.4em] text-white/90">
+            {config.footer.brand}
+          </p>
+          <p className="text-[9px] uppercase tracking-[0.24em] text-zinc-600">
+            {config.footer.tagline}
+          </p>
           <a
             href={`https://mail.google.com/mail/?view=cm&fs=1&to=${config.footer.email}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-zinc-400 transition hover:text-white"
+            className="group mt-2 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.18em] text-zinc-400 backdrop-blur-md transition hover:border-white/[0.2] hover:bg-white/[0.08] hover:text-white"
           >
+            <Mail className="h-3.5 w-3.5 text-zinc-500 transition-colors group-hover:text-white" />
             {config.footer.email}
           </a>
-          <p className="mt-2 text-[8px] font-bold tracking-wider text-zinc-600">{config.footer.copyright}</p>
+          <p className="mt-2 text-[8px] font-bold tracking-wider text-zinc-600">
+            {config.footer.copyright}
+          </p>
         </div>
       </footer>
 
@@ -782,6 +672,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                   setFarewellName(name);
                   setShowFarewell(true);
                 }}
+                event={selectedCarouselEvent}
               />
             </motion.div>
           </motion.div>
@@ -812,13 +703,17 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
               <div className="relative aspect-[4/3] overflow-hidden rounded-t-[28px] bg-zinc-900">
                 <img
-                  src={VENUE_PHOTOS[eventPhotoIndex]}
+                  src={[
+                    selectedCarouselEvent.poster,
+                    (selectedCarouselEvent as any).miniImage || selectedCarouselEvent.poster,
+                    selectedCarouselEvent.poster
+                  ][eventPhotoIndex] || VENUE_PHOTOS[0]}
                   alt="Lugar del evento"
                   className="h-full w-full object-cover transition-opacity duration-700"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                 <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
-                  {VENUE_PHOTOS.map((_, i) => (
+                  {[0, 1, 2].map((i) => (
                     <button
                       key={i}
                       onClick={() => setEventPhotoIndex(i)}
@@ -830,32 +725,34 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
               <div className="p-6 space-y-5">
                 <div>
-                  <h3 className="text-lg font-black uppercase tracking-wider text-white">San Juan, Ecuador</h3>
+                  <h3 className="text-lg font-black uppercase tracking-wider text-white">
+                    {selectedCarouselEvent.city}, {selectedCarouselEvent.id === 'trap-loud' ? 'Ecuador' : selectedCarouselEvent.id === 'dawg-night' ? 'EUA' : 'Colombia'}
+                  </h3>
                   <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-400">Casa privada · Dirección confirmada al comprar</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
-                    <p className="text-lg">📸</p>
-                    <p className="mt-1 text-[7px] font-black uppercase tracking-wider text-zinc-300">Photo spot</p>
+                  <div className="flex flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
+                    <Camera className="h-5 w-5 text-zinc-400 mb-1" />
+                    <p className="text-[7px] font-black uppercase tracking-wider text-zinc-300">Photo spot</p>
                   </div>
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
-                    <p className="text-lg">🎧</p>
-                    <p className="mt-1 text-[7px] font-black uppercase tracking-wider text-zinc-300">Sonido envolvente</p>
+                  <div className="flex flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
+                    <Headphones className="h-5 w-5 text-zinc-400 mb-1" />
+                    <p className="text-[7px] font-black uppercase tracking-wider text-zinc-300">Sonido envolvente</p>
                   </div>
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
-                    <p className="text-lg">🍸</p>
-                    <p className="mt-1 text-[7px] font-black uppercase tracking-wider text-zinc-300">Barra libre</p>
+                  <div className="flex flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
+                    <Wine className="h-5 w-5 text-zinc-400 mb-1" />
+                    <p className="text-[7px] font-black uppercase tracking-wider text-zinc-300">Barra libre</p>
                   </div>
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
-                    <p className="text-lg">🔒</p>
-                    <p className="mt-1 text-[7px] font-black uppercase tracking-wider text-zinc-300">Acceso controlado</p>
+                  <div className="flex flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
+                    <LockKeyhole className="h-5 w-5 text-zinc-400 mb-1" />
+                    <p className="text-[7px] font-black uppercase tracking-wider text-zinc-300">Acceso controlado</p>
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <a
-                    href="https://maps.google.com/?q=San+Juan+Ecuador"
+                    href={`https://maps.google.com/?q=${selectedCarouselEvent.city}+${selectedCarouselEvent.id === 'trap-loud' ? 'Ecuador' : selectedCarouselEvent.id === 'dawg-night' ? 'EUA' : 'Colombia'}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-pink-500 text-[9px] font-black uppercase tracking-[0.2em] text-white transition hover:bg-pink-400"
@@ -864,7 +761,11 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                   </a>
                   <button
                     onClick={() => {
-                      navigator.share?.({ title: "DAWGS - TRAP LOUD", text: `${featuredEvent.title} · ${featuredEvent.dateLabel} · ${featuredEvent.city}`, url: window.location.href });
+                      navigator.share?.({
+                        title: `DAWGS - ${selectedCarouselEvent.title}`,
+                        text: `${selectedCarouselEvent.title} · ${selectedCarouselEvent.dateLabel} · ${selectedCarouselEvent.city}`,
+                        url: window.location.href
+                      });
                     }}
                     className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300 transition hover:border-pink-400/30 hover:text-pink-300"
                   >
@@ -1076,7 +977,13 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             box-shadow: 0 0 0 6px var(--theme-border-accent), 0 0 42px var(--theme-glow-rgba);
           }
         }
-
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
       `}} />
     </main>
   );

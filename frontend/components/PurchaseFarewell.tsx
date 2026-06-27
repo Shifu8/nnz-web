@@ -39,11 +39,13 @@ export default function PurchaseFarewell({ name, onComplete }: PurchaseFarewellP
 
       mm.add(
         {
+          mobile: "(max-width: 639px)",
           desktop: "(min-width: 640px)",
           reduceMotion: "(prefers-reduced-motion: reduce)",
         },
         (context) => {
-          const { desktop, reduceMotion } = context.conditions as {
+          const { mobile, desktop, reduceMotion } = context.conditions as {
+            mobile: boolean;
             desktop: boolean;
             reduceMotion: boolean;
           };

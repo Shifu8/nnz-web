@@ -22,6 +22,10 @@ import {
   Navigation,
   Share2,
   X,
+  Camera,
+  Headphones,
+  Wine,
+  LockKeyhole
 } from "lucide-react";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
 import { events } from "@/frontend/services/dawgsData";
@@ -87,13 +91,12 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
   ];
 
   const [dropState, setDropState] = useState<DropState>("register");
-  const [formData, setFormData] = useState({ firstName: "", lastName: "", phone: "", email: "" });
+  const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "" });
   const [quantity, setQuantity] = useState(1);
   const [selectedBank, setSelectedBank] = useState("banco-loja");
   const [selectedDesign, setSelectedDesign] = useState(1);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const [step, setStep] = useState(1);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -127,7 +130,12 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
     const draft = loadCheckoutDraft();
     if (draft) {
       queueMicrotask(() => {
-        setFormData((prev) => ({ ...prev, ...draft }));
+        setFormData((prev) => ({
+          ...prev,
+          firstName: draft.firstName || "",
+          lastName: draft.lastName || "",
+          email: draft.email || "",
+        }));
         if (draft.quantity) setQuantity(parseInt(draft.quantity, 10) || 1);
         if (draft.selectedDesign) setSelectedDesign(parseInt(draft.selectedDesign, 10) || 1);
       });
@@ -143,7 +151,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
   }, [showEventModal]);
 
   useEffect(() => {
-    saveCheckoutDraft({ ...formData, quantity: quantity.toString(), selectedDesign: selectedDesign.toString() });
+    saveCheckoutDraft({ ...formData, phone: "", quantity: quantity.toString(), selectedDesign: selectedDesign.toString() });
   }, [formData, quantity, selectedDesign]);
 
   useEffect(() => {
@@ -234,11 +242,6 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
     e.preventDefault();
     setErrorMsg("");
 
-    const rawPhone = "593" + formData.phone.replace(/\D/g, "");
-    if (!/^59309\d{8}$/.test(rawPhone) || rawPhone.length !== 13) {
-      setErrorMsg("NÚMERO INVÁLIDO. DEBE SER +593 09XXXXXXXX");
-      return;
-    }
     if (isBadWord(formData.firstName) || isBadWord(formData.lastName)) {
       setErrorMsg("LENGUAJE INAPROPIADO DETECTADO.");
       return;
@@ -264,7 +267,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
       body.append("comprobante", selectedFile);
       body.append("firstName", formData.firstName);
       body.append("lastName", formData.lastName);
-      body.append("phone", `+593 ${formData.phone}`);
+      body.append("phone", "");
       body.append("email", email);
       body.append("quantity", quantity.toString());
       body.append("paymentMethod", selectedBank);
@@ -307,347 +310,350 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
         {dropState === "register" && (
           <div className="relative z-10 w-full max-w-5xl mx-auto">
             {onClose && (
-              <button onClick={onClose} className="glass-pill glass-pill-red absolute -top-3 right-4 z-50">
-                <ChevronLeft className="h-3 w-3" /> SALIR
+              <button
+                type="button"
+                onClick={onClose}
+                className="glass-pill glass-pill-red absolute -top-3 right-4 z-50 flex items-center gap-1.5 px-3 py-1.5 text-[8px] font-black uppercase tracking-wider"
+              >
+                <X className="h-3.5 w-3.5" /> SALIR
               </button>
             )}
 
-            {/* Step indicator */}
-            <div className="mb-8 flex items-center justify-center gap-1 sm:mb-10 sm:gap-4">
-              {[
-                { num: 1, label: "DISEÑO" },
-                { num: 2, label: "DATOS" },
-                { num: 3, label: "PAGO" },
-              ].map((s) => (
-                <div key={s.num} className="flex items-center gap-1.5 sm:gap-4">
-                  <div className="flex items-center gap-2">
-                    <div className={`h-8 w-8 rounded-full flex items-center justify-center transition-all duration-500 ${step === s.num ? "bg-pink-500 shadow-[0_0_20px_rgba(255,79,163,0.32)]" : step > s.num ? "bg-green-500/80" : "border border-white/10 bg-white/[0.04]"}`}>
-                      {step > s.num ? <CheckCircle className="h-4 w-4 text-black" /> : <span className={`text-xs font-black ${step === s.num ? "text-white" : "text-zinc-600"}`}>{s.num}</span>}
-                    </div>
-                    <span className={`text-[7px] font-black uppercase tracking-[0.15em] transition-all duration-500 sm:text-[9px] sm:tracking-[0.3em] ${step === s.num ? "text-white" : "text-zinc-600"}`}>{s.label}</span>
-                  </div>
-                  {s.num < 3 && <div className={`h-px w-4 transition-all duration-500 sm:w-12 ${step > s.num ? "bg-green-500/50" : "bg-white/10"}`} />}
-                </div>
-              ))}
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-black text-white tracking-widest uppercase italic bg-clip-text text-transparent bg-gradient-to-r from-pink-400 via-fuchsia-400 to-zinc-200">
+                {currentEvent.title}
+              </h2>
+              <p className="text-[10px] uppercase tracking-[0.4em] text-pink-400 font-bold mt-1">
+                {currentEvent.subtitle} • COMPRA SEGURA
+              </p>
             </div>
 
-            {/* Step 1: Diseño */}
-            {step === 1 && (
-              <div className="w-full max-w-3xl mx-auto">
-                <div className="relative flex flex-col items-center justify-center gap-6 sm:flex-row">
-                  {ticketDesigns.map((t) => {
-                    const isSelected = selectedDesign === t.id;
-                    return (
-                      <button key={t.id} type="button" onClick={() => setSelectedDesign(t.id)} className={`ticket-float w-full max-w-[260px] text-left transition-all duration-500 ${isSelected ? "scale-105" : "opacity-60 hover:opacity-90 hover:scale-[1.02]"}`} style={{ animationDelay: t.id === 1 ? "0s" : "0.5s" }}>
-                        <div className={`relative overflow-hidden rounded-2xl border-2 ${isSelected ? t.id === 1 ? "border-pink-400/50 shadow-[0_0_30px_rgba(255,79,163,0.16)]" : "border-[#C8FF00]/50 shadow-[0_0_30px_rgba(200,255,0,0.15)]" : "border-white/10"} bg-gradient-to-br ${t.gradient}`}>
-                          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.08),transparent_60%)]" />
-                          <div className="relative p-5 flex flex-col min-h-[280px]">
-                            <div className="flex items-center justify-between">
-                              <div className={`flex items-center gap-1.5 ${t.accent === "red" ? "text-pink-300" : "text-[#C8FF00]"}`}>
-                                <Zap className="h-3 w-3" />
-                                <span className={`text-[8px] font-black uppercase tracking-[0.3em] ${t.accent === "red" ? "text-pink-300" : "text-[#C8FF00]"}`}>DAWGS</span>
-                              </div>
-                              <div className={`h-5 w-5 rounded-full border ${t.accent === "red" ? "border-pink-400/40" : "border-[#C8FF00]/40"} flex items-center justify-center ${isSelected ? (t.accent === "red" ? "bg-pink-500/20" : "bg-[#C8FF00]/20") : ""}`}>
-                                {isSelected && <div className={`h-2.5 w-2.5 rounded-full ${t.accent === "red" ? "bg-pink-400" : "bg-[#C8FF00]"}`} />}
-                              </div>
-                            </div>
-                            <div className="flex-1 flex flex-col justify-center">
-                              <p className="text-sm font-black text-white uppercase tracking-wider leading-relaxed">{t.label}</p>
-                              <div className={`mt-3 h-px w-3/4 ${t.accent === "red" ? "bg-pink-400/30" : "bg-[#C8FF00]/30"}`} />
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <p className={`text-[7px] font-mono font-bold ${t.accent === "red" ? "text-pink-200" : "text-[#C8FF00]/70"}`}>{t.serial}</p>
-                              <div className="rounded border border-white/10 bg-white/[0.04] px-2 py-0.5">
-                                <p className="text-[6px] font-black uppercase tracking-wider text-zinc-500">VIP</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="mt-8 flex justify-center">
-                  <button type="button" onClick={() => setStep(2)} className="glass-action glass-action-primary" style={{ "--glass-action-height": "48px", "--glass-action-px": "2.5rem", "--glass-action-text": "0.82rem" } as CSSProperties}>
-                    SIGUIENTE <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            )}
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              {/* LEFT COLUMN: Datos y Diseño */}
+              <div className="lg:col-span-6 space-y-6">
+                
+                {/* 1. Registro de Datos */}
+                <div className="rounded-2xl border border-white/10 bg-black/40 p-5 space-y-4 backdrop-blur-2xl">
+                  <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-pink-500/20 text-[10px] font-black text-pink-300">1</span>
+                    <h3 className="text-xs font-black uppercase tracking-widest text-white">Tus Datos</h3>
+                  </div>
 
-            {/* Step 2: Datos */}
-            {step === 2 && (
-              <div className="w-full max-w-xl mx-auto space-y-6">
-                <div className="text-center">
-                  <h2 className="text-3xl font-black text-white tracking-widest uppercase italic">tus datos</h2>
-                  <p className="text-xs uppercase tracking-[0.4em] text-pink-400 font-bold">completa el formulario</p>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <p className="ml-2 text-xs uppercase tracking-widest text-zinc-500 font-bold">nombre</p>
-                    <input required type="text" maxLength={24} autoComplete="given-name" placeholder="AXEL" className="w-full rounded-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-pink-400/50 transition" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "").slice(0, 24) })} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <p className="ml-2 text-xs uppercase tracking-widest text-zinc-500 font-bold">apellido</p>
-                    <input required type="text" maxLength={24} autoComplete="family-name" placeholder="PEREZ" className="w-full rounded-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-pink-400/50 transition" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "").slice(0, 24) })} />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <p className="ml-2 text-xs uppercase tracking-widest text-zinc-500 font-bold">teléfono</p>
-                  <div className="flex">
-                    <span className="inline-flex items-center rounded-l-xl border border-r-0 border-white/10 bg-white/[0.04] px-4 text-sm font-bold text-zinc-400">+593</span>
-                    <input required type="tel" maxLength={10} placeholder="0988888888" className="w-full rounded-r-xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none focus:border-pink-400/50 transition" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, "") })} />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <p className="ml-2 text-xs uppercase tracking-widest text-zinc-500 font-bold">correo</p>
-                  <div className="flex items-center rounded-xl border border-white/10 bg-black/50 px-4 transition focus-within:border-pink-400/50">
-                    <Mail className="h-4 w-4 shrink-0 text-pink-300/80" />
-                    <input
-                      required
-                      type="email"
-                      maxLength={80}
-                      inputMode="email"
-                      autoComplete="email"
-                      autoCapitalize="none"
-                      spellCheck={false}
-                      list="ticket-email-domains"
-                      placeholder="tu@gmail.com"
-                      className="w-full bg-transparent px-4 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: cleanEmailInput(e.target.value) })}
-                    />
-                  </div>
-                  <datalist id="ticket-email-domains">
-                    {emailDomains.map((domain) => {
-                      const local = formData.email.split("@")[0] || "tu";
-                      return <option key={domain} value={`${local}@${domain}`} />;
-                    })}
-                  </datalist>
-                  <div className="ml-2 flex flex-wrap items-center gap-2">
-                    <p className={`text-[8px] font-bold uppercase tracking-wider ${
-                      emailHint.tone === "ok"
-                        ? "text-[#C8FF00]"
-                        : emailHint.tone === "warn"
-                          ? "text-pink-300"
-                          : "text-zinc-600"
-                    }`}>
-                      {emailHint.text}
-                    </p>
-                    {emailSuggestion && (
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, email: applyEmailSuggestion(formData.email) })}
-                        className="rounded-full border border-pink-300/20 bg-pink-500/10 px-2 py-1 text-[7px] font-black uppercase tracking-wider text-pink-100"
-                      >
-                        usar {emailSuggestion}
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-white/10 bg-black/40 p-4 flex items-center gap-4">
-                  <div className={`h-10 w-10 rounded-lg bg-gradient-to-br ${selectedDesign === 1 ? "from-pink-950 via-fuchsia-950 to-black" : "from-[#C8FF00]/20 via-black to-black"} flex items-center justify-center`}>
-                    <Zap className={`h-4 w-4 ${selectedDesign === 1 ? "text-pink-300" : "text-[#C8FF00]"}`} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-[9px] font-black uppercase tracking-wider text-zinc-500">diseño seleccionado</p>
-                    <p className="text-sm font-black text-white uppercase tracking-wider">{ticketDesigns[selectedDesign - 1].name}</p>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-white/10 bg-black/40 p-6">
-                  <p className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-3">cantidad de entradas</p>
-                  <div className="flex items-center justify-between">
-                    <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="glass-icon-button text-white" style={{ "--glass-icon-size": "48px" } as CSSProperties}>
-                      <Minus className="h-5 w-5" />
-                    </button>
-                    <div className="text-center">
-                      <span className="text-4xl font-black text-white">{quantity}</span>
-                      <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">entradas</p>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <p className="ml-1 text-[9px] uppercase tracking-widest text-zinc-500 font-bold">Nombre</p>
+                      <input
+                        required
+                        type="text"
+                        maxLength={24}
+                        autoComplete="given-name"
+                        placeholder="EJ. AXEL"
+                        className="w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3.5 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-pink-400/50 transition"
+                        value={formData.firstName}
+                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "").slice(0, 24) })}
+                      />
                     </div>
-                    <button type="button" onClick={() => setQuantity(Math.min(10, quantity + 1))} className="glass-icon-button text-white" style={{ "--glass-icon-size": "48px" } as CSSProperties}>
-                      <Plus className="h-5 w-5" />
-                    </button>
+                    <div className="space-y-1.5">
+                      <p className="ml-1 text-[9px] uppercase tracking-widest text-zinc-500 font-bold">Apellido</p>
+                      <input
+                        required
+                        type="text"
+                        maxLength={24}
+                        autoComplete="family-name"
+                        placeholder="EJ. PEREZ"
+                        className="w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3.5 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-pink-400/50 transition"
+                        value={formData.lastName}
+                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "").slice(0, 24) })}
+                      />
+                    </div>
                   </div>
-                  <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-4">
-                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">total</span>
-                    <span className="text-2xl font-black text-[#C8FF00]">${totalPrice.toFixed(2)}</span>
+
+                  <div className="space-y-1.5">
+                    <p className="ml-1 text-[9px] uppercase tracking-widest text-zinc-500 font-bold">Correo Electrónico</p>
+                    <div className="flex items-center rounded-xl border border-white/10 bg-black/60 px-3.5 transition focus-within:border-pink-400/50">
+                      <Mail className="h-4 w-4 shrink-0 text-pink-300/80" />
+                      <input
+                        required
+                        type="email"
+                        maxLength={80}
+                        inputMode="email"
+                        autoComplete="email"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        list="ticket-email-domains"
+                        placeholder="tu@gmail.com"
+                        className="w-full bg-transparent px-3 py-3.5 text-xs font-bold text-white placeholder-zinc-800 outline-none"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: cleanEmailInput(e.target.value) })}
+                      />
+                    </div>
+                    <datalist id="ticket-email-domains">
+                      {emailDomains.map((domain) => {
+                        const local = formData.email.split("@")[0] || "tu";
+                        return <option key={domain} value={`${local}@${domain}`} />;
+                      })}
+                    </datalist>
+                    <div className="ml-1 flex flex-wrap items-center gap-2">
+                      <p className={`text-[8px] font-bold uppercase tracking-wider ${
+                        emailHint.tone === "ok"
+                          ? "text-[#C8FF00]"
+                          : emailHint.tone === "warn"
+                            ? "text-pink-300"
+                            : "text-zinc-600"
+                      }`}>
+                        {emailHint.text}
+                      </p>
+                      {emailSuggestion && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, email: applyEmailSuggestion(formData.email) })}
+                          className="rounded-full border border-pink-300/20 bg-pink-500/10 px-2 py-0.5 text-[7px] font-black uppercase tracking-wider text-pink-100"
+                        >
+                          usar {emailSuggestion}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-4">
-                  <button type="button" onClick={() => setStep(1)} className="glass-action glass-action-quiet" style={{ "--glass-action-height": "44px", "--glass-action-px": "1.5rem", "--glass-action-text": "0.68rem" } as CSSProperties}>
-                    <ChevronLeft className="h-4 w-4" /> ANTERIOR
-                  </button>
-                  <button type="button" onClick={() => setStep(3)} className="glass-action glass-action-primary" style={{ "--glass-action-height": "44px", "--glass-action-px": "2rem", "--glass-action-text": "0.82rem" } as CSSProperties}>
-                    SIGUIENTE <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: Pago */}
-            {step === 3 && (
-              <div className="w-full max-w-2xl mx-auto">
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className="text-center">
-                    <h2 className="text-3xl font-black text-white tracking-widest uppercase italic">pago</h2>
-                    <p className="text-xs uppercase tracking-[0.4em] text-pink-400 font-bold">elige tu método</p>
+                {/* 2. Diseño de Entrada */}
+                <div className="rounded-2xl border border-white/10 bg-black/40 p-5 space-y-4 backdrop-blur-2xl">
+                  <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-pink-500/20 text-[10px] font-black text-pink-300">2</span>
+                    <h3 className="text-xs font-black uppercase tracking-widest text-white">Diseño de Entrada</h3>
                   </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-5">
-                    <p className="text-[9px] font-black uppercase tracking-[0.4em] text-zinc-500 mb-3 text-center">Paga con</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {BANKS.map((bank) => (
-                        <button key={bank.id} type="button" onClick={() => setSelectedBank(bank.id)} className={`glass-select-tile p-4 text-center transition-all duration-300 ${selectedBank === bank.id ? "glass-select-tile-active scale-[1.02]" : "hover:border-white/25"}`}>
-                          {selectedBank === bank.id && <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,0,24,.08),transparent_60%)]" />}
-                          <div className="relative">
-                            <Building2 className={`mx-auto h-6 w-6 ${selectedBank === bank.id ? "text-pink-300" : "text-zinc-500"}`} />
-                            <p className={`mt-1.5 text-[10px] font-black uppercase tracking-wider ${selectedBank === bank.id ? "text-white" : "text-zinc-400"}`}>{bank.name}</p>
-                            <p className={`mt-0.5 text-sm font-black tracking-widest ${selectedBank === bank.id ? "text-[#C8FF00]" : "text-zinc-600"}`}>{bank.label}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {ticketDesigns.map((t) => {
+                      const isSelected = selectedDesign === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => setSelectedDesign(t.id)}
+                          className={`w-full text-left transition-all duration-300 ${isSelected ? "scale-[1.02]" : "opacity-50 hover:opacity-85"}`}
+                        >
+                          <div className={`relative overflow-hidden rounded-xl border ${isSelected ? t.id === 1 ? "border-pink-500/50 shadow-[0_0_20px_rgba(255,79,163,0.14)]" : "border-[#C8FF00]/50 shadow-[0_0_20px_rgba(200,255,0,0.12)]" : "border-white/10"} bg-gradient-to-br ${t.gradient}`}>
+                            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.06),transparent_60%)]" />
+                            <div className="relative p-4 flex flex-col min-h-[160px] justify-between">
+                              <div className="flex items-center justify-between">
+                                <div className={`flex items-center gap-1 ${t.accent === "red" ? "text-pink-300" : "text-[#C8FF00]"}`}>
+                                  <Zap className="h-3 w-3" />
+                                  <span className="text-[7px] font-black uppercase tracking-[0.3em]">DAWGS</span>
+                                </div>
+                                <div className={`h-4.5 w-4.5 rounded-full border ${t.accent === "red" ? "border-pink-400/40" : "border-[#C8FF00]/40"} flex items-center justify-center ${isSelected ? (t.accent === "red" ? "bg-pink-500/20" : "bg-[#C8FF00]/20") : ""}`}>
+                                  {isSelected && <div className={`h-2.5 w-2.5 rounded-full ${t.accent === "red" ? "bg-pink-400" : "bg-[#C8FF00]"}`} />}
+                                </div>
+                              </div>
+                              <div className="my-2">
+                                <p className="text-xs font-black text-white uppercase tracking-wider leading-relaxed truncate">{t.label}</p>
+                                <div className={`mt-2 h-px w-2/3 ${t.accent === "red" ? "bg-pink-400/20" : "bg-[#C8FF00]/20"}`} />
+                              </div>
+                              <div className="flex items-center justify-between mt-1">
+                                <p className={`text-[6px] font-mono font-bold ${t.accent === "red" ? "text-pink-300/60" : "text-[#C8FF00]/50"}`}>{t.serial}</p>
+                                <div className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.2">
+                                  <p className="text-[5px] font-black uppercase tracking-wider text-zinc-500">VIP</p>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </button>
-                      ))}
-                    </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Cantidad de Entradas */}
+                <div className="rounded-2xl border border-white/10 bg-black/40 p-5 space-y-4 backdrop-blur-2xl">
+                  <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-pink-500/20 text-[10px] font-black text-pink-300">3</span>
+                    <h3 className="text-xs font-black uppercase tracking-widest text-white">Cantidad</h3>
                   </div>
 
-                  <div className="grid grid-cols-1 items-start gap-5 sm:grid-cols-[1fr_auto]">
-                    <div className="space-y-4">
-                      <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-5">
-                        <div className="flex items-center gap-2 mb-3">
-                          <CreditCard className="h-4 w-4 text-pink-300" />
-                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-pink-300">cuenta</p>
+                  <div className="flex items-center justify-between gap-6">
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="glass-icon-button text-white shrink-0"
+                      style={{ "--glass-icon-size": "44px" } as CSSProperties}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <div className="text-center flex-1">
+                      <span className="text-3xl font-black text-white">{quantity}</span>
+                      <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">entradas</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(Math.min(10, quantity + 1))}
+                      className="glass-icon-button text-white shrink-0"
+                      style={{ "--glass-icon-size": "44px" } as CSSProperties}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* RIGHT COLUMN: Pago y Comprobante */}
+              <div className="lg:col-span-6 space-y-6">
+
+                {/* 4. Método de Pago */}
+                <div className="rounded-2xl border border-white/10 bg-black/40 p-5 space-y-4 backdrop-blur-2xl">
+                  <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-pink-500/20 text-[10px] font-black text-pink-300">4</span>
+                    <h3 className="text-xs font-black uppercase tracking-widest text-white">Método de Pago</h3>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {BANKS.map((bank) => (
+                      <button
+                        key={bank.id}
+                        type="button"
+                        onClick={() => setSelectedBank(bank.id)}
+                        className={`glass-select-tile p-3 text-center transition-all duration-300 ${selectedBank === bank.id ? "glass-select-tile-active scale-[1.01]" : "hover:border-white/20"}`}
+                      >
+                        {selectedBank === bank.id && <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,0,24,.06),transparent_60%)]" />}
+                        <div className="relative">
+                          <Building2 className={`mx-auto h-5 w-5 ${selectedBank === bank.id ? "text-pink-300" : "text-zinc-500"}`} />
+                          <p className={`mt-1 text-[9px] font-black uppercase tracking-wider ${selectedBank === bank.id ? "text-white" : "text-zinc-400"}`}>{bank.name}</p>
+                          <p className={`mt-0.5 text-xs font-black tracking-wider ${selectedBank === bank.id ? "text-[#C8FF00]" : "text-zinc-600"}`}>{bank.label}</p>
                         </div>
-                        <div className="rounded-xl border border-white/[0.06] bg-black/40 p-4">
-                          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-1">a nombre de:</p>
-                          <div className="flex items-center gap-2">
-                            <p className="text-base font-black text-white tracking-wider">MEDINA BRANDON</p>
-                            <span className="rounded-full border border-pink-400/20 bg-pink-950/40 px-2 py-0.5 text-[7px] font-black uppercase tracking-widest text-pink-200">miembro dawgs</span>
-                          </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Transfer Details Card & QR Code */}
+                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 rounded-xl border border-white/[0.06] bg-black/60 p-4">
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-0.5">Beneficiario</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-black text-white tracking-wider">MEDINA BRANDON</p>
+                          <span className="rounded-full border border-pink-400/20 bg-pink-950/40 px-1.5 py-0.2 text-[6px] font-black uppercase tracking-widest text-pink-200">DAWGS Admin</span>
                         </div>
                       </div>
+                      <div>
+                        <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-0.5">Detalles de Cuenta</p>
+                        <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest leading-relaxed">
+                          {selectedBank === "banco-loja" ? "CTA AHORROS: 2901416738" : "DEUNA AL: 0983803157"}
+                        </p>
+                      </div>
+                      <div className="pt-1">
+                        <span className="rounded-full border border-[#C8FF00]/25 bg-[#C8FF00]/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-[#C8FF00]">
+                          TOTAL A PAGAR: ${totalPrice.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center rounded-xl border border-dashed border-white/10 bg-black/40 p-2 shrink-0">
+                      <img
+                        src={BANKS.find((b) => b.id === selectedBank)?.qrImage}
+                        alt="QR Pago"
+                        className="h-20 w-20 object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                          const parent = (e.target as HTMLImageElement).parentElement;
+                          if (parent) parent.innerHTML = '<div class="text-[8px] text-zinc-600 font-bold uppercase tracking-widest">QR no disponible</div>';
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
 
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between gap-3 px-1">
-                          <div>
-                            <p className="text-[9px] font-black uppercase tracking-[0.22em] text-white">comprobante de pago</p>
-                            <p className="mt-1 text-[7px] font-bold uppercase tracking-widest text-zinc-500">solo JPG, JPEG o PNG · máximo 5 MB</p>
-                          </div>
-                          <div className="rounded-full border border-[#C8FF00]/20 bg-[#C8FF00]/10 px-2.5 py-1 text-[7px] font-black uppercase tracking-wider text-[#C8FF00]">
-                            revisión segura
-                          </div>
-                        </div>
+                {/* 5. Comprobante de Pago */}
+                <div className="rounded-2xl border border-white/10 bg-black/40 p-5 space-y-4 backdrop-blur-2xl">
+                  <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-pink-500/20 text-[10px] font-black text-pink-300">5</span>
+                    <h3 className="text-xs font-black uppercase tracking-widest text-white">Subir Comprobante</h3>
+                  </div>
 
-                        <input
-                          ref={fileInputRef}
-                          id="receipt-file-input"
-                          type="file"
-                          accept="image/jpeg,image/png,.jpg,.jpeg,.png"
-                          className="sr-only"
-                          disabled={isSubmitting}
-                          onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
+                  <input
+                    ref={fileInputRef}
+                    id="receipt-file-input"
+                    type="file"
+                    accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                    className="sr-only"
+                    disabled={isSubmitting}
+                    onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
+                  />
+
+                  {selectedFile && preview ? (
+                    <div className="overflow-hidden rounded-xl border border-emerald-400/20 bg-emerald-950/5">
+                      <div className="relative flex min-h-40 items-center justify-center bg-black/50 p-2">
+                        <img
+                          src={preview}
+                          alt="Vista previa"
+                          className="max-h-48 w-full rounded-lg object-contain"
                         />
-
-                        {selectedFile && preview ? (
-                          <div className="overflow-hidden rounded-2xl border border-emerald-400/30 bg-emerald-950/10">
-                            <div className="relative flex min-h-56 items-center justify-center bg-black/70 p-3 sm:min-h-64">
-                              <img
-                                src={preview}
-                                alt={`Vista previa de ${selectedFile.name}`}
-                                className="max-h-72 w-full rounded-xl object-contain"
-                              />
-                              <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-300/20 bg-black/80 px-2.5 py-1 text-[7px] font-black uppercase tracking-wider text-emerald-300 backdrop-blur">
-                                <FileCheck className="h-3 w-3" /> lista para enviar
-                              </div>
-                            </div>
-                            <div className="flex flex-col gap-3 border-t border-white/[0.06] p-3 sm:flex-row sm:items-center sm:justify-between">
-                              <div className="min-w-0">
-                                <p className="truncate text-[9px] font-black text-white">{selectedFile.name}</p>
-                                <p className="mt-1 text-[7px] font-bold uppercase tracking-wider text-zinc-500">
-                                  {formatFileSize(selectedFile.size)} · {selectedFile.type}
-                                </p>
-                              </div>
-                              <div className="flex shrink-0 gap-2">
-                                <button
-                                  type="button"
-                                  disabled={isSubmitting}
-                                  onClick={() => fileInputRef.current?.click()}
-                                  className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-[7px] font-black uppercase tracking-wider text-zinc-200 transition hover:border-white/20 disabled:opacity-50"
-                                >
-                                  <ImagePlus className="h-3.5 w-3.5" /> cambiar
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={isSubmitting}
-                                  onClick={clearSelectedFile}
-                                  className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-red-400/20 bg-red-500/10 px-3 text-[7px] font-black uppercase tracking-wider text-red-300 transition hover:bg-red-500/15 disabled:opacity-50"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" /> eliminar
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
+                        <div className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full border border-emerald-300/20 bg-black/80 px-2 py-0.5 text-[7px] font-black uppercase tracking-wider text-emerald-300 backdrop-blur">
+                          <FileCheck className="h-3 w-3" /> listo
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2 border-t border-white/[0.04] p-2.5 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="truncate text-[8px] font-black text-white">{selectedFile.name}</p>
+                          <p className="mt-0.5 text-[7px] font-bold uppercase tracking-wider text-zinc-500">
+                            {formatFileSize(selectedFile.size)}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
                           <button
                             type="button"
                             disabled={isSubmitting}
-                            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                            onDragLeave={() => setDragOver(false)}
-                            onDrop={(e) => {
-                              e.preventDefault();
-                              setDragOver(false);
-                              handleFileSelect(e.dataTransfer.files?.[0] || null);
-                            }}
                             onClick={() => fileInputRef.current?.click()}
-                            className={`flex min-h-56 w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center transition ${
-                              dragOver
-                                ? "border-pink-400 bg-pink-500/10"
-                                : "border-white/10 bg-black/40 hover:border-pink-300/30 hover:bg-white/[0.03]"
-                            }`}
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/[0.02] px-2.5 text-[7px] font-black uppercase tracking-wider text-zinc-200 hover:bg-white/[0.06]"
                           >
-                            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-pink-300/15 bg-pink-500/10">
-                              <Upload className="h-6 w-6 text-pink-200" />
-                            </div>
-                            <p className="text-xs font-black uppercase tracking-[0.18em] text-white">selecciona tu comprobante</p>
-                            <p className="mt-2 max-w-xs text-[9px] font-medium leading-relaxed text-zinc-500">
-                              Toca para buscar una imagen o arrástrala aquí desde tu equipo.
-                            </p>
-                            <span className="mt-4 rounded-full border border-white/10 px-3 py-1.5 text-[7px] font-black uppercase tracking-widest text-zinc-400">
-                              JPG · JPEG · PNG
-                            </span>
+                            cambiar
                           </button>
-                        )}
-
-                        <div className="flex items-start gap-2 rounded-xl border border-sky-400/10 bg-sky-500/[0.04] px-3 py-2.5">
-                          <ScanSearch className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-300" />
-                          <p className="text-[7px] font-bold uppercase leading-relaxed tracking-wider text-zinc-400">
-                            Aceptamos capturas y fotos claras de depósitos. Evita sombras, reflejos, bordes cortados o movimiento. Las imágenes rechazadas no se guardan.
-                          </p>
+                          <button
+                            type="button"
+                            disabled={isSubmitting}
+                            onClick={clearSelectedFile}
+                            className="inline-flex h-8 items-center justify-center gap-1 rounded-lg border border-red-400/10 bg-red-500/10 px-2.5 text-[7px] font-black uppercase tracking-wider text-red-300 hover:bg-red-500/15"
+                          >
+                            eliminar
+                          </button>
                         </div>
                       </div>
                     </div>
-
-                    <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-5">
-                      <p className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-3 text-center">código QR</p>
-                      <div className="flex items-center justify-center rounded-2xl border border-dashed border-white/10 bg-black/40 p-4 w-fit mx-auto">
-                        <img src={BANKS.find((b) => b.id === selectedBank)?.qrImage} alt="QR" className="h-28 w-28 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; const parent = (e.target as HTMLImageElement).parentElement; if (parent) parent.innerHTML = '<div class="text-[8px] text-zinc-600 font-bold uppercase tracking-widest">QR no disponible</div>'; }} />
-                      </div>
-                    </div>
-                  </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                      onDragLeave={() => setDragOver(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setDragOver(false);
+                        handleFileSelect(e.dataTransfer.files?.[0] || null);
+                      }}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`flex min-h-40 w-full flex-col items-center justify-center rounded-xl border border-dashed p-4 text-center transition ${
+                        dragOver
+                          ? "border-pink-500 bg-pink-500/5"
+                          : "border-white/10 bg-black/40 hover:border-pink-300/20 hover:bg-white/[0.01]"
+                      }`}
+                    >
+                      <Upload className="h-5 w-5 text-pink-300 mb-2" />
+                      <p className="text-[10px] font-black uppercase tracking-wider text-white">Selecciona tu comprobante</p>
+                      <p className="mt-1 text-[8px] font-medium text-zinc-500">Arrastra aquí o toca para buscar</p>
+                      <span className="mt-2.5 rounded border border-white/5 bg-white/[0.02] px-2 py-0.5 text-[6px] font-black text-zinc-500 uppercase tracking-widest">
+                        JPG · PNG · Máx 5MB
+                      </span>
+                    </button>
+                  )}
 
                   {errorMsg && (
-                    <div role="alert" aria-live="assertive" className="flex items-center gap-3 text-sm font-bold text-red-400 bg-red-950/40 p-4 rounded-xl border border-red-500/30">
-                      <ShieldAlert className="h-4 w-4 shrink-0" /> {errorMsg}
+                    <div role="alert" aria-live="assertive" className="flex items-center gap-2.5 text-xs font-bold text-red-400 bg-red-950/20 p-3 rounded-lg border border-red-500/20">
+                      <ShieldAlert className="h-4 w-4 shrink-0 text-red-400" /> {errorMsg}
                     </div>
                   )}
 
                   {isSubmitting && uploadMessage && (
-                    <div aria-live="polite" className="flex items-center justify-center gap-2 py-1 text-[8px] font-bold uppercase tracking-[0.16em] text-zinc-500">
-                      <Loader2 className="h-3 w-3 shrink-0 animate-spin" />
+                    <div aria-live="polite" className="flex items-center justify-center gap-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-zinc-500">
+                      <Loader2 className="h-3 w-3 shrink-0 animate-spin text-pink-300" />
                       <span>{uploadMessage}</span>
                     </div>
                   )}
@@ -662,18 +668,24 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                     onError={() => setTurnstileToken("")}
                   />
 
-                  <button type="submit" disabled={isSubmitting || !selectedFile} className="glass-action glass-action-primary w-full" style={{ "--glass-action-height": "56px", "--glass-action-text": "0.95rem" } as CSSProperties}>
-                    {isSubmitting ? <><Loader2 className="h-5 w-5 animate-spin" /> REVISANDO...</> : <>ENVIAR COMPROBANTE — ${totalPrice.toFixed(2)}</>}
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !selectedFile}
+                    className="glass-action glass-action-primary w-full"
+                    style={{ "--glass-action-height": "48px", "--glass-action-text": "0.85rem" } as CSSProperties}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> PROCESANDO...
+                      </>
+                    ) : (
+                      <>COMPRAR ENTRADA — ${totalPrice.toFixed(2)}</>
+                    )}
                   </button>
+                </div>
 
-                  <div className="flex items-center justify-center">
-                    <button type="button" onClick={() => setStep(2)} className="glass-action glass-action-quiet text-zinc-400" style={{ "--glass-action-height": "36px", "--glass-action-px": "1.5rem", "--glass-action-text": "0.6rem" } as CSSProperties}>
-                      <ChevronLeft className="h-4 w-4" /> ANTERIOR
-                    </button>
-                  </div>
-                </form>
               </div>
-            )}
+            </form>
           </div>
         )}
 
@@ -735,21 +747,26 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                 {/* Features grid — glass cards */}
                 <div className="grid grid-cols-2 gap-2.5">
                   {[
-                    { icon: "📸", label: "Photo spot", desc: "Captura el momento", gradient: "from-yellow-500/10 to-orange-500/5", border: "border-yellow-500/15", hoverBorder: "hover:border-yellow-400/30" },
-                    { icon: "🎧", label: "Sonido envolvente", desc: "Ecosistema Dolby", gradient: "from-blue-500/10 to-cyan-500/5", border: "border-blue-500/15", hoverBorder: "hover:border-blue-400/30" },
-                    { icon: "🍸", label: "Barra libre", desc: "Premium selection", gradient: "from-emerald-500/10 to-green-500/5", border: "border-emerald-500/15", hoverBorder: "hover:border-emerald-400/30" },
-                    { icon: "🔒", label: "Acceso controlado", desc: "Entrada garantizada", gradient: "from-violet-500/10 to-purple-500/5", border: "border-violet-500/15", hoverBorder: "hover:border-violet-400/30" },
-                  ].map((feat) => (
-                    <div
-                      key={feat.label}
-                      className={`group relative overflow-hidden rounded-2xl border ${feat.border} bg-gradient-to-br ${feat.gradient} px-4 py-3.5 text-center transition-all duration-300 ${feat.hoverBorder} hover:shadow-[0_0_25px_rgba(255,255,255,0.04)]`}
-                    >
-                      <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent_30%,rgba(255,255,255,0.03)_50%,transparent_70%)] translate-x-[-200%] transition-transform duration-700 group-hover:translate-x-[200%]" />
-                      <p className="relative text-2xl transition-transform duration-300 group-hover:scale-110">{feat.icon}</p>
-                      <p className="relative mt-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-white/80">{feat.label}</p>
-                      <p className="relative mt-0.5 text-[7px] font-medium text-white/40">{feat.desc}</p>
-                    </div>
-                  ))}
+                    { icon: Camera, label: "Photo spot", desc: "Captura el momento", gradient: "from-yellow-500/10 to-orange-500/5", border: "border-yellow-500/15", hoverBorder: "hover:border-yellow-400/30" },
+                    { icon: Headphones, label: "Sonido envolvente", desc: "Ecosistema Dolby", gradient: "from-blue-500/10 to-cyan-500/5", border: "border-blue-500/15", hoverBorder: "hover:border-blue-400/30" },
+                    { icon: Wine, label: "Barra libre", desc: "Premium selection", gradient: "from-emerald-500/10 to-green-500/5", border: "border-emerald-500/15", hoverBorder: "hover:border-emerald-400/30" },
+                    { icon: LockKeyhole, label: "Acceso controlado", desc: "Entrada garantizada", gradient: "from-violet-500/10 to-purple-500/5", border: "border-violet-500/15", hoverBorder: "hover:border-violet-400/30" },
+                  ].map((feat) => {
+                    const IconComponent = feat.icon;
+                    return (
+                      <div
+                        key={feat.label}
+                        className={`group relative overflow-hidden rounded-2xl border ${feat.border} bg-gradient-to-br ${feat.gradient} px-4 py-3.5 text-center transition-all duration-300 ${feat.hoverBorder} hover:shadow-[0_0_25px_rgba(255,255,255,0.04)]`}
+                      >
+                        <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent_30%,rgba(255,255,255,0.03)_50%,transparent_70%)] translate-x-[-200%] transition-transform duration-700 group-hover:translate-x-[200%]" />
+                        <div className="flex justify-center mb-1.5">
+                          <IconComponent className="h-5 w-5 text-zinc-300 transition-transform duration-300 group-hover:scale-110" />
+                        </div>
+                        <p className="relative text-[8px] font-black uppercase tracking-[0.2em] text-white/80">{feat.label}</p>
+                        <p className="relative mt-0.5 text-[7px] font-medium text-white/40">{feat.desc}</p>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Action buttons */}

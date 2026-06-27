@@ -203,7 +203,7 @@ export default function BankTransferInfo({
             </div>
             <div className="rounded-xl border border-amber-500/20 bg-amber-950/20 p-3">
               <p className="text-[7px] font-bold uppercase tracking-wider text-amber-400 leading-relaxed">
-                ⚠ Verifica que tus datos sean correctos. Si el teléfono no es el correcto, <span className="text-red-400">no podremos contactarte</span>.
+                [!] Verifica que tus datos sean correctos. Si el teléfono no es el correcto, <span className="text-red-400">no podremos contactarte</span>.
               </p>
               <p className="text-[7px] font-bold uppercase tracking-wider text-amber-400 leading-relaxed mt-2">
                 Revisa bien antes de enviar el comprobante.

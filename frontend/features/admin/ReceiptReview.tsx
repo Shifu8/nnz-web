@@ -184,12 +184,12 @@ export default function ReceiptReview() {
                         <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-zinc-500">Datos del comprador</p>
                         <div className="rounded-xl border border-white/10 bg-black/40 p-3 space-y-1">
                           <p className="text-[10px] font-bold text-white">{receipt.firstName} {receipt.lastName}</p>
-                          <p className="text-[9px] text-zinc-400">📞 {receipt.phone}</p>
-                          <p className="text-[9px] text-zinc-400">📧 {receipt.email}</p>
-                          <p className="text-[9px] text-zinc-400">🆔 {receipt.documentNumber}</p>
-                          <p className="text-[9px] text-zinc-400">🎫 {receipt.quantity} entrada(s)</p>
-                          <p className="text-[9px] text-zinc-400">🔢 Ref: {receipt.referenceNumber}</p>
-                          <p className="text-[9px] text-zinc-400">🏦 {receipt.paymentMethod}</p>
+                          <p className="text-[9px] text-zinc-400">Teléfono: {receipt.phone}</p>
+                          <p className="text-[9px] text-zinc-400">Email: {receipt.email}</p>
+                          <p className="text-[9px] text-zinc-400">Documento: {receipt.documentNumber}</p>
+                          <p className="text-[9px] text-zinc-400">Entradas: {receipt.quantity}</p>
+                          <p className="text-[9px] text-zinc-400">Referencia: {receipt.referenceNumber}</p>
+                          <p className="text-[9px] text-zinc-400">Método: {receipt.paymentMethod}</p>
                         </div>
                       </div>
 
@@ -198,24 +198,24 @@ export default function ReceiptReview() {
                           <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-zinc-500">
                             OCR — Confianza: {receipt.ocrResult.confidence}%
                             {receipt.ocrResult.isSuspicious && (
-                              <span className="ml-2 text-amber-400">⚠ SOSPECHOSO</span>
+                              <span className="ml-2 text-amber-400">[!] SOSPECHOSO</span>
                             )}
                           </p>
                           <div className="rounded-xl border border-white/10 bg-black/40 p-3">
                             {receipt.ocrResult.detectedAmount && (
-                              <p className="text-[9px] text-green-400 font-bold">💰 Monto: {receipt.ocrResult.detectedAmount}</p>
+                              <p className="text-[9px] text-green-400 font-bold">Monto: {receipt.ocrResult.detectedAmount}</p>
                             )}
                             {receipt.ocrResult.detectedDate && (
-                              <p className="text-[9px] text-blue-400 font-bold">📅 Fecha: {receipt.ocrResult.detectedDate}</p>
+                              <p className="text-[9px] text-blue-400 font-bold">Fecha: {receipt.ocrResult.detectedDate}</p>
                             )}
                             {receipt.ocrResult.detectedReference && (
-                              <p className="text-[9px] text-purple-400 font-bold">🔗 Ref: {receipt.ocrResult.detectedReference}</p>
+                              <p className="text-[9px] text-purple-400 font-bold">Ref: {receipt.ocrResult.detectedReference}</p>
                             )}
                             {receipt.ocrResult.detectedBank && (
-                              <p className="text-[9px] text-cyan-400 font-bold">🏦 Banco: {receipt.ocrResult.detectedBank}</p>
+                              <p className="text-[9px] text-cyan-400 font-bold">Banco: {receipt.ocrResult.detectedBank}</p>
                             )}
                             {receipt.ocrResult.suspiciousReason && (
-                              <p className="mt-1 text-[8px] text-amber-500 font-bold uppercase tracking-wider">⚠ {receipt.ocrResult.suspiciousReason}</p>
+                              <p className="mt-1 text-[8px] text-amber-500 font-bold uppercase tracking-wider">[!] {receipt.ocrResult.suspiciousReason}</p>
                             )}
                             <details className="mt-2">
                               <summary className="cursor-pointer text-[8px] font-bold text-zinc-600 hover:text-zinc-400 uppercase tracking-wider">
