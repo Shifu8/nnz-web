@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, type CSSProperties } from "react";
-
+import { Bot } from "lucide-react";
 import { gsap } from "gsap";
 
 type Message = {
@@ -152,7 +152,7 @@ export default function AIChatbot() {
           boxShadow: "0 0 34px rgba(var(--theme-primary-rgb),0.3)",
         } as CSSProperties}
       >
-        <span className="text-2xl">🤖</span>
+        <Bot className="h-7 w-7" />
       </button>
 
       {/* Interfaz de Chat */}
@@ -168,7 +168,7 @@ export default function AIChatbot() {
             <div className="flex items-center justify-between border-b border-white/10 bg-white/5 p-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-500/20 border border-pink-300/30 text-pink-300">
-                  <span className="text-xl">🤖</span>
+                  <Bot className="h-5 w-5" />
                 </div>
                 <div>
                   <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">DAWGS AI</h3>

@@ -313,7 +313,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 as="span"
                 staggerMs={55}
                 durationMs={420}
-                className="hidden text-sm font-black uppercase tracking-[0.38em] text-white sm:block"
+                className="text-sm font-black uppercase tracking-[0.38em] text-white"
               />
             </button>
           </div>
