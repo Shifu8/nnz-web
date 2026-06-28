@@ -7,7 +7,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Sparkles, Ticket, X } from "lucide-react";
+
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
 
 type FloatingBubbleProps = {
@@ -68,7 +68,7 @@ export default function FloatingBubble({ onAccessClick, passCount = 100 }: Float
             }}
             className="mt-4 flex h-12 w-full items-center justify-between rounded-2xl bg-red-600 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-[0_0_35px_rgba(255,0,24,.5)]"
           >
-            Canjear pase ahora <Ticket className="h-4 w-4" />
+            Canjear pase ahora
           </button>
 
         </div>
@@ -78,7 +78,7 @@ export default function FloatingBubble({ onAccessClick, passCount = 100 }: Float
           className="bubble-trigger pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full border border-red-400/60 bg-black/70 text-red-200 shadow-[0_0_25px_rgba(255,0,24,.65)]"
           aria-label="Abrir acciones rapidas"
         >
-          {open ? <X className="h-6 w-6" /> : <Sparkles className="h-5 w-5" />}
+          {open ? "✕" : "✦"}
         </button>
       </div>
     </div>

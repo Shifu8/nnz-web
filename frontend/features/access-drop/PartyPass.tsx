@@ -8,7 +8,7 @@
 
 import { useRef, type CSSProperties } from "react";
 import { QRCodeCanvas } from "qrcode.react";
-import { Download, Share2 } from "lucide-react";
+
 import { motion } from "framer-motion";
 import { toPng } from "html-to-image";
 
@@ -202,20 +202,14 @@ export default function PartyPass({ data }: PartyPassProps) {
           className="glass-action glass-action-lime flex-1"
           style={{ "--glass-action-height": "48px", "--glass-action-text": "0.6rem" } as CSSProperties}
         >
-          <Download className="h-4 w-4" /> descargar png
+          descargar png
         </button>
-        <button className="glass-icon-button text-white" style={{ "--glass-icon-size": "48px" } as CSSProperties}>
-          <Share2 className="h-4 w-4" />
-        </button>
+
       </div>
 
       {/* Aviso de acceso para asistentes */}
       <div className="mt-6 w-full max-w-[360px] rounded-3xl border border-dashed border-red-500/35 bg-red-950/20 p-4 text-center backdrop-blur-md shadow-[0_0_30px_rgba(239,68,68,0.05)]">
         <span className="inline-flex items-center gap-1.5 text-[8.5px] font-black text-red-500 uppercase tracking-[0.2em] mb-2 animate-pulse">
-          <svg className="w-3.5 h-3.5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-          </svg>
           QR de entrada: uso unico
         </span>
         <h4 className="text-[10px] font-black text-white uppercase tracking-wider mb-1">PRE-REGISTRO / CANJE EN TAQUILLA</h4>

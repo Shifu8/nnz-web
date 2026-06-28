@@ -2,19 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import Image from "next/image";
-import {
-  CalendarDays,
-  CheckCircle,
-  Download,
-  KeyRound,
-  Mail,
-  MapPin,
-  RefreshCw,
-  Send,
-  ShieldCheck,
-  Ticket,
-  UserRound,
-} from "lucide-react";
+
 import TurnstileWidget, { hasTurnstileSiteKey } from "@/frontend/components/TurnstileWidget";
 import {
   applyEmailSuggestion,
@@ -189,7 +177,6 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
 
         <div className="relative flex flex-col justify-center">
           <p className="inline-flex w-fit items-center gap-2 rounded-full border border-pink-300/20 bg-pink-500/[0.08] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.28em] text-pink-200">
-            <ShieldCheck className="h-3.5 w-3.5" />
             Recuperar entrada
           </p>
           <h2 className="mt-4 text-3xl font-black uppercase leading-[0.9] tracking-[-0.04em] text-white sm:text-4xl">
@@ -230,7 +217,6 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
               <div>
                 <p className="text-[9px] font-black uppercase tracking-[0.26em] text-zinc-500">correo de compra</p>
                 <div className="mt-2 flex items-center rounded-2xl border border-white/10 bg-black/45 px-4 transition focus-within:border-pink-300/45">
-                  <Mail className="h-4 w-4 shrink-0 text-pink-300" />
                   <input
                     required
                     type="email"
@@ -293,7 +279,6 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                 }`}
               >
                 {loading ? "Procesando..." : "Enviar codigo"}
-                <KeyRound className="h-4 w-4" />
               </button>
             </form>
           )}
@@ -326,7 +311,6 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                 }`}
               >
                 {loading ? "Validando..." : "Verificar codigo"}
-                <ShieldCheck className="h-4 w-4" />
               </button>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -346,7 +330,6 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                   }}
                   className="inline-flex h-10 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-[8px] font-black uppercase tracking-[0.15em] text-zinc-400 transition hover:border-pink-300/25 hover:text-white"
                 >
-                  <RefreshCw className="h-3 w-3" />
                   Nuevo codigo
                 </button>
               </div>
@@ -362,7 +345,6 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                   <p className="mt-1 text-[8px] font-black uppercase tracking-[0.2em] text-pink-300">{ticket.seriesName}</p>
                 </div>
                 <span className="inline-flex items-center gap-1 rounded-full border border-[#C8FF00]/25 bg-[#C8FF00]/10 px-3 py-1.5 text-[7px] font-black uppercase tracking-[0.16em] text-[#C8FF00]">
-                  <CheckCircle className="h-3 w-3" />
                   Aprobada
                 </span>
               </div>
@@ -370,15 +352,13 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
               <div className="mt-5 grid gap-4 sm:grid-cols-[1fr_156px]">
                 <div className="space-y-2">
                   {[
-                    [UserRound, "Titular", ticket.holderName],
-                    [Ticket, "Artistas", ticket.artist],
-                    [CalendarDays, "Fecha", ticket.date],
-                    [MapPin, "Lugar", ticket.venue],
-                  ].map(([Icon, label, value]) => {
-                    const DetailIcon = Icon as typeof UserRound;
+                    ["Titular", ticket.holderName],
+                    ["Artistas", ticket.artist],
+                    ["Fecha", ticket.date],
+                    ["Lugar", ticket.venue],
+                  ].map(([label, value]) => {
                     return (
                       <div key={String(label)} className="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.03] px-3 py-2.5">
-                        <DetailIcon className="h-4 w-4 shrink-0 text-pink-300" />
                         <div className="min-w-0">
                           <p className="text-[7px] font-black uppercase tracking-[0.18em] text-zinc-600">{String(label)}</p>
                           <p className="mt-0.5 truncate text-[10px] font-black uppercase text-zinc-200">{String(value)}</p>
@@ -415,7 +395,6 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                   }`}
                 >
                   Descargar entrada
-                  <Download className="h-4 w-4" />
                 </a>
                 <button
                   type="button"
@@ -424,7 +403,6 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                   className="inline-flex h-12 items-center justify-between rounded-2xl border border-pink-300/20 bg-pink-500/10 px-5 text-[9px] font-black uppercase tracking-[0.17em] text-pink-100 transition hover:bg-pink-500/15 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {resending ? "Reenviando..." : "Reenviar al correo"}
-                  <Send className="h-4 w-4" />
                 </button>
               </div>
             </div>

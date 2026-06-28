@@ -2,17 +2,6 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import Image from "next/image";
-import {
-  MapPin,
-  CalendarDays,
-  Ticket,
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
-  Info,
-  Music2
-} from "lucide-react";
 import type { Event } from "@/frontend/types/domain";
 
 // Extend domain Event with price and mini image for our editorial card requirements
@@ -158,7 +147,6 @@ export default function EventTicketCarousel({
           aria-label="Anterior evento"
           className="absolute -left-5 lg:-left-12 z-40 hidden md:flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white/60 backdrop-blur-md transition hover:border-white/30 hover:bg-black/80 hover:text-white active:scale-95"
         >
-          <ChevronLeft className="h-6 w-6" />
         </button>
 
         {/* Horizontal Snap Scroll container */}
@@ -275,11 +263,9 @@ export default function EventTicketCarousel({
                       {/* Event location & date badges */}
                       <div className="flex flex-wrap gap-1.5">
                         <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-200/18 bg-white/[0.08] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.18em] text-zinc-100">
-                          <MapPin className="h-3 w-3 text-pink-300" />
                           {event.city}
                         </span>
                         <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-200/18 bg-white/[0.08] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.18em] text-zinc-100">
-                          <CalendarDays className="h-3 w-3 text-pink-300" />
                           {event.dateLabel}
                         </span>
                       </div>
@@ -300,7 +286,7 @@ export default function EventTicketCarousel({
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 rounded-full border border-blue-400/30 bg-blue-950/40 px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.17em] text-blue-200 transition hover:bg-blue-900/50"
                         >
-                          <Music2 className="h-2.5 w-2.5" /> DAWG DJ
+                          DAWG DJ
                         </a>
                       </div>
 
@@ -340,7 +326,6 @@ export default function EventTicketCarousel({
                         onClick={() => onViewDetails(event)}
                         className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] text-[8px] font-black uppercase tracking-[0.18em] text-zinc-200 transition hover:border-pink-400/30 hover:bg-pink-500/10 hover:text-pink-300"
                       >
-                        <MapPin className="h-3.5 w-3.5 shrink-0" />
                         VER EVENTO
                       </button>
                       
@@ -350,7 +335,6 @@ export default function EventTicketCarousel({
                         className="group/buy inline-flex h-11 items-center justify-between rounded-xl bg-white px-4 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.18em] text-black shadow-lg transition hover:bg-zinc-200"
                       >
                         COMPRAR ENTRADA
-                        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/buy:translate-x-1" />
                       </button>
                     </div>
                   </div>
@@ -367,7 +351,6 @@ export default function EventTicketCarousel({
           aria-label="Siguiente evento"
           className="absolute -right-5 lg:-right-12 z-40 hidden md:flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white/60 backdrop-blur-md transition hover:border-white/30 hover:bg-black/80 hover:text-white active:scale-95"
         >
-          <ChevronRight className="h-6 w-6" />
         </button>
       </div>
 

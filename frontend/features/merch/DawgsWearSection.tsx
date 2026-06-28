@@ -3,7 +3,7 @@
 import { useState, useEffect, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingBag, ShieldCheck, Sparkles, AtSign, Scan, ArrowRight, X } from "lucide-react";
+
 import { motion, AnimatePresence } from "framer-motion";
 
 const WHATSAPP_NUMBER = "593XXXXXXXXX";
@@ -130,7 +130,6 @@ export default function DawgsWearSection() {
             <a href={model.instagramUrl} target="_blank" rel="noopener noreferrer"
               className="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-full border border-white/10 hover:border-red-500/50 transition"
             >
-              <AtSign className="w-3 h-3 text-[#C8FF00]" />
               <span className="text-[8px] font-black text-white tracking-widest">{model.modelName.split(" ")[0]}</span>
             </a>
 
@@ -161,14 +160,14 @@ export default function DawgsWearSection() {
                 className="glass-action glass-action-lime flex-1"
                 style={{ "--glass-action-height": "56px", "--glass-action-text": "0.74rem" } as CSSProperties}
               >
-                Entrar <ArrowRight className="w-4 h-4" />
+                Entrar
               </button>
               <button
                 onClick={handleScan}
                 className="glass-action glass-action-quiet flex-1"
                 style={{ "--glass-action-height": "56px", "--glass-action-text": "0.74rem" } as CSSProperties}
               >
-                <Scan className="w-4 h-4" /> Scan NFC
+                Scan NFC
               </button>
             </div>
           </div>
@@ -193,7 +192,7 @@ export default function DawgsWearSection() {
               acceder a información detallada y conocer los cuidados de la prenda.
             </p>
             <div className="mt-4 flex items-center justify-center gap-2 text-[9px] text-[#C8FF00] font-bold uppercase tracking-widest">
-              <ShieldCheck className="w-3.5 h-3.5" /> 100% Auténtico
+              100% Auténtico
             </div>
           </div>
         </div>
@@ -216,7 +215,7 @@ export default function DawgsWearSection() {
               className="relative w-full max-w-5xl rounded-[40px] border border-white/10 bg-black/60 backdrop-blur-3xl p-6 md:p-10 shadow-[0_0_100px_rgba(255,255,255,0.03)]"
             >
               <button onClick={() => setShowCatalogModal(false)} className="glass-pill absolute top-4 left-4 z-50">
-                <X className="w-3 h-3" /> CERRAR
+                CERRAR
               </button>
 
               <div className="mb-8 mt-4">
@@ -229,7 +228,6 @@ export default function DawgsWearSection() {
                 {wearCollection.map((outfit) => (
                   <div key={outfit.id} className="rounded-[28px] border border-white/10 bg-black/30 backdrop-blur-xl p-3 transition-all duration-500 hover:border-red-500/20 group overflow-hidden flex flex-col">
                     <div className="absolute top-3 right-3 z-30 flex items-center gap-1 px-2.5 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/10">
-                      <Sparkles className="w-2 h-2 text-[#C8FF00]" />
                       <span className="text-[5px] font-black text-[#C8FF00] uppercase tracking-widest">NFC</span>
                     </div>
 
@@ -253,7 +251,7 @@ export default function DawgsWearSection() {
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 rounded-2xl bg-[#C8FF00] hover:bg-[#b5e600] text-black px-4 py-3 text-[10px] font-black uppercase tracking-widest transition shadow-[0_0_20px_rgba(200,255,0,0.15)] active:scale-95"
                       >
-                        <ShoppingBag className="w-3 h-3" /> Comprar
+                        Comprar
                       </a>
                     </div>
                   </div>
@@ -280,7 +278,7 @@ export default function DawgsWearSection() {
               className="relative w-full max-w-sm rounded-[40px] border border-white/10 bg-black/60 backdrop-blur-3xl p-8 text-center"
             >
               <button onClick={() => { setShowScanModal(false); setScanStep("idle"); }} className="glass-pill absolute top-4 left-4">
-                <X className="w-3 h-3" /> CERRAR
+                CERRAR
               </button>
 
               {scanStep === "scanning" && (
@@ -312,7 +310,7 @@ export default function DawgsWearSection() {
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300 }}
                     className="w-20 h-20 rounded-full bg-[#C8FF00]/10 border-2 border-[#C8FF00] flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(200,255,0,0.15)]"
                   >
-                    <ShieldCheck className="w-10 h-10 text-[#C8FF00]" />
+
                   </motion.div>
                   <h3 className="text-xl font-black text-white uppercase tracking-wider">Prenda Autenticada</h3>
                   <p className="text-[9px] text-zinc-400 mt-2 max-w-xs">Chip NFC verificado. Producto original DAWGS.</p>
@@ -321,7 +319,7 @@ export default function DawgsWearSection() {
                       onClick={() => { setShowScanModal(false); setScanStep("idle"); }}
                       className="flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 text-xs font-black uppercase tracking-widest hover:bg-white/90 transition"
                     >
-                      Ver Prenda <ArrowRight className="w-3.5 h-3.5" />
+                      Ver Prenda
                     </Link>
                   </div>
                 </div>

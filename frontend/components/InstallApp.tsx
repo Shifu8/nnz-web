@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { X, Download, Smartphone } from "lucide-react";
+
 import { motion, AnimatePresence } from "framer-motion";
 
 type BeforeInstallPrompt = Event & {
@@ -69,7 +69,7 @@ export default function InstallApp({ label, className }: { label?: string; class
   return (
     <>
       <button onClick={handleClick} className={className || "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white transition hover:bg-white hover:text-black"}>
-        {(!className) && <Download className="h-3 w-3 shrink-0" />}
+
         <span className="leading-none">{label || "Descarga la App"}</span>
       </button>
 
@@ -93,12 +93,12 @@ export default function InstallApp({ label, className }: { label?: string; class
                 onClick={() => setIsOpen(false)}
                 className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-zinc-400 transition hover:bg-white/20 hover:text-white"
               >
-                <X className="h-4 w-4" />
+                <span>✕</span>
               </button>
 
               <div className="flex flex-col items-center gap-4 text-center">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-600/20">
-                  <Smartphone className="h-6 w-6 text-red-400" />
+                  <span className="text-2xl">📱</span>
                 </div>
                 <p className="text-sm font-black uppercase tracking-wider text-white">Escanea desde tu m&oacute;vil</p>
                 <div className="rounded-2xl bg-white p-4">

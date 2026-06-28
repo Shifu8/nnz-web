@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { CheckCircle, ShieldCheck } from "lucide-react";
+
 
 type TurnstileVariant = "visible" | "invisible";
 type TurnstileSize = "normal" | "compact" | "flexible";
@@ -197,12 +197,10 @@ export default function TurnstileWidget({
     } ${className}`}>
       <div className="mb-2 flex items-center justify-between gap-3">
         <span className="inline-flex items-center gap-2 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400">
-          <ShieldCheck className={`h-3.5 w-3.5 ${verified ? "text-[#C8FF00]" : "text-pink-300"}`} />
           {label}
         </span>
         {verified && (
           <span className="inline-flex items-center gap-1 rounded-full border border-[#C8FF00]/25 bg-[#C8FF00]/10 px-2 py-1 text-[7px] font-black uppercase tracking-wider text-[#C8FF00]">
-            <CheckCircle className="h-3 w-3" />
             listo
           </span>
         )}

@@ -1,16 +1,7 @@
 "use client";
 
 import { useState, useRef, type CSSProperties } from "react";
-import {
-  ChevronRight,
-  ShieldAlert,
-  Upload,
-  FileCheck,
-  Loader2,
-  CreditCard,
-  Building2,
-  Zap,
-} from "lucide-react";
+
 import { validateReceiptFileMetadata } from "@/lib/access-drop/fileValidation";
 
 const TICKET_DESIGNS = [
@@ -152,7 +143,7 @@ export default function BankTransferInfo({
           onClick={onClose}
           className="glass-pill glass-pill-red absolute -top-4 -right-3 z-50"
         >
-          <ChevronRight className="h-3 w-3 rotate-180" /> SALIR
+          SALIR
         </button>
       )}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_1.3fr] md:items-start">
@@ -166,7 +157,6 @@ export default function BankTransferInfo({
               <div className="relative p-5 flex flex-col min-h-[220px]">
                 <div className="flex items-center justify-between mb-3">
                   <div className={`flex items-center gap-1.5 ${ticketDesign.accent === "red" ? "text-red-400" : "text-[#C8FF00]"}`}>
-                    <Zap className="h-3 w-3" />
                     <span className={`text-[7px] font-black uppercase tracking-[0.3em] ${ticketDesign.accent === "red" ? "text-red-400" : "text-[#C8FF00]"}`}>DAWGS</span>
                   </div>
                   <div className={`h-4 w-4 rounded-full border ${ticketDesign.accent === "red" ? "border-red-500/40" : "border-[#C8FF00]/40"}`} />
@@ -232,7 +222,6 @@ export default function BankTransferInfo({
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,0,24,.08),transparent_60%)]" />
                   )}
                   <div className="relative">
-                    <Building2 className={`mx-auto h-6 w-6 ${selectedBank === bank.id ? "text-red-400" : "text-zinc-500"}`} />
                     <p className={`mt-1.5 text-[10px] font-black uppercase tracking-wider ${selectedBank === bank.id ? "text-white" : "text-zinc-400"}`}>
                       {bank.name}
                     </p>
@@ -247,7 +236,6 @@ export default function BankTransferInfo({
 
           <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent p-5">
             <div className="flex items-center gap-2 mb-3">
-              <CreditCard className="h-4 w-4 text-red-400" />
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-red-400">cuenta</p>
             </div>
             <div className="rounded-xl border border-white/[0.06] bg-black/40 p-4">
@@ -313,7 +301,7 @@ export default function BankTransferInfo({
                   <div className="w-full">
                     <img src={preview} alt={`Vista previa de ${selectedFile.name}`} className="mx-auto max-h-32 rounded-lg object-contain" />
                     <p className="mt-2 text-center text-[8px] font-bold text-green-400 uppercase tracking-wider">
-                      <FileCheck className="mr-1 inline h-3 w-3" /> {selectedFile.name}
+                      {selectedFile.name}
                     </p>
                     <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedFile(null); setPreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="glass-action glass-action-danger mx-auto mt-2" style={{ "--glass-action-height": "28px", "--glass-action-px": "0.75rem", "--glass-action-text": "0.44rem" } as CSSProperties}>
                       eliminar
@@ -321,7 +309,6 @@ export default function BankTransferInfo({
                   </div>
                 ) : selectedFile ? (
                   <div className="text-center">
-                    <FileCheck className="mx-auto h-8 w-8 text-green-400" />
                     <p className="mt-2 text-[8px] font-bold text-green-400 uppercase tracking-wider">{selectedFile.name}</p>
                     <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedFile(null); setPreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="glass-action glass-action-danger mx-auto mt-2" style={{ "--glass-action-height": "28px", "--glass-action-px": "0.75rem", "--glass-action-text": "0.44rem" } as CSSProperties}>
                       eliminar
@@ -329,7 +316,6 @@ export default function BankTransferInfo({
                   </div>
                 ) : (
                   <>
-                    <Upload className="mb-2 h-7 w-7 text-zinc-600" />
                     <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider">ARRASTRA O SELECCIONA</p>
                     <p className="mt-1 text-[6px] text-zinc-700 uppercase tracking-widest">JPG, JPEG o PNG — 5MB máx</p>
                   </>
@@ -339,7 +325,7 @@ export default function BankTransferInfo({
 
             {errorMsg && (
               <div className="flex items-center gap-3 text-[9px] font-bold text-red-400 bg-red-950/40 p-4 rounded-xl border border-red-500/30">
-                <ShieldAlert className="h-4 w-4 shrink-0" /> {errorMsg}
+                {errorMsg}
               </div>
             )}
 
@@ -350,11 +336,11 @@ export default function BankTransferInfo({
               className="glass-action glass-action-primary w-full"
               style={{ "--glass-action-height": "56px", "--glass-action-text": "0.78rem" } as CSSProperties}
             >
-              ENVIAR COMPROBANTE <ChevronRight className="h-4 w-4" />
+              ENVIAR COMPROBANTE
             </button>
 
             <button type="button" onClick={onBack} className="glass-action glass-action-quiet w-full text-zinc-300" style={{ "--glass-action-height": "46px", "--glass-action-text": "0.68rem" } as CSSProperties}>
-              <ChevronRight className="h-3.5 w-3.5 rotate-180" /> volver al registro
+              volver al registro
             </button>
 
             {showConfirm && (
@@ -399,9 +385,9 @@ export default function BankTransferInfo({
                       style={{ "--glass-action-height": "44px", "--glass-action-text": "0.65rem" } as CSSProperties}
                     >
                       {isSubmitting ? (
-                        <><Loader2 className="h-4 w-4 animate-spin" /> ENVIANDO...</>
+                        <>ENVIANDO...</>
                       ) : (
-                        <>CONFIRMAR <ChevronRight className="h-4 w-4" /></>
+                        <>CONFIRMAR</>
                       )}
                     </button>
                   </div>

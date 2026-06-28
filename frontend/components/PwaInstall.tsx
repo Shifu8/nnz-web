@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { X, Smartphone, Download } from "lucide-react";
+
 
 type BeforeInstallPrompt = Event & {
   prompt: () => Promise<void>;
@@ -51,13 +51,13 @@ export default function PwaInstall() {
           onClick={() => setDismissed(true)}
           className="absolute right-2 top-2 rounded-full p-1 text-zinc-500 transition hover:bg-white/10 hover:text-white"
         >
-          <X className="h-3.5 w-3.5" />
+          <span>✕</span>
         </button>
 
         {isMobileInstallReady ? (
           <div className="flex flex-col items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-600/20">
-              <Download className="h-5 w-5 text-red-400" />
+              <span className="text-xl">⬇</span>
             </div>
             <p className="text-center text-[11px] font-bold uppercase tracking-wider text-white leading-relaxed">
               Descarga la App
@@ -82,7 +82,7 @@ export default function PwaInstall() {
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3">
-            <Smartphone className="h-5 w-5 text-red-400" />
+            <span className="text-xl">📱</span>
             <p className="text-center text-[11px] font-bold uppercase tracking-wider text-white">
               Escanea en tu m&oacute;vil
             </p>

@@ -1,13 +1,12 @@
 "use client";
 
-import { HandMetal, Dumbbell, UtensilsCrossed, Beef } from "lucide-react";
+
 
 export default function SponsorsSection() {
   const sponsors = [
     {
       name: "DAWGS Burgers",
       role: "Official Food Partner",
-      icon: Beef,
       color: "text-orange-500",
       bg: "bg-orange-500/10",
       border: "border-orange-500/20"
@@ -15,7 +14,6 @@ export default function SponsorsSection() {
     {
       name: "Kyoto Sushi Bar",
       role: "Premium Catering",
-      icon: UtensilsCrossed,
       color: "text-red-500",
       bg: "bg-red-500/10",
       border: "border-red-500/20"
@@ -23,7 +21,6 @@ export default function SponsorsSection() {
     {
       name: "Iron Athletics",
       role: "Fitness Partner",
-      icon: Dumbbell,
       color: "text-zinc-300",
       bg: "bg-zinc-500/10",
       border: "border-zinc-500/20"
@@ -31,7 +28,6 @@ export default function SponsorsSection() {
     {
       name: "Zen Fisioterapia",
       role: "Recovery Partner",
-      icon: HandMetal,
       color: "text-blue-400",
       bg: "bg-blue-500/10",
       border: "border-blue-500/20"
@@ -52,7 +48,6 @@ export default function SponsorsSection() {
           {sponsors.map((sponsor, idx) => (
             <div key={idx} className={`flex flex-col items-center justify-center rounded-[24px] border ${sponsor.border} bg-black/40 p-8 transition-all hover:bg-white/5 hover:scale-105 group`}>
               <div className={`h-16 w-16 rounded-full flex items-center justify-center ${sponsor.bg} mb-4 group-hover:scale-110 transition-transform`}>
-                <sponsor.icon className={`h-8 w-8 ${sponsor.color}`} />
               </div>
               <h3 className="text-sm font-black text-white text-center uppercase tracking-widest">{sponsor.name}</h3>
               <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mt-1 text-center">{sponsor.role}</p>

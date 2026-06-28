@@ -8,7 +8,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef } from "react";
-import { AtSign, MessageCircle, Music2, X } from "lucide-react";
+
 import { gsap } from "@/frontend/animations/gsapSetup";
 import type { Artist } from "@/frontend/types/domain";
 
@@ -59,7 +59,7 @@ export default function ArtistModal({ artist, onClose }: ArtistModalProps) {
         className="relative w-full max-w-md overflow-hidden rounded-[34px] border border-red-500/20 bg-zinc-950/80 p-4 shadow-[0_0_100px_rgba(255,0,24,.4)] backdrop-blur-3xl"
       >
         <button onClick={handleClose} className="absolute right-4 top-4 z-20 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-black/60 text-white backdrop-blur-xl transition hover:bg-white/20 hover:scale-110">
-          <X className="h-5 w-5" />
+
         </button>
         <div className="relative h-80 overflow-hidden rounded-[26px]">
           <Image src={artist.image} alt={artist.name} fill sizes="(max-width: 768px) 100vw, 420px" className="object-cover transition-transform duration-[3s] hover:scale-110" />
@@ -77,17 +77,17 @@ export default function ArtistModal({ artist, onClose }: ArtistModalProps) {
           <div className="artist-modal-item mt-5 grid grid-cols-3 gap-2">
             {artist.socials.instagram && (
               <a href={artist.socials.instagram} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 py-3 text-xs font-bold text-white transition hover:bg-red-500/20 hover:border-red-500/50 hover:shadow-[0_0_15px_rgba(255,0,24,0.3)]">
-                <AtSign className="h-5 w-5 text-red-300" /><span>IG</span>
+<span>IG</span>
               </a>
             )}
             {artist.socials.tiktok && (
               <a href={artist.socials.tiktok} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 py-3 text-xs font-bold text-white transition hover:bg-red-500/20 hover:border-red-500/50 hover:shadow-[0_0_15px_rgba(255,0,24,0.3)]">
-                <Music2 className="h-5 w-5 text-red-300" /><span>TikTok</span>
+<span>TikTok</span>
               </a>
             )}
             {artist.socials.whatsapp && (
               <a href={artist.socials.whatsapp} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center gap-1 rounded-2xl border border-white/10 bg-white/5 py-3 text-xs font-bold text-white transition hover:bg-red-500/20 hover:border-red-500/50 hover:shadow-[0_0_15px_rgba(255,0,24,0.3)]">
-                <MessageCircle className="h-5 w-5 text-red-300" /><span>WhatsApp</span>
+<span>WhatsApp</span>
               </a>
             )}
           </div>

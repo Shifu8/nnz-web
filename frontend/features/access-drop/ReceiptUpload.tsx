@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, ShieldAlert, FileCheck, Loader2, BadgeCheck } from "lucide-react";
+
 import { validateReceiptFileMetadata } from "@/lib/access-drop/fileValidation";
 
 type ReceiptUploadProps = {
@@ -82,28 +82,27 @@ export default function ReceiptUpload({ onUpload }: ReceiptUploadProps) {
         <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" className="hidden" disabled={validating} onChange={(e) => handleFile(e.target.files?.[0] || null)} />
         {validating ? (
           <div className="text-center">
-            <Loader2 className="mx-auto h-7 w-7 animate-spin text-zinc-400" />
             <p className="mt-2 text-[8px] font-bold text-zinc-400">VALIDANDO...</p>
           </div>
         ) : file && preview && validated ? (
           <div className="w-full text-center">
             <img src={preview} alt={`Vista previa de ${file.name}`} className="mx-auto max-h-32 rounded-lg object-contain" />
-            <p className="mt-2 text-[8px] font-bold text-green-400"><BadgeCheck className="mr-1 inline h-3 w-3" />{file.name} — VALIDADO</p>
+            <p className="mt-2 text-[8px] font-bold text-green-400">{file.name} — VALIDADO</p>
           </div>
         ) : file ? (
-          <div className="text-center"><FileCheck className="mx-auto h-8 w-8 text-green-400" /><p className="mt-2 text-[8px] font-bold text-green-400">{file.name}</p></div>
+          <div className="text-center"><p className="mt-2 text-[8px] font-bold text-green-400">{file.name}</p></div>
         ) : (
-          <><Upload className="mb-2 h-7 w-7 text-zinc-600" /><p className="text-[8px] font-bold text-zinc-500">SELECCIONA COMPROBANTE</p><p className="mt-1 text-[6px] text-zinc-700">JPG, JPEG O PNG — 5MB</p></>
+          <><p className="text-[8px] font-bold text-zinc-500">SELECCIONA COMPROBANTE</p><p className="mt-1 text-[6px] text-zinc-700">JPG, JPEG O PNG — 5MB</p></>
         )}
       </div>
       <p className="text-[7px] leading-relaxed text-zinc-600">
         Puedes subir una captura o una foto clara de un depósito físico. Evita sombras, reflejos y movimiento.
       </p>
 
-      {error && <div className="text-[9px] font-bold text-red-400 bg-red-950/40 p-3 rounded-xl"><ShieldAlert className="inline h-3 w-3 mr-1" />{error}</div>}
+      {error && <div className="text-[9px] font-bold text-red-400 bg-red-950/40 p-3 rounded-xl">{error}</div>}
 
       <button disabled={loading || !file || validating} type="submit" className="flex h-12 w-full items-center justify-center rounded-xl bg-red-600 text-xs font-black uppercase tracking-wider text-white disabled:opacity-50">
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "SUBIR COMPROBANTE"}
+        {loading ? "SUBIR COMPROBANTE" : "SUBIR COMPROBANTE"}
       </button>
     </form>
   );

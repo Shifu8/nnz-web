@@ -10,29 +10,7 @@ import Image from "next/image";
 import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowRight,
-  CalendarDays,
-  ChevronLeft,
-  Clock3,
-  KeyRound,
-  LockKeyhole,
-  MapPin,
-  MessageCircle,
-  Music2,
-  Navigation,
-  Radio,
-  Share2,
-  ShieldCheck,
-  Sparkles,
-  Ticket,
-  X,
-  Zap,
-  Camera,
-  Headphones,
-  Wine,
-  Mail
-} from "lucide-react";
+
 import { AnimatePresence, motion } from "framer-motion";
 import Atmosphere from "@/frontend/components/Atmosphere";
 import AnimatedHeading from "@/frontend/components/AnimatedHeading";
@@ -330,15 +308,6 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               style={{ WebkitTapHighlightColor: "transparent" }}
               aria-label="DAWGS"
             >
-              <span className="relative h-10 w-10 overflow-hidden rounded-full border bg-black sm:h-11 sm:w-11" style={{ borderColor: "var(--theme-border-accent)", boxShadow: "0 0 28px rgba(var(--theme-primary-rgb), 0.18)" }}>
-                <Image
-                  src="/images/dawgs-logo-hd.png"
-                  alt=""
-                  fill
-                  sizes="44px"
-                  className="object-cover transition duration-500 group-hover:scale-105"
-                />
-              </span>
               <AnimatedHeading
                 text="DAWGS"
                 as="span"
@@ -379,7 +348,6 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 isRecoveryPulse ? "top-recovery-pulse" : ""
               }`}
             >
-              <KeyRound className="h-3.5 w-3.5" />
               Recuperar
             </button>
             <button
@@ -387,7 +355,6 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               onClick={scrollToTicketCard}
               className="inline-flex h-10 items-center gap-1.5 rounded-full border border-pink-300/25 bg-pink-500/10 px-3 text-[8px] font-black uppercase tracking-[0.14em] text-pink-100 transition hover:border-pink-300/45 hover:bg-pink-500/20 sm:gap-2 sm:px-4 sm:text-[9px] sm:tracking-[0.18em]"
             >
-              <Ticket className="h-3.5 w-3.5" />
               Comprar
             </button>
           </div>
@@ -560,7 +527,6 @@ export default function HomePage({ initialConfig }: HomePageProps) {
           <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             <div className="relative z-10">
               <p className="inline-flex items-center gap-2 rounded-full border border-pink-300/20 bg-pink-500/[0.08] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.3em] text-pink-300">
-                <Ticket className="h-3.5 w-3.5" />
                 {config.accessSection.badge}
               </p>
               <h2 className="mt-4 text-4xl font-black uppercase leading-[0.9] tracking-[-0.05em] text-white sm:text-5xl">
@@ -569,7 +535,6 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 {config.accessSection.headingLine2}
               </h2>
               <p className="mt-5 inline-flex items-center gap-2 text-xl font-black uppercase tracking-[-0.03em] text-white">
-                <LockKeyhole className="h-5 w-5 text-pink-300" />
                 {config.accessSection.qrSubtitle}
               </p>
               <p className="mt-5 max-w-lg text-sm leading-7 text-zinc-400">
@@ -578,17 +543,12 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             </div>
 
             <div className="relative z-10 grid gap-3 sm:grid-cols-3">
-              {[
-                { icon: Ticket, data: config.accessSection.steps[0] },
-                { icon: MessageCircle, data: config.accessSection.steps[1] },
-                { icon: ShieldCheck, data: config.accessSection.steps[2] },
-              ].map(({ icon: Icon, data }) => (
+              {config.accessSection.steps.map((data) => (
                 <article
                   key={data.step}
                   className="rounded-[24px] border border-pink-300/[0.08] bg-black/45 p-5 shadow-[0_16px_46px_rgba(0,0,0,0.24)] transition hover:border-pink-300/25 hover:bg-pink-500/[0.055]"
                 >
                   <div className="flex items-center justify-between">
-                    <Icon className="h-5 w-5 text-pink-400" />
                     <span className="text-[8px] font-black tracking-[0.24em] text-zinc-600">{data.step}</span>
                   </div>
                   <h3 className="mt-8 text-lg font-black uppercase text-white">{data.title}</h3>
@@ -630,7 +590,6 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             rel="noopener noreferrer"
             className="group mt-2 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.18em] text-zinc-400 backdrop-blur-md transition hover:border-white/[0.2] hover:bg-white/[0.08] hover:text-white"
           >
-            <Mail className="h-3.5 w-3.5 text-zinc-500 transition-colors group-hover:text-white" />
             {config.footer.email}
           </a>
           <p className="mt-2 text-[8px] font-bold tracking-wider text-zinc-600">
@@ -662,9 +621,9 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                   setIsTicketModalOpen(false);
                 }}
                 aria-label="Cerrar compra"
-                className="absolute right-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/70 text-xs font-black text-white/60 transition hover:text-white"
+                className="absolute right-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/70 text-[9px] font-black uppercase tracking-[0.12em] text-white/60 transition hover:text-white"
               >
-                X
+                Cerrar
               </button>
               <AccessDrop
                 ref={accessDropRef}
@@ -696,9 +655,9 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             >
               <button
                 onClick={() => setShowEventModal(false)}
-                className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/70 text-white/60 transition hover:text-white"
+                className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/70 text-[7px] font-black uppercase tracking-[0.1em] text-white/60 transition hover:text-white"
               >
-                <X className="h-4 w-4" />
+                Cerrar
               </button>
 
               <div className="relative aspect-[4/3] overflow-hidden rounded-t-[28px] bg-zinc-900">
@@ -733,19 +692,15 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
-                    <Camera className="h-5 w-5 text-zinc-400 mb-1" />
                     <p className="text-[7px] font-black uppercase tracking-wider text-zinc-300">Photo spot</p>
                   </div>
                   <div className="flex flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
-                    <Headphones className="h-5 w-5 text-zinc-400 mb-1" />
                     <p className="text-[7px] font-black uppercase tracking-wider text-zinc-300">Sonido envolvente</p>
                   </div>
                   <div className="flex flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
-                    <Wine className="h-5 w-5 text-zinc-400 mb-1" />
                     <p className="text-[7px] font-black uppercase tracking-wider text-zinc-300">Barra libre</p>
                   </div>
                   <div className="flex flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
-                    <LockKeyhole className="h-5 w-5 text-zinc-400 mb-1" />
                     <p className="text-[7px] font-black uppercase tracking-wider text-zinc-300">Acceso controlado</p>
                   </div>
                 </div>
@@ -757,7 +712,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                     rel="noopener noreferrer"
                     className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-pink-500 text-[9px] font-black uppercase tracking-[0.2em] text-white transition hover:bg-pink-400"
                   >
-                    <Navigation className="h-4 w-4" /> Abrir en Google Maps
+                    Abrir en Google Maps
                   </a>
                   <button
                     onClick={() => {
@@ -769,7 +724,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                     }}
                     className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300 transition hover:border-pink-400/30 hover:text-pink-300"
                   >
-                    <Share2 className="h-3.5 w-3.5" /> Compartir evento
+                    Compartir evento
                   </button>
                 </div>
               </div>
@@ -797,11 +752,10 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 onClick={() => setShowHiddenMenu(false)}
                 className="absolute left-5 top-5 z-10 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-[8px] font-black uppercase tracking-wider text-zinc-400 transition hover:border-white/20 hover:text-white"
               >
-                <ChevronLeft className="h-3 w-3" /> Volver
+                Volver
               </button>
 
-              <div className="mb-5 mt-8 flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-white/[0.06]">
-                <Zap className="h-6 w-6 text-pink-300" />
+              <div className="mb-5 mt-8">
               </div>
               <h2 className="text-2xl font-black uppercase tracking-[0.15em] text-white">System Access</h2>
               <p className="mb-8 mt-2 text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-500">
@@ -817,7 +771,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                   }}
                   className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-[11px] font-black uppercase tracking-wider text-zinc-300 transition hover:border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-400"
                 >
-                  <Radio className="h-4 w-4" /> Agente Staff
+                  Agente Staff
                 </button>
                 <button
                   type="button"
@@ -827,7 +781,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                   }}
                   className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-[11px] font-black uppercase tracking-wider text-zinc-300 transition hover:border-pink-500/30 hover:bg-pink-500/10 hover:text-pink-300"
                 >
-                  <Music2 className="h-4 w-4" /> Admin
+                  Admin
                 </button>
               </div>
             </motion.div>

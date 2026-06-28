@@ -8,7 +8,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Check, QrCode, ShieldCheck } from "lucide-react";
+
 import { claimRewardCode } from "@/frontend/services/rewardApi";
 import type { PartyPass } from "@/frontend/types/domain";
 import QRCode from "qrcode";
@@ -93,7 +93,7 @@ export default function RewardClaim() {
             <input value={code} onChange={(event) => setCode(event.target.value)} placeholder="DAWGS-XXXX" className="h-16 w-full rounded-2xl border border-white/12 bg-black/55 px-5 text-lg font-black uppercase tracking-[0.16em] text-white outline-none ring-red-500/40 transition placeholder:text-zinc-600 focus:ring-4" />
             {error && <p className="text-sm text-red-300">{error}</p>}
             <button className="flex h-[60px] w-full items-center justify-center gap-2 rounded-2xl bg-white text-xs font-black uppercase tracking-[0.24em] text-black transition hover:scale-[1.01] hover:bg-red-600 hover:text-white">
-              <ShieldCheck className="h-4 w-4" /> {loading ? "VALIDATING..." : "GENERATE PASS"}
+              {loading ? "VALIDATING..." : "GENERATE PASS"}
             </button>
           </form>
         </div>
@@ -103,7 +103,7 @@ export default function RewardClaim() {
           <div className="relative z-10">
             <div className="flex items-center justify-between">
               <span className="rounded-full border border-white/12 bg-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-white">party pass</span>
-              <QrCode className="h-6 w-6 text-red-300" />
+
             </div>
             <h3 className="mt-8 text-3xl font-black text-white drop-shadow-[0_0_10px_rgba(255,0,24,0.5)]">{pass ? pass.id : "LOCKED ACCESS"}</h3>
             <p className="mt-2 text-xs uppercase tracking-[0.22em] text-zinc-400">{pass ? `VALID UNTIL ${new Date(pass.expiresAt).toLocaleDateString("en-US")}` : "AWAITING CODE INPUT"}</p>
@@ -120,7 +120,7 @@ export default function RewardClaim() {
             
             <div className="mt-6 grid gap-2 text-[10px] font-black uppercase tracking-[0.15em] text-zinc-400">
               {["SECURE TOKEN GENERATED", "SINGLE-USE VALIDATION", "STRICT ENTRY PROTOCOL"].map((item) => (
-                <div key={item} className="flex items-center gap-2"><Check className="h-3 w-3 text-red-500" />{item}</div>
+                <div key={item} className="flex items-center gap-2">{item}</div>
               ))}
             </div>
           </div>

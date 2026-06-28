@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, type CSSProperties } from "react";
-import { ArrowRight, Music, SlidersHorizontal, Disc3, Speaker } from "lucide-react";
+
 import { motion, AnimatePresence } from "framer-motion";
 
 const studioImages = [
@@ -39,10 +39,10 @@ export default function DawgsStudio() {
   }, []);
 
   const services = [
-    { icon: Music, title: "Production", desc: "Beatmaking, sound design y estructuración." },
-    { icon: SlidersHorizontal, title: "Mix & Master", desc: "Sonido cristalino, punch analógico." },
-    { icon: Disc3, title: "Creative Sessions", desc: "Campamentos de composición y grabación." },
-    { icon: Speaker, title: "Sonic Branding", desc: "Identidad sonora para marcas y artistas." },
+    { title: "Production", desc: "Beatmaking, sound design y estructuración." },
+    { title: "Mix & Master", desc: "Sonido cristalino, punch analógico." },
+    { title: "Creative Sessions", desc: "Campamentos de composición y grabación." },
+    { title: "Sonic Branding", desc: "Identidad sonora para marcas y artistas." },
   ];
 
   return (
@@ -124,7 +124,6 @@ export default function DawgsStudio() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12">
               {services.map((service, i) => (
                 <div key={i} className="p-6 rounded-3xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition duration-300">
-                  <service.icon className="w-6 h-6 text-red-400 mb-4" />
                   <h3 className="text-white font-bold mb-2 uppercase tracking-wide text-sm">{service.title}</h3>
                   <p className="text-zinc-500 text-xs leading-relaxed">{service.desc}</p>
                 </div>
@@ -140,7 +139,7 @@ export default function DawgsStudio() {
                 style={{ "--glass-action-height": "56px", "--glass-action-px": "2.5rem", "--glass-action-text": "0.72rem" } as CSSProperties}
               >
                 Start a Project
-                <ArrowRight className="w-5 h-5" />
+
               </a>
             </div>
           </div>

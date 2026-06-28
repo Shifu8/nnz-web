@@ -8,7 +8,7 @@
 
 import { useState, FormEvent, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ShieldAlert } from "lucide-react";
+
 import { useRouter } from "next/navigation";
 
 export default function StaffModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -61,12 +61,12 @@ export default function StaffModal({ isOpen, onClose }: { isOpen: boolean; onClo
             className="relative w-full max-w-sm rounded-[34px] border border-red-500/30 bg-black/60 p-6 shadow-[0_0_80px_rgba(255,0,24,.15)] backdrop-blur-xl"
           >
             <button onClick={onClose} className="glass-pill absolute top-4 left-4">
-              <ChevronLeft className="h-3 w-3" /> VOLVER
+              VOLVER
             </button>
 
             <div className="flex flex-col items-center text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/20 text-red-500">
-                <ShieldAlert className="h-6 w-6" />
+
               </div>
               <h2 className="mt-4 text-2xl font-black uppercase tracking-[0.15em] text-white">Staff Access</h2>
               <p className="mt-2 text-xs text-zinc-400">Zona de validacion. Cada QR aprobado queda usado al instante.</p>

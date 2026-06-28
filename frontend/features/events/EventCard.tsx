@@ -9,7 +9,7 @@
 import Image from "next/image";
 import { useRef } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { ChevronRight, MapPin } from "lucide-react";
+
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
 import { useCountdown } from "@/frontend/hooks/useCountdown";
 import type { Event } from "@/frontend/types/domain";
@@ -106,7 +106,7 @@ export default function EventCard({ event, onArtistClick, isFirst = false }: Eve
       <div className="relative z-10 flex h-full flex-col p-5" style={{ transform: "translateZ(30px)" }}>
         <div className="event-reveal flex items-center justify-between">
           <span className="rounded-full border border-red-400/25 bg-black/35 px-3 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-red-200 backdrop-blur-xl">{event.dateLabel}</span>
-          <span className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white backdrop-blur-xl"><MapPin className="h-3 w-3" />{event.city}</span>
+          <span className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white backdrop-blur-xl">{event.city}</span>
         </div>
 
         <div className="mt-auto">
@@ -140,7 +140,7 @@ export default function EventCard({ event, onArtistClick, isFirst = false }: Eve
           </div>
 
           <a href="#access" className="event-reveal mt-4 flex h-[52px] items-center justify-between rounded-2xl bg-white px-5 text-xs font-black uppercase tracking-[0.22em] text-black transition hover:bg-zinc-200 hover:scale-[1.02] group-hover:shadow-[0_0_50px_rgba(255,0,24,.5)]">
-            BUY TICKET $10 <ChevronRight className="h-4 w-4" />
+            BUY TICKET $10
           </a>
         </div>
       </div>

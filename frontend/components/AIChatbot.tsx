@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, type CSSProperties } from "react";
-import { X, Send, Bot } from "lucide-react";
+
 import { gsap } from "gsap";
 
 type Message = {
@@ -152,7 +152,7 @@ export default function AIChatbot() {
           boxShadow: "0 0 34px rgba(var(--theme-primary-rgb),0.3)",
         } as CSSProperties}
       >
-        <Bot className="h-6 w-6 animate-pulse" />
+        <span className="text-2xl">🤖</span>
       </button>
 
       {/* Interfaz de Chat */}
@@ -168,7 +168,7 @@ export default function AIChatbot() {
             <div className="flex items-center justify-between border-b border-white/10 bg-white/5 p-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-500/20 border border-pink-300/30 text-pink-300">
-                  <Bot className="h-5 w-5" />
+                  <span className="text-xl">🤖</span>
                 </div>
                 <div>
                   <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">DAWGS AI</h3>
@@ -179,7 +179,7 @@ export default function AIChatbot() {
                 onClick={closeChat}
                 className="flex h-[34px] w-[34px] items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-zinc-400 backdrop-blur-xl transition hover:border-pink-300/30 hover:bg-pink-500/20 hover:text-pink-300"
               >
-                <X className="h-4 w-4" />
+                <span>✕</span>
               </button>
             </div>
 
@@ -228,7 +228,7 @@ export default function AIChatbot() {
                   className="glass-icon-button glass-action-lime"
                   style={{ "--glass-icon-size": "40px" } as CSSProperties}
                 >
-                  <Send className="h-4 w-4 ml-0.5" />
+                  <span>➤</span>
                 </button>
               </form>
 

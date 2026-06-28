@@ -2,17 +2,7 @@
 
 import { useState, FormEvent, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ChevronLeft,
-  ShieldAlert,
-  Ticket,
-  Send,
-  Loader2,
-  CheckCircle2,
-  Mail,
-  Smartphone,
-  Layers,
-} from "lucide-react";
+
 import TurnstileWidget, { hasTurnstileSiteKey } from "@/frontend/components/TurnstileWidget";
 
 type DeliveryChannel = "email" | "whatsapp" | "both";
@@ -21,11 +11,10 @@ const CHANNEL_OPTIONS: {
   id: DeliveryChannel;
   label: string;
   sub: string;
-  icon: typeof Mail;
 }[] = [
-  { id: "email", label: "Gmail", sub: "Correo + QR adjunto", icon: Mail },
-  { id: "whatsapp", label: "Móvil", sub: "WhatsApp + imagen QR", icon: Smartphone },
-  { id: "both", label: "Ambos", sub: "Gmail y WhatsApp", icon: Layers },
+  { id: "email", label: "Gmail", sub: "Correo + QR adjunto" },
+  { id: "whatsapp", label: "Móvil", sub: "WhatsApp + imagen QR" },
+  { id: "both", label: "Ambos", sub: "Gmail y WhatsApp" },
 ];
 
 function channelSuccessLabel(channel: DeliveryChannel) {
@@ -142,13 +131,13 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
               }}
               className="glass-pill absolute top-4 left-4"
             >
-              <ChevronLeft className="h-3 w-3" /> VOLVER
+              VOLVER
             </button>
 
             {!isAuthenticated ? (
               <>
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#C8FF00]/20 text-[#C8FF00]">
-                  <ShieldAlert className="h-6 w-6" />
+
                 </div>
                 <h2 className="text-2xl font-black uppercase tracking-[0.15em] text-white">Tickets Admin</h2>
                 <p className="mt-2 text-center text-xs text-zinc-400">
@@ -187,7 +176,7 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
             ) : success ? (
               <div className="flex w-full flex-col items-center text-center">
                 <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20 text-green-500">
-                  <CheckCircle2 className="h-8 w-8" />
+
                 </div>
                 <h2 className="text-2xl font-black uppercase tracking-widest text-white">ENVIADO</h2>
                 <p className="mt-2 text-[10px] leading-loose tracking-widest text-zinc-400 uppercase">
@@ -210,7 +199,7 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
               <div className="w-full">
                 <div className="mb-6 text-center">
                   <h2 className="flex items-center justify-center gap-2 text-xl font-black uppercase tracking-widest text-white">
-                    <Ticket className="h-5 w-5 text-[#C8FF00]" /> TICKET GRATIS VIP
+                    TICKET GRATIS VIP
                   </h2>
                   <p className="mt-1 text-[9px] uppercase tracking-[0.2em] text-zinc-500">
                     Elige canal y envía la foto del QR
@@ -264,7 +253,6 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
                     </p>
                     <div className="grid grid-cols-3 gap-2">
                       {CHANNEL_OPTIONS.map((opt) => {
-                        const Icon = opt.icon;
                         const active = deliveryChannel === opt.id;
                         return (
                           <button
@@ -275,7 +263,6 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
                               active ? "glass-select-tile-active-lime text-[#C8FF00]" : "text-zinc-500"
                             }`}
                           >
-                            <Icon className="h-4 w-4" />
                             <span className="text-[9px] font-black uppercase tracking-wider">{opt.label}</span>
                             <span className="text-[7px] leading-tight text-center opacity-70">{opt.sub}</span>
                           </button>
@@ -296,7 +283,6 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
                     className="glass-action-lime w-full mt-2"
                     style={{ "--glass-action-height": "52px", "--glass-action-text": "0.65rem" } as CSSProperties}
                   >
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     ENVIAR ACCESO
                   </button>
                 </form>

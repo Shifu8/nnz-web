@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { ShieldAlert, ShieldCheck, Eye, ChevronDown, Loader2, FileCheck, FileX, Search, X } from "lucide-react";
+
 import type { ReceiptRecord, ReceiptStatus } from "@/lib/access-drop/types";
 
 type TabFilter = "todas" | ReceiptStatus;
@@ -100,7 +100,7 @@ export default function ReceiptReview() {
         </div>
 
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-600" />
+
           <input
             type="text"
             placeholder="Buscar..."
@@ -113,11 +113,11 @@ export default function ReceiptReview() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-red-500" />
+
         </div>
       ) : receipts.length === 0 ? (
         <div className="rounded-2xl border border-white/10 bg-black/40 p-12 text-center">
-          <ShieldCheck className="mx-auto h-10 w-10 text-zinc-600" />
+
           <p className="mt-4 text-sm font-bold text-zinc-500 uppercase tracking-wider">No hay comprobantes</p>
         </div>
       ) : (
@@ -129,14 +129,8 @@ export default function ReceiptReview() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-950/50">
-                    {receipt.status === "aprobado" ? (
-                      <FileCheck className="h-5 w-5 text-green-400" />
-                    ) : receipt.status === "rechazado" ? (
-                      <FileX className="h-5 w-5 text-red-400" />
-                    ) : (
-                      <ShieldAlert className="h-5 w-5 text-amber-400" />
-                    )}
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-950/50 text-[7px] font-black uppercase tracking-wider text-white/60">
+                    {receipt.status}
                   </div>
                   <div>
                     <p className="text-sm font-black text-white uppercase tracking-wider">
@@ -153,7 +147,7 @@ export default function ReceiptReview() {
                     onClick={() => setSelected(selected?.id === receipt.id ? null : receipt)}
                     className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-zinc-500 hover:text-white transition"
                   >
-                    <Eye className="h-4 w-4" />
+
                   </button>
                 </div>
               </div>
@@ -166,7 +160,7 @@ export default function ReceiptReview() {
                       <div className="flex items-center justify-center rounded-xl border border-white/10 bg-black/60 p-4">
                         {receipt.mimeType === "application/pdf" ? (
                           <div className="flex flex-col items-center gap-2 py-8">
-                            <FileCheck className="h-10 w-10 text-zinc-500" />
+
                             <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">PDF — Vista previa no disponible</p>
                           </div>
                         ) : (
@@ -236,7 +230,6 @@ export default function ReceiptReview() {
                             disabled={reviewing}
                             className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-green-600 py-3 text-xs font-black uppercase tracking-wider text-white transition hover:bg-green-500 disabled:opacity-50"
                           >
-                            {reviewing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                             APROBAR
                           </button>
                           <button
@@ -244,7 +237,6 @@ export default function ReceiptReview() {
                             disabled={reviewing}
                             className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 py-3 text-xs font-black uppercase tracking-wider text-white transition hover:bg-red-500 disabled:opacity-50"
                           >
-                            {reviewing ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileX className="h-4 w-4" />}
                             RECHAZAR
                           </button>
                         </div>

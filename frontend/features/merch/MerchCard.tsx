@@ -9,7 +9,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Sparkles } from "lucide-react";
+
 import type { MerchItem } from "@/frontend/types/domain";
 
 export default function MerchCard({ items }: { items: MerchItem[] }) {
@@ -50,7 +50,7 @@ export default function MerchCard({ items }: { items: MerchItem[] }) {
 
       <div className="relative z-10 flex h-full flex-col p-5" style={{ transform: "translateZ(30px)" }}>
         <span className="inline-flex w-fit items-center gap-2 rounded-full border border-red-400/40 bg-black/50 px-3 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-red-100 backdrop-blur-xl shadow-[0_0_20px_rgba(255,0,24,0.5)]">
-          <Sparkles className="h-3 w-3 text-red-400" /> exclusive merch
+          exclusive merch
         </span>
         <div className="mt-auto transition-transform duration-700 group-hover:-translate-y-3">
           <p className="text-[10px] font-black uppercase tracking-[0.46em] text-red-300 drop-shadow-[0_0_10px_red]">DAWGS campaign</p>
@@ -67,7 +67,7 @@ export default function MerchCard({ items }: { items: MerchItem[] }) {
               onClick={() => alert("PRE-ORDER reservado. Se habilitará en el próximo DROP.")} 
               className="mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-red-600 text-xs font-black uppercase tracking-[0.22em] text-white shadow-[0_0_40px_rgba(255,0,24,.6)] transition hover:bg-white hover:text-red-700 hover:scale-[1.02]"
             >
-              <ShoppingBag className="h-4 w-4" /> PRE-ORDER
+              PRE-ORDER
             </button>
           </div>
         </div>

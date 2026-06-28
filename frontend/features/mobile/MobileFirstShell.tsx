@@ -7,16 +7,16 @@
 "use client";
 
 import { useState, useEffect, useRef, type CSSProperties } from "react";
-import { Flame, Gem, Radio, Ticket } from "lucide-react";
+
 import type { Event } from "@/frontend/types/domain";
 import AccessDrop, { type AccessDropHandle } from "@/frontend/features/access-drop/AccessDrop";
 import { motion, AnimatePresence } from "framer-motion";
 
 const tags = [
-  { label: "trap latino", Icon: Flame },
-  { label: "luxury dark", Icon: Gem },
-  { label: "live signal", Icon: Radio },
-  { label: "party pass", Icon: Ticket },
+  { label: "trap latino" },
+  { label: "luxury dark" },
+  { label: "live signal" },
+  { label: "party pass" },
 ];
 
 export default function MobileFirstShell() {
@@ -84,12 +84,11 @@ export default function MobileFirstShell() {
         </p>
 
         <div className="mt-5 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-          {tags.map(({ label, Icon }) => (
+          {tags.map(({ label }) => (
             <span
               key={label}
               className="inline-flex min-w-[122px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/12 bg-white/[0.06] px-3 py-2 text-[8px] font-black uppercase tracking-[0.16em] text-zinc-100 backdrop-blur-xl"
             >
-              <Icon className="h-3 w-3 text-red-400" />
               {label}
             </span>
           ))}
@@ -167,7 +166,7 @@ export default function MobileFirstShell() {
                         className={`glass-action flex-1 ${isFirst ? "glass-action-primary" : "glass-action-quiet text-zinc-500"}`}
                         style={{ "--glass-action-height": "40px", "--glass-action-px": "0.85rem", "--glass-action-text": "0.56rem" } as CSSProperties}
                       >
-                        <Ticket className="h-3.5 w-3.5" /> Buy $10
+                        Buy $10
                       </button>
 
                     </div>
