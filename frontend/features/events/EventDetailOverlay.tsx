@@ -406,12 +406,8 @@ export default function EventDetailOverlay({
                     {event.merch!.map((product, i) => (
                       <div
                         key={product.id}
-                        className={`group shrink-0 w-[160px] rounded-[20px] border overflow-hidden cursor-pointer transition-all duration-400 ${
-                          i === activeMerchIdx
-                            ? "border-white/20 shadow-[0_0_40px_rgba(255,255,255,0.04)]"
-                            : "border-white/[0.06] opacity-60 hover:opacity-80 hover:border-white/[0.1]"
-                        }`}
-                        onClick={() => setActiveMerchIdx(i)}
+                        className="group shrink-0 w-[160px] rounded-[20px] border border-white/[0.06] opacity-90 hover:opacity-100 hover:border-white/25 hover:shadow-[0_0_40px_rgba(255,255,255,0.04)] overflow-hidden cursor-pointer transition-all duration-400"
+                        onClick={handleGoToMerch}
                       >
                         <div className="relative h-[180px] bg-zinc-900 overflow-hidden">
                           {product.image ? (
@@ -439,16 +435,6 @@ export default function EventDetailOverlay({
                       </div>
                     ))}
                   </div>
-                </div>
-                {/* Merch dots */}
-                <div className="flex justify-center gap-1 mt-4">
-                  {event.merch!.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setActiveMerchIdx(i)}
-                      className={`rounded-full transition-all duration-300 ${i === activeMerchIdx ? "w-4 h-1 bg-white" : "w-1 h-1 bg-white/20"}`}
-                    />
-                  ))}
                 </div>
               </motion.div>
             )}
