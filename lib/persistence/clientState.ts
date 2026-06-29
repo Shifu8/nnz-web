@@ -119,3 +119,16 @@ export function loadGiveawaySchedule(): {
 } | null {
   return getItem("giveaway_schedule");
 }
+
+/** Preview de comprobante (base64) — persiste entre cierres del modal, se borra al recargar */
+export function saveReceiptPreview(base64: string) {
+  setItem("receipt_preview", base64, true);
+}
+
+export function loadReceiptPreview(): string | null {
+  return getItem<string>("receipt_preview", true);
+}
+
+export function clearReceiptPreview() {
+  removeItem("receipt_preview", true);
+}

@@ -104,7 +104,7 @@ export default function TurnstileWidget({
   variant = "visible",
   size = "flexible",
   className = "",
-  label = "Verificacion segura",
+  label,
   resetKey = 0,
   onVerify,
   onExpire,
@@ -117,7 +117,6 @@ export default function TurnstileWidget({
   const onExpireRef = useRef(onExpire);
   const onErrorRef = useRef(onError);
   const [ready, setReady] = useState(false);
-  const [verified, setVerified] = useState(false);
   const siteKey = siteKeyForVariant(variant);
 
   useEffect(() => {
@@ -130,7 +129,6 @@ export default function TurnstileWidget({
     if (!siteKey || !containerRef.current) return;
 
     let cancelled = false;
-    setVerified(false);
     setReady(false);
 
     loadTurnstileScript()
@@ -148,22 +146,18 @@ export default function TurnstileWidget({
           size,
           appearance: variant === "invisible" ? "interaction-only" : "always",
           callback: (token) => {
-            setVerified(true);
             onVerifyRef.current(token);
           },
           "expired-callback": () => {
-            setVerified(false);
             onExpireRef.current?.();
           },
           "error-callback": () => {
-            setVerified(false);
             onErrorRef.current?.();
           },
         });
         setReady(true);
       })
       .catch(() => {
-        setVerified(false);
         onErrorRef.current?.();
       });
 
@@ -189,23 +183,10 @@ export default function TurnstileWidget({
     );
   }
 
+  // Visible variant — bare widget, no wrapper card
   return (
-    <div className={`rounded-2xl border px-3 py-3 transition ${
-      verified
-        ? "border-[#C8FF00]/35 bg-[#C8FF00]/[0.08] shadow-[0_0_26px_rgba(200,255,0,0.08)]"
-        : "border-white/10 bg-black/35"
-    } ${className}`}>
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <span className="inline-flex items-center gap-2 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400">
-          {label}
-        </span>
-        {verified && (
-          <span className="inline-flex items-center gap-1 rounded-full border border-[#C8FF00]/25 bg-[#C8FF00]/10 px-2 py-1 text-[7px] font-black uppercase tracking-wider text-[#C8FF00]">
-            listo
-          </span>
-        )}
-      </div>
-      <div className="min-h-[65px] overflow-hidden rounded-xl" ref={containerRef}>
+    <div className={`overflow-hidden rounded-xl ${className}`}>
+      <div ref={containerRef}>
         {!ready && <div className="h-[65px] animate-pulse rounded-xl bg-white/[0.04]" />}
       </div>
     </div>

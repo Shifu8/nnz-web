@@ -57,7 +57,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   const scope = useRef<HTMLElement>(null);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const manualActiveUntil = useRef(0);
-  
+
   const [events, setEvents] = useState<Event[]>(fallbackEvents);
   const [activeSection, setActiveSection] = useState<HomeNavId>("show");
   const [showHiddenMenu, setShowHiddenMenu] = useState(false);
@@ -71,12 +71,12 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   const [showEventModal, setShowEventModal] = useState(false);
   const [showDetailOverlay, setShowDetailOverlay] = useState(false);
   const [selectedCarouselEvent, setSelectedCarouselEvent] = useState<Event>(CAROUSEL_EVENTS[0]);
-  
+
   // Custom states for 3D Carousel & Premium visual effects
   const [activeIndex, setActiveIndex] = useState(0);
   const activeEvent = CAROUSEL_EVENTS[activeIndex];
   const [isLoading, setIsLoading] = useState(true);
-  
+
 
 
   const { config } = useHomepageConfig(initialConfig);
@@ -149,7 +149,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
           setEvents(data.events);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -307,7 +307,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
       {/* Premium cinematic intro loader overlay */}
       <AnimatePresence>
         {isLoading && (
-          <motion.div 
+          <motion.div
             key="loader"
             exit={{ opacity: 0, filter: "blur(12px)" }}
             transition={{ duration: 0.75, ease: "easeInOut" }}
@@ -320,9 +320,9 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               className="text-center"
             >
               <h1 className="text-sm font-black uppercase tracking-[0.6em] text-white">NENEZ</h1>
-              <p className="mt-2 text-[8px] font-black uppercase tracking-[0.4em] text-zinc-500">Exclusivity in live music</p>
+              <p className="mt-2 text-[8px] font-black uppercase tracking-[0.4em] text-zinc-500">Elevate Your Frequency</p>
               <div className="mt-6 h-0.5 w-16 bg-white/20 mx-auto overflow-hidden rounded">
-                <motion.div 
+                <motion.div
                   initial={{ x: "-100%" }}
                   animate={{ x: "100%" }}
                   transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
@@ -339,7 +339,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
       {/* Modern, minimalist top navigation bar */}
       <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.02] bg-black/45 backdrop-blur-2xl">
         <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-3 px-4 py-3 sm:px-6 md:px-12 lg:px-16">
-          
+
           {/* Logo on the left (No puppy image, text visible on mobile and desktop) */}
           <div className="flex min-w-0 items-center">
             <button
@@ -366,15 +366,13 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 onClick={() => {
                   scrollToSection(item.id, item.id === "show" ? "start" : "center");
                 }}
-                className={`relative py-2 text-[9px] font-black uppercase tracking-[0.28em] transition ${
-                  activeSection === item.id ? "text-white font-bold" : "text-zinc-500 hover:text-zinc-200"
-                }`}
+                className={`relative py-2 text-[9px] font-black uppercase tracking-[0.28em] transition ${activeSection === item.id ? "text-white font-bold" : "text-zinc-500 hover:text-zinc-200"
+                  }`}
               >
                 {item.label}
                 <span
-                  className={`absolute inset-x-0 -bottom-0.5 h-px bg-white transition-transform duration-300 ${
-                    activeSection === item.id ? "scale-x-100" : "scale-x-0"
-                  }`}
+                  className={`absolute inset-x-0 -bottom-0.5 h-px bg-white transition-transform duration-300 ${activeSection === item.id ? "scale-x-100" : "scale-x-0"
+                    }`}
                 />
               </button>
             ))}
@@ -385,13 +383,12 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             <button
               type="button"
               onClick={scrollToRecovery}
-              className={`inline-flex h-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] px-5 text-[8px] font-black uppercase tracking-[0.16em] text-zinc-300 transition hover:border-white/30 hover:bg-white/5 hover:text-white ${
-                isRecoveryPulse ? "top-recovery-pulse" : ""
-              }`}
+              className={`inline-flex h-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] px-5 text-[8px] font-black uppercase tracking-[0.16em] text-zinc-300 transition hover:border-white/30 hover:bg-white/5 hover:text-white ${isRecoveryPulse ? "top-recovery-pulse" : ""
+                }`}
             >
               Recuperar
             </button>
-            
+
             <button
               type="button"
               onClick={scrollToTicketCard}
@@ -417,9 +414,9 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
           {/* Wall corner gradient shadow (Back wall shadow) - transitions smoothly to floor base color */}
           <div className="absolute top-0 inset-x-0 h-[45%] bg-gradient-to-b from-black via-zinc-950/90 to-[#090909]" />
-          
+
           {/* Floor gradient */}
-          <div 
+          <div
             className="absolute bottom-0 inset-x-0 h-[55%] bg-[#080808]"
             style={{
               backgroundImage: "radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.05) 0%, transparent 60%), linear-gradient(180deg, #090909 0%, #060606 40%, #030303 100%)",
@@ -427,15 +424,15 @@ export default function HomePage({ initialConfig }: HomePageProps) {
           />
 
           {/* Soft diffused spotlight source at the top (replaces the solid white skylight) */}
-          <div 
+          <div
             className="absolute top-0 lg:left-[64%] left-1/2 -translate-x-1/2 w-[110vw] lg:w-[75vw] h-[30vh] pointer-events-none mix-blend-screen"
             style={{
               background: "radial-gradient(ellipse at top, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 50%, transparent 80%)",
             }}
           />
-          
+
           {/* Volumetric light cone with soft blurred edges (no clip-path to prevent browser blur clipping) */}
-          <div 
+          <div
             className="absolute top-0 lg:left-[64%] left-1/2 -translate-x-1/2 w-[100vw] lg:w-[60vw] h-[100vh] opacity-15 pointer-events-none mix-blend-screen filter blur-[24px]"
             style={{
               background: "conic-gradient(from 165deg at 50% 0%, transparent, rgba(255, 255, 255, 0.08) 10deg, rgba(255, 255, 255, 0.08) 20deg, transparent 30deg)",
@@ -472,39 +469,37 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
         {/* Columns Grid Layout */}
         <div className="relative z-10 w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center flex-1">
-          
+
           {/* Left Column: Premium Editorial text */}
           <div className="lg:col-span-5 flex flex-col justify-center text-left space-y-8 select-none">
-            
+
             {/* NENEZ PRESENTA tag */}
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-500">
                 NENEZ presenta
               </p>
-              
+
               {/* Dynamic Big Artist Name with elegant AnimatePresence transition */}
-              <div className="relative h-[8.5rem] overflow-visible mt-2">
-                <AnimatePresence mode="wait">
-                  <motion.h1
-                    key={activeEvent.id}
-                    initial={{ opacity: 0, y: 35, rotateX: 12 }}
-                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                    exit={{ opacity: 0, y: -35, rotateX: -12 }}
-                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute inset-0 text-7xl md:text-8xl font-black uppercase leading-none tracking-tighter text-white"
-                  >
-                    {activeEvent.id === "trap-loud" ? "ROA" : activeEvent.id === "dawg-night" ? "COURTZ" : "RAUW"}
-                  </motion.h1>
-                </AnimatePresence>
-              </div>
-              
+              <AnimatePresence mode="wait">
+                <motion.h1
+                  key={activeEvent.id}
+                  initial={{ opacity: 0, y: 35, rotateX: 12 }}
+                  animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                  exit={{ opacity: 0, y: -35, rotateX: -12 }}
+                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                  className="mt-2 text-7xl md:text-8xl font-black uppercase leading-none tracking-tighter text-white"
+                >
+                  {activeEvent.id === "trap-loud" ? "YAN BLOCK" : activeEvent.id === "dawg-night" ? "OMAR COURTZ" : "RAUW"}
+                </motion.h1>
+              </AnimatePresence>
+
               {/* Luxury descriptive subtitle */}
               <p className="text-zinc-400 text-xs mt-2 max-w-sm leading-relaxed">
-                {activeEvent.id === "trap-loud" 
-                  ? "Eventos exclusivos. Experiencias que se viven en la clandestinidad." 
-                  : activeEvent.id === "dawg-night" 
-                  ? "La calle se viste de gala. Autenticidad y flows de otro nivel." 
-                  : "El futuro del ritmo latino. Vanguardia y movimiento en directo."}
+                {activeEvent.id === "trap-loud"
+                  ? "Eventos exclusivos. Experiencias que se viven en la clandestinidad."
+                  : activeEvent.id === "dawg-night"
+                    ? "La calle se viste de gala. Autenticidad y flows de otro nivel."
+                    : "El futuro del ritmo latino. Vanguardia y movimiento en directo."}
               </p>
             </div>
 
@@ -554,10 +549,10 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               >
                 Ver Detalle
               </button>
-              
+
               <div className="relative">
                 {isTicketPulse && (
-                  <div 
+                  <div
                     className="absolute inset-0 rounded-full bg-white blur-md animate-glow-backdrop z-0 pointer-events-none"
                     style={{
                       boxShadow: "0 0 35px 15px rgba(255, 255, 255, 0.9)",
@@ -567,9 +562,8 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 <button
                   type="button"
                   onClick={() => onBuy(activeEvent)}
-                  className={`relative z-10 flex h-12 px-6 items-center justify-center rounded-full bg-white text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 ${
-                    isTicketPulse ? "scale-[1.04]" : ""
-                  }`}
+                  className={`relative z-10 flex h-12 px-6 items-center justify-center rounded-full bg-white text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 ${isTicketPulse ? "scale-[1.04]" : ""
+                    }`}
                   style={{
                     transition: "transform 300ms cubic-bezier(0.4, 0, 0.2, 1)",
                   }}
@@ -583,9 +577,9 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
           {/* Right Column: Circular Stage Platform & 3D Carousel */}
           <div className="lg:col-span-7 relative h-[600px] w-full flex items-center justify-center overflow-visible">
-            
+
             {/* Circular Concrete Stage Platform */}
-            <div 
+            <div
               className="absolute bottom-[8%] left-1/2 -translate-x-1/2 w-[550px] h-[160px] pointer-events-none z-0"
               style={{ perspective: 1000 }}
             >
@@ -594,14 +588,14 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               {/* Concrete edge rim */}
               <div className="absolute inset-x-[15px] bottom-0 h-6 bg-[#040404] border-b border-zinc-900 rounded-full" />
               {/* Platform top face */}
-              <div 
+              <div
                 className="absolute inset-0 bg-gradient-to-b from-zinc-800 to-[#080808] border border-white/5 rounded-full"
                 style={{
                   transform: "rotateX(72deg) translateZ(0)",
                 }}
               />
               {/* Subtle light rim highlight */}
-              <div 
+              <div
                 className="absolute inset-[3px] bg-transparent border border-white/10 rounded-full"
                 style={{
                   transform: "rotateX(72deg) translateZ(1px)",
@@ -631,9 +625,9 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         className="relative z-20 mx-auto w-full max-w-[1600px] px-4 py-16 sm:px-6 md:px-12 lg:px-16"
       >
         <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
-          
+
           {/* Card 1: Protected Access */}
-          <div 
+          <div
             className="relative overflow-hidden rounded-[32px] border border-white/10 bg-black/45 p-5 backdrop-blur-2xl sm:p-7 lg:p-9 shadow-2xl flex flex-col justify-between gap-6"
             style={{ boxShadow: "0 24px 90px rgba(255, 255, 255, 0.01)" }}
           >
@@ -721,56 +715,52 @@ export default function HomePage({ initialConfig }: HomePageProps) {
       </footer>
 
       {/* Purchasing Access Modal Dialog */}
-      <AnimatePresence>
-        {isTicketModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.35 }}
-            className="fixed inset-0 z-[150] flex items-end md:items-center justify-center bg-black/90 backdrop-blur-xl"
+      <div
+        className={`fixed inset-0 z-[150] flex items-end md:items-center justify-center bg-black/90 backdrop-blur-xl transition-all duration-300 ${
+          isTicketModalOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <motion.div
+          animate={isTicketModalOpen ? { y: 0, opacity: 1 } : { y: 60, opacity: 0 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="relative w-full h-[96dvh] md:h-[92vh] md:max-w-[1020px] md:mx-4 overflow-hidden flex flex-col rounded-t-[32px] md:rounded-[36px] border border-white/[0.07] bg-[#060606] shadow-[0_-20px_80px_rgba(0,0,0,0.8)] md:shadow-[0_40px_120px_rgba(0,0,0,0.9)]"
+        >
+          {/* Drag handle — mobile only */}
+          <div className="md:hidden flex justify-center pt-3 pb-1 shrink-0">
+            <div className="h-1 w-10 rounded-full bg-white/20" />
+          </div>
+
+          <button
+            onClick={() => {
+              if (accessDropRef.current?.isSuccess) {
+                setFarewellName(accessDropRef.current.firstName);
+                setShowFarewell(true);
+                accessDropRef.current?.reset();
+              }
+              setIsTicketModalOpen(false);
+            }}
+            aria-label="Cerrar compra"
+            className="absolute right-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/70 text-white/60 transition hover:text-white hover:border-white/25"
           >
-            <motion.div
-              initial={{ y: 60, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 60, opacity: 0 }}
-              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              className="relative w-full h-[96dvh] md:h-[92vh] md:max-w-[1020px] md:mx-4 overflow-hidden flex flex-col rounded-t-[32px] md:rounded-[36px] border border-white/[0.07] bg-[#060606] shadow-[0_-20px_80px_rgba(0,0,0,0.8)] md:shadow-[0_40px_120px_rgba(0,0,0,0.9)]"
-            >
-              {/* Drag handle — mobile only */}
-              <div className="md:hidden flex justify-center pt-3 pb-1 shrink-0">
-                <div className="h-1 w-10 rounded-full bg-white/20" />
-              </div>
+            <X className="h-4 w-4" />
+          </button>
 
-              <button
-                onClick={() => {
-                  if (accessDropRef.current?.isSuccess) {
-                    setFarewellName(accessDropRef.current.firstName);
-                    setShowFarewell(true);
-                  }
-                  setIsTicketModalOpen(false);
-                }}
-                aria-label="Cerrar compra"
-                className="absolute right-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/70 text-white/60 transition hover:text-white hover:border-white/25"
-              >
-                <X className="h-4 w-4" />
-              </button>
-
-              {/* Scrollable form content */}
-              <div className="flex-1 overflow-y-auto no-scrollbar">
-                <AccessDrop
-                  ref={accessDropRef}
-                  onFarewell={(name) => {
-                    setFarewellName(name);
-                    setShowFarewell(true);
-                  }}
-                  event={selectedCarouselEvent}
-                />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          {/* Scrollable form content */}
+          <div className="flex-1 overflow-y-auto no-scrollbar">
+            <AccessDrop
+              ref={accessDropRef}
+              onFarewell={(name) => {
+                setFarewellName(name);
+                setShowFarewell(true);
+              }}
+              onClose={() => {
+                setIsTicketModalOpen(false);
+              }}
+              event={selectedCarouselEvent}
+            />
+          </div>
+        </motion.div>
+      </div>
 
       {/* Premium Cinematic Event Detail Overlay */}
       <AnimatePresence>
@@ -804,7 +794,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-               className="relative flex w-full max-w-sm flex-col items-center rounded-[40px] border border-white/[0.08] bg-white/[0.03] p-10 text-center backdrop-blur-2xl" style={{ boxShadow: "0 0 80px rgba(255,255,255,0.02)" }}
+              className="relative flex w-full max-w-sm flex-col items-center rounded-[40px] border border-white/[0.08] bg-white/[0.03] p-10 text-center backdrop-blur-2xl" style={{ boxShadow: "0 0 80px rgba(255,255,255,0.02)" }}
             >
               <button
                 type="button"
@@ -849,7 +839,8 @@ export default function HomePage({ initialConfig }: HomePageProps) {
       </AnimatePresence>
 
       {/* Styled overridden stylesheet for total monochromatic consistency */}
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         :root {
           --theme-primary: ${theme.primary};
           --theme-primary-rgb: ${primaryRgb};
