@@ -15,21 +15,6 @@ import {
   getEmailSuggestion,
 } from "@/frontend/utils/emailInput";
 import { validateReceiptFileMetadata } from "@/lib/access-drop/fileValidation";
-import type { CarouselEvent } from "@/frontend/components/EventTicketCarousel";
-
-const EVENT = events[0];
-const PRICE_PER_TICKET = 10;
-
-const VENUE_PHOTOS = [
-  "/images/trap_loud_trio_artists.png",
-  "/images/trap_loud_trio_artists.png",
-  "/images/trap_loud_trio_artists.png",
-];
-
-const TICKET_DESIGNS = [
-  { id: 1, name: "BLOCK CARD", gradient: "from-pink-950 via-fuchsia-950 to-black", accent: "red", label: "TRAP LOUD · YAN BLOCK", serial: "DAWGS-0001-A" },
-  { id: 2, name: "BELLAKITA CARD", gradient: "from-[#C8FF00]/20 via-black to-black", accent: "lime", label: "VIP ACCESS · YAN BLOCK", serial: "DAWGS-0002-B" },
-];
 
 const BANKS = [
   {
@@ -52,24 +37,61 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 }
 
+// Map event to artist details for vertical ticket colors and assets
+const getArtistDetails = (eventId: string) => {
+  switch (eventId) {
+    case "trap-loud":
+      return {
+        name: "YAN BLOCK",
+        photo: "/images/yan_block_artist_1779161408288.png",
+        accentColor: "#C8FF00",
+        shadowColor: "rgba(200, 255, 0, 0.25)",
+      };
+    case "trap-loud-anuel":
+      return {
+        name: "ANUEL AA",
+        photo: "/images/trap_loud_anuel_1778966415162.png",
+        accentColor: "#FF2E2E",
+        shadowColor: "rgba(255, 46, 46, 0.25)",
+      };
+    case "rnb-loud":
+      return {
+        name: "BRENT FAIYAZ",
+        photo: "/images/rnb_loud_brent_1778966427864.png",
+        accentColor: "#FF00FF",
+        shadowColor: "rgba(255, 0, 255, 0.25)",
+      };
+    case "latin-loud":
+      return {
+        name: "BAD BUNNY",
+        photo: "/images/latin_loud_bad_bunny_1778966469259.png",
+        accentColor: "#00E5FF",
+        shadowColor: "rgba(0, 229, 255, 0.25)",
+      };
+    default:
+      return {
+        name: "YAN BLOCK",
+        photo: "/images/yan_block_artist_1779161408288.png",
+        accentColor: "#C8FF00",
+        shadowColor: "rgba(200, 255, 0, 0.25)",
+      };
+  }
+};
+
 export type AccessDropHandle = { isSuccess: boolean; firstName: string };
 
 const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewell?: (name: string) => void; event?: Event }>(({ onClose, onFarewell, event }, ref) => {
   const scope = useRef<HTMLElement>(null);
+  const ticketRef = useRef<HTMLDivElement>(null);
 
   const currentEvent = event || events[0];
   const pricePerTicket = currentEvent.id === "trap-loud" ? 10 : currentEvent.id === "dawg-night" ? 15 : 20;
-
-  const ticketDesigns = [
-    { id: 1, name: "BLOCK CARD", gradient: "from-pink-950 via-fuchsia-950 to-black", accent: "red", label: `${currentEvent.title} · ${currentEvent.subtitle}`, serial: "DAWGS-0001-A" },
-    { id: 2, name: "BELLAKITA CARD", gradient: "from-[#C8FF00]/20 via-black to-black", accent: "lime", label: `VIP ACCESS · ${currentEvent.title}`, serial: "DAWGS-0002-B" },
-  ];
+  const artistDetails = getArtistDetails(currentEvent.id);
 
   const [dropState, setDropState] = useState<DropState>("register");
   const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "" });
   const [quantity, setQuantity] = useState(1);
   const [selectedBank, setSelectedBank] = useState("banco-loja");
-  const [selectedDesign, setSelectedDesign] = useState(1);
   const [errorMsg, setErrorMsg] = useState("");
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -81,8 +103,6 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const [receiptId, setReceiptId] = useState<string | null>(null);
-  const [showEventModal, setShowEventModal] = useState(false);
-  const [eventPhotoIndex, setEventPhotoIndex] = useState(0);
   const [uploadMessage, setUploadMessage] = useState("");
 
   useImperativeHandle(ref, () => ({ isSuccess: dropState === "success", firstName: formData.firstName.trim() || "DAWGS" }));
@@ -101,6 +121,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
     setTurnstileResetKey((key) => key + 1);
   };
 
+  // Load checkout draft state
   useEffect(() => {
     const draft = loadCheckoutDraft();
     if (draft) {
@@ -112,23 +133,16 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
           email: draft.email || "",
         }));
         if (draft.quantity) setQuantity(parseInt(draft.quantity, 10) || 1);
-        if (draft.selectedDesign) setSelectedDesign(parseInt(draft.selectedDesign, 10) || 1);
       });
     }
   }, []);
 
+  // Save checkout draft state
   useEffect(() => {
-    if (!showEventModal) return;
-    const timer = setInterval(() => {
-      setEventPhotoIndex((i) => (i + 1) % VENUE_PHOTOS.length);
-    }, 3500);
-    return () => clearInterval(timer);
-  }, [showEventModal]);
+    saveCheckoutDraft({ ...formData, phone: "", quantity: quantity.toString(), selectedDesign: "1" });
+  }, [formData, quantity]);
 
-  useEffect(() => {
-    saveCheckoutDraft({ ...formData, phone: "", quantity: quantity.toString(), selectedDesign: selectedDesign.toString() });
-  }, [formData, quantity, selectedDesign]);
-
+  // Clean up object URL previews
   useEffect(() => {
     return () => {
       if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
@@ -138,47 +152,42 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
   const successRef = useRef<HTMLDivElement>(null);
   const sparklesRef = useRef<HTMLDivElement>(null);
 
+  // GSAP animations for success state
   useGSAP(
     () => {
       if (dropState === "success") {
         const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-        tl.from(".success-reveal", { scale: 0.4, opacity: 0, y: 100, duration: 1, ease: "elastic.out(1, 0.4)" });
+        tl.from(".success-reveal", { scale: 0.8, opacity: 0, y: 50, duration: 0.8 });
 
-        tl.fromTo(".success-energy-ring", { scale: 0, opacity: 0.7 }, { scale: 5, opacity: 0, duration: 1.2 }, "-=0.5");
-
-        tl.from(".success-ring-inner", { scale: 0, duration: 0.6, ease: "back.out(2.5)" }, "-=0.6");
+        tl.fromTo(".success-energy-ring", { scale: 0, opacity: 0.5 }, { scale: 4, opacity: 0, duration: 1 });
 
         const checkPath = scope.current?.querySelector<SVGPathElement>(".success-check-path");
         if (checkPath) {
           const length = checkPath.getTotalLength();
           gsap.set(checkPath, { strokeDasharray: length, strokeDashoffset: length });
-          tl.to(checkPath, { strokeDashoffset: 0, duration: 0.5, ease: "power2.inOut" }, "-=0.3");
+          tl.to(checkPath, { strokeDashoffset: 0, duration: 0.4 }, "-=0.3");
         }
 
-        tl.from(".success-check-fill", { opacity: 0, duration: 0.3 }, "-=0.15");
-
-        tl.from(".success-name", { y: 30, opacity: 0, duration: 0.5 }, "-=0.1");
-        tl.from(".success-text", { y: 20, opacity: 0, duration: 0.4 }, "-=0.15");
-        tl.from(".success-msg", { y: 15, opacity: 0, duration: 0.35 }, "-=0.15");
-
-        tl.to(".success-ring-pulse", { borderWidth: 6, duration: 0.3, ease: "power2.out" }, "-=0.3");
+        tl.from(".success-name", { y: 20, opacity: 0, duration: 0.4 }, "-=0.1");
+        tl.from(".success-text", { y: 15, opacity: 0, duration: 0.3 }, "-=0.1");
+        tl.from(".success-msg", { y: 10, opacity: 0, duration: 0.3 }, "-=0.15");
 
         if (sparklesRef.current) {
           const sparkles = sparklesRef.current.querySelectorAll<HTMLDivElement>(".success-sparkle");
           sparkles.forEach((s) => {
             const angle = Math.random() * Math.PI * 2;
-            const dist = 70 + Math.random() * 120;
+            const dist = 50 + Math.random() * 80;
             const x = Math.cos(angle) * dist;
-            const y = Math.sin(angle) * dist - 40;
-            tl.to(s, { x, y, opacity: 0, scale: 0.3, duration: 1.2 + Math.random() * 0.8, ease: "power2.out" }, "-=0.3");
+            const y = Math.sin(angle) * dist - 20;
+            tl.to(s, { x, y, opacity: 0, scale: 0.3, duration: 1.0 + Math.random() * 0.5 }, "-=0.25");
           });
         }
 
-        tl.from(".success-btn", { y: 15, opacity: 0, duration: 0.3 }, "-=0.1");
+        tl.from(".success-btn", { y: 10, opacity: 0, duration: 0.35 }, "-=0.2");
       }
     },
-    { scope, dependencies: [dropState] },
+    { scope, dependencies: [dropState] }
   );
 
   const clearSelectedFile = () => {
@@ -276,298 +285,309 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
     }
   };
 
+  // Interactive 3D tilt and mouse reflection coordinates
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const card = ticketRef.current;
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const xc = rect.width / 2;
+    const yc = rect.height / 2;
+    const angleX = (yc - y) / 18;
+    const angleY = (x - xc) / 18;
+    
+    card.style.transform = `perspective(1000px) rotateX(${angleX}deg) rotateY(${angleY}deg) scale3d(1.015, 1.015, 1.015)`;
+    card.style.setProperty("--x", `${x}px`);
+    card.style.setProperty("--y", `${y}px`);
+  };
+
+  const handleMouseLeave = () => {
+    const card = ticketRef.current;
+    if (!card) return;
+    card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+    card.style.setProperty("--x", `-1000px`);
+    card.style.setProperty("--y", `-1000px`);
+  };
+
   const totalPrice = quantity * pricePerTicket;
 
-
   return (
-    <section id="ticket-flow" ref={scope} className="relative z-10 mx-auto flex w-full justify-center px-4 pt-6 pb-8 md:px-6 md:py-10">
-      <div className="relative w-full max-w-6xl">
+    <section id="ticket-flow" ref={scope} className="relative z-10 mx-auto flex w-full justify-center px-4 pt-6 pb-12 md:px-6 md:py-10">
+      <div className="relative w-full max-w-5xl">
         {dropState === "register" && (
-          <div className="relative z-10 w-full max-w-5xl mx-auto">
+          <div className="relative z-10 w-full mx-auto">
             {onClose && (
               <button
                 type="button"
                 onClick={onClose}
-                className="glass-pill glass-pill-red absolute -top-3 right-4 z-50 flex items-center gap-1.5 px-3 py-1.5 text-[8px] font-black uppercase tracking-wider"
+                className="absolute top-0 right-0 z-50 flex items-center justify-center rounded-full border border-zinc-800 bg-zinc-950/80 px-4 py-2 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white hover:border-zinc-700 transition duration-300"
               >
                 SALIR
               </button>
             )}
 
-            {/* ── LUXURY HEADER: Cinematic Event Poster Card ── */}
-            <div className="relative overflow-hidden rounded-[24px] border border-white/[0.07] mb-7" style={{ minHeight: "140px" }}>
-              {/* Background artwork */}
-              {(currentEvent as CarouselEvent).poster && (
-                <img
-                  src={(currentEvent as CarouselEvent).poster}
-                  alt={currentEvent.title}
-                  aria-hidden="true"
-                  className="absolute inset-0 w-full h-full object-cover object-center grayscale brightness-[0.2] scale-105"
-                />
-              )}
-              {/* Gradient overlays */}
-              <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-              {/* Content */}
-              <div className="relative p-6 sm:p-8 flex items-center justify-between gap-6">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[7px] font-black uppercase tracking-[0.5em] text-zinc-500 mb-2">DAWGS · Compra Segura</p>
-                  <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight leading-none">
-                    {currentEvent.title}
-                  </h2>
-                  <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-400 mt-1.5">
-                    {currentEvent.subtitle}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2 mt-4">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/60 px-3 py-1 text-[7px] font-black uppercase tracking-[0.2em] text-zinc-400 backdrop-blur-md">
-                      📍 {currentEvent.city}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/60 px-3 py-1 text-[7px] font-black uppercase tracking-[0.2em] text-zinc-400 backdrop-blur-md">
-                      📅 {currentEvent.dateLabel}
-                    </span>
-                  </div>
-                </div>
-                <div className="shrink-0 text-right">
-                  <p className="text-[7px] font-black uppercase tracking-[0.4em] text-zinc-500 mb-1">Por entrada</p>
-                  <p className="text-4xl sm:text-5xl font-black text-white tabular-nums">${pricePerTicket}</p>
-                  <p className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest mt-0.5">USD</p>
-                </div>
+            {/* Premium Editorial Header */}
+            <div className="mb-10 text-center lg:text-left select-none max-w-xl">
+              <span className="text-[9px] font-black uppercase tracking-[0.45em] text-zinc-500">DAWGS</span>
+              <h1 className="text-sm font-black uppercase tracking-[0.3em] text-white mt-1">COMPRA SEGURA</h1>
+              <div className="h-px w-8 bg-zinc-800 my-4 mx-auto lg:mx-0" />
+              <h2 className="text-3xl font-black uppercase tracking-tighter text-white leading-none">
+                {currentEvent.title}
+              </h2>
+              <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-zinc-400 mt-2">
+                {currentEvent.subtitle}
+              </p>
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mt-4 text-[9px] font-black tracking-wider text-zinc-500 uppercase">
+                <span>{currentEvent.city}</span>
+                <span className="w-1 h-1 rounded-full bg-zinc-700" />
+                <span>{currentEvent.dateLabel}</span>
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              {/* LEFT COLUMN: Datos y Diseño */}
-              <div className="lg:col-span-6 space-y-6">
+            {/* Main Checkout Layout: Flex order stacks Ticket Preview on top on mobile */}
+            <form onSubmit={handleSubmit} className="flex flex-col lg:flex-row gap-10 items-start">
+              
+              {/* LEFT COLUMN: Toda la información del comprador */}
+              <div className="w-full lg:w-7/12 order-2 lg:order-1 space-y-8">
                 
-                {/* 1. Registro de Datos */}
-                <div className="rounded-2xl border border-white/[0.07] bg-[#0a0a0a] p-5 space-y-4">
-                  <div className="flex items-center gap-3 border-b border-white/[0.05] pb-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[9px] font-black text-white">1</span>
-                    <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-white">Tus Datos</h3>
+                {/* Paso 1: Tus Datos */}
+                <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-6 space-y-6">
+                  <div className="flex items-center gap-3 border-b border-zinc-900 pb-3">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-[9px] font-mono font-bold text-zinc-400">1</span>
+                    <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-400">Tus Datos</h3>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="space-y-1.5">
-                      <p className="ml-1 text-[9px] uppercase tracking-widest text-zinc-500 font-bold">Nombre</p>
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <div className="group relative rounded-xl border border-zinc-900 bg-zinc-950 p-4 transition-all duration-300 hover:border-zinc-800 focus-within:border-zinc-700">
+                      <label className="block text-[8px] font-black uppercase tracking-widest text-zinc-500">Nombre</label>
                       <input
                         required
                         type="text"
                         maxLength={24}
                         autoComplete="given-name"
                         placeholder="EJ. AXEL"
-                        className="w-full rounded-xl border border-white/[0.07] bg-black/60 px-4 py-3.5 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-white/20 focus:bg-black/80 transition"
+                        className="w-full bg-transparent text-sm font-bold text-white placeholder-zinc-800 outline-none mt-1"
                         value={formData.firstName}
                         onChange={(e) => setFormData({ ...formData, firstName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "").slice(0, 24) })}
                       />
                     </div>
-                    <div className="space-y-1.5">
-                      <p className="ml-1 text-[9px] uppercase tracking-widest text-zinc-500 font-bold">Apellido</p>
+                    
+                    <div className="group relative rounded-xl border border-zinc-900 bg-zinc-950 p-4 transition-all duration-300 hover:border-zinc-800 focus-within:border-zinc-700">
+                      <label className="block text-[8px] font-black uppercase tracking-widest text-zinc-500">Apellido</label>
                       <input
                         required
                         type="text"
                         maxLength={24}
                         autoComplete="family-name"
                         placeholder="EJ. PEREZ"
-                        className="w-full rounded-xl border border-white/[0.07] bg-black/60 px-4 py-3.5 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-white/20 focus:bg-black/80 transition"
+                        className="w-full bg-transparent text-sm font-bold text-white placeholder-zinc-800 outline-none mt-1"
                         value={formData.lastName}
                         onChange={(e) => setFormData({ ...formData, lastName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "").slice(0, 24) })}
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <p className="ml-1 text-[9px] uppercase tracking-widest text-zinc-500 font-bold">Correo Electrónico</p>
-                    <div className="flex items-center rounded-xl border border-white/[0.07] bg-black/60 px-3.5 transition focus-within:border-white/20 focus-within:bg-black/80">
-                      <input
-                        required
-                        type="email"
-                        maxLength={80}
-                        inputMode="email"
-                        autoComplete="email"
-                        autoCapitalize="none"
-                        spellCheck={false}
-                        list="ticket-email-domains"
-                        placeholder="tu@gmail.com"
-                        className="w-full bg-transparent px-3 py-3.5 text-xs font-bold text-white placeholder-zinc-800 outline-none"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: cleanEmailInput(e.target.value) })}
-                      />
-                    </div>
+                  <div className="group relative rounded-xl border border-zinc-900 bg-zinc-950 p-4 transition-all duration-300 hover:border-zinc-800 focus-within:border-zinc-700">
+                    <label className="block text-[8px] font-black uppercase tracking-widest text-zinc-500">Correo Electrónico</label>
+                    <input
+                      required
+                      type="email"
+                      maxLength={80}
+                      inputMode="email"
+                      autoComplete="email"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      list="ticket-email-domains"
+                      placeholder="tu@gmail.com"
+                      className="w-full bg-transparent text-sm font-bold text-white placeholder-zinc-800 outline-none mt-1"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: cleanEmailInput(e.target.value) })}
+                    />
                     <datalist id="ticket-email-domains">
                       {emailDomains.map((domain) => {
                         const local = formData.email.split("@")[0] || "tu";
                         return <option key={domain} value={`${local}@${domain}`} />;
                       })}
                     </datalist>
-                    <div className="ml-1 flex flex-wrap items-center gap-2">
-                      <p className={`text-[8px] font-bold uppercase tracking-wider ${
-                        emailHint.tone === "ok"
-                          ? "text-[#C8FF00]"
-                          : emailHint.tone === "warn"
-                            ? "text-pink-300"
-                            : "text-zinc-600"
-                      }`}>
-                        {emailHint.text}
-                      </p>
+                    {/* Suggestions hint */}
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {emailHint.text && (
+                        <span className={`text-[8px] font-bold uppercase tracking-wider ${
+                          emailHint.tone === "ok" ? "text-zinc-400" : "text-zinc-600"
+                        }`}>
+                          {emailHint.text}
+                        </span>
+                      )}
                       {emailSuggestion && (
                         <button
                           type="button"
                           onClick={() => setFormData({ ...formData, email: applyEmailSuggestion(formData.email) })}
-                          className="rounded-full border border-pink-300/20 bg-pink-500/10 px-2 py-0.5 text-[7px] font-black uppercase tracking-wider text-pink-100"
+                          className="rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-0.5 text-[7px] font-black uppercase tracking-wider text-white hover:bg-zinc-800 transition duration-300"
                         >
-                          usar {emailSuggestion}
+                          Usar {emailSuggestion}
                         </button>
                       )}
                     </div>
                   </div>
+                  <p className="text-[9px] font-medium tracking-wide text-zinc-600 ml-1">
+                    Usa el correo donde recibirás tu entrada.
+                  </p>
                 </div>
 
-                {/* 2. Diseño de Entrada */}
-                <div className="rounded-2xl border border-white/[0.07] bg-[#0a0a0a] p-5 space-y-4">
-                  <div className="flex items-center gap-3 border-b border-white/[0.05] pb-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[9px] font-black text-white">2</span>
-                    <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-white">Diseño de Entrada</h3>
+                {/* Paso 2: Cantidad */}
+                <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-6 space-y-6">
+                  <div className="flex items-center gap-3 border-b border-zinc-900 pb-3">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-[9px] font-mono font-bold text-zinc-400">2</span>
+                    <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-400">Cantidad</h3>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {ticketDesigns.map((t) => {
-                      const isSelected = selectedDesign === t.id;
-                      return (
-                        <button
-                          key={t.id}
-                          type="button"
-                          onClick={() => setSelectedDesign(t.id)}
-                          className={`w-full text-left transition-all duration-300 ${isSelected ? "scale-[1.02]" : "opacity-50 hover:opacity-85"}`}
-                        >
-                          <div className={`relative overflow-hidden rounded-xl border ${isSelected ? t.id === 1 ? "border-pink-500/50 shadow-[0_0_20px_rgba(255,79,163,0.14)]" : "border-[#C8FF00]/50 shadow-[0_0_20px_rgba(200,255,0,0.12)]" : "border-white/10"} bg-gradient-to-br ${t.gradient}`}>
-                            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.06),transparent_60%)]" />
-                            <div className="relative p-4 flex flex-col min-h-[160px] justify-between">
-                              <div className="flex items-center justify-between">
-                                <div className={`flex items-center gap-1 ${t.accent === "red" ? "text-pink-300" : "text-[#C8FF00]"}`}>
-                                  <span className="text-[7px] font-black uppercase tracking-[0.3em]">DAWGS</span>
-                                </div>
-                                <div className={`h-4.5 w-4.5 rounded-full border ${t.accent === "red" ? "border-pink-400/40" : "border-[#C8FF00]/40"} flex items-center justify-center ${isSelected ? (t.accent === "red" ? "bg-pink-500/20" : "bg-[#C8FF00]/20") : ""}`}>
-                                  {isSelected && <div className={`h-2.5 w-2.5 rounded-full ${t.accent === "red" ? "bg-pink-400" : "bg-[#C8FF00]"}`} />}
-                                </div>
-                              </div>
-                              <div className="my-2">
-                                <p className="text-xs font-black text-white uppercase tracking-wider leading-relaxed truncate">{t.label}</p>
-                                <div className={`mt-2 h-px w-2/3 ${t.accent === "red" ? "bg-pink-400/20" : "bg-[#C8FF00]/20"}`} />
-                              </div>
-                              <div className="flex items-center justify-between mt-1">
-                                <p className={`text-[6px] font-mono font-bold ${t.accent === "red" ? "text-pink-300/60" : "text-[#C8FF00]/50"}`}>{t.serial}</p>
-                                <div className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.2">
-                                  <p className="text-[5px] font-black uppercase tracking-wider text-zinc-500">VIP</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 3. Cantidad de Entradas */}
-                <div className="rounded-2xl border border-white/[0.07] bg-[#0a0a0a] p-5 space-y-4">
-                  <div className="flex items-center gap-3 border-b border-white/[0.05] pb-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[9px] font-black text-white">3</span>
-                    <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-white">Cantidad</h3>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-6">
+                  <div className="flex items-center justify-between gap-6 p-4 rounded-xl border border-zinc-900 bg-black/40">
                     <button
                       type="button"
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="glass-icon-button text-white shrink-0"
-                      style={{ "--glass-icon-size": "44px" } as CSSProperties}
+                      className="flex h-11 w-11 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950 text-base font-black text-white hover:border-zinc-700 active:scale-95 transition-all select-none"
                     >
+                      -
                     </button>
                     <div className="text-center flex-1">
-                      <span className="text-3xl font-black text-white">{quantity}</span>
-                      <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">entradas</p>
+                      <span className="text-2xl font-black text-white transition-all duration-300">{quantity}</span>
+                      <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest mt-0.5">entradas</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setQuantity(Math.min(10, quantity + 1))}
-                      className="glass-icon-button text-white shrink-0"
-                      style={{ "--glass-icon-size": "44px" } as CSSProperties}
+                      className="flex h-11 w-11 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950 text-base font-black text-white hover:border-zinc-700 active:scale-95 transition-all select-none"
                     >
+                      +
                     </button>
                   </div>
-                </div>
-
-              </div>
-
-              {/* RIGHT COLUMN: Pago y Comprobante */}
-              <div className="lg:col-span-6 space-y-5">
-
-                {/* 4. Método de Pago */}
-                <div className="rounded-2xl border border-white/[0.07] bg-[#0a0a0a] p-5 space-y-4">
-                  <div className="flex items-center gap-3 border-b border-white/[0.05] pb-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[9px] font-black text-white">4</span>
-                    <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-white">Método de Pago</h3>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    {BANKS.map((bank) => (
-                      <button
-                        key={bank.id}
-                        type="button"
-                        onClick={() => setSelectedBank(bank.id)}
-                        className={`glass-select-tile p-3 text-center transition-all duration-300 ${selectedBank === bank.id ? "glass-select-tile-active scale-[1.01]" : "hover:border-white/20"}`}
-                      >
-                        {selectedBank === bank.id && <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,0,24,.06),transparent_60%)]" />}
-                        <div className="relative">
-                          <p className={`mt-1 text-[9px] font-black uppercase tracking-wider ${selectedBank === bank.id ? "text-white" : "text-zinc-400"}`}>{bank.name}</p>
-                          <p className={`mt-0.5 text-xs font-black tracking-wider ${selectedBank === bank.id ? "text-[#C8FF00]" : "text-zinc-600"}`}>{bank.label}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Transfer Details Card & QR Code */}
-                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 rounded-xl border border-white/[0.06] bg-black/60 p-4">
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-0.5">Beneficiario</p>
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-xs font-black text-white tracking-wider">MEDINA BRANDON</p>
-                          <span className="rounded-full border border-pink-400/20 bg-pink-950/40 px-1.5 py-0.2 text-[6px] font-black uppercase tracking-widest text-pink-200">DAWGS Admin</span>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-0.5">Detalles de Cuenta</p>
-                        <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest leading-relaxed">
-                          {selectedBank === "banco-loja" ? "CTA AHORROS: 2901416738" : "DEUNA AL: 0983803157"}
-                        </p>
-                      </div>
-                      <div className="pt-1">
-                        <span className="rounded-full border border-[#C8FF00]/25 bg-[#C8FF00]/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-[#C8FF00]">
-                          TOTAL A PAGAR: ${totalPrice.toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-center rounded-xl border border-dashed border-white/10 bg-black/40 p-2 shrink-0">
-                      <img
-                        src={BANKS.find((b) => b.id === selectedBank)?.qrImage}
-                        alt="QR Pago"
-                        className="h-20 w-20 object-contain"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                          const parent = (e.target as HTMLImageElement).parentElement;
-                          if (parent) parent.innerHTML = '<div class="text-[8px] text-zinc-600 font-bold uppercase tracking-widest">QR no disponible</div>';
-                        }}
-                      />
-                    </div>
+                  
+                  <div className="flex items-baseline justify-between border-t border-zinc-900/60 pt-4 px-1">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">TOTAL ESTIMADO</span>
+                    <span className="text-2xl font-black text-white tracking-tight">${totalPrice.toFixed(2)} USD</span>
                   </div>
                 </div>
 
-                {/* 5. Comprobante de Pago */}
-                <div className="rounded-2xl border border-white/[0.07] bg-[#0a0a0a] p-5 space-y-4">
-                  <div className="flex items-center gap-3 border-b border-white/[0.05] pb-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[9px] font-black text-white">5</span>
-                    <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-white">Subir Comprobante</h3>
+                {/* Paso 3: Método de Pago */}
+                <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-6 space-y-6">
+                  <div className="flex items-center gap-3 border-b border-zinc-900 pb-3">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-[9px] font-mono font-bold text-zinc-400">3</span>
+                    <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-400">Método de Pago</h3>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      key="banco-loja"
+                      type="button"
+                      onClick={() => setSelectedBank("banco-loja")}
+                      className={`relative overflow-hidden rounded-xl border p-4 text-left transition-all duration-300 focus:outline-none ${
+                        selectedBank === "banco-loja"
+                          ? "border-white bg-zinc-900 shadow-[0_0_20px_rgba(255,255,255,0.05)] scale-[1.01]"
+                          : "border-zinc-900 bg-zinc-950 hover:border-zinc-800 opacity-60 hover:opacity-90"
+                      }`}
+                    >
+                      <span className="block text-[8px] font-black uppercase tracking-widest text-zinc-500">Banco</span>
+                      <span className="block text-sm font-black text-white uppercase mt-0.5">Banco Loja</span>
+                      <span className="inline-block mt-2 rounded border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-white">
+                        AHORITA
+                      </span>
+                    </button>
+
+                    <button
+                      key="banco-pichincha"
+                      type="button"
+                      onClick={() => setSelectedBank("banco-pichincha")}
+                      className={`relative overflow-hidden rounded-xl border p-4 text-left transition-all duration-300 focus:outline-none ${
+                        selectedBank === "banco-pichincha"
+                          ? "border-white bg-zinc-900 shadow-[0_0_20px_rgba(255,255,255,0.05)] scale-[1.01]"
+                          : "border-zinc-900 bg-zinc-950 hover:border-zinc-800 opacity-60 hover:opacity-90"
+                      }`}
+                    >
+                      <span className="block text-[8px] font-black uppercase tracking-widest text-zinc-500">Banco</span>
+                      <span className="block text-sm font-black text-white uppercase mt-0.5">Banco Pichincha</span>
+                      <span className="inline-block mt-2 rounded border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-white">
+                        DE UNA
+                      </span>
+                    </button>
+                  </div>
+
+                  <div className="rounded-xl border border-zinc-900 bg-black/40 p-5 space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+                      <div className="space-y-4 flex-1">
+                        <div>
+                          <span className="block text-[8px] font-black uppercase tracking-widest text-zinc-500">A nombre de</span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-xs font-black text-white uppercase tracking-wider">MEDINA BRANDON</span>
+                            <span className="rounded-full border border-zinc-800 bg-zinc-900 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wider text-zinc-400">
+                              DAWGS MEMBER
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <span className="block text-[8px] font-black uppercase tracking-widest text-zinc-500">Se aceptan</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-zinc-400">
+                              Transferencias
+                            </span>
+                            <span className="rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-zinc-400">
+                              Depósitos
+                            </span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <span className="block text-[8px] font-black uppercase tracking-widest text-zinc-500">Detalles de la Cuenta</span>
+                          <div className="mt-1">
+                            {selectedBank === "banco-loja" ? (
+                              <div>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Banco Loja</span>
+                                <p className="text-xs font-bold text-white tracking-wider mt-0.5">CTA AHORROS: 2904334981</p>
+                              </div>
+                            ) : (
+                              <div>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Banco Pichincha</span>
+                                <p className="text-xs font-bold text-white tracking-wider mt-0.5">CTA AHORROS: 2211985907</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Payment QR container with plenty of spacing and border */}
+                      <div className="flex flex-col items-center justify-center p-4 bg-zinc-950 border border-zinc-900 rounded-xl shrink-0 self-center">
+                        <div className="bg-white p-3.5 rounded-lg overflow-hidden flex items-center justify-center">
+                          <img
+                            src={selectedBank === "banco-loja" ? "/images/qr-banco-loja.png" : "/images/qr-banco-pichincha.png"}
+                            alt="QR de Pago"
+                            className="h-28 w-28 object-contain"
+                            style={{ imageRendering: "pixelated" }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = "none";
+                              const parent = (e.target as HTMLImageElement).parentElement;
+                              if (parent) {
+                                parent.innerHTML = '<div class="text-[8px] text-zinc-800 font-black uppercase tracking-widest py-8 px-4 text-center">QR no disponible</div>';
+                              }
+                            }}
+                          />
+                        </div>
+                        <span className="text-[8px] font-black text-zinc-500 uppercase tracking-widest mt-2">Escanea para pagar</span>
+                      </div>
+                    </div>
+                    
+                    <div className="border-t border-zinc-900/60 pt-4 flex justify-between items-baseline px-1">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">TOTAL A PAGAR</span>
+                      <span className="text-2xl font-black text-white tracking-tight">${totalPrice.toFixed(2)} USD</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Paso 4: Subir Comprobante */}
+                <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-6 space-y-6">
+                  <div className="flex items-center gap-3 border-b border-zinc-900 pb-3">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-[9px] font-mono font-bold text-zinc-400">4</span>
+                    <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-400">Subir Comprobante</h3>
                   </div>
 
                   <input
@@ -581,21 +601,21 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                   />
 
                   {selectedFile && preview ? (
-                    <div className="overflow-hidden rounded-xl border border-emerald-400/20 bg-emerald-950/5">
-                      <div className="relative flex min-h-40 items-center justify-center bg-black/50 p-2">
+                    <div className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 transition-all duration-300 animate-in fade-in zoom-in-95">
+                      <div className="relative flex min-h-[160px] items-center justify-center bg-black/60 p-4">
                         <img
                           src={preview}
-                          alt="Vista previa"
-                          className="max-h-48 w-full rounded-lg object-contain"
+                          alt="Comprobante"
+                          className="max-h-44 max-w-full rounded object-contain border border-zinc-800 shadow-2xl"
                         />
-                        <div className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full border border-emerald-300/20 bg-black/80 px-2 py-0.5 text-[7px] font-black uppercase tracking-wider text-emerald-300 backdrop-blur">
-                          listo
+                        <div className="absolute left-3 top-3 inline-flex items-center rounded-full border border-zinc-800 bg-black px-2.5 py-0.5 text-[7px] font-black uppercase tracking-wider text-white">
+                          CARGADO
                         </div>
                       </div>
-                      <div className="flex flex-col gap-2 border-t border-white/[0.04] p-2.5 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="min-w-0">
-                          <p className="truncate text-[8px] font-black text-white">{selectedFile.name}</p>
-                          <p className="mt-0.5 text-[7px] font-bold uppercase tracking-wider text-zinc-500">
+                      <div className="flex flex-col gap-3 border-t border-zinc-900 p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-bold text-white">{selectedFile.name}</p>
+                          <p className="mt-0.5 text-[8px] font-black uppercase tracking-wider text-zinc-500">
                             {formatFileSize(selectedFile.size)}
                           </p>
                         </div>
@@ -604,17 +624,17 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                             type="button"
                             disabled={isSubmitting}
                             onClick={() => fileInputRef.current?.click()}
-                            className="inline-flex h-8 items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/[0.02] px-2.5 text-[7px] font-black uppercase tracking-wider text-zinc-200 hover:bg-white/[0.06]"
+                            className="inline-flex h-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 px-3.5 text-[8px] font-black uppercase tracking-wider text-white hover:bg-zinc-850 transition"
                           >
-                            cambiar
+                            Cambiar
                           </button>
                           <button
                             type="button"
                             disabled={isSubmitting}
                             onClick={clearSelectedFile}
-                            className="inline-flex h-8 items-center justify-center gap-1 rounded-lg border border-red-400/10 bg-red-500/10 px-2.5 text-[7px] font-black uppercase tracking-wider text-red-300 hover:bg-red-500/15"
+                            className="inline-flex h-8 items-center justify-center rounded-lg border border-zinc-900 bg-red-950/20 px-3.5 text-[8px] font-black uppercase tracking-wider text-red-400 hover:bg-red-950/40 transition"
                           >
-                            eliminar
+                            Eliminar
                           </button>
                         </div>
                       </div>
@@ -631,29 +651,36 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                         handleFileSelect(e.dataTransfer.files?.[0] || null);
                       }}
                       onClick={() => fileInputRef.current?.click()}
-                      className={`flex min-h-40 w-full flex-col items-center justify-center rounded-xl border border-dashed p-4 text-center transition ${
+                      className={`group flex min-h-[160px] w-full flex-col items-center justify-center rounded-xl border border-dashed p-6 text-center transition-all duration-300 focus:outline-none ${
                         dragOver
-                          ? "border-pink-500 bg-pink-500/5"
-                          : "border-white/10 bg-black/40 hover:border-pink-300/20 hover:bg-white/[0.01]"
+                          ? "border-white bg-zinc-900"
+                          : "border-zinc-800 bg-black/40 hover:border-zinc-700 hover:bg-zinc-950"
                       }`}
                     >
-                      <p className="text-[10px] font-black uppercase tracking-wider text-white">Selecciona tu comprobante</p>
-                      <p className="mt-1 text-[8px] font-medium text-zinc-500">Arrastra aquí o toca para buscar</p>
-                      <span className="mt-2.5 rounded border border-white/5 bg-white/[0.02] px-2 py-0.5 text-[6px] font-black text-zinc-500 uppercase tracking-widest">
-                        JPG · PNG · Máx 5MB
+                      {/* Minimalist document upload CSS illustration (zero emojis / icons) */}
+                      <div className="relative w-10 h-10 border border-zinc-700 rounded-lg flex items-center justify-center bg-zinc-950 mb-3 group-hover:border-zinc-500 transition duration-300">
+                        <div className="w-0.5 h-4 bg-zinc-400 absolute transition-transform group-hover:-translate-y-0.5 duration-300" />
+                        <div className="w-3 h-3 border-t-2 border-l-2 border-zinc-400 rotate-45 -translate-y-1 transition-transform group-hover:-translate-y-1.5 duration-300" />
+                        <div className="w-5 h-1 border-b-2 border-zinc-400 absolute bottom-2" />
+                      </div>
+                      
+                      <p className="text-[10px] font-black uppercase tracking-wider text-white">Arrastra tu comprobante aquí</p>
+                      <p className="mt-1 text-[8px] font-bold text-zinc-500 uppercase tracking-widest">o haz clic para seleccionarlo</p>
+                      <span className="mt-3 rounded border border-zinc-900 bg-zinc-950 px-2 py-0.5 text-[7px] font-black text-zinc-500 uppercase tracking-widest">
+                        JPG · PNG · Máx 5 MB
                       </span>
                     </button>
                   )}
 
                   {errorMsg && (
-                    <div role="alert" aria-live="assertive" className="flex items-center gap-2.5 text-xs font-bold text-red-400 bg-red-950/20 p-3 rounded-lg border border-red-500/20">
+                    <div role="alert" className="text-[9px] font-black tracking-wider text-red-400 bg-red-950/20 p-3 rounded-lg border border-red-900 uppercase">
                       {errorMsg}
                     </div>
                   )}
 
                   {isSubmitting && uploadMessage && (
-                    <div aria-live="polite" className="flex items-center justify-center gap-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-zinc-500">
-                      <span>{uploadMessage}</span>
+                    <div className="text-center py-1 text-[8px] font-black uppercase tracking-widest text-zinc-500 animate-pulse">
+                      {uploadMessage}
                     </div>
                   )}
 
@@ -666,38 +693,173 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                     onExpire={() => setTurnstileToken("")}
                     onError={() => setTurnstileToken("")}
                   />
+                </div>
 
-                  {/* ── PREMIUM CTA: Gated by Turnstile ── */}
-                  <div className={`relative overflow-hidden rounded-2xl transition-all duration-500 ${
-                    !selectedFile
-                      ? "opacity-50"
-                      : hasTurnstileSiteKey("visible") && !turnstileToken
-                      ? "opacity-60"
-                      : "opacity-100"
-                  }`}>
-                    {/* Subtle shimmer on hover when ready */}
-                    {selectedFile && (!hasTurnstileSiteKey("visible") || turnstileToken) && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent -translate-x-full hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
+                {/* Final Button Area */}
+                <div className="space-y-3 pt-2">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !selectedFile || (hasTurnstileSiteKey("visible") && !turnstileToken)}
+                    className="relative overflow-hidden w-full flex h-14 items-center justify-center rounded-xl bg-white text-[10px] font-black uppercase tracking-[0.3em] text-black transition-all duration-300 hover:bg-zinc-200 active:scale-[0.99] disabled:opacity-30 disabled:hover:bg-white disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {isSubmitting ? (
+                      <span className="flex items-center gap-2">
+                        <span className="h-3.5 w-3.5 rounded-full border-2 border-black/30 border-t-black animate-spin" />
+                        PROCESANDO...
+                      </span>
+                    ) : (
+                      "CONFIRMAR COMPRA"
                     )}
-                    <button
-                      type="submit"
-                      disabled={isSubmitting || !selectedFile || (hasTurnstileSiteKey("visible") && !turnstileToken)}
-                      className="relative w-full flex h-14 items-center justify-center gap-3 rounded-2xl bg-white text-[9px] font-black uppercase tracking-[0.25em] text-black transition-all duration-300 hover:bg-zinc-100 disabled:cursor-not-allowed"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <span className="h-4 w-4 rounded-full border-2 border-zinc-400/30 border-t-zinc-700 animate-spin" />
-                          PROCESANDO...
-                        </>
-                      ) : hasTurnstileSiteKey("visible") && !turnstileToken ? (
-                        <>
-                          <span className="h-1.5 w-1.5 rounded-full bg-zinc-500" />
-                          COMPLETA LA VERIFICACIÓN
-                        </>
-                      ) : (
-                        <>COMPRAR ENTRADA — ${totalPrice.toFixed(2)}</>
-                      )}
-                    </button>
+                  </button>
+                  <p className="text-center text-[9px] font-medium tracking-wide text-zinc-500">
+                    Tu entrada será validada por nuestro equipo.
+                  </p>
+                </div>
+
+              </div>
+
+              {/* RIGHT COLUMN: Panel Fijo (Sticky) - Resumen y Entrada VIP Vertical */}
+              <div className="w-full lg:w-5/12 order-1 lg:order-2 lg:sticky lg:top-24 space-y-6">
+                
+                {/* Live pricing and total summary */}
+                <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-6">
+                  <div className="flex items-baseline justify-between border-b border-zinc-900 pb-4 mb-6">
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500">PRICE</p>
+                      <div className="flex items-baseline gap-0.5">
+                        <span className="text-5xl font-black text-white leading-none">${pricePerTicket}</span>
+                        <span className="text-[9px] font-black tracking-wider text-zinc-400">USD</span>
+                      </div>
+                      <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Per Ticket</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500">TOTAL</p>
+                      <span className="text-5xl font-black text-white leading-none tracking-tight">${totalPrice.toFixed(2)}</span>
+                      <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Updated Live</p>
+                    </div>
+                  </div>
+
+                  {/* STEP 2: PREVIEW DE LA ENTRADA (VIP VERTICAL TICKET) */}
+                  <div className="relative w-full flex justify-center py-2 select-none">
+                    {/* The floating wrapper */}
+                    <div className="ticket-float w-full max-w-[300px]">
+                      {/* The interactive 3D card wrapper */}
+                      <div
+                        ref={ticketRef}
+                        onMouseMove={handleMouseMove}
+                        onMouseLeave={handleMouseLeave}
+                        className="relative w-full aspect-[1/1.75] rounded-2xl overflow-hidden bg-zinc-950 border border-zinc-800 transition-all duration-200 cursor-default flex flex-col justify-between"
+                        style={{
+                          transformStyle: "preserve-3d",
+                          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.9)",
+                        }}
+                      >
+                        {/* Interactive light reflection overlay */}
+                        <div
+                          className="absolute inset-0 z-30 pointer-events-none transition-opacity duration-300"
+                          style={{
+                            background: "radial-gradient(circle 180px at var(--x, -1000px) var(--y, -1000px), rgba(255, 255, 255, 0.08), transparent 80%)",
+                          }}
+                        />
+                        
+                        {/* Glow outline around ticket based on artist details */}
+                        <div 
+                          className="absolute inset-0 border border-transparent rounded-2xl z-20 pointer-events-none transition-all duration-500"
+                          style={{
+                            boxShadow: `inset 0 0 10px ${artistDetails.accentColor}25`,
+                          }}
+                        />
+
+                        {/* Top half: Beautiful Color Artist Photo */}
+                        <div className="relative aspect-[4/5] w-full overflow-hidden bg-black shrink-0">
+                          <img
+                            src={artistDetails.photo}
+                            alt={artistDetails.name}
+                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                          />
+                          {/* Dark vignette gradient overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-black/60 z-10" />
+                          
+                          {/* Top Tagging */}
+                          <div className="absolute top-4 inset-x-4 z-20 flex justify-between items-center text-[8px] font-black uppercase tracking-[0.25em] text-white/90">
+                            <span>DAWGS</span>
+                            <span className="rounded border border-white/20 bg-black/45 px-2 py-0.5 backdrop-blur-md">
+                              VIP ACCESS
+                            </span>
+                          </div>
+
+                          {/* Event info inside photo */}
+                          <div className="absolute bottom-4 inset-x-4 z-20">
+                            <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400">
+                              {currentEvent.title}
+                            </span>
+                            <h4 className="text-xl font-black uppercase tracking-tight text-white mt-0.5 leading-none">
+                              {artistDetails.name}
+                            </h4>
+                          </div>
+                        </div>
+
+                        {/* Dashed line cutout separating main body from stub */}
+                        <div className="relative w-full h-px shrink-0 z-20">
+                          {/* Left notch */}
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-[#060606] border border-zinc-800 z-20" />
+                          {/* Right notch */}
+                          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-5 h-5 rounded-full bg-[#060606] border border-zinc-800 z-20" />
+                          {/* Dashed divider */}
+                          <div className="absolute left-3.5 right-3.5 top-1/2 h-0.5 border-t border-dashed border-zinc-800 z-10" />
+                        </div>
+
+                        {/* Bottom half: Ticket Stub */}
+                        <div className="relative p-5 flex-1 flex flex-col justify-between bg-zinc-950 text-left">
+                          {/* Info Rows */}
+                          <div className="grid grid-cols-2 gap-3 text-[9px] font-bold uppercase tracking-wider text-zinc-500">
+                            <div>
+                              <span className="block text-[7px] font-black tracking-widest text-zinc-600">CIUDAD</span>
+                              <span className="text-white font-bold">{currentEvent.city}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[7px] font-black tracking-widest text-zinc-600">FECHA</span>
+                              <span className="text-white font-bold">{currentEvent.dateLabel}</span>
+                            </div>
+                          </div>
+
+                          {/* Dynamic ticket ID number */}
+                          <div className="text-[8px] font-mono font-bold tracking-widest text-zinc-600 uppercase">
+                            TICKET NO: #DAWGS-{2026 + quantity}-{102 + quantity}VIP
+                          </div>
+
+                          {/* CSS Barcode and sharp SVG QR code */}
+                          <div className="flex items-center justify-between gap-4 mt-3">
+                            <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+                              {/* Horizontal Barcode illustration in CSS */}
+                              <div className="flex items-end justify-start h-8 w-full opacity-60">
+                                <div className="w-1.5 h-full bg-white shrink-0" />
+                                <div className="w-0.5 h-full bg-white shrink-0 ml-0.5" />
+                                <div className="w-2.5 h-full bg-white shrink-0 ml-1" />
+                                <div className="w-0.5 h-full bg-white shrink-0 ml-0.5" />
+                                <div className="w-1 h-full bg-white shrink-0 ml-0.5" />
+                                <div className="w-2 h-full bg-white shrink-0 ml-1" />
+                                <div className="w-0.5 h-full bg-white shrink-0 ml-0.5" />
+                                <div className="w-1.5 h-full bg-white shrink-0 ml-0.5" />
+                                <div className="w-0.5 h-full bg-white shrink-0 ml-1" />
+                                <div className="w-1 h-full bg-white shrink-0 ml-0.5" />
+                                <div className="w-2.5 h-full bg-white shrink-0 ml-1" />
+                              </div>
+                              <span className="text-[6.5px] font-mono tracking-widest text-zinc-600 uppercase block truncate">
+                                *VIP-ONLY-ENTRY*
+                              </span>
+                            </div>
+
+                            {/* Decorative High-Res sharp QR (SVG) */}
+                            <div className="w-12 h-12 bg-white p-1 rounded shrink-0 flex items-center justify-center shadow-md">
+                              <svg className="w-full h-full text-black" viewBox="0 0 29 29" fill="currentColor">
+                                <path d="M0 0h9v9H0zm1 1h7v7H1zm1 1h5v5H2zm12-2h1v1h-1zm2 0h2v1h-2zm3 0h1v1h-1zm1 0h3v1h-3zm5 0h1v1h-1zm-9 2h1v2h-1zm2 0h1v1h-1zm1 0h2v1h-2zm3 0h2v2h-2zm2 0h1v1h-1zm1 0h1v2h-1zm2 0h1v1h-1zm-10 2h2v1h-2zm3 0h1v1h-1zm2 0h2v1h-2zm3 0h1v1h-1zm-10 2h1v1h-1zm2 0h1v1h-1zm2 0h1v1h-1zm2 0h1v2h-1zm2 0h2v1h-2zm-9 2h1v1h-1zm3 0h1v1h-1zm1 0h1v1h-1zm3 0h1v1h-1zm2 0h3v1h-3zm-10 2h1v1h-1zm3 0h1v1h-1zm2 0h1v1h-1zm1 0h2v1h-2zm3 0h1v1h-1zm2 0h1v1h-1zm-12 2h9v9H0zm1 1h7v7H1zm1 1h5v5H2zm12-2h1v1h-1zm2 0h2v1h-2zm3 0h1v1h-1zm1 0h3v1h-3zm5 0h1v1h-1z" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -706,122 +868,25 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
           </div>
         )}
 
-        {/* Event info modal */}
-        {showEventModal && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[28px] border border-white/[0.10] bg-gradient-to-b from-zinc-900 to-black shadow-[0_40px_150px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-300">
-              {/* Close button */}
-              <button
-                onClick={() => setShowEventModal(false)}
-                className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white/50 backdrop-blur-md transition-all hover:bg-pink-500 hover:text-white hover:shadow-[0_0_20px_rgba(236,72,153,0.5)]"
-              >
-              </button>
-
-              {/* Photo slideshow */}
-              <div className="relative aspect-[4/3] overflow-hidden rounded-t-[28px] bg-zinc-900">
-                <img
-                  src={VENUE_PHOTOS[eventPhotoIndex]}
-                  alt="Lugar del evento"
-                  className="h-full w-full object-cover transition-all duration-700 scale-105 hover:scale-100"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-zinc-900/80 to-transparent h-16" />
-                <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-                  {VENUE_PHOTOS.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setEventPhotoIndex(i)}
-                      className={`rounded-full transition-all duration-300 ${
-                        i === eventPhotoIndex
-                          ? "h-2.5 w-8 bg-pink-400 shadow-[0_0_12px_rgba(236,72,153,0.6)]"
-                          : "h-2.5 w-2.5 bg-white/30 hover:bg-white/60"
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="p-6 space-y-5">
-                {/* Location header with neon card */}
-                <div className="relative overflow-hidden rounded-2xl border border-pink-500/20 bg-gradient-to-br from-pink-500/[0.08] to-fuchsia-500/[0.04] p-4">
-                  <div className="absolute top-0 right-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-pink-500/10 blur-3xl" />
-                  <div className="relative flex items-start gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 shadow-[0_0_20px_rgba(236,72,153,0.3)]">
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-black uppercase tracking-wider text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.15)]">
-                        San Juan, Ecuador
-                      </h3>
-                      <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.25em] text-pink-200/70">
-                        Casa privada · Dirección confirmada al comprar
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Features grid — glass cards */}
-                <div className="grid grid-cols-2 gap-2.5">
-                  {[
-                    { label: "Photo spot", desc: "Captura el momento", gradient: "from-yellow-500/10 to-orange-500/5", border: "border-yellow-500/15", hoverBorder: "hover:border-yellow-400/30" },
-                    { label: "Sonido envolvente", desc: "Ecosistema Dolby", gradient: "from-blue-500/10 to-cyan-500/5", border: "border-blue-500/15", hoverBorder: "hover:border-blue-400/30" },
-                    { label: "Barra libre", desc: "Premium selection", gradient: "from-emerald-500/10 to-green-500/5", border: "border-emerald-500/15", hoverBorder: "hover:border-emerald-400/30" },
-                    { label: "Acceso controlado", desc: "Entrada garantizada", gradient: "from-violet-500/10 to-purple-500/5", border: "border-violet-500/15", hoverBorder: "hover:border-violet-400/30" },
-                  ].map((feat) => {
-                    return (
-                      <div
-                        key={feat.label}
-                        className={`group relative overflow-hidden rounded-2xl border ${feat.border} bg-gradient-to-br ${feat.gradient} px-4 py-3.5 text-center transition-all duration-300 ${feat.hoverBorder} hover:shadow-[0_0_25px_rgba(255,255,255,0.04)]`}
-                      >
-                        <div className="absolute inset-0 bg-[linear-gradient(120deg,transparent_30%,rgba(255,255,255,0.03)_50%,transparent_70%)] translate-x-[-200%] transition-transform duration-700 group-hover:translate-x-[200%]" />
-                        <p className="relative text-[8px] font-black uppercase tracking-[0.2em] text-white/80">{feat.label}</p>
-                        <p className="relative mt-0.5 text-[7px] font-medium text-white/40">{feat.desc}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Action buttons */}
-                <div className="flex flex-col gap-2.5">
-                  <a
-                    href="https://maps.google.com/?q=San+Juan+Ecuador"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group relative inline-flex h-13 items-center justify-center gap-2.5 overflow-hidden rounded-2xl bg-gradient-to-r from-pink-600 to-rose-500 text-[9px] font-black uppercase tracking-[0.2em] text-white transition-all duration-300 hover:from-pink-500 hover:to-rose-400 hover:shadow-[0_0_40px_rgba(236,72,153,0.4)] hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    <span className="absolute inset-0 bg-[linear-gradient(120deg,transparent_30%,rgba(255,255,255,0.15)_50%,transparent_70%)] translate-x-[-200%] transition-transform duration-700 group-hover:translate-x-[200%]" />
-                    <span className="relative z-10">Abrir en Google Maps</span>
-                  </a>
-                  <button
-                    onClick={() => {
-                      navigator.share?.({ title: `DAWGS - ${currentEvent.title}`, text: `${currentEvent.title} · ${currentEvent.dateLabel} · ${currentEvent.city}`, url: window.location.href });
-                    }}
-                    className="group relative inline-flex h-12 items-center justify-center gap-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300 transition-all duration-300 hover:border-pink-400/30 hover:bg-pink-500/[0.08] hover:text-pink-300 hover:shadow-[0_0_30px_rgba(236,72,153,0.12)] hover:scale-[1.01] active:scale-[0.98]"
-                  >
-                    <span className="absolute inset-0 bg-[linear-gradient(120deg,transparent_30%,rgba(236,72,153,0.06)_50%,transparent_70%)] translate-x-[-200%] transition-transform duration-700 group-hover:translate-x-[200%]" />
-                    <div className="relative z-10 flex items-center gap-2.5">
-                    </div>
-                    <span className="relative z-10">Compartir</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
+        {/* Success View */}
         {dropState === "success" && (
-          <div ref={successRef} className="success-reveal relative z-10 flex flex-col items-center text-center max-w-md mx-auto py-12 mt-8">
+          <div ref={successRef} className="success-reveal relative z-10 flex flex-col items-center text-center max-w-md mx-auto py-12">
             <div className="success-ring relative mb-8">
               <div className="success-energy-ring absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="h-20 w-20 rounded-full border-[3px] border-[#FFD700] opacity-0" />
+                <div className="h-20 w-20 rounded-full border-[3px] border-white opacity-0" />
               </div>
-              <div className="success-ring-pulse absolute -inset-4 rounded-full border-[3px] border-[#FFD700] shadow-[0_0_60px_rgba(255,215,0,0.25)]" />
+              <div className="success-ring-pulse absolute -inset-4 rounded-full border-[2px] border-white/20 shadow-[0_0_50px_rgba(255,255,255,0.1)]" />
               <div className="success-ring-inner relative flex items-center justify-center">
-                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#FFD700] to-[#FFA500] shadow-[0_0_50px_rgba(255,215,0,0.35)]">
+                {/* Checkmark Circle (no icons) */}
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-2xl">
+                  <svg className="w-8 h-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" className="success-check-path" />
+                  </svg>
                 </div>
               </div>
               <div ref={sparklesRef} className="absolute inset-0 pointer-events-none overflow-visible">
-                {Array.from({ length: 16 }).map((_, i) => {
-                  const colors = ["#FFD700", "#FFA500", "#FF6B6B", "#00E5FF", "#FF4081", "#FFFFFF"];
+                {Array.from({ length: 12 }).map((_, i) => {
+                  const colors = ["#ffffff", "#e4e4e7", "#a1a1aa", "#71717a", "#ffffff"];
                   return (
                     <div
                       key={i}
@@ -830,7 +895,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                         left: "50%",
                         top: "50%",
                         background: colors[i % colors.length],
-                        boxShadow: `0 0 6px ${colors[i % colors.length]}`,
+                        boxShadow: `0 0 4px ${colors[i % colors.length]}`,
                       }}
                     />
                   );
@@ -838,16 +903,16 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
               </div>
             </div>
             {formData.firstName.trim() && (
-              <h2 className="success-name text-3xl font-black text-white uppercase italic tracking-widest drop-shadow-[0_0_20px_rgba(255,215,0,0.25)]">
-                ¡GRACIAS, {formData.firstName.trim().toUpperCase()}!
+              <h2 className="success-name text-3xl font-black text-white uppercase italic tracking-widest">
+                GRACIAS, {formData.firstName.trim().toUpperCase()}
               </h2>
             )}
-            <h3 className="success-text mt-2 text-lg font-bold text-[#FFD700] uppercase tracking-widest">comprobante recibido</h3>
-            <p className="success-msg mt-3 text-[10.5px] font-bold text-zinc-400 uppercase tracking-wider leading-relaxed max-w-sm">
-              TU COMPROBANTE FUE RECIBIDO CORRECTAMENTE. UN MIEMBRO DE VENTAS DAWG CONFIRMARA EL PAGO Y RECIBIRAS TU ACCESO POR GMAIL.
+            <h3 className="success-text mt-2 text-sm font-bold text-zinc-400 uppercase tracking-widest">comprobante recibido</h3>
+            <p className="success-msg mt-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-relaxed max-w-sm">
+              TU COMPROBANTE FUE RECIBIDO CORRECTAMENTE. UN MIEMBRO DE VENTAS DAWG CONFIRMARA EL PAGO Y RECIBIRAS TU ACCESO POR CORREO ELECTRÓNICO.
             </p>
             {onClose && (
-              <button onClick={handleSuccessClose} className="success-btn glass-action glass-action-primary mt-8" style={{ "--glass-action-height": "48px", "--glass-action-px": "2rem", "--glass-action-text": "0.72rem" } as CSSProperties}>
+              <button onClick={handleSuccessClose} className="success-btn mt-8 flex h-12 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950 px-8 text-[9px] font-black uppercase tracking-widest text-white hover:bg-zinc-900 transition duration-300">
                 CERRAR
               </button>
             )}
@@ -857,14 +922,14 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
 
       <style>{`
         .ticket-float { animation: ticketFloat 4s ease-in-out infinite; }
-        @keyframes ticketFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
-        .album-float-inner { animation: albumFloat 3.5s ease-in-out infinite; }
-        @keyframes albumFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        @keyframes ticketFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-6px); } }
         .success-ring-pulse { animation: ringPulse 2.8s ease-out 0.6s infinite; }
-        @keyframes ringPulse { 0% { transform: scale(0.8); opacity: 0; } 40% { opacity: 0.15; } 100% { transform: scale(1.6); opacity: 0; } }
+        @keyframes ringPulse { 0% { transform: scale(0.8); opacity: 0; } 40% { opacity: 0.15; } 100% { transform: scale(1.5); opacity: 0; } }
       `}</style>
     </section>
   );
 });
+
+AccessDrop.displayName = "AccessDrop";
 
 export default AccessDrop;
