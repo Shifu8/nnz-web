@@ -726,3 +726,16 @@ body {
   animation: button-glow-smooth 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
   transition: none !important;
 }
+
+/* Slower, breathing opacity pulse for the glowing backdrop */
+@keyframes backdrop-glow-breath {
+  0%, 100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+.animate-glow-backdrop {
+  animation: backdrop-glow-breath 2s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+}

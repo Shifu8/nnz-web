@@ -589,7 +589,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               <div className="relative">
                 {isTicketPulse && (
                   <div 
-                    className="absolute inset-0 rounded-full bg-white opacity-75 blur-md animate-pulse z-0 pointer-events-none"
+                    className="absolute inset-0 rounded-full bg-white blur-md animate-glow-backdrop z-0 pointer-events-none"
                     style={{
                       boxShadow: "0 0 35px 15px rgba(255, 255, 255, 0.9)",
                     }}
