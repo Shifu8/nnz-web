@@ -586,15 +586,28 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 Ver Evento
               </button>
               
-              <button
-                type="button"
-                onClick={() => onBuy(activeEvent)}
-                className={`flex h-12 px-6 items-center justify-center rounded-full bg-white text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 ${
-                  isTicketPulse ? "button-pulse-smooth" : ""
-                }`}
-              >
-                Comprar Entrada
-              </button>
+              <div className="relative">
+                {isTicketPulse && (
+                  <div 
+                    className="absolute inset-0 rounded-full bg-white opacity-75 blur-md animate-pulse z-0 pointer-events-none"
+                    style={{
+                      boxShadow: "0 0 35px 15px rgba(255, 255, 255, 0.9)",
+                    }}
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => onBuy(activeEvent)}
+                  className={`relative z-10 flex h-12 px-6 items-center justify-center rounded-full bg-white text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 ${
+                    isTicketPulse ? "scale-[1.04]" : ""
+                  }`}
+                  style={{
+                    transition: "transform 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+                  }}
+                >
+                  Comprar Entrada
+                </button>
+              </div>
             </div>
 
           </div>
