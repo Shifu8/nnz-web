@@ -221,7 +221,9 @@ export default function EventTicketCarousel({
                   setActiveIndex(idx);
                 }
               }}
-              className="absolute w-[290px] h-[410px] md:w-[310px] md:h-[440px] rounded-[32px] overflow-hidden cursor-pointer origin-center transition-all animate-float"
+              className={`absolute w-[290px] h-[410px] md:w-[310px] md:h-[440px] rounded-[32px] overflow-hidden cursor-pointer origin-center transition-all animate-float ${
+                diff === 0 && isTicketPulse ? "ticket-pulse-active" : ""
+              }`}
               style={{
                 transform: `translate3d(${translateX + px}px, ${diff === 0 ? -15 + py : py}px, ${translateZ}px) rotateY(${rotateY + prY}deg) rotateX(${prX}deg) scale(${scale})`,
                 zIndex,

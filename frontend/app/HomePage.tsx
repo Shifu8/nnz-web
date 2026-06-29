@@ -295,7 +295,11 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   };
 
   const scrollToTicketCard = () => {
-    setIsTicketModalOpen(true);
+    scrollToSection("show", "start", "show");
+    setIsTicketPulse(true);
+    window.setTimeout(() => {
+      setIsTicketPulse(false);
+    }, 2400);
   };
 
   const scrollToRecovery = () => {
@@ -977,13 +981,25 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         .bg-pink-300\\/60 { background: rgba(255,255,255,0.4) !important; }
         .border-pink-300\\/15 { border-color: rgba(255,255,255,0.08) !important; }
         .border-pink-300\\/\\[0\\.12\\] { border-color: rgba(255,255,255,0.08) !important; }
-        .bg-white\\/\\[0.04\\] { background: rgba(255,255,255,0.04) !important; }
         .hide-scrollbar::-webkit-scrollbar {
           display: none;
         }
         .hide-scrollbar {
           -ms-overflow-style: none;
           scrollbar-width: none;
+        }
+        @keyframes ticket-glow-pulse {
+          0%, 100% {
+            box-shadow: 0 40px 100px rgba(0,0,0,0.85), 0 0 50px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+            border-color: rgba(255,255,255,0.08) !important;
+          }
+          50% {
+            box-shadow: 0 0 70px rgba(255,255,255,0.38), 0 40px 100px rgba(0,0,0,0.85), 0 0 50px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.25) !important;
+            border-color: rgba(255,255,255,0.3) !important;
+          }
+        }
+        .ticket-pulse-active {
+          animation: ticket-glow-pulse 0.8s ease-in-out infinite !important;
         }
       `}} />
     </main>
