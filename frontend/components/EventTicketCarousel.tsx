@@ -76,8 +76,6 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     },
     merch: [
       { id: "tl-hoodie", name: "TRAP LOUD Hoodie", category: "Hoodie", price: "$65", image: "/images/dawgs-studio-fit-front.png" },
-      { id: "tl-tee", name: "Block Oversized Tee", category: "T-Shirt", price: "$35", image: "/images/dawgs-studio-portrait.png" },
-      { id: "tl-cap", name: "DAWGS Cap", category: "Accessory", price: "$28", image: "/images/dawgs-studio-rack.png" },
     ],
   },
   {

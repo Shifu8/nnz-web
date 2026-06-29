@@ -285,17 +285,7 @@ export default function EventDetailOverlay({
               </div>
             </motion.div>
 
-            {/* ─── ABOUT ─── */}
-            {event.about && event.about.length > 0 && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.14, ease: "easeOut" }}>
-                <SectionLabel>Acerca del Evento</SectionLabel>
-                <div className="mt-4 space-y-4 border-l border-white/[0.06] pl-5">
-                  {event.about.map((para, i) => (
-                    <p key={i} className="text-sm leading-7 text-zinc-400">{para}</p>
-                  ))}
-                </div>
-              </motion.div>
-            )}
+
 
             {/* ─── LINEUP ─── */}
             {sortedRoles.length > 0 && (
@@ -363,26 +353,7 @@ export default function EventDetailOverlay({
               </motion.div>
             )}
 
-            {/* ─── IMPORTANT INFO ─── */}
-            {hasImportantInfo && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.35, ease: "easeOut" }}>
-                <SectionLabel>Información Importante</SectionLabel>
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {event.importantInfo!.map((card, i) => (
-                    <div
-                      key={i}
-                      className="flex gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 transition-all duration-300 hover:border-white/[0.1] hover:bg-white/[0.04]"
-                    >
-                      <span className="text-xl mt-0.5 shrink-0">{card.icon}</span>
-                      <div>
-                        <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white mb-1">{card.title}</p>
-                        <p className="text-[10px] leading-5 text-zinc-500">{card.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
+
 
             {/* ─── SOCIAL LINKS ─── */}
             {hasSocials && (
@@ -390,7 +361,7 @@ export default function EventDetailOverlay({
                 <SectionLabel>Links Oficiales</SectionLabel>
                 <div className="mt-4 flex flex-wrap gap-2.5">
                   {Object.entries(event.socialLinks!).map(([platform, url]) => {
-                    if (!url) return null;
+                    if (!url || platform === 'spotify') return null;
                     return (
                       <a
                         key={platform}
