@@ -729,7 +729,10 @@ export default function HomePage({ initialConfig }: HomePageProps) {
       {/* Monochromatic minimalist footer */}
       <footer
         id="support"
-        className="relative z-10 -mx-4 border-t border-white/[0.06] bg-[#050404] px-4 py-16 sm:-mx-8 sm:px-6 md:-mx-14 md:px-12 lg:-mx-20 lg:px-16"
+        className="relative z-10 -mx-4 border-t border-white/[0.04] px-4 py-16 sm:-mx-8 sm:px-6 md:-mx-14 md:px-12 lg:-mx-20 lg:px-16 backdrop-blur-xl"
+        style={{
+          background: "linear-gradient(to bottom, transparent 0%, rgba(39, 39, 42, 0.08) 50%, rgba(255, 255, 255, 0.02) 100%), radial-gradient(circle at bottom, rgba(255, 255, 255, 0.04) 0%, transparent 80%)",
+        }}
       >
         <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center text-center gap-4">
           <p className="text-xl font-black uppercase tracking-[0.4em] text-white/90">
