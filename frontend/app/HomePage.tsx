@@ -590,8 +590,13 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 type="button"
                 onClick={() => onBuy(activeEvent)}
                 className={`flex h-12 px-6 items-center justify-center rounded-full bg-white text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 ${
-                  isTicketPulse ? "button-pulse-subtle" : ""
+                  isTicketPulse ? "animate-pulse" : ""
                 }`}
+                style={isTicketPulse ? {
+                  boxShadow: "0 0 0 6px rgba(255, 255, 255, 0.35), 0 0 45px 20px rgba(255, 255, 255, 0.8)",
+                  transform: "scale(1.05)",
+                  transition: "none",
+                } : {}}
               >
                 Comprar Entrada
               </button>
