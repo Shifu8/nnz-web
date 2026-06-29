@@ -237,15 +237,15 @@ export default function EventDetailOverlay({
               </p>
               <div className="flex flex-wrap items-center gap-2 mt-4">
                 <StatusBadge status={event.status} />
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300">
-                  <Calendar className="h-3 w-3 opacity-60" /> {event.dateLabel}
+                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300">
+                  {event.dateLabel}
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300">
-                  <MapPin className="h-3 w-3 opacity-60" /> {event.city}
+                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300">
+                  {event.city}
                 </span>
                 {event.time && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300">
-                    <Clock className="h-3 w-3 opacity-60" /> {event.time}
+                  <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300">
+                    {event.time}
                   </span>
                 )}
               </div>
@@ -274,8 +274,7 @@ export default function EventDetailOverlay({
                     key={i}
                     className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4 transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.04]"
                   >
-                    <div className="flex items-center gap-2 text-zinc-600 mb-2 group-hover:text-zinc-400 transition-colors">
-                      {item.icon}
+                    <div className="flex items-center text-zinc-600 mb-2 group-hover:text-zinc-400 transition-colors">
                       <span className="text-[7px] font-black uppercase tracking-[0.25em]">{item.label}</span>
                     </div>
                     <p className="text-[11px] font-black text-white uppercase tracking-wide leading-tight truncate">
@@ -520,12 +519,11 @@ export default function EventDetailOverlay({
                           </div>
                         </div>
                         <div className="p-3 border-t border-white/[0.05]">
-                          <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-1">
-                            <MapPin className="h-2.5 w-2.5" /> {rel.city}
+                          <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider flex items-center">
+                            {rel.city}
                           </p>
                           <div className="flex items-center justify-between mt-2">
                             <span className="text-[7px] font-black text-white/40 uppercase tracking-wider">Ver detalles</span>
-                            <ChevronRight className="h-3 w-3 text-white/30 group-hover:text-white/70 group-hover:translate-x-0.5 transition-all" />
                           </div>
                         </div>
                       </button>

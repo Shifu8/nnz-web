@@ -126,7 +126,7 @@ export default function PartyPass({ data }: PartyPassProps) {
                 {data.firstName} {data.lastName}
               </span>
               <span className="text-black font-extrabold text-[6px] tracking-widest mt-1 select-none">
-                LIVE FROM SAN JUAN
+                LIVE FROM LOJA
               </span>
               <span className="text-black font-medium text-[4.5px] tracking-widest text-black/60 mt-1 select-none">
                 FOR VIP ACCESS ONLY

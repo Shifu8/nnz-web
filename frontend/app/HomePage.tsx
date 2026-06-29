@@ -368,7 +368,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
       <Atmosphere />
 
       {/* Modern, minimalist top navigation bar */}
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] bg-black/45 backdrop-blur-2xl">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.02] bg-black/45 backdrop-blur-2xl">
         <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-3 px-4 py-3 sm:px-6 md:px-12 lg:px-16">
           
           {/* Logo on the left (No puppy image, text visible on mobile and desktop) */}
@@ -447,7 +447,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
           <div className="absolute inset-0 opacity-[0.02] border-x border-white mx-64 pointer-events-none" />
 
           {/* Wall corner gradient shadow (Back wall shadow) */}
-          <div className="absolute top-0 inset-x-0 h-[45%] bg-gradient-to-b from-zinc-950 to-[#030303] border-b border-zinc-900" />
+          <div className="absolute top-0 inset-x-0 h-[45%] bg-gradient-to-b from-zinc-950 to-[#030303]" />
           
           {/* Floor gradient */}
           <div 
@@ -546,7 +546,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             </div>
 
             {/* NEXT EVENT section */}
-            <div className="space-y-4 pt-6 border-t border-white/5">
+            <div className="space-y-4 pt-6">
               <p className="text-[8px] font-black tracking-[0.3em] text-zinc-500 uppercase">
                 Próximo Evento
               </p>
@@ -561,12 +561,10 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
               {/* Event Location & Date info */}
               <div className="flex flex-wrap gap-2 text-zinc-300">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest">
-                  <Calendar className="h-3 w-3 text-white/50" />
+                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest">
                   {activeEvent.dateLabel}
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest">
-                  <MapPin className="h-3 w-3 text-white/50" />
+                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest">
                   {activeEvent.city}
                 </span>
               </div>
@@ -687,8 +685,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 <br />
                 {config.accessSection.headingLine2}
               </h2>
-              <p className="mt-5 inline-flex items-center gap-2 text-xl font-black uppercase tracking-[-0.03em] text-white">
-                <LockKeyhole className="h-5 w-5 text-white/50" />
+              <p className="mt-5 inline-flex items-center text-xl font-black uppercase tracking-[-0.03em] text-white">
                 {config.accessSection.qrSubtitle}
               </p>
               <p className="mt-5 max-w-lg text-sm leading-7 text-zinc-400">

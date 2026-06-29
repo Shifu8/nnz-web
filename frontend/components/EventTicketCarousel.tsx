@@ -28,7 +28,7 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     id: "trap-loud",
     title: "TRAP LOUD",
     subtitle: "YAN BLOCK EXPERIENCE",
-    city: "San Juan",
+    city: "Loja",
     dateLabel: "18 JUN 2026",
     startsAt: "2026-06-18T21:00:00-05:00",
     poster: "/images/yan_block_card_bg.png",
@@ -43,14 +43,14 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     description: "La escena subterránea cobra vida. Trap latino oscuro, bajo retumbante y energía inagotable. Luces de escenario crudas, beats pesados y acceso restringido.",
     // Extended editorial data
     organizer: "DAWGS",
-    venue: "Venue Privado · San Juan",
+    venue: "Venue Privado · Loja",
     time: "9:00 PM",
     category: "Trap / Urban",
     ageRestriction: "18+",
     status: "available",
     about: [
       "La escena subterránea cobra vida en una noche diseñada para los que entienden el movimiento. TRAP LOUD es más que un concierto — es una experiencia que combina trap latino oscuro, bajo retumbante y energía inagotable en un venue exclusivo.",
-      "Acceso estrictamente limitado. Beats pesados, luces de escenario crudas y una atmósfera que no encontrarás en ningún otro lugar. Esta es la experiencia DAWGS."
+      "Acceso strictly limitado. Beats pesados, luces de escenario crudas y una atmósfera que no encontrarás en ningún otro lugar. Esta es la experiencia DAWGS."
     ],
     detailedLineup: [
       { name: "Yan Block", role: "Headliner", image: "/images/yan_block_artist_1779161408288.png" },
@@ -84,7 +84,7 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     id: "dawg-night",
     title: "DAWG NIGHT",
     subtitle: "OMAR COURTZ EXPERIENCE",
-    city: "Miami",
+    city: "Loja",
     dateLabel: "15 AGO 2026",
     startsAt: "2026-08-15T22:00:00-05:00",
     poster: "/images/omar_courtz_card_bg.jpg",
@@ -99,14 +99,14 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     description: "Voz única y flows de la calle. Autenticidad reggaetonera premium en una atmósfera brutal de luz cenital diseñada para vivirse al límite.",
     // Extended editorial data
     organizer: "DAWGS",
-    venue: "Venue TBA · Miami, FL",
+    venue: "Venue TBA · Loja",
     time: "10:00 PM",
     category: "Reggaetón / Urban",
     ageRestriction: "18+",
     status: "coming-soon",
     about: [
       "DAWG NIGHT es la experiencia definitiva de Omar Courtz en vivo. Una noche donde la autenticidad reggaetonera se fusiona con producción de nivel mundial en un ambiente íntimo y exclusivo.",
-      "Voz única, flows de la calle y una energía que solo se encuentra en los mejores shows de Miami. Acceso limitado. La lista se cierra pronto.",
+      "Voz única, flows de la calle y una energía que solo se encuentra en los mejores shows de Loja. Acceso limitado. La lista se cierra pronto.",
     ],
     detailedLineup: [
       { name: "Omar Courtz", role: "Headliner", image: "/images/omar_courtz_card_bg.jpg" },
@@ -140,7 +140,7 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     id: "urban-drop",
     title: "URBAN DROP",
     subtitle: "RAUW & BAD BUNNY",
-    city: "Medellín",
+    city: "Loja",
     dateLabel: "10 DIC 2026",
     startsAt: "2026-12-10T20:00:00-05:00",
     poster: "/images/rauw_alejandro_card_bg.png",
@@ -155,14 +155,14 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     description: "Energía sin límites y orgullo latino. Una experiencia masiva, de alto contraste y estética editorial que redefine la cultura urbana a gran escala.",
     // Extended editorial data
     organizer: "DAWGS × Wave Music",
-    venue: "Arena Medellín",
+    venue: "Arena Loja",
     time: "8:00 PM",
     category: "Festival / Urban",
     ageRestriction: "All Ages",
     status: "coming-soon",
     about: [
-      "El festival urbano del año llega a Medellín. URBAN DROP reúne a los artistas más grandes del movimiento latino en una producción de escala mundial.",
-      "Una experiencia masiva de alto contraste y estética editorial que redefine la cultura urbana. Dos escenarios, producción internacional y energía sin límites en la ciudad de la eterna primavera.",
+      "El festival urbano del año llega a Loja. URBAN DROP reúne a los artistas más grandes del movimiento latino en una producción de escala mundial.",
+      "Una experiencia masiva de alto contraste y estética editorial que redefine la cultura urbana. Dos escenarios, producción internacional y energía sin límites en la ciudad de Loja.",
     ],
     detailedLineup: [
       { name: "Bad Bunny", role: "Headliner", image: "/images/trap_loud_anuel_1778966415162.png" },
@@ -405,13 +405,11 @@ export default function EventTicketCarousel({
                   </div>
 
                   {/* Horizontal dividers & metadata details */}
-                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/5 text-zinc-400">
-                    <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-wider">
-                      <Calendar className="h-3 w-3 text-white/40" />
+                  <div className="flex items-center gap-4 mt-3 pt-3 text-zinc-400">
+                    <div className="flex items-center text-[8px] font-black uppercase tracking-wider">
                       <span>{event.dateLabel.split(" ")[0]} {event.dateLabel.split(" ")[1]}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-wider">
-                      <MapPin className="h-3 w-3 text-white/40" />
+                    <div className="flex items-center text-[8px] font-black uppercase tracking-wider">
                       <span>{event.city}</span>
                     </div>
                   </div>
