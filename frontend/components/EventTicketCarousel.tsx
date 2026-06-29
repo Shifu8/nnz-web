@@ -206,6 +206,16 @@ export default function EventTicketCarousel({
 
   // Mouse tilt parallax offsets
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
+  const [radius, setRadius] = useState(320);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setRadius(window.innerWidth > 1024 ? 380 : window.innerWidth > 768 ? 340 : 320);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -285,7 +295,7 @@ export default function EventTicketCarousel({
     : "transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease";
 
   return (
-    <div className="relative w-full h-[520px] flex items-center justify-center select-none overflow-visible">
+    <div className="relative w-full h-[520px] md:h-[560px] lg:h-[620px] flex items-center justify-center select-none overflow-visible">
       {/* 3D Scene Wrapper */}
       <div 
         className="relative w-full h-full flex items-center justify-center overflow-visible"
@@ -309,7 +319,7 @@ export default function EventTicketCarousel({
           const angle = baseAngle + dragOffset;
           const rad = (angle * Math.PI) / 180;
           
-          const radius = 320;
+          // using responsive state radius
           const translateX = Math.sin(rad) * radius;
           const translateZ = Math.cos(rad) * radius - radius + (diff === 0 ? 60 : 0);
           
@@ -333,7 +343,7 @@ export default function EventTicketCarousel({
                   setActiveIndex(idx);
                 }
               }}
-              className={`absolute w-[290px] h-[410px] md:w-[310px] md:h-[440px] rounded-[32px] overflow-hidden cursor-pointer origin-center transition-all animate-float ${
+              className={`absolute w-[290px] h-[410px] md:w-[330px] md:h-[460px] lg:w-[370px] lg:h-[520px] rounded-[32px] overflow-hidden cursor-pointer origin-center transition-all animate-float ${
                 diff === 0 && isTicketPulse ? "ticket-pulse-active" : ""
               }`}
               style={{
@@ -359,7 +369,7 @@ export default function EventTicketCarousel({
                     src={event.poster}
                     alt={event.title}
                     fill
-                    sizes="(max-width: 768px) 290px, 310px"
+                    sizes="(max-width: 768px) 290px, (max-width: 1024px) 330px, 370px"
                     className="object-cover grayscale contrast-[1.15] brightness-[0.82] transition duration-1000 group-hover:scale-105"
                     priority={idx === 0}
                   />
