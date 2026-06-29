@@ -739,3 +739,126 @@ body {
 .animate-glow-backdrop {
   animation: backdrop-glow-breath 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
 }
+
+/* ─── Cinematic Overlay Animations ─── */
+@keyframes overlayRevealIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
+    filter: blur(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0px);
+  }
+}
+
+@keyframes overlayRevealOut {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.97);
+    filter: blur(8px);
+  }
+}
+
+@keyframes contentStaggerFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+@layer utilities {
+  .animate-overlay-in {
+    animation: overlayRevealIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-overlay-out {
+    animation: overlayRevealOut 0.35s cubic-bezier(0.4, 0, 1, 1) forwards;
+  }
+
+  .animate-content-stagger {
+    animation: contentStaggerFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+  }
+
+  .animate-skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,0.03) 25%,
+      rgba(255,255,255,0.07) 50%,
+      rgba(255,255,255,0.03) 75%
+    );
+    background-size: 400px 100%;
+    animation: skeletonShimmer 1.6s ease-in-out infinite;
+  }
+
+  /* Premium horizontal carousel container */
+  .merch-carousel {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-bottom: 4px;
+  }
+
+  .merch-carousel::-webkit-scrollbar {
+    display: none;
+  }
+
+  .merch-carousel > * {
+    scroll-snap-align: start;
+  }
+
+  /* Section divider */
+  .section-divider {
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgba(255, 255, 255, 0.06) 20%,
+      rgba(255, 255, 255, 0.06) 80%,
+      transparent
+    );
+  }
+
+  /* Timeline dot */
+  .timeline-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    box-shadow: 0 0 0 2px #000, 0 0 0 3px rgba(255,255,255,0.15);
+    flex-shrink: 0;
+  }
+
+  /* Hide scrollbar — used in modal/overlay scroll containers */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}

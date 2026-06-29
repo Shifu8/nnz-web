@@ -31,6 +31,7 @@ import TicketRecovery from "@/frontend/features/access-drop/TicketRecovery";
 import OutfitBuilderSection from "@/frontend/features/merch/OutfitBuilderSection";
 import StaffModal from "@/frontend/features/staff/StaffModal";
 import EventTicketCarousel, { CAROUSEL_EVENTS } from "@/frontend/components/EventTicketCarousel";
+import EventDetailOverlay from "@/frontend/features/events/EventDetailOverlay";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
 import { events as fallbackEvents } from "@/frontend/services/dawgsData";
 import { useHomepageConfig } from "@/frontend/hooks/useHomepageConfig";
@@ -68,6 +69,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   const [isTicketPulse, setIsTicketPulse] = useState(false);
   const [isRecoveryPulse, setIsRecoveryPulse] = useState(false);
   const [showEventModal, setShowEventModal] = useState(false);
+  const [showDetailOverlay, setShowDetailOverlay] = useState(false);
   const [selectedCarouselEvent, setSelectedCarouselEvent] = useState<Event>(CAROUSEL_EVENTS[0]);
   
   // Custom states for 3D Carousel & Premium visual effects
@@ -317,7 +319,14 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
   const onViewDetails = (event: Event) => {
     setSelectedCarouselEvent(event);
-    setShowEventModal(true);
+    setShowDetailOverlay(true);
+  };
+
+  const onSelectRelatedEvent = (event: Event) => {
+    setSelectedCarouselEvent(event);
+    // Also update the carousel index if event exists in carousel
+    const idx = CAROUSEL_EVENTS.findIndex(e => e.id === event.id);
+    if (idx !== -1) setActiveIndex(idx);
   };
 
   return (
@@ -583,7 +592,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 onClick={() => onViewDetails(activeEvent)}
                 className="flex h-12 px-6 items-center justify-center rounded-full border border-white/10 bg-black/20 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-300 transition hover:border-white/30 hover:bg-white/5 hover:text-white"
               >
-                Ver Evento
+                Ver Detalle
               </button>
               
               <div className="relative">
@@ -750,14 +759,21 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[150] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+            transition={{ duration: 0.35 }}
+            className="fixed inset-0 z-[150] flex items-end md:items-center justify-center bg-black/90 backdrop-blur-xl"
           >
             <motion.div
-              initial={{ scale: 0.95, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 20 }}
-              className="relative max-h-[92vh] w-full max-w-[980px] overflow-y-auto rounded-[34px] border border-white/[0.08] bg-black shadow-[0_30px_120px_rgba(0,0,0,0.7)]"
+              initial={{ y: 60, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 60, opacity: 0 }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+              className="relative w-full h-[96dvh] md:h-[92vh] md:max-w-[1020px] md:mx-4 overflow-hidden flex flex-col rounded-t-[32px] md:rounded-[36px] border border-white/[0.07] bg-[#060606] shadow-[0_-20px_80px_rgba(0,0,0,0.8)] md:shadow-[0_40px_120px_rgba(0,0,0,0.9)]"
             >
+              {/* Drag handle — mobile only */}
+              <div className="md:hidden flex justify-center pt-3 pb-1 shrink-0">
+                <div className="h-1 w-10 rounded-full bg-white/20" />
+              </div>
+
               <button
                 onClick={() => {
                   if (accessDropRef.current?.isSuccess) {
@@ -767,102 +783,43 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                   setIsTicketModalOpen(false);
                 }}
                 aria-label="Cerrar compra"
-                className="absolute right-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/70 text-[9px] font-black uppercase tracking-[0.12em] text-white/60 transition hover:text-white"
+                className="absolute right-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/70 text-white/60 transition hover:text-white hover:border-white/25"
               >
-                Cerrar
+                <X className="h-4 w-4" />
               </button>
-              <AccessDrop
-                ref={accessDropRef}
-                onFarewell={(name) => {
-                  setFarewellName(name);
-                  setShowFarewell(true);
-                }}
-                event={selectedCarouselEvent}
-              />
+
+              {/* Scrollable form content */}
+              <div className="flex-1 overflow-y-auto no-scrollbar">
+                <AccessDrop
+                  ref={accessDropRef}
+                  onFarewell={(name) => {
+                    setFarewellName(name);
+                    setShowFarewell(true);
+                  }}
+                  event={selectedCarouselEvent}
+                />
+              </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Event Details Modal Dialog */}
+      {/* Premium Cinematic Event Detail Overlay */}
       <AnimatePresence>
-        {showEventModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md"
-          >
-            <motion.div
-              initial={{ scale: 0.95, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 20 }}
-              className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[28px] border border-white/[0.08] bg-black shadow-[0_30px_120px_rgba(0,0,0,0.7)]"
-            >
-              <button
-                onClick={() => setShowEventModal(false)}
-                className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/70 text-[7px] font-black uppercase tracking-[0.15em] text-white/60 transition hover:text-white"
-              >
-                Cerrar
-              </button>
-
-              <div className="relative aspect-[4/3] overflow-hidden rounded-t-[28px] bg-zinc-900">
-                <img
-                  src={selectedCarouselEvent.poster}
-                  alt="Lugar del evento"
-                  className="h-full w-full object-cover transition-opacity duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 to-transparent" />
-              </div>
-
-              <div className="p-6 space-y-5">
-                <div>
-                  <h3 className="text-lg font-black uppercase tracking-wider text-white">
-                    {selectedCarouselEvent.city}
-                  </h3>
-                  <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-400">Casa privada · Dirección confirmada al comprar</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
-                    <p className="text-[7px] font-black uppercase tracking-wider text-zinc-300">Photo spot</p>
-                  </div>
-                  <div className="flex flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
-                    <p className="text-[7px] font-black uppercase tracking-wider text-zinc-300">Sonido envolvente</p>
-                  </div>
-                  <div className="flex flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
-                    <p className="text-[7px] font-black uppercase tracking-wider text-zinc-300">Barra libre</p>
-                  </div>
-                  <div className="flex flex-col items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-center">
-                    <p className="text-[7px] font-black uppercase tracking-wider text-zinc-300">Acceso controlado</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <a
-                    href={`https://maps.google.com/?q=${selectedCarouselEvent.city}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-white text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200"
-                  >
-                    Abrir en Google Maps
-                  </a>
-                  <button
-                    onClick={() => {
-                      navigator.share?.({
-                        title: `DAWGS - ${selectedCarouselEvent.title}`,
-                        text: `${selectedCarouselEvent.title} · ${selectedCarouselEvent.dateLabel} · ${selectedCarouselEvent.city}`,
-                        url: window.location.href
-                      });
-                    }}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300 transition hover:border-white/30 hover:text-white"
-                  >
-                    Compartir evento
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
+        {showDetailOverlay && (
+          <EventDetailOverlay
+            event={selectedCarouselEvent}
+            allEvents={CAROUSEL_EVENTS}
+            onClose={() => setShowDetailOverlay(false)}
+            onBuy={(event) => {
+              setShowDetailOverlay(false);
+              onBuy(event);
+            }}
+            onSelectEvent={(event) => {
+              onSelectRelatedEvent(event);
+              setSelectedCarouselEvent(event);
+            }}
+          />
         )}
       </AnimatePresence>
 

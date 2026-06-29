@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import Image from "next/image";
-import { MapPin, Calendar, Compass, ArrowRight, ChevronLeft, ChevronRight, DollarSign } from "lucide-react";
+import { MapPin, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Event } from "@/frontend/types/domain";
 
 export interface CarouselEvent extends Event {
@@ -40,7 +40,45 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     badge: "LIVE ACCESS",
     accentColor: "#ffffff",
     useFullBackground: true,
-    description: "La escena subterránea cobra vida. Trap latino oscuro, bajo retumbante y energía inagotable. Luces de escenario crudas, beats pesados y acceso restringido."
+    description: "La escena subterránea cobra vida. Trap latino oscuro, bajo retumbante y energía inagotable. Luces de escenario crudas, beats pesados y acceso restringido.",
+    // Extended editorial data
+    organizer: "DAWGS",
+    venue: "Venue Privado · San Juan",
+    time: "9:00 PM",
+    category: "Trap / Urban",
+    ageRestriction: "18+",
+    status: "available",
+    about: [
+      "La escena subterránea cobra vida en una noche diseñada para los que entienden el movimiento. TRAP LOUD es más que un concierto — es una experiencia que combina trap latino oscuro, bajo retumbante y energía inagotable en un venue exclusivo.",
+      "Acceso estrictamente limitado. Beats pesados, luces de escenario crudas y una atmósfera que no encontrarás en ningún otro lugar. Esta es la experiencia DAWGS."
+    ],
+    detailedLineup: [
+      { name: "Yan Block", role: "Headliner", image: "/images/yan_block_artist_1779161408288.png" },
+      { name: "ROA", role: "Supporting", image: "/images/roa_artist_1779161704881.png" },
+      { name: "Omar Courtz", role: "Guest", image: "/images/omar_courtz_card_bg.jpg" },
+    ],
+    schedule: [
+      { time: "8:00 PM", label: "Puertas Abren" },
+      { time: "9:00 PM", label: "Apertura" },
+      { time: "10:30 PM", label: "Show Principal" },
+      { time: "1:00 AM", label: "After Party" },
+    ],
+    importantInfo: [
+      { icon: "🎫", title: "Entrada", description: "Presenta tu acceso digital al ingresar. No se aceptan entradas físicas." },
+      { icon: "🔞", title: "Edad Mínima", description: "Evento exclusivo para mayores de 18 años. ID requerida." },
+      { icon: "🔒", title: "Seguridad", description: "Revisión de seguridad en la entrada. Prohibido ingresar con objetos peligrosos." },
+      { icon: "📸", title: "Fotografía", description: "Cámaras profesionales no permitidas. Teléfonos móviles bienvenidos." },
+    ],
+    socialLinks: {
+      instagram: "https://instagram.com/yanblock",
+      tiktok: "https://tiktok.com/@yanblock",
+      spotify: "https://open.spotify.com/artist/yanblock",
+    },
+    merch: [
+      { id: "tl-hoodie", name: "TRAP LOUD Hoodie", category: "Hoodie", price: "$65", image: "/images/dawgs-studio-fit-front.png" },
+      { id: "tl-tee", name: "Block Oversized Tee", category: "T-Shirt", price: "$35", image: "/images/dawgs-studio-portrait.png" },
+      { id: "tl-cap", name: "DAWGS Cap", category: "Accessory", price: "$28", image: "/images/dawgs-studio-rack.png" },
+    ],
   },
   {
     id: "dawg-night",
@@ -51,14 +89,52 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     startsAt: "2026-08-15T22:00:00-05:00",
     poster: "/images/omar_courtz_card_bg.jpg",
     featuredImage: "/images/omar_courtz_card_bg.jpg",
-    miniImage: "/images/omar_courtz_artist_1779161689015.png",
+    miniImage: "/images/omar_courtz_card_bg.jpg",
     lineup: ["Omar Courtz", "Anuel AA", "y más"],
     price: 15,
     currency: "USD",
     badge: "TRENDING PRESET",
     accentColor: "#ffffff",
     useFullBackground: true,
-    description: "Voz única y flows de la calle. Autenticidad reggaetonera premium en una atmósfera brutal de luz cenital diseñada para vivirse al límite."
+    description: "Voz única y flows de la calle. Autenticidad reggaetonera premium en una atmósfera brutal de luz cenital diseñada para vivirse al límite.",
+    // Extended editorial data
+    organizer: "DAWGS",
+    venue: "Venue TBA · Miami, FL",
+    time: "10:00 PM",
+    category: "Reggaetón / Urban",
+    ageRestriction: "18+",
+    status: "coming-soon",
+    about: [
+      "DAWG NIGHT es la experiencia definitiva de Omar Courtz en vivo. Una noche donde la autenticidad reggaetonera se fusiona con producción de nivel mundial en un ambiente íntimo y exclusivo.",
+      "Voz única, flows de la calle y una energía que solo se encuentra en los mejores shows de Miami. Acceso limitado. La lista se cierra pronto.",
+    ],
+    detailedLineup: [
+      { name: "Omar Courtz", role: "Headliner", image: "/images/omar_courtz_card_bg.jpg" },
+      { name: "Anuel AA", role: "Supporting", image: "/images/trap_loud_anuel_1778966415162.png" },
+    ],
+    schedule: [
+      { time: "9:00 PM", label: "Puertas Abren" },
+      { time: "10:00 PM", label: "Opening Act" },
+      { time: "11:30 PM", label: "Omar Courtz" },
+    ],
+    importantInfo: [
+      { icon: "🎫", title: "Entrada", description: "Acceso digital verificado. Confirmación por email." },
+      { icon: "🔞", title: "Edad Mínima", description: "18+ requerido. Presentar identificación válida." },
+      { icon: "🅿️", title: "Parking", description: "Estacionamiento disponible en el venue. Capacidad limitada." },
+      { icon: "♿", title: "Accesibilidad", description: "Venue accesible para personas con movilidad reducida." },
+    ],
+    socialLinks: {
+      instagram: "https://instagram.com/omarcourtz",
+      tiktok: "https://tiktok.com/@omarcourtz",
+      spotify: "https://open.spotify.com/artist/omarcourtz",
+      youtube: "https://youtube.com/@omarcourtz",
+    },
+    merch: [
+      { id: "dn-hoodie", name: "DAWG NIGHT Hoodie", category: "Hoodie", price: "$75", image: "/images/dawgs-studio-fit-front.png" },
+      { id: "dn-jersey", name: "Courtz Jersey", category: "Jersey", price: "$85", image: "/images/dawgs-studio-portrait.png" },
+      { id: "dn-vinyl", name: "Omar Courtz Vinyl", category: "Vinyl", price: "$45", image: "/images/dawgs-studio-rack.png" },
+      { id: "dn-poster", name: "DAWG NIGHT Poster", category: "Poster", price: "$25", image: "/images/dawgs-studio-couch.png" },
+    ],
   },
   {
     id: "urban-drop",
@@ -76,8 +152,48 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     badge: "COLLECTIBLE PASS",
     accentColor: "#ffffff",
     useFullBackground: true,
-    description: "Energía sin límites y orgullo latino. Una experiencia masiva, de alto contraste y estética editorial que redefine la cultura urbana a gran escala."
-  }
+    description: "Energía sin límites y orgullo latino. Una experiencia masiva, de alto contraste y estética editorial que redefine la cultura urbana a gran escala.",
+    // Extended editorial data
+    organizer: "DAWGS × Wave Music",
+    venue: "Arena Medellín",
+    time: "8:00 PM",
+    category: "Festival / Urban",
+    ageRestriction: "All Ages",
+    status: "coming-soon",
+    about: [
+      "El festival urbano del año llega a Medellín. URBAN DROP reúne a los artistas más grandes del movimiento latino en una producción de escala mundial.",
+      "Una experiencia masiva de alto contraste y estética editorial que redefine la cultura urbana. Dos escenarios, producción internacional y energía sin límites en la ciudad de la eterna primavera.",
+    ],
+    detailedLineup: [
+      { name: "Bad Bunny", role: "Headliner", image: "/images/trap_loud_anuel_1778966415162.png" },
+      { name: "Rauw Alejandro", role: "Headliner", image: "/images/rauw_alejandro_card_bg.png" },
+      { name: "ROA", role: "Supporting", image: "/images/roa_artist_1779161704881.png" },
+    ],
+    schedule: [
+      { time: "6:00 PM", label: "Puertas Abren" },
+      { time: "7:00 PM", label: "Apertura" },
+      { time: "8:00 PM", label: "Rauw Alejandro" },
+      { time: "10:00 PM", label: "Bad Bunny" },
+      { time: "12:30 AM", label: "After Party Oficial" },
+    ],
+    importantInfo: [
+      { icon: "🎫", title: "Política de Tickets", description: "No reembolsable. Transferible con 48h de anticipación." },
+      { icon: "🔒", title: "Seguridad", description: "Revista de seguridad estricta. Coopera con el equipo de seguridad." },
+      { icon: "🚗", title: "Transporte", description: "Se recomienda transporte público. Parking limitado disponible." },
+      { icon: "♿", title: "Accesibilidad", description: "Áreas accesibles disponibles. Contacta al venue con anticipación." },
+      { icon: "📷", title: "Fotografía", description: "Cámaras profesionales permitidas con credencial de prensa." },
+    ],
+    socialLinks: {
+      instagram: "https://instagram.com/rauw_alejandro",
+      spotify: "https://open.spotify.com/artist/rauwalejandro",
+      youtube: "https://youtube.com/@rauwalejandro",
+      website: "https://dawgs.com",
+    },
+    merch: [
+      { id: "ud-tee", name: "URBAN DROP Tee", category: "T-Shirt", price: "$40", image: "/images/dawgs-studio-fit-front.png" },
+      { id: "ud-hoodie", name: "URBAN DROP Hoodie", category: "Hoodie", price: "$70", image: "/images/dawgs-studio-portrait.png" },
+    ],
+  },
 ];
 
 export default function EventTicketCarousel({
@@ -259,6 +375,19 @@ export default function EventTicketCarousel({
                       ${event.price} <span className="text-zinc-500 font-bold text-[8px]">{event.currency}</span>
                     </span>
                   </div>
+
+                  {/* Status badge */}
+                  {event.status && (
+                    <div className={`absolute top-3 right-3 rounded-full px-2.5 py-1 text-[7px] font-black uppercase tracking-wider backdrop-blur-md ${
+                      event.status === "available" 
+                        ? "bg-white/10 border border-white/20 text-white" 
+                        : event.status === "sold-out" 
+                        ? "bg-red-950/60 border border-red-500/30 text-red-400"
+                        : "bg-zinc-900/60 border border-white/10 text-zinc-400"
+                    }`}>
+                      {event.status === "available" ? "Disponible" : event.status === "sold-out" ? "Agotado" : "Próximamente"}
+                    </div>
+                  )}
                 </div>
 
                 {/* Event info details */}

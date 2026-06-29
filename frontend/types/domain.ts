@@ -1,13 +1,17 @@
 /**
  * Autor: Brandon Medina
  * Fecha: 11/05/2026
- * DescripciÃ³n: Tipos centrales para eventos, artistas, merch y rewards DAWGS.
+ * Descripción: Tipos centrales para eventos, artistas, merch y rewards DAWGS.
  */
 
 export type SocialLinks = {
-  instagram: string;
+  instagram?: string;
   tiktok?: string;
   whatsapp?: string;
+  spotify?: string;
+  appleMusic?: string;
+  youtube?: string;
+  website?: string;
 };
 
 export type Artist = {
@@ -17,6 +21,31 @@ export type Artist = {
   image: string;
   socials: SocialLinks;
   description?: string;
+};
+
+export type LineupArtist = {
+  name: string;
+  role: "Headliner" | "Supporting" | "Guest" | "DJ" | "Live Act" | "Surprise";
+  image?: string;
+};
+
+export type ScheduleItem = {
+  time: string;
+  label: string;
+};
+
+export type InfoCard = {
+  icon: string;
+  title: string;
+  description: string;
+};
+
+export type MerchProduct = {
+  id: string;
+  name: string;
+  category: string;
+  price: string;
+  image?: string;
 };
 
 export type Event = {
@@ -29,6 +58,20 @@ export type Event = {
   poster: string;
   lineup: string[];
   description: string;
+
+  // Extended editorial fields
+  organizer?: string;
+  venue?: string;
+  time?: string;
+  category?: string;
+  ageRestriction?: string;
+  status?: "available" | "sold-out" | "coming-soon";
+  about?: string[];
+  detailedLineup?: LineupArtist[];
+  schedule?: ScheduleItem[];
+  importantInfo?: InfoCard[];
+  socialLinks?: SocialLinks;
+  merch?: MerchProduct[];
 };
 
 export type MerchItem = {

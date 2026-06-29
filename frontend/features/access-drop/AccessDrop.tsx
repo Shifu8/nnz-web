@@ -15,6 +15,7 @@ import {
   getEmailSuggestion,
 } from "@/frontend/utils/emailInput";
 import { validateReceiptFileMetadata } from "@/lib/access-drop/fileValidation";
+import type { CarouselEvent } from "@/frontend/components/EventTicketCarousel";
 
 const EVENT = events[0];
 const PRICE_PER_TICKET = 10;
@@ -279,7 +280,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
 
 
   return (
-    <section id="ticket-flow" ref={scope} className="relative z-10 mx-auto flex w-full justify-center px-3 py-8 sm:px-4 md:py-14">
+    <section id="ticket-flow" ref={scope} className="relative z-10 mx-auto flex w-full justify-center px-4 pt-6 pb-8 md:px-6 md:py-10">
       <div className="relative w-full max-w-6xl">
         {dropState === "register" && (
           <div className="relative z-10 w-full max-w-5xl mx-auto">
@@ -293,14 +294,45 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
               </button>
             )}
 
-            {/* Header */}
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-black text-white tracking-widest uppercase italic bg-clip-text text-transparent bg-gradient-to-r from-pink-400 via-fuchsia-400 to-zinc-200">
-                {currentEvent.title}
-              </h2>
-              <p className="text-[10px] uppercase tracking-[0.4em] text-pink-400 font-bold mt-1">
-                {currentEvent.subtitle} • COMPRA SEGURA
-              </p>
+            {/* ── LUXURY HEADER: Cinematic Event Poster Card ── */}
+            <div className="relative overflow-hidden rounded-[24px] border border-white/[0.07] mb-7" style={{ minHeight: "140px" }}>
+              {/* Background artwork */}
+              {(currentEvent as CarouselEvent).poster && (
+                <img
+                  src={(currentEvent as CarouselEvent).poster}
+                  alt={currentEvent.title}
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover object-center grayscale brightness-[0.2] scale-105"
+                />
+              )}
+              {/* Gradient overlays */}
+              <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              {/* Content */}
+              <div className="relative p-6 sm:p-8 flex items-center justify-between gap-6">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[7px] font-black uppercase tracking-[0.5em] text-zinc-500 mb-2">DAWGS · Compra Segura</p>
+                  <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight leading-none">
+                    {currentEvent.title}
+                  </h2>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-400 mt-1.5">
+                    {currentEvent.subtitle}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 mt-4">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/60 px-3 py-1 text-[7px] font-black uppercase tracking-[0.2em] text-zinc-400 backdrop-blur-md">
+                      📍 {currentEvent.city}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/60 px-3 py-1 text-[7px] font-black uppercase tracking-[0.2em] text-zinc-400 backdrop-blur-md">
+                      📅 {currentEvent.dateLabel}
+                    </span>
+                  </div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-[7px] font-black uppercase tracking-[0.4em] text-zinc-500 mb-1">Por entrada</p>
+                  <p className="text-4xl sm:text-5xl font-black text-white tabular-nums">${pricePerTicket}</p>
+                  <p className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest mt-0.5">USD</p>
+                </div>
+              </div>
             </div>
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -308,10 +340,10 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
               <div className="lg:col-span-6 space-y-6">
                 
                 {/* 1. Registro de Datos */}
-                <div className="rounded-2xl border border-white/10 bg-black/40 p-5 space-y-4 backdrop-blur-2xl">
-                  <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-pink-500/20 text-[10px] font-black text-pink-300">1</span>
-                    <h3 className="text-xs font-black uppercase tracking-widest text-white">Tus Datos</h3>
+                <div className="rounded-2xl border border-white/[0.07] bg-[#0a0a0a] p-5 space-y-4">
+                  <div className="flex items-center gap-3 border-b border-white/[0.05] pb-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[9px] font-black text-white">1</span>
+                    <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-white">Tus Datos</h3>
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -323,7 +355,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                         maxLength={24}
                         autoComplete="given-name"
                         placeholder="EJ. AXEL"
-                        className="w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3.5 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-pink-400/50 transition"
+                        className="w-full rounded-xl border border-white/[0.07] bg-black/60 px-4 py-3.5 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-white/20 focus:bg-black/80 transition"
                         value={formData.firstName}
                         onChange={(e) => setFormData({ ...formData, firstName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "").slice(0, 24) })}
                       />
@@ -336,7 +368,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                         maxLength={24}
                         autoComplete="family-name"
                         placeholder="EJ. PEREZ"
-                        className="w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3.5 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-pink-400/50 transition"
+                        className="w-full rounded-xl border border-white/[0.07] bg-black/60 px-4 py-3.5 text-xs font-bold text-white placeholder-zinc-800 outline-none focus:border-white/20 focus:bg-black/80 transition"
                         value={formData.lastName}
                         onChange={(e) => setFormData({ ...formData, lastName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "").slice(0, 24) })}
                       />
@@ -345,7 +377,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
 
                   <div className="space-y-1.5">
                     <p className="ml-1 text-[9px] uppercase tracking-widest text-zinc-500 font-bold">Correo Electrónico</p>
-                    <div className="flex items-center rounded-xl border border-white/10 bg-black/60 px-3.5 transition focus-within:border-pink-400/50">
+                    <div className="flex items-center rounded-xl border border-white/[0.07] bg-black/60 px-3.5 transition focus-within:border-white/20 focus-within:bg-black/80">
                       <input
                         required
                         type="email"
@@ -391,10 +423,10 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                 </div>
 
                 {/* 2. Diseño de Entrada */}
-                <div className="rounded-2xl border border-white/10 bg-black/40 p-5 space-y-4 backdrop-blur-2xl">
-                  <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-pink-500/20 text-[10px] font-black text-pink-300">2</span>
-                    <h3 className="text-xs font-black uppercase tracking-widest text-white">Diseño de Entrada</h3>
+                <div className="rounded-2xl border border-white/[0.07] bg-[#0a0a0a] p-5 space-y-4">
+                  <div className="flex items-center gap-3 border-b border-white/[0.05] pb-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[9px] font-black text-white">2</span>
+                    <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-white">Diseño de Entrada</h3>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -437,10 +469,10 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                 </div>
 
                 {/* 3. Cantidad de Entradas */}
-                <div className="rounded-2xl border border-white/10 bg-black/40 p-5 space-y-4 backdrop-blur-2xl">
-                  <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-pink-500/20 text-[10px] font-black text-pink-300">3</span>
-                    <h3 className="text-xs font-black uppercase tracking-widest text-white">Cantidad</h3>
+                <div className="rounded-2xl border border-white/[0.07] bg-[#0a0a0a] p-5 space-y-4">
+                  <div className="flex items-center gap-3 border-b border-white/[0.05] pb-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[9px] font-black text-white">3</span>
+                    <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-white">Cantidad</h3>
                   </div>
 
                   <div className="flex items-center justify-between gap-6">
@@ -468,13 +500,13 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
               </div>
 
               {/* RIGHT COLUMN: Pago y Comprobante */}
-              <div className="lg:col-span-6 space-y-6">
+              <div className="lg:col-span-6 space-y-5">
 
                 {/* 4. Método de Pago */}
-                <div className="rounded-2xl border border-white/10 bg-black/40 p-5 space-y-4 backdrop-blur-2xl">
-                  <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-pink-500/20 text-[10px] font-black text-pink-300">4</span>
-                    <h3 className="text-xs font-black uppercase tracking-widest text-white">Método de Pago</h3>
+                <div className="rounded-2xl border border-white/[0.07] bg-[#0a0a0a] p-5 space-y-4">
+                  <div className="flex items-center gap-3 border-b border-white/[0.05] pb-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[9px] font-black text-white">4</span>
+                    <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-white">Método de Pago</h3>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -532,10 +564,10 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                 </div>
 
                 {/* 5. Comprobante de Pago */}
-                <div className="rounded-2xl border border-white/10 bg-black/40 p-5 space-y-4 backdrop-blur-2xl">
-                  <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-pink-500/20 text-[10px] font-black text-pink-300">5</span>
-                    <h3 className="text-xs font-black uppercase tracking-widest text-white">Subir Comprobante</h3>
+                <div className="rounded-2xl border border-white/[0.07] bg-[#0a0a0a] p-5 space-y-4">
+                  <div className="flex items-center gap-3 border-b border-white/[0.05] pb-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[9px] font-black text-white">5</span>
+                    <h3 className="text-[9px] font-black uppercase tracking-[0.3em] text-white">Subir Comprobante</h3>
                   </div>
 
                   <input
@@ -628,27 +660,45 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                   <TurnstileWidget
                     action="ticket_upload"
                     variant="visible"
-                    label="Captcha de registro"
+                    label="Verificación de seguridad Cloudflare"
                     resetKey={turnstileResetKey}
                     onVerify={setTurnstileToken}
                     onExpire={() => setTurnstileToken("")}
                     onError={() => setTurnstileToken("")}
                   />
 
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || !selectedFile}
-                    className="glass-action glass-action-primary w-full"
-                    style={{ "--glass-action-height": "48px", "--glass-action-text": "0.85rem" } as CSSProperties}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        PROCESANDO...
-                      </>
-                    ) : (
-                      <>COMPRAR ENTRADA — ${totalPrice.toFixed(2)}</>
+                  {/* ── PREMIUM CTA: Gated by Turnstile ── */}
+                  <div className={`relative overflow-hidden rounded-2xl transition-all duration-500 ${
+                    !selectedFile
+                      ? "opacity-50"
+                      : hasTurnstileSiteKey("visible") && !turnstileToken
+                      ? "opacity-60"
+                      : "opacity-100"
+                  }`}>
+                    {/* Subtle shimmer on hover when ready */}
+                    {selectedFile && (!hasTurnstileSiteKey("visible") || turnstileToken) && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.06] to-transparent -translate-x-full hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
                     )}
-                  </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting || !selectedFile || (hasTurnstileSiteKey("visible") && !turnstileToken)}
+                      className="relative w-full flex h-14 items-center justify-center gap-3 rounded-2xl bg-white text-[9px] font-black uppercase tracking-[0.25em] text-black transition-all duration-300 hover:bg-zinc-100 disabled:cursor-not-allowed"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <span className="h-4 w-4 rounded-full border-2 border-zinc-400/30 border-t-zinc-700 animate-spin" />
+                          PROCESANDO...
+                        </>
+                      ) : hasTurnstileSiteKey("visible") && !turnstileToken ? (
+                        <>
+                          <span className="h-1.5 w-1.5 rounded-full bg-zinc-500" />
+                          COMPLETA LA VERIFICACIÓN
+                        </>
+                      ) : (
+                        <>COMPRAR ENTRADA — ${totalPrice.toFixed(2)}</>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
               </div>
