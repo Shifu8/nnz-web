@@ -72,17 +72,7 @@ export default function OutfitBuilderSection() {
             </div>
           </div>
 
-          {/* Product Tag Indicators matching layout borders */}
-          <div className="flex flex-wrap gap-1.5 justify-end">
-            {["Drop privado", "Diseño Studio", "Edición 01"].map((label) => (
-              <span
-                key={label}
-                className="rounded-full border border-white/5 bg-white/[0.02] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.14em] text-zinc-500 backdrop-blur-md"
-              >
-                {label}
-              </span>
-            ))}
-          </div>
+
         </div>
 
       </div>
