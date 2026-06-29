@@ -590,13 +590,8 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 type="button"
                 onClick={() => onBuy(activeEvent)}
                 className={`flex h-12 px-6 items-center justify-center rounded-full bg-white text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 ${
-                  isTicketPulse ? "animate-pulse" : ""
+                  isTicketPulse ? "button-pulse-smooth" : ""
                 }`}
-                style={isTicketPulse ? {
-                  boxShadow: "0 0 0 6px rgba(255, 255, 255, 0.35), 0 0 45px 20px rgba(255, 255, 255, 0.8)",
-                  transform: "scale(1.05)",
-                  transition: "none",
-                } : {}}
               >
                 Comprar Entrada
               </button>
@@ -1008,18 +1003,18 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         .ticket-pulse-active {
           animation: ticket-glow-pulse 0.8s ease-in-out infinite !important;
         }
-        @keyframes button-glow-subtle {
+        @keyframes button-glow-smooth {
           0%, 100% {
-            box-shadow: 0 0 0 0px rgba(255, 255, 255, 0.4), 0 10px 25px rgba(0,0,0,0.3) !important;
+            box-shadow: 0 0 0 0px rgba(255, 255, 255, 0.4), 0 0 0 0px rgba(255, 255, 255, 0.2) !important;
             transform: scale(1) !important;
           }
           50% {
-            box-shadow: 0 0 0 10px rgba(255, 255, 255, 0), 0 0 20px 4px rgba(255, 255, 255, 0.3) !important;
-            transform: scale(1.02) !important;
+            box-shadow: 0 0 0 12px rgba(255, 255, 255, 0), 0 0 45px 20px rgba(255, 255, 255, 0.75) !important;
+            transform: scale(1.04) !important;
           }
         }
-        .button-pulse-subtle {
-          animation: button-glow-subtle 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+        .button-pulse-smooth {
+          animation: button-glow-smooth 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
           transition: none !important;
         }
       `}} />
