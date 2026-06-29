@@ -85,14 +85,14 @@ export default function OutfitBuilderSection() {
         </div>
 
         {/* Centered button at the very bottom of the card spanning columns */}
-        <div className="col-span-1 lg:col-span-2 flex justify-end mt-1 w-full relative z-20 -mr-5 sm:-mr-7 lg:-mr-9">
+        <div className="col-span-1 lg:col-span-2 flex justify-center mt-1 w-full relative z-20">
           <a
             href="https://wa.me/593988831372"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex h-12 items-center justify-center rounded-xl bg-white px-8 text-[10px] font-black uppercase tracking-[0.25em] text-black transition-all hover:bg-zinc-200 active:scale-[0.98] select-none cursor-pointer"
           >
-            Pedir por Whats
+            Pedir por WhatsApp
           </a>
         </div>
 
