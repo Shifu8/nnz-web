@@ -589,7 +589,9 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               <button
                 type="button"
                 onClick={() => onBuy(activeEvent)}
-                className="flex h-12 px-6 items-center justify-center rounded-full bg-white text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200"
+                className={`flex h-12 px-6 items-center justify-center rounded-full bg-white text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 ${
+                  isTicketPulse ? "ticket-pulse-active" : ""
+                }`}
               >
                 Comprar Entrada
               </button>
