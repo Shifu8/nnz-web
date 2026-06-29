@@ -465,11 +465,13 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             }}
           />
           
-          {/* Volumetric light cone with soft blurred edges */}
+          {/* Volumetric light cone with soft blurred edges (no clip-path to prevent browser blur clipping) */}
           <div 
-            className="absolute top-0 lg:left-[64%] left-1/2 -translate-x-1/2 w-[90vw] lg:w-[50vw] h-[100vh] opacity-20 bg-gradient-to-b from-white/12 via-white/2 to-transparent pointer-events-none mix-blend-screen filter blur-[12px]"
+            className="absolute top-0 lg:left-[64%] left-1/2 -translate-x-1/2 w-[100vw] lg:w-[60vw] h-[100vh] opacity-15 pointer-events-none mix-blend-screen filter blur-[24px]"
             style={{
-              clipPath: "polygon(48% 0%, 52% 0%, 100% 100%, 0% 100%)",
+              background: "conic-gradient(from 165deg at 50% 0%, transparent, rgba(255, 255, 255, 0.08) 10deg, rgba(255, 255, 255, 0.08) 20deg, transparent 30deg)",
+              maskImage: "linear-gradient(to bottom, black 0%, rgba(0, 0, 0, 0.2) 50%, transparent 85%)",
+              WebkitMaskImage: "linear-gradient(to bottom, black 0%, rgba(0, 0, 0, 0.2) 50%, transparent 85%)",
             }}
           />
 
