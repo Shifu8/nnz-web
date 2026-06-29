@@ -92,7 +92,7 @@ export default function OutfitBuilderSection() {
             rel="noopener noreferrer"
             className="inline-flex h-12 items-center justify-center rounded-xl bg-white px-8 text-[10px] font-black uppercase tracking-[0.25em] text-black transition-all hover:bg-zinc-200 active:scale-[0.98] select-none cursor-pointer"
           >
-            Ir a WhatsApp
+            Pedir por WS
           </a>
         </div>
 
