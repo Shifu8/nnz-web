@@ -66,7 +66,7 @@ export const events: Event[] = [
     dateLabel: "18 JUN 2026",
     startsAt: "2026-06-18T21:00:00-05:00",
     poster: "/images/trap_loud_trio_artists.png",
-    lineup: ["YAN BLOCK", "ROA", "OMAR COURTZ", "y mas"],
+    lineup: ["DJ OFICIAL DAWGS"],
     description:
       "La escena subterranea cobra vida. Trap latino oscuro, bajo retumbante y energia inagotable. Luces rojas, beats pesados y acceso estricto.",
   },
