@@ -48,10 +48,10 @@ export default function OutfitBuilderSection() {
           </p>
         </div>
 
-        {/* Right Column: Premium Visual Product Showcase in Full Color */}
+        {/* Right Column: Premium Visual Product Showcase in Full Color (Vertical Portrait Aspect for Full Visibility) */}
         <div className="relative z-10 w-full flex flex-col gap-4">
           <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-zinc-950/60 p-3 shadow-[0_24px_70px_rgba(0,0,0,0.6)] backdrop-blur-md">
-            <div className="relative aspect-[4/3] sm:aspect-[16/10] overflow-hidden rounded-[18px]">
+            <div className="relative aspect-[4/5] min-h-[560px] overflow-hidden rounded-[18px]">
               <Image
                 src={STUDIO_PORTRAIT_IMAGE}
                 alt="Modelos DAWGS en estudio"
