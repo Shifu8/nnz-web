@@ -9,89 +9,106 @@ export default function OutfitBuilderSection() {
   return (
     <section
       id="wear"
-      className="hero-reveal relative z-20 -mx-4 mt-8 overflow-hidden bg-[#050404] text-white sm:-mx-8 md:-mx-14 lg:-mx-20"
+      className="hero-reveal relative z-20 mx-auto w-full max-w-[1600px] px-4 pb-16 sm:px-6 md:px-12 lg:px-16"
     >
-      <div className="relative min-h-[1250px] overflow-hidden">
+      <div 
+        className="relative overflow-hidden rounded-[32px] border border-white/10 bg-black/45 backdrop-blur-2xl shadow-2xl min-h-[750px] md:min-h-[850px] flex flex-col"
+        style={{ boxShadow: "0 24px 90px rgba(255, 255, 255, 0.01)" }}
+      >
+        {/* Grayscale Background Image integrating naturally into the dark room context */}
         <Image
           src={STUDIO_HERO_IMAGE}
           alt="Modelos DAWGS usando hoodie y jogger burgundy en sofa de estudio"
           fill
-          sizes="100vw"
-          className="object-cover object-[center_top] opacity-[0.96]"
+          sizes="(max-width: 1600px) 100vw, 1600px"
+          className="object-cover object-[center_top] opacity-50 grayscale contrast-[1.15] brightness-[0.7]"
           priority={false}
         />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.74)_0%,rgba(0,0,0,0.3)_44%,rgba(0,0,0,0.58)_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.35)_0%,transparent_80%,rgba(0,0,0,0.95)_100%)]" />
-        <div className="absolute inset-0 opacity-[0.09] [background-image:linear-gradient(rgba(255,255,255,0.6)_1px,transparent_1px)] [background-size:100%_5px]" />
+        
+        {/* Soft dark vignette overlays */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/35 to-black/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/40 to-black/95" />
+        <div className="absolute inset-0 opacity-[0.05] [background-image:linear-gradient(rgba(255,255,255,0.6)_1px,transparent_1px)] [background-size:100%_5px]" />
 
-        <div className="relative z-10 mx-auto flex min-h-[1150px] w-full max-w-[1500px] flex-col justify-between px-4 pb-7 pt-24 sm:px-6 sm:pb-9 sm:pt-28 md:px-12 lg:px-16">
-          <div className="flex items-center justify-between gap-4 text-[10px] font-black uppercase tracking-[0.18em] text-white/[0.72]">
+        {/* Editorial Content Container */}
+        <div className="relative z-10 flex-1 flex flex-col justify-between p-6 sm:p-8 lg:p-12">
+          
+          {/* Header Metadata */}
+          <div className="flex items-center justify-between gap-4 text-[9px] font-black uppercase tracking-[0.24em] text-zinc-400">
             <span>DAWGS Studio</span>
-            <span className="rounded-full border border-white/[0.14] bg-white/[0.08] px-3 py-1.5 backdrop-blur-md">
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 backdrop-blur-md text-white">
               Drop activo
             </span>
           </div>
 
-          <div className="grid items-end gap-8 lg:grid-cols-[420px_minmax(0,1fr)]">
-            <div className="max-w-[420px]">
-              <div className="relative overflow-hidden rounded-[8px] border border-white/[0.12] bg-black shadow-[0_28px_90px_rgba(0,0,0,0.62)]">
-                <div className="relative aspect-[4/5] min-h-[560px] overflow-hidden bg-[#070606]">
+          {/* Main Visuals & Title Composition */}
+          <div className="grid items-end gap-10 lg:grid-cols-[380px_minmax(0,1fr)] mt-12 mb-8">
+            
+            {/* Left Box: Portrait Editorial Frame */}
+            <div className="max-w-[380px] w-full">
+              <div className="relative overflow-hidden rounded-[20px] border border-white/10 bg-black shadow-[0_24px_70px_rgba(0,0,0,0.7)]">
+                <div className="relative aspect-[4/5] min-h-[460px] md:min-h-[500px] overflow-hidden bg-zinc-950">
                   <Image
                     src={STUDIO_PORTRAIT_IMAGE}
                     alt="Modelos DAWGS en hoodie burgundy editorial"
                     fill
-                    sizes="(max-width: 768px) 100vw, 420px"
-                    className="object-cover object-[68%_42%]"
+                    sizes="(max-width: 768px) 100vw, 380px"
+                    className="object-cover object-[68%_42%] grayscale contrast-[1.1] brightness-[0.75]"
                   />
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.08)_0%,transparent_45%,rgba(0,0,0,0.82)_100%)]" />
-                  <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.65)_1px,transparent_1px)] [background-size:100%_6px]" />
-                  <div className="absolute left-4 top-4 rounded-full border border-white/[0.13] bg-black/48 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.2em] text-white/[0.72] backdrop-blur-md">
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-black/90" />
+                  <div className="absolute inset-0 opacity-[0.05] [background-image:linear-gradient(rgba(255,255,255,0.65)_1px,transparent_1px)] [background-size:100%_6px]" />
+                  
+                  <div className="absolute left-4 top-4 rounded-full border border-white/10 bg-black/60 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300 backdrop-blur-md">
                     Made by studios
                   </div>
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-rose-100/[0.7]">
-                      Burgundy mood
+                  
+                  <div className="absolute bottom-5 left-5 right-5">
+                    <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-400">
+                      Studio mood
                     </p>
-                    <h3 className="mt-2 max-w-xs text-3xl font-black uppercase leading-[0.92] text-white">
+                    <h3 className="mt-2 text-2xl font-black uppercase leading-[0.95] text-white tracking-tighter">
                       No es outfit.
-                      <span className="block text-[#ffd8df]">
+                      <span className="block text-zinc-300 font-bold">
                         Es presencia.
                       </span>
                     </h3>
                   </div>
                 </div>
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {["Drop privado", "Sin uniforme", "Movimiento"].map(
-                  (label) => (
-                    <span
-                      key={label}
-                      className="rounded-full border border-white/[0.1] bg-black/42 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.14em] text-white/[0.58] backdrop-blur-md"
-                    >
-                      {label}
-                    </span>
-                  )
-                )}
+
+              {/* Tag Elements under Portrait */}
+              <div className="mt-4 flex flex-wrap gap-1.5">
+                {["Drop privado", "Sin uniforme", "Movimiento"].map((label) => (
+                  <span
+                    key={label}
+                    className="rounded-full border border-white/5 bg-white/[0.02] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.14em] text-zinc-400 backdrop-blur-md transition hover:border-white/20 hover:text-white"
+                  >
+                    {label}
+                  </span>
+                ))}
               </div>
             </div>
-            <div className="hidden max-w-sm justify-self-end rounded-[8px] border border-white/[0.1] bg-black/42 p-5 text-right backdrop-blur-md lg:block">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-100/[0.62]">
+
+            {/* Right Box: Editorial Text block (Visible on desktop) */}
+            <div className="hidden max-w-sm justify-self-end rounded-2xl border border-white/10 bg-black/60 p-6 text-right backdrop-blur-md lg:block">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500">
                 Obsession 01
               </p>
-              <p className="mt-3 text-3xl font-black uppercase leading-[0.92]">
+              <p className="mt-3 text-2xl font-black uppercase leading-[1.0] tracking-tight text-white">
                 Studio rack
-                <span className="block text-[#ffd8df]">ready to wear</span>
+                <span className="block text-zinc-400 font-medium text-lg mt-1 lowercase italic">ready to wear</span>
               </p>
             </div>
+
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5 text-[9px] font-black uppercase tracking-[0.18em] text-white/[0.42]">
+          {/* Footer Metadata */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5 text-[8px] font-black uppercase tracking-[0.22em] text-zinc-500">
             <span>DAWGS Studio / private drop</span>
           </div>
+
         </div>
       </div>
-
-
     </section>
   );
 }

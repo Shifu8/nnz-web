@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Dawgs Web",
+  title: "DawgsTickets",
   description:
     "Eventos underground, streetwear premium y Party Pass sin login para la comunidad DAWGS.",
   manifest: "/manifest.json",
