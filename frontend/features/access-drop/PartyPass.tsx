@@ -29,7 +29,7 @@ export default function PartyPass({ data }: PartyPassProps) {
     try {
       const dataUrl = await toPng(passRef.current, { cacheBust: true, backgroundColor: "#050505" });
       const link = document.createElement('a');
-      link.download = `DAWGS-PASS-${data.serialNumber}.png`;
+      link.download = `NENEZ-PASS-${data.serialNumber}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -98,7 +98,7 @@ export default function PartyPass({ data }: PartyPassProps) {
           <div className="flex w-full items-center justify-between border-b border-zinc-800 pb-3">
             <div className="flex items-center gap-1.5">
               <div className="h-1.5 w-1.5 rounded-full bg-[#C8FF00] animate-pulse" />
-              <span className="text-[9px] font-black uppercase tracking-[0.25em] text-[#C8FF00]">DAWGS VIP ACCESS</span>
+              <span className="text-[9px] font-black uppercase tracking-[0.25em] text-[#C8FF00]">NENEZ VIP ACCESS</span>
             </div>
             <span className="rounded-full bg-red-600/10 px-2 py-0.5 text-[7px] font-black uppercase tracking-wider text-red-500 border border-red-500/30">
               ESTRICTO
@@ -111,7 +111,7 @@ export default function PartyPass({ data }: PartyPassProps) {
             {/* Travis Scott-style Neon Sticker Circle */}
             <div className="absolute -right-4 top-2 w-[180px] h-[180px] rounded-full bg-[#C8FF00] p-4 flex flex-col items-center justify-center shadow-[0_15px_35px_rgba(200,255,0,0.25)] rotate-6 border-[3px] border-black z-20 transition-transform duration-300 hover:rotate-12">
               <span className="text-black font-black text-[23px] tracking-tighter leading-none select-none uppercase">
-                DAWGS
+                NENEZ
               </span>
               <span className="text-black font-extrabold text-[8px] tracking-[0.22em] leading-none uppercase select-none mt-0.5">
                 PARTY PASS

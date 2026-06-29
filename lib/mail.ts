@@ -38,7 +38,7 @@ function createTransport() {
 }
 
 function fromAddress(): string {
-  return process.env.MAILJET_FROM_EMAIL || "DAWGS <tickets@dawgswear.com>";
+  return process.env.MAILJET_FROM_EMAIL || "NENEZ <tickets@nenezwear.com>";
 }
 
 async function sendMail(options: MailOptions) {
@@ -64,7 +64,7 @@ function wrapHtml(body: string): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>DAWGS</title>
+  <title>NENEZ</title>
 </head>
 <body style="margin:0;padding:0;background-color:#050505;font-family:Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#050505;">
@@ -77,7 +77,7 @@ function wrapHtml(body: string): string {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:32px;border-top:1px solid rgba(255,255,255,0.06);padding-top:20px;">
                 <tr>
                   <td style="text-align:center;">
-                    <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:#C8FF00;">DAWGS</p>
+                    <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:#C8FF00;">NENEZ</p>
                     <p style="margin:8px 0 0;font-size:10px;color:#555;letter-spacing:1px;">underground access</p>
                   </td>
                 </tr>
@@ -100,26 +100,26 @@ export function ticketEmailHtml(
   resend = false,
 ): string {
   const title = resend
-    ? "REENVÍO DE TU PASE DAWGS"
-    : "TU PASE VIP DAWGS TRAP LOUD";
+    ? "REENVÍO DE TU PASE NENEZ"
+    : "TU PASE VIP NENEZ TRAP LOUD";
   const body = `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td style="text-align:center;padding-bottom:20px;">
-          <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#C8FF00;">DAWGS</p>
+          <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#C8FF00;">NENEZ</p>
           <h1 style="color:#fff;font-size:22px;font-weight:900;letter-spacing:1px;margin:12px 0 0;text-transform:uppercase;">${title}</h1>
         </td>
       </tr>
       <tr>
         <td style="padding-bottom:16px;">
           <p style="margin:0;font-size:14px;color:#ccc;">Hola <strong style="color:#fff;">${pass.firstName} ${pass.lastName}</strong>,</p>
-          <p style="margin:8px 0 0;font-size:13px;color:#999;">Tu acceso DAWGS está listo.</p>
+          <p style="margin:8px 0 0;font-size:13px;color:#999;">Tu acceso NENEZ está listo.</p>
           <p style="margin:4px 0 0;font-size:11px;color:#888;">Serial: <strong style="color:#C8FF00;letter-spacing:2px;">${pass.serialNumber}</strong></p>
         </td>
       </tr>
       <tr>
         <td style="background:#0a0a0a;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px;text-align:center;">
-          <img src="${qrDataUri}" alt="QR DAWGS" width="260" height="260" style="display:block;margin:0 auto;border-radius:8px;outline:2px solid rgba(200,255,0,0.15);outline-offset:4px;" />
+          <img src="${qrDataUri}" alt="QR NENEZ" width="260" height="260" style="display:block;margin:0 auto;border-radius:8px;outline:2px solid rgba(200,255,0,0.15);outline-offset:4px;" />
           <p style="margin:16px 0 0;font-size:10px;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:#C8FF00;">TRAP LOUD · 18 JUN 2026 · SAN JUAN</p>
           <p style="margin:4px 0 0;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#555;">cuenca · ecuador</p>
         </td>
@@ -140,7 +140,7 @@ export function purchaseConfirmationHtml(pass: TicketPass): string {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td style="text-align:center;padding-bottom:16px;">
-          <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#C8FF00;">DAWGS</p>
+          <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#C8FF00;">NENEZ</p>
           <h1 style="color:#fff;font-size:20px;font-weight:900;margin:12px 0 0;text-transform:uppercase;">COMPRA CONFIRMADA</h1>
         </td>
       </tr>
@@ -199,14 +199,14 @@ export function giveawayWinnerHtml(params: {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td style="text-align:center;padding-bottom:16px;">
-          <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#C8FF00;">DAWGS</p>
+          <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#C8FF00;">NENEZ</p>
           <h1 style="color:#fff;font-size:20px;font-weight:900;margin:12px 0 0;text-transform:uppercase;">¡FELICIDADES!</h1>
         </td>
       </tr>
       <tr>
         <td style="padding-bottom:16px;">
           <p style="margin:0;font-size:14px;color:#ccc;">Hola <strong style="color:#fff;">${params.firstName}</strong>,</p>
-          <p style="margin:8px 0 0;font-size:13px;color:#999;">Has ganado en el sorteo DAWGS.</p>
+          <p style="margin:8px 0 0;font-size:13px;color:#999;">Has ganado en el sorteo NENEZ.</p>
         </td>
       </tr>
       <tr>
@@ -235,8 +235,8 @@ export function supportEmailHtml(params: {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td style="text-align:center;padding-bottom:16px;">
-          <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#C8FF00;">DAWGS</p>
-          <h1 style="color:#fff;font-size:18px;font-weight:900;margin:12px 0 0;">SOPORTE DAWGS</h1>
+          <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#C8FF00;">NENEZ</p>
+          <h1 style="color:#fff;font-size:18px;font-weight:900;margin:12px 0 0;">SOPORTE NENEZ</h1>
         </td>
       </tr>
       <tr>
@@ -254,7 +254,7 @@ export function supportEmailHtml(params: {
       </tr>
       <tr>
         <td style="padding:16px 0 0;text-align:center;">
-          <p style="margin:0;font-size:11px;color:#555;">Equipo DAWGS — underground access</p>
+          <p style="margin:0;font-size:11px;color:#555;">Equipo NENEZ — underground access</p>
         </td>
       </tr>
     </table>
@@ -273,8 +273,8 @@ export async function sendTicketEmail(
   await sendMail({
     to,
     subject: resend
-      ? "🎟️ Reenvío de tu pase DAWGS Trap Loud"
-      : "🎟️ Tu pase DAWGS Trap Loud",
+      ? "🎟️ Reenvío de tu pase NENEZ Trap Loud"
+      : "🎟️ Tu pase NENEZ Trap Loud",
     html: ticketEmailHtml(pass, qrDataUri, resend),
   });
 }
@@ -285,7 +285,7 @@ export async function sendPurchaseConfirmationEmail(
 ): Promise<void> {
   await sendMail({
     to,
-    subject: "✅ Compra confirmada — DAWGS Trap Loud",
+    subject: "✅ Compra confirmada — NENEZ Trap Loud",
     html: purchaseConfirmationHtml(pass),
   });
 }
@@ -296,7 +296,7 @@ export async function sendGiveawayWinnerEmail(
 ): Promise<void> {
   await sendMail({
     to,
-    subject: "🎉 ¡Ganaste en el sorteo DAWGS!",
+    subject: "🎉 ¡Ganaste en el sorteo NENEZ!",
     html: giveawayWinnerHtml(params),
   });
 }
@@ -307,7 +307,7 @@ export async function sendSupportEmail(
 ): Promise<void> {
   await sendMail({
     to,
-    subject: "📬 Hemos recibido tu solicitud — DAWGS Soporte",
+    subject: "📬 Hemos recibido tu solicitud — NENEZ Soporte",
     html: supportEmailHtml(params),
   });
 }

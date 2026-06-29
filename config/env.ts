@@ -17,7 +17,7 @@ export const ENV = {
   SMTP_PORT: parseInt(getEnv("SMTP_PORT", "587"), 10),
   SMTP_USER: getEnv("SMTP_USER", getEnv("GMAIL_USER")),
   SMTP_PASS: getEnv("SMTP_PASS", getEnv("GMAIL_PASS")),
-  SMTP_FROM: getEnv("SMTP_FROM", "DAWGS <mrshifu879@gmail.com>"),
+  SMTP_FROM: getEnv("SMTP_FROM", "NENEZ <mrshifu879@gmail.com>"),
 
   WHATSAPP_TOKEN: getEnv("WHATSAPP_ACCESS_TOKEN"),
   WHATSAPP_PHONE_ID: getEnv("WHATSAPP_PHONE_NUMBER_ID"),

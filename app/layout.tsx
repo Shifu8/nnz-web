@@ -1,7 +1,7 @@
 /**
  * Autor: Brandon Medina
  * Fecha: 11/05/2026
- * DescripciÃ³n: Layout raÃ­z de Next.js para DAWGS.
+ * DescripciÃ³n: Layout raÃ­z de Next.js para NENEZ.
  */
 
 import type { Metadata } from "next";
@@ -20,19 +20,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DawgsTickets",
+  title: "NenezTickets",
   description:
-    "Eventos underground, streetwear premium y Party Pass sin login para la comunidad DAWGS.",
+    "Eventos underground, streetwear premium y Party Pass sin login para la comunidad NENEZ.",
   manifest: "/manifest.json",
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/icons/dawgs-icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/dawgs-icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/icons/nenez-icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/nenez-icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
   },
-  appleWebApp: { capable: true, title: "DAWGS", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "NENEZ", statusBarStyle: "black-translucent" },
   other: {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes",

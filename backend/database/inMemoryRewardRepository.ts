@@ -9,9 +9,9 @@ import type { RewardCode, RewardRepository, StoredPartyPass } from "./rewardRepo
 export class InMemoryRewardRepository implements RewardRepository {
   private codes = new Map<string, RewardCode>([
     [
-      "DAWGS-2026",
+      "NENEZ-2026",
       {
-        code: "DAWGS-2026",
+        code: "NENEZ-2026",
         eventId: "trap-loud",
         used: false,
         expiresAt: "2026-12-31T23:59:59-05:00",

@@ -3,8 +3,8 @@ import crypto from "crypto";
 import { jwtVerify, SignJWT } from "jose";
 import { z } from "zod";
 
-export const STAFF_SESSION_COOKIE = "dawgs_staff_session";
-export const STAFF_CSRF_COOKIE = "dawgs_staff_csrf";
+export const STAFF_SESSION_COOKIE = "nenez_staff_session";
+export const STAFF_CSRF_COOKIE = "nenez_staff_csrf";
 
 const encoder = new TextEncoder();
 const rateLimitBuckets = new Map<string, { count: number; resetAt: number }>();
@@ -236,7 +236,7 @@ function encryptionKey(): Buffer {
     throw new ApiError(500, "Falta variable de entorno: DATA_ENCRYPTION_KEY", "CONFIG_ERROR");
   }
 
-  return crypto.createHash("sha256").update("dev-only-dawgs-encryption-key").digest();
+  return crypto.createHash("sha256").update("dev-only-nenez-encryption-key").digest();
 }
 
 export function encryptSensitive(value: string): string {
@@ -262,8 +262,8 @@ export function decryptSensitive(value: string): string {
 }
 
 const qrPayloadSchema = z.object({
-  type: z.literal("DAWGS_PASS"),
-  serialNumber: z.string().regex(/^DAWGS-[A-Z0-9-]{6,40}$/),
+  type: z.literal("NENEZ_PASS"),
+  serialNumber: z.string().regex(/^NENEZ-[A-Z0-9-]{6,40}$/),
   token: z.string().min(24).max(80),
   eventId: z.string().regex(/^[a-z0-9-]{3,40}$/),
   issuedAt: z.string().datetime(),
@@ -272,7 +272,7 @@ const qrPayloadSchema = z.object({
 
 const legacyQrPayloadSchema = z
   .object({
-    type: z.literal("DAWGS_PASS"),
+    type: z.literal("NENEZ_PASS"),
     serialNumber: z.string().min(3).max(80).optional(),
     passId: z.string().min(3).max(80).optional(),
     token: z.string().min(8).max(120),
@@ -280,20 +280,20 @@ const legacyQrPayloadSchema = z
   })
   .passthrough();
 
-export type DawgsQrPayload = z.infer<typeof qrPayloadSchema>;
+export type NenezQrPayload = z.infer<typeof qrPayloadSchema>;
 
 export function generateSecureQrPayload(serialNumber: string, token: string, eventId: string): string {
   return JSON.stringify({
-    type: "DAWGS_PASS",
+    type: "NENEZ_PASS",
     serialNumber,
     token,
     eventId,
     issuedAt: new Date().toISOString(),
     v: 1,
-  } satisfies DawgsQrPayload);
+  } satisfies NenezQrPayload);
 }
 
-export function parseSecureQrPayload(qrPayload: string): DawgsQrPayload {
+export function parseSecureQrPayload(qrPayload: string): NenezQrPayload {
   if (qrPayload.length > 2048) {
     throw new ApiError(400, "QR demasiado grande.", "QR_TOO_LARGE");
   }
@@ -306,7 +306,7 @@ export function parseSecureQrPayload(qrPayload: string): DawgsQrPayload {
       const serialNumber = legacy.serialNumber || legacy.passId;
       if (!serialNumber) throw new Error("missing serial");
       return {
-        type: "DAWGS_PASS",
+        type: "NENEZ_PASS",
         serialNumber,
         token: legacy.token,
         eventId: legacy.eventId,
@@ -326,16 +326,16 @@ function timingSafeEqualString(left: string, right: string): boolean {
   return crypto.timingSafeEqual(leftBuffer, rightBuffer);
 }
 
-export type DawgsAuthRole = "staff" | "admin";
+export type NenezAuthRole = "staff" | "admin";
 
-function roleHashEnvNames(role: DawgsAuthRole): { b64: string; plain: string } {
+function roleHashEnvNames(role: NenezAuthRole): { b64: string; plain: string } {
   return role === "admin"
     ? { b64: "ADMIN_PASSWORD_HASH_B64", plain: "ADMIN_PASSWORD_HASH" }
     : { b64: "STAFF_PASSWORD_HASH_B64", plain: "STAFF_PASSWORD_HASH" };
 }
 
 /** Next/dotenv-expand corrupts bcrypt hashes that contain `$` in .env files. */
-function loadBcryptHash(role: DawgsAuthRole): string | undefined {
+function loadBcryptHash(role: NenezAuthRole): string | undefined {
   const { b64, plain } = roleHashEnvNames(role);
   const encoded = process.env[b64]?.trim();
   if (encoded) {
@@ -352,7 +352,7 @@ function loadBcryptHash(role: DawgsAuthRole): string | undefined {
   return undefined;
 }
 
-export async function verifyRolePassword(password: string, role: DawgsAuthRole): Promise<boolean> {
+export async function verifyRolePassword(password: string, role: NenezAuthRole): Promise<boolean> {
   const hash = loadBcryptHash(role);
   if (hash) return bcrypt.compare(password, hash);
 
@@ -378,7 +378,7 @@ function jwtSecret(): Uint8Array {
 export async function createStaffSessionJwt(
   sessionId: string,
   csrfToken: string,
-  role: DawgsAuthRole = "staff",
+  role: NenezAuthRole = "staff",
 ): Promise<string> {
   return new SignJWT({ role, sessionId, csrfToken })
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
@@ -403,7 +403,7 @@ export function getCookie(request: Request, name: string): string | undefined {
 
 export async function verifyStaffRequest(
   request: Request,
-  options: { requireCsrf?: boolean; roles?: DawgsAuthRole[] } = { requireCsrf: true },
+  options: { requireCsrf?: boolean; roles?: NenezAuthRole[] } = { requireCsrf: true },
 ) {
   const token =
     getCookie(request, STAFF_SESSION_COOKIE) ||
@@ -417,7 +417,7 @@ export async function verifyStaffRequest(
 
   try {
     const { payload } = await jwtVerify(token, jwtSecret());
-    const role = payload.role as DawgsAuthRole;
+    const role = payload.role as NenezAuthRole;
     if (!allowedRoles.includes(role) || typeof payload.sessionId !== "string") {
       throw new Error("bad role");
     }

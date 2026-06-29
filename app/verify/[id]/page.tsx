@@ -43,7 +43,7 @@ export function generateMetadata({ params }: { params: { id: string } }): Metada
   const product = products[params.id as keyof typeof products];
   if (!product) return { title: "Producto no encontrado" };
   return {
-    title: `${product.name} · DAWGS Authentic`,
+    title: `${product.name} · NENEZ Authentic`,
     description: `Verificación NFC · ${product.name} de la colección ${product.collection}`,
   };
 }

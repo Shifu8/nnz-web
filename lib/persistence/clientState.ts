@@ -2,7 +2,7 @@
  * Persistencia anti-reload en el cliente (localStorage + sessionStorage).
  */
 
-const PREFIX = "dawgs_";
+const PREFIX = "nenez_";
 
 export type StoredTicketPass = {
   firstName: string;

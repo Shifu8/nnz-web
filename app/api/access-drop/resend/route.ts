@@ -93,7 +93,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const firstName = passInfo.first_name || passInfo.firstName || "DAWGS";
+    const firstName = passInfo.first_name || passInfo.firstName || "NENEZ";
     const lastName = passInfo.last_name || passInfo.lastName || "GUEST";
 
     if (!qrPayload) throw new ApiError(404, "QR del pase no disponible.");

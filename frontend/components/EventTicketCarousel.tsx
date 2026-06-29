@@ -34,7 +34,7 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     poster: "/images/yan_block_card_bg.png",
     featuredImage: "/images/yan_block_card_bg.png",
     miniImage: "/images/yan_block_artist_1779161408288.png",
-    lineup: ["DJ OFICIAL DAWGS"],
+    lineup: ["DJ OFICIAL NENEZ"],
     price: 10,
     currency: "USD",
     badge: "LIVE ACCESS",
@@ -42,7 +42,7 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     useFullBackground: true,
     description: "La escena subterránea cobra vida. Trap latino oscuro, bajo retumbante y energía inagotable. Luces de escenario crudas, beats pesados y acceso restringido.",
     // Extended editorial data
-    organizer: "DAWGS",
+    organizer: "NENEZ",
     venue: "Venue Privado · Loja",
     time: "9:00 PM",
     category: "Trap / Urban",
@@ -50,10 +50,10 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     status: "available",
     about: [
       "La escena subterránea cobra vida en una noche diseñada para los que entienden el movimiento. TRAP LOUD es más que un concierto — es una experiencia que combina trap latino oscuro, bajo retumbante y energía inagotable en un venue exclusivo.",
-      "Acceso strictly limitado. Beats pesados, luces de escenario crudas y una atmósfera que no encontrarás en ningún otro lugar. Esta es la experiencia DAWGS."
+      "Acceso strictly limitado. Beats pesados, luces de escenario crudas y una atmósfera que no encontrarás en ningún otro lugar. Esta es la experiencia NENEZ."
     ],
     detailedLineup: [
-      { name: "DJ OFICIAL DAWGS", role: "DJ", image: "/images/roa_artist_1779161704881.png" },
+      { name: "DJ OFICIAL NENEZ", role: "DJ", image: "/images/roa_artist_1779161704881.png" },
     ],
     schedule: [
       { time: "8:00 PM", label: "Puertas Abren" },
@@ -73,7 +73,7 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
       spotify: "https://open.spotify.com/artist/yanblock",
     },
     merch: [
-      { id: "tl-hoodie", name: "TRAP LOUD Hoodie", category: "Hoodie", price: "$65", image: "/images/dawgs-studio-fit-front.png" },
+      { id: "tl-hoodie", name: "TRAP LOUD Hoodie", category: "Hoodie", price: "$65", image: "/images/nenez-studio-fit-front.png" },
     ],
   },
   {
@@ -94,7 +94,7 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     useFullBackground: true,
     description: "Voz única y flows de la calle. Autenticidad reggaetonera premium en una atmósfera brutal de luz cenital diseñada para vivirse al límite.",
     // Extended editorial data
-    organizer: "DAWGS",
+    organizer: "NENEZ",
     venue: "Venue TBA · Loja",
     time: "10:00 PM",
     category: "Reggaetón / Urban",
@@ -126,10 +126,10 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
       youtube: "https://youtube.com/@omarcourtz",
     },
     merch: [
-      { id: "dn-hoodie", name: "DAWG NIGHT Hoodie", category: "Hoodie", price: "$75", image: "/images/dawgs-studio-fit-front.png" },
-      { id: "dn-jersey", name: "Courtz Jersey", category: "Jersey", price: "$85", image: "/images/dawgs-studio-portrait.png" },
-      { id: "dn-vinyl", name: "Omar Courtz Vinyl", category: "Vinyl", price: "$45", image: "/images/dawgs-studio-rack.png" },
-      { id: "dn-poster", name: "DAWG NIGHT Poster", category: "Poster", price: "$25", image: "/images/dawgs-studio-couch.png" },
+      { id: "dn-hoodie", name: "DAWG NIGHT Hoodie", category: "Hoodie", price: "$75", image: "/images/nenez-studio-fit-front.png" },
+      { id: "dn-jersey", name: "Courtz Jersey", category: "Jersey", price: "$85", image: "/images/nenez-studio-portrait.png" },
+      { id: "dn-vinyl", name: "Omar Courtz Vinyl", category: "Vinyl", price: "$45", image: "/images/nenez-studio-rack.png" },
+      { id: "dn-poster", name: "DAWG NIGHT Poster", category: "Poster", price: "$25", image: "/images/nenez-studio-couch.png" },
     ],
   },
   {
@@ -150,7 +150,7 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     useFullBackground: true,
     description: "Energía sin límites y orgullo latino. Una experiencia masiva, de alto contraste y estética editorial que redefine la cultura urbana a gran escala.",
     // Extended editorial data
-    organizer: "DAWGS × Wave Music",
+    organizer: "NENEZ × Wave Music",
     venue: "Arena Loja",
     time: "8:00 PM",
     category: "Festival / Urban",
@@ -183,11 +183,11 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
       instagram: "https://instagram.com/rauw_alejandro",
       spotify: "https://open.spotify.com/artist/rauwalejandro",
       youtube: "https://youtube.com/@rauwalejandro",
-      website: "https://dawgs.com",
+      website: "https://nenez.com",
     },
     merch: [
-      { id: "ud-tee", name: "URBAN DROP Tee", category: "T-Shirt", price: "$40", image: "/images/dawgs-studio-fit-front.png" },
-      { id: "ud-hoodie", name: "URBAN DROP Hoodie", category: "Hoodie", price: "$70", image: "/images/dawgs-studio-portrait.png" },
+      { id: "ud-tee", name: "URBAN DROP Tee", category: "T-Shirt", price: "$40", image: "/images/nenez-studio-fit-front.png" },
+      { id: "ud-hoodie", name: "URBAN DROP Hoodie", category: "Hoodie", price: "$70", image: "/images/nenez-studio-portrait.png" },
     ],
   },
 ];
@@ -400,7 +400,7 @@ export default function EventTicketCarousel({
                 <div className="flex-1 flex flex-col justify-end mt-3 text-left">
                   <div>
                     <span className="text-[7px] font-black tracking-[0.3em] text-zinc-500 uppercase">
-                      {event.badge || "DAWGS EXPERIENCE"}
+                      {event.badge || "NENEZ EXPERIENCE"}
                     </span>
                     <h4 className="text-xl font-black text-white uppercase mt-0.5 tracking-tight">
                       {event.title}

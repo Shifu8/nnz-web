@@ -1,7 +1,7 @@
 /**
  * Autor: Brandon Medina
  * Fecha: 11/05/2026
- * Descripción: Controlador HTTP para obtener eventos DAWGS.
+ * Descripción: Controlador HTTP para obtener eventos NENEZ.
  */
 
 import type { Request, Response } from "express";

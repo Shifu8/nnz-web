@@ -27,7 +27,7 @@ export interface ThemePreset {
 export const THEMES: ThemePreset[] = [
   {
     id: "pink",
-    label: "Pink DAWGS",
+    label: "Pink NENEZ",
     colors: {
       primary: "#ff0066",
       primaryLight: "#ff3399",

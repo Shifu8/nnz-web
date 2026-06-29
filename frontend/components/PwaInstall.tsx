@@ -90,7 +90,7 @@ export default function PwaInstall() {
               <QRCodeSVG value={url} size={140} bgColor="#ffffff" fgColor="#000000" />
             </div>
             <p className="text-center text-[9px] text-zinc-400 leading-relaxed">
-              Abre la c&aacute;mara de tu celular y escanea para abrir DAWGS
+              Abre la c&aacute;mara de tu celular y escanea para abrir NENEZ
             </p>
           </div>
         )}

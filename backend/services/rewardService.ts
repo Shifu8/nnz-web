@@ -32,7 +32,7 @@ export class RewardService {
       return { ok: false, error: validation.reason ?? "INVALID_CODE" };
     }
 
-    const passId = `DAWGS-${randomUUID().slice(0, 8).toUpperCase()}`;
+    const passId = `NENEZ-${randomUUID().slice(0, 8).toUpperCase()}`;
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 21).toISOString();
     const payload = JSON.stringify({ passId, code: cleanCode, eventId: validation.eventId, expiresAt });
     const qrDataUrl = await QRCode.toDataURL(payload, { margin: 1, width: 420 });

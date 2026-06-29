@@ -16,7 +16,7 @@ export default function Navbar() {
     <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur-2xl">
       <div className="mx-auto flex max-w-[1600px] w-full items-center justify-between px-6 md:px-12 lg:px-16 py-4">
         <Link href="/" className="text-sm font-black tracking-[0.38em] text-white uppercase outline-none select-none transition hover:text-red-400">
-          DAWGS
+          NENEZ
         </Link>
 
         <nav className="hidden md:flex items-center gap-7">

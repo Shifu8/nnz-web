@@ -23,7 +23,7 @@ export { COVER_POSITIONS };
 export const DEFAULT_HOMEPAGE_CONFIG: HomepageConfig = {
   theme: "pink",
   hero: {
-    tagline: "DAWGS presenta",
+    tagline: "NENEZ presenta",
     artistNames: [
       { first: "Yan", second: "Block" },
       { first: "Omar", second: "Courtz" },
@@ -77,9 +77,9 @@ export const DEFAULT_HOMEPAGE_CONFIG: HomepageConfig = {
     ],
   },
   footer: {
-    brand: "DAWGS",
+    brand: "NENEZ",
     tagline: "Live shows · official access · wear",
-    email: "soporte.dawgs@gmail.com",
-    copyright: "© 2026 DAWGS. Todos los derechos reservados.",
+    email: "soporte.nenez@gmail.com",
+    copyright: "© 2026 NENEZ. Todos los derechos reservados.",
   },
 };

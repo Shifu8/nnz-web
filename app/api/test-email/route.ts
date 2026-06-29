@@ -29,9 +29,9 @@ export async function POST(request: Request) {
     });
 
     const info = await transport.sendMail({
-      from: process.env.SMTP_FROM || `DAWGS <${user}>`,
+      from: process.env.SMTP_FROM || `NENEZ <${user}>`,
       to: to || user,
-      subject: subject || "DAWGS — prueba de email",
+      subject: subject || "NENEZ — prueba de email",
       html: message || "<p>Si recibes esto, el email funciona correctamente.</p>",
     });
 
@@ -62,6 +62,6 @@ export async function GET() {
     host: process.env.SMTP_HOST || "smtp.gmail.com",
     port: parseInt(process.env.SMTP_PORT || "587", 10),
     user: user ? `${user.slice(0, 3)}...${user.slice(-5)}` : null,
-    from: process.env.SMTP_FROM || `DAWGS <${user}>`,
+    from: process.env.SMTP_FROM || `NENEZ <${user}>`,
   });
 }

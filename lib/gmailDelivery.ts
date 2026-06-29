@@ -5,7 +5,7 @@ import { createTransport } from "nodemailer";
 import { secureLog } from "./security";
 
 const GMAIL_USAGE_PATH = path.join(process.cwd(), "data", "gmail-usage.json");
-const DEFAULT_GMAIL_USER = "soporte.dawgs@gmail.com";
+const DEFAULT_GMAIL_USER = "soporte.nenez@gmail.com";
 
 type GmailUsageFile = Record<
   string,
@@ -64,7 +64,7 @@ function gmailUser(): string {
 }
 
 function gmailFrom(): string {
-  return process.env.GMAIL_FROM || process.env.SMTP_FROM || `DAWGS <${gmailUser()}>`;
+  return process.env.GMAIL_FROM || process.env.SMTP_FROM || `NENEZ <${gmailUser()}>`;
 }
 
 function dailyLimit(): number {
@@ -165,7 +165,7 @@ function ticketHtml(input: TicketPdfEmailInput): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>DAWGS</title>
+  <title>NENEZ</title>
 </head>
 <body style="margin:0;padding:0;background:#050306;font-family:Arial,Helvetica,sans-serif;color:#ffffff;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050306;">
@@ -174,7 +174,7 @@ function ticketHtml(input: TicketPdfEmailInput): string {
         <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;border:1px solid rgba(255,111,188,0.22);border-radius:28px;background:linear-gradient(180deg,#120611 0%,#070307 100%);overflow:hidden;">
           <tr>
             <td style="padding:30px 24px 18px;text-align:center;">
-              <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:#ff8acb;">DAWGS</p>
+              <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:#ff8acb;">NENEZ</p>
               <h1 style="margin:12px 0 0;font-size:26px;line-height:1;font-weight:900;letter-spacing:-1px;text-transform:uppercase;color:#ffffff;">Tu entrada esta lista</h1>
               <p style="margin:10px 0 0;font-size:12px;color:#b8a9b4;">${eventTitle} - ${eventName}</p>
             </td>
@@ -215,7 +215,7 @@ function ticketHtml(input: TicketPdfEmailInput): string {
 }
 
 function buildMimeMessage(input: GmailMessageInput): string {
-  const boundary = `dawgs_${randomUUID().replace(/-/g, "")}`;
+  const boundary = `nenez_${randomUUID().replace(/-/g, "")}`;
   const message = [
     `From: ${cleanHeader(gmailFrom())}`,
     `To: ${cleanHeader(input.to)}`,
@@ -412,7 +412,7 @@ export async function sendTicketPdfViaGmailWithLimit(input: TicketPdfEmailInput)
   const serial = cleanHeader(input.serialNumber);
   return sendGmailMessageWithLimit({
     to: input.to,
-    subject: `Tu entrada DAWGS - ${cleanHeader(input.eventTitle || "TRAP LOUD")}`,
+    subject: `Tu entrada NENEZ - ${cleanHeader(input.eventTitle || "TRAP LOUD")}`,
     html: ticketHtml(input),
     logLabel: "ticket-pdf",
     attachments: [
@@ -432,7 +432,7 @@ function recoveryOtpHtml(code: string): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>DAWGS</title>
+  <title>NENEZ</title>
 </head>
 <body style="margin:0;padding:0;background:#050306;font-family:Arial,Helvetica,sans-serif;color:#ffffff;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050306;">
@@ -441,7 +441,7 @@ function recoveryOtpHtml(code: string): string {
         <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;border:1px solid rgba(255,111,188,0.22);border-radius:26px;background:linear-gradient(180deg,#120611 0%,#070307 100%);overflow:hidden;">
           <tr>
             <td style="padding:30px 24px;text-align:center;">
-              <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:#ff8acb;">DAWGS</p>
+              <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:#ff8acb;">NENEZ</p>
               <h1 style="margin:12px 0 0;font-size:24px;line-height:1;font-weight:900;text-transform:uppercase;color:#ffffff;">Recuperar entrada</h1>
               <p style="margin:12px auto 0;max-width:360px;font-size:13px;line-height:1.6;color:#a99da6;">Usa este codigo para validar tu correo. Expira en 10 minutos.</p>
               <p style="margin:24px 0 0;display:inline-block;border:1px solid rgba(255,111,188,0.28);border-radius:18px;background:rgba(255,111,188,0.08);padding:14px 22px;font-size:28px;font-weight:900;letter-spacing:8px;color:#ffffff;">${cleanCode}</p>
@@ -459,7 +459,7 @@ function recoveryOtpHtml(code: string): string {
 export async function sendRecoveryOtpViaGmail(to: string, code: string): Promise<GmailDeliveryResult> {
   return sendGmailMessageWithLimit({
     to,
-    subject: "Codigo para recuperar tu entrada DAWGS",
+    subject: "Codigo para recuperar tu entrada NENEZ",
     html: recoveryOtpHtml(code),
     logLabel: "recovery-otp",
   });

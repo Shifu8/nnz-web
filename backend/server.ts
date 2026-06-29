@@ -1,7 +1,7 @@
 /**
  * Autor: Brandon Medina
  * Fecha: 11/05/2026
- * Descripción: Servidor Express modular para DAWGS rewards y eventos.
+ * Descripción: Servidor Express modular para NENEZ rewards y eventos.
  */
 
 import "dotenv/config";
@@ -58,14 +58,14 @@ app.use(
 );
 app.use(express.json({ limit: "16kb" }));
 
-app.get("/health", (_request, response) => response.json({ ok: true, service: "dawgs-backend" }));
+app.get("/health", (_request, response) => response.json({ ok: true, service: "nenez-backend" }));
 app.use("/api", createRewardRoutes(new RewardController(rewardService)));
 app.use("/api", createEventRoutes(new EventController(eventService)));
 app.use("/api", createWhatsAppRoutes());
 app.use(errorHandler);
 
 app.listen(port, () => {
-  console.log(`DAWGS backend running on http://localhost:${port}`);
+  console.log(`NENEZ backend running on http://localhost:${port}`);
   if (!whatsappEnabled) {
     console.log("[SERVER] WhatsApp/Baileys disabled. Set WHATSAPP_ENABLED=true to enable it.");
     return;

@@ -14,7 +14,7 @@ const initialMessages: Message[] = [
   {
     id: "1",
     sender: "bot",
-    text: "Hola, que tal. Bienvenido a DAWGS. Soy tu concierge del evento: entradas y soporte. Que necesitas?",
+    text: "Hola, que tal. Bienvenido a NENEZ. Soy tu concierge del evento: entradas y soporte. Que necesitas?",
   },
 ];
 
@@ -171,7 +171,7 @@ export default function AIChatbot() {
                   <Bot className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">DAWGS AI</h3>
+                  <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">NENEZ AI</h3>
                   <p className="text-[10px] uppercase tracking-widest text-zinc-400">Concierge</p>
                 </div>
               </div>
@@ -234,7 +234,7 @@ export default function AIChatbot() {
 
               {/* Sleek branded watermark logo */}
               <div className="mt-4 flex items-center justify-center gap-1.5 text-[8px] font-black uppercase tracking-[0.3em] text-zinc-600">
-                <span>DAWGS</span>
+                <span>NENEZ</span>
                 <div className="h-1 w-1 animate-pulse rounded-full bg-[var(--theme-primary)]" />
                 <span>AI CONCIERGE v2.0</span>
               </div>

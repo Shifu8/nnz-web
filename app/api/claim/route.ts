@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString(); // 30 days
       
       const payloadObj = {
-        type: "DAWGS_PASS",
+        type: "NENEZ_PASS",
         passId: passId,
         token: cleanCode,
         eventId: "trap-loud",
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       const passId = `PASS-${uuidv4().slice(0, 8).toUpperCase()}`;
       const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString();
       const payloadObj = {
-        type: "DAWGS_PASS",
+        type: "NENEZ_PASS",
         passId: passId,
         token: cleanCode,
         eventId: "trap-loud",

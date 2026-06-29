@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEventById, updateEvent, deleteEvent, createEvent, loadAllEvents, setEventPosition } from "@/lib/admin/events-store";
-import { events as frontendEvents } from "@/frontend/services/dawgsData";
+import { events as frontendEvents } from "@/frontend/services/nenezData";
 
 const MONTHS: Record<string, string> = {
   ENE: "01", FEB: "02", MAR: "03", ABR: "04", MAY: "05", JUN: "06",

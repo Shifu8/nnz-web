@@ -5,8 +5,8 @@ import type { ActiveTicketEvent } from "@/lib/tickets/activeEvent";
 import type { RecoveryTicket, RecoveryTicketSource } from "@/lib/tickets/recoveryTicket";
 
 const encoder = new TextEncoder();
-const ISSUER = "dawgs-ticket-recovery";
-const AUDIENCE = "dawgs-ticket-holder";
+const ISSUER = "nenez-ticket-recovery";
+const AUDIENCE = "nenez-ticket-holder";
 
 export type RecoveryTokenPayload = {
   ticketId: string;
@@ -25,7 +25,7 @@ function recoverySecret(): Uint8Array {
     throw new Error("TICKET_RECOVERY_SECRET is required in production.");
   }
 
-  return encoder.encode(value || "dev-only-dawgs-ticket-recovery-secret");
+  return encoder.encode(value || "dev-only-nenez-ticket-recovery-secret");
 }
 
 export async function createRecoveryToken(

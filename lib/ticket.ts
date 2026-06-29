@@ -36,7 +36,7 @@ function generateTicketCode(): string {
 function generateSerial(transactionId: string): string {
   const short = transactionId.split("-")[0].toUpperCase().slice(0, 4);
   const num = crypto.randomInt(1000, 9999);
-  return `DAWGS-${num}-${short}`;
+  return `NENEZ-${num}-${short}`;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,7 +47,7 @@ export async function createTicket(input: TicketInput): Promise<Ticket> {
   const ticketCode = generateTicketCode();
   const serialNumber = generateSerial(id);
 
-  const ticketUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://dawgs.vercel.app"}/ticket/${ticketCode}`;
+  const ticketUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "https://nenez.vercel.app"}/ticket/${ticketCode}`;
   const qrPng = await generateTicketQrPng(ticketUrl);
   const qrBase64 = qrPng.toString("base64");
   const qrDataUri = `data:image/png;base64,${qrBase64}`;

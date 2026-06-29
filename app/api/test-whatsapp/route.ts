@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
     const result = await sendWhatsAppText(
       phone,
-      `DAWGS — Mensaje de prueba\n\nSi recibes esto, WhatsApp Baileys est\u00e1 configurado correctamente.`,
+      `NENEZ — Mensaje de prueba\n\nSi recibes esto, WhatsApp Baileys est\u00e1 configurado correctamente.`,
     );
 
     if (!result.success) {

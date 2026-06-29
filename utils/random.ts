@@ -13,7 +13,7 @@ export function shortCode(length = 6): string {
   return code;
 }
 
-export function serialNumber(prefix = "DAWGS"): string {
+export function serialNumber(prefix = "NENEZ"): string {
   const num = crypto.randomInt(1000, 9999);
   const suffix = crypto.randomBytes(2).toString("hex").toUpperCase();
   return `${prefix}-${num}-${suffix}`;

@@ -72,15 +72,15 @@ export default function MobileFirstShell() {
 
   return (
     <section className="relative z-20 flex min-h-[100svh] flex-col justify-between overflow-hidden px-4 pb-24 pt-20 md:hidden">
-      <div aria-hidden className="dawgs-red-event-bg absolute inset-0 -z-10" />
+      <div aria-hidden className="nenez-red-event-bg absolute inset-0 -z-10" />
       
       {/* Hero Section */}
       <div className="flex-none text-center">
         <h1 className="mx-auto text-[3.75rem] font-black leading-[0.82] text-white drop-shadow-[0_0_30px_rgba(255,0,24,0.5)]">
-          DAWGS
+          NENEZ
         </h1>
         <p className="mx-auto mt-4 max-w-[330px] text-[11px] leading-5 text-zinc-300">
-          Incredible live shows. Upfront pricing. Relevant recommendations. DAWGS makes going out easy.
+          Incredible live shows. Upfront pricing. Relevant recommendations. NENEZ makes going out easy.
         </p>
 
         <div className="mt-5 flex gap-2 overflow-x-auto pb-1 no-scrollbar">

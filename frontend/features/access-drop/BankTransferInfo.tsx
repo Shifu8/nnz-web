@@ -5,8 +5,8 @@ import { useState, useRef, type CSSProperties } from "react";
 import { validateReceiptFileMetadata } from "@/lib/access-drop/fileValidation";
 
 const TICKET_DESIGNS = [
-  { id: 1, gradient: "from-red-900 via-red-950 to-black", accent: "red", label: "TRAP LOUD · YAN BLOCK", serial: "DAWGS-0001-A", name: "BLOCK CARD" },
-  { id: 2, gradient: "from-[#C8FF00]/20 via-black to-black", accent: "lime", label: "VIP ACCESS · YAN BLOCK", serial: "DAWGS-0002-B", name: "BELLAKITA CARD" },
+  { id: 1, gradient: "from-red-900 via-red-950 to-black", accent: "red", label: "TRAP LOUD · YAN BLOCK", serial: "NENEZ-0001-A", name: "BLOCK CARD" },
+  { id: 2, gradient: "from-[#C8FF00]/20 via-black to-black", accent: "lime", label: "VIP ACCESS · YAN BLOCK", serial: "NENEZ-0002-B", name: "BELLAKITA CARD" },
 ];
 
 interface BankTransferInfoProps {
@@ -157,7 +157,7 @@ export default function BankTransferInfo({
               <div className="relative p-5 flex flex-col min-h-[220px]">
                 <div className="flex items-center justify-between mb-3">
                   <div className={`flex items-center gap-1.5 ${ticketDesign.accent === "red" ? "text-red-400" : "text-[#C8FF00]"}`}>
-                    <span className={`text-[7px] font-black uppercase tracking-[0.3em] ${ticketDesign.accent === "red" ? "text-red-400" : "text-[#C8FF00]"}`}>DAWGS</span>
+                    <span className={`text-[7px] font-black uppercase tracking-[0.3em] ${ticketDesign.accent === "red" ? "text-red-400" : "text-[#C8FF00]"}`}>NENEZ</span>
                   </div>
                   <div className={`h-4 w-4 rounded-full border ${ticketDesign.accent === "red" ? "border-red-500/40" : "border-[#C8FF00]/40"}`} />
                 </div>
@@ -242,7 +242,7 @@ export default function BankTransferInfo({
               <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-1">a nombre de:</p>
               <div className="flex items-center gap-2">
                 <p className="text-base font-black text-white tracking-wider">MEDINA BRANDON</p>
-                <span className="rounded-full border border-red-500/20 bg-red-950/40 px-2 py-0.5 text-[7px] font-black uppercase tracking-widest text-red-300">miembro dawgs</span>
+                <span className="rounded-full border border-red-500/20 bg-red-950/40 px-2 py-0.5 text-[7px] font-black uppercase tracking-widest text-red-300">miembro nenez</span>
               </div>
             </div>
           </div>

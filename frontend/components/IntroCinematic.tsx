@@ -129,7 +129,7 @@ export default function IntroCinematic() {
             willChange: "transform, opacity, filter" // Previene cuadros estáticos iniciales
           }}
         >
-          DAWGS
+          NENEZ
         </h1>
 
         <p className="intro-subtitle mt-4 text-[9px] font-bold uppercase text-zinc-400 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">

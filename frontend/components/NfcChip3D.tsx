@@ -36,7 +36,7 @@ export default function NfcChip3D({ className = "", white }: { className?: strin
                 <path d="M5 6h14M5 10h10" strokeLinecap="round" />
               </svg>
             </div>
-            <span className="text-[4px] font-bold text-zinc-300 uppercase tracking-[0.2em]">DAWGS</span>
+            <span className="text-[4px] font-bold text-zinc-300 uppercase tracking-[0.2em]">NENEZ</span>
           </div>
         </div>
       </motion.div>

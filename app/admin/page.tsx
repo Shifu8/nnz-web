@@ -47,7 +47,7 @@ const tooltipNumber = (value: unknown) => {
   return 0;
 };
 
-const ADMIN_CREDENTIALS = { user: "admin", pass: "dawgs2026" };
+const ADMIN_CREDENTIALS = { user: "admin", pass: "nenez2026" };
 
 const SIDEBAR_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -171,7 +171,7 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
         <div className="flex h-24 w-24 items-center justify-center rounded-[28px] border border-white/20 bg-black/[0.35] shadow-[0_24px_80px_rgba(0,0,0,0.28)] backdrop-blur-2xl">
           <Zap className="h-11 w-11 text-[#ffd36a]" />
         </div>
-        <p className="mt-6 text-4xl font-black tracking-[0.18em]">DAWGS</p>
+        <p className="mt-6 text-4xl font-black tracking-[0.18em]">NENEZ</p>
         <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.45em] text-white/[0.55]">Admin Panel</p>
       </motion.div>
     </motion.div>
@@ -252,7 +252,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
               <Zap className="h-6 w-6 text-[#ffd36a]" />
             </div>
             <div>
-              <p className="text-lg font-black tracking-[0.16em] text-white">DAWGS</p>
+              <p className="text-lg font-black tracking-[0.16em] text-white">NENEZ</p>
               <p className="text-[9px] font-bold uppercase tracking-[0.28em] text-white/[0.45]">Admin Access</p>
             </div>
           </div>
@@ -986,7 +986,7 @@ function AdminDashboardInner({ onLogout, onOpenDesigner }: { onLogout: () => voi
           </div>
           {sidebarOpen && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <p className="text-sm font-black tracking-[0.14em] text-white">DAWGS</p>
+              <p className="text-sm font-black tracking-[0.14em] text-white">NENEZ</p>
               <p className="text-[8px] font-bold uppercase tracking-[0.22em] text-white/[0.42]">Admin</p>
             </motion.div>
           )}

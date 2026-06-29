@@ -1,7 +1,7 @@
 /**
  * Autor: Brandon Medina
  * Fecha: 11/05/2026
- * DescripciÃ³n: Vista de colecciÃ³n DAWGS WEAR.
+ * DescripciÃ³n: Vista de colecciÃ³n NENEZ WEAR.
  */
 
 "use client";
@@ -16,7 +16,7 @@ const products = [
     type: "Oversized Hoodie",
     price: 58,
     color: "Black / Red",
-    description: "Hoodie pesado con fit ancho, arte frontal DAWGS y detalle rojo.",
+    description: "Hoodie pesado con fit ancho, arte frontal NENEZ y detalle rojo.",
   },
   {
     name: "Loud Energy Tee",
@@ -65,7 +65,7 @@ export default function WearPage() {
             <div className="relative z-10 flex h-full min-h-[560px] flex-col justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.4em] text-red-400">
-                  Dawgs Wear
+                  Nenez Wear
                 </p>
 
                 <h1 className="mt-4 text-5xl font-black uppercase leading-none text-white sm:text-7xl">

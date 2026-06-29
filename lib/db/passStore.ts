@@ -223,7 +223,7 @@ function normalizeTicket(input: PendingTicketInput | ActivateTicketInput) {
 }
 
 function serialFor(transactionId: string): string {
-  return `DAWGS-${crypto.randomInt(1000, 9999)}-${transactionId.split("-")[0].toUpperCase()}`;
+  return `NENEZ-${crypto.randomInt(1000, 9999)}-${transactionId.split("-")[0].toUpperCase()}`;
 }
 
 async function assertNoActivePassForPhone(phoneHash: string, eventId: string) {

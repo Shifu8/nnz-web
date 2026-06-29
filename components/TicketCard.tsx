@@ -17,7 +17,7 @@ export default function TicketCard({ ticket }: Props) {
     <div className="w-full max-w-md rounded-[32px] border border-zinc-800 bg-[#070707] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
       <div className="flex justify-between items-center border-b border-zinc-900 pb-3 mb-4">
         <span className="text-[8px] font-black tracking-[0.25em] text-[#C8FF00] uppercase">
-          DAWGS VIP ACCESS
+          NENEZ VIP ACCESS
         </span>
         <span className={`text-[7px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${statusColors[ticket.status] || statusColors.valid}`}>
           {ticket.status}

@@ -89,7 +89,7 @@ export async function POST(request: Request) {
       if (countSnap.data().count >= 100) return { error: "ACCESS DROP AGOTADO." };
 
       const participantId = uuidv4();
-      const serialNumber = `DAWGS-${Math.floor(1000 + Math.random() * 9000)}-${uuidv4().split("-")[0].toUpperCase()}`;
+      const serialNumber = `NENEZ-${Math.floor(1000 + Math.random() * 9000)}-${uuidv4().split("-")[0].toUpperCase()}`;
       const token = uuidv4();
       const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString();
       const qrPayload = generateSecureQrPayload(serialNumber, token, "trap-loud");

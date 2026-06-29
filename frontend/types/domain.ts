@@ -1,7 +1,7 @@
 /**
  * Autor: Brandon Medina
  * Fecha: 11/05/2026
- * Descripción: Tipos centrales para eventos, artistas, merch y rewards DAWGS.
+ * Descripción: Tipos centrales para eventos, artistas, merch y rewards NENEZ.
  */
 
 export type SocialLinks = {

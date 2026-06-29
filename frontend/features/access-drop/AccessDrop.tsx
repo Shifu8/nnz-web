@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useImperativeHandle, forwardRef, type CSSProperties } from "react";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
-import { events } from "@/frontend/services/dawgsData";
+import { events } from "@/frontend/services/nenezData";
 import type { Event } from "@/frontend/types/domain";
 import { isBadWord } from "@/lib/badWords";
 import { loadCheckoutDraft, saveCheckoutDraft } from "@/lib/persistence/clientState";
@@ -105,10 +105,10 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
   const [receiptId, setReceiptId] = useState<string | null>(null);
   const [uploadMessage, setUploadMessage] = useState("");
 
-  useImperativeHandle(ref, () => ({ isSuccess: dropState === "success", firstName: formData.firstName.trim() || "DAWGS" }));
+  useImperativeHandle(ref, () => ({ isSuccess: dropState === "success", firstName: formData.firstName.trim() || "NENEZ" }));
 
   const handleSuccessClose = () => {
-    const name = formData.firstName.trim() || "DAWGS";
+    const name = formData.firstName.trim() || "NENEZ";
     onFarewell?.(name);
     setTimeout(() => onClose?.(), 2500);
   };
@@ -329,7 +329,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
 
             {/* Premium Editorial Header */}
             <div className="mb-10 text-center lg:text-left select-none max-w-xl">
-              <span className="text-[9px] font-black uppercase tracking-[0.45em] text-zinc-500">DAWGS</span>
+              <span className="text-[9px] font-black uppercase tracking-[0.45em] text-zinc-500">NENEZ</span>
               <h1 className="text-sm font-black uppercase tracking-[0.3em] text-white mt-1">COMPRA SEGURA</h1>
               <div className="h-px w-8 bg-zinc-800 my-4 mx-auto lg:mx-0" />
               <h2 className="text-3xl font-black uppercase tracking-tighter text-white leading-none">
@@ -520,7 +520,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-xs font-black text-white uppercase tracking-wider">MEDINA BRANDON</span>
                             <span className="rounded-full border border-zinc-800 bg-zinc-900 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wider text-zinc-400">
-                              DAWGS MEMBER
+                              NENEZ MEMBER
                             </span>
                           </div>
                         </div>
@@ -782,7 +782,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                           
                           {/* Top Tagging */}
                           <div className="absolute top-4 inset-x-4 z-20 flex justify-between items-center text-[8px] font-black uppercase tracking-[0.25em] text-white/90">
-                            <span>DAWGS</span>
+                            <span>NENEZ</span>
                             <span className="rounded border border-white/20 bg-black/45 px-2 py-0.5 backdrop-blur-md">
                               VIP ACCESS
                             </span>
@@ -825,7 +825,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
 
                           {/* Dynamic ticket ID number */}
                           <div className="text-[8px] font-mono font-bold tracking-widest text-zinc-600 uppercase">
-                            TICKET NO: #DAWGS-{2026 + quantity}-{102 + quantity}VIP
+                            TICKET NO: #NENEZ-{2026 + quantity}-{102 + quantity}VIP
                           </div>
 
                           {/* CSS Barcode and sharp SVG QR code */}

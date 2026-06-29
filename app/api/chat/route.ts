@@ -4,7 +4,7 @@ export const runtime = "nodejs";
 
 const replies: [RegExp, string][] = [
   [/^(hola|hey|buenas|que tal|q tal|hi|buenos|saludos|buen[oa])\b/i,
-    "Hola. Bienvenido a DAWGS. Pregunta lo que necesites: entradas, precio, fecha, giveaway, acceso o soporte."],
+    "Hola. Bienvenido a NENEZ. Pregunta lo que necesites: entradas, precio, fecha, giveaway, acceso o soporte."],
   [/gracias|thank|excelente|perfecto|okey|ok/i,
     "Con gusto. Cualquier otra duda, aca estoy."],
   [/adios|chao|bye|nos vemos|hasta luego/i,
@@ -24,7 +24,7 @@ const replies: [RegExp, string][] = [
 
   // Evento general
   [/evento|trap.?loud|concierto|show|presentaci[oó]n|que\s*hay|que\s*es/i,
-    "TRAP LOUD es el evento activo de DAWGS. Puedes comprar tu ticket por $10. Incluye QR unico enviado por Gmail y confirmacion por WhatsApp."],
+    "TRAP LOUD es el evento activo de NENEZ. Puedes comprar tu ticket por $10. Incluye QR unico enviado por Gmail y confirmacion por WhatsApp."],
 
   // Comprar ticket
   [/comprar|ticket|acceso|entrada|boleta|como\s*obtengo|quiero\s*ir/i,
@@ -46,13 +46,13 @@ const replies: [RegExp, string][] = [
   [/qr|c[oód]igo|escane[oa]r|validar|scanner|unico|replica/i,
     "Cada QR es unico y de un solo uso. Se genera al aprobar el pago y se envia por Gmail. Si alguien intenta duplicarlo, el sistema lo bloquea al instante."],
 
-  // DAWGS Wear / ropa
+  // NENEZ Wear / ropa
   [/ropa|wear|merch|streetwear|camiseta|polera|gorra|buso|sudadera|talla|vestimenta|moda/i,
-    "Por ahora DAWGS esta enfocado en eventos y accesos. Si necesitas soporte, escribe al contacto oficial que aparece en la pagina."],
+    "Por ahora NENEZ esta enfocado en eventos y accesos. Si necesitas soporte, escribe al contacto oficial que aparece en la pagina."],
 
   // Studio / música
   [/studio|m[uú]sica|produccion|mezcla|master|beat|grabar|cancion|instrumental|sonido|estudio/i,
-    "DAWGS Studio esta pausado por ahora. Cuando vuelva a estar activo, el equipo lo anunciara en la pagina."],
+    "NENEZ Studio esta pausado por ahora. Cuando vuelva a estar activo, el equipo lo anunciara en la pagina."],
 
   // Ubicación / lugar
   [/d[oó]nde|ubicacion|lugar|direccion|ciudad|san\s*juan|lugar|mapa/i,
@@ -68,7 +68,7 @@ const replies: [RegExp, string][] = [
 
   // Contacto / soporte
   [/contacto|soporte|ayuda|asesor|whatsapp.*ayuda|problema|error/i,
-    "Si tienes algun problema con tu compra o el QR, escribe al WhatsApp oficial de DAWGS que aparece en la pagina. El equipo de soporte te asistira."],
+    "Si tienes algun problema con tu compra o el QR, escribe al WhatsApp oficial de NENEZ que aparece en la pagina. El equipo de soporte te asistira."],
 
   // Cedula / documento
   [/c[eé]dula|documento|identidad|id|identificacion|ruc|pasaporte/i,
@@ -84,17 +84,17 @@ const replies: [RegExp, string][] = [
 
   // Inventado / random / raro
   [/que\s*soy|quien\s*soy|existencia|sentido\s*vida|filosofia|universo|dios|religion/i,
-    "Esa es una pregunta profunda. En DAWGS nos enfocamos en el trap, la ropa y el desmadre controlado. Pero si quieres, puedes pensar que el sentido de la vida es conseguir un buen ticket para TRAP LOUD por solo $10."],
+    "Esa es una pregunta profunda. En NENEZ nos enfocamos en el trap, la ropa y el desmadre controlado. Pero si quieres, puedes pensar que el sentido de la vida es conseguir un buen ticket para TRAP LOUD por solo $10."],
   [/cu[aá]nto\s*mides|altura|peso|edad|nombre.*verdadero/i,
-    "Soy un concierge virtual de DAWGS. No tengo cuerpo ni edad. Solo existo para ayudarte con el evento, la musica y la ropa."],
+    "Soy un concierge virtual de NENEZ. No tengo cuerpo ni edad. Solo existo para ayudarte con el evento, la musica y la ropa."],
   [/(?:me\s*)?quieres|(?:te\s*)?amo|amor|corazon|novi[oa]|beso|abraz[oa]/i,
-    "Aprecio tu energia. Pero soy un bot de DAWGS y mi unico proposito es ayudarte con el evento, la musica y la ropa. Para algo mas, ve a la seccion Wear."],
+    "Aprecio tu energia. Pero soy un bot de NENEZ y mi unico proposito es ayudarte con el evento, la musica y la ropa. Para algo mas, ve a la seccion Wear."],
   [/estupido|tonto|idiota|pendejo|huev[oó]n|mierda|put[ao]|carajo|cochino|mal\s*bot|bot\s*malo/i,
     "Entiendo tu frustracion. Lamento no poder ayudarte mejor. Si tienes una duda concreta sobre el evento, precio, fecha, compra o ropa, intenta preguntarmelo de otra forma y vere como asistirte."],
   [/hack|hacker|pirata|robar|truco|trampa|clonar|duplicar|gratis.*todo/i,
     "No promovemos actividades ilegales ni trucos. Cada QR es unico y seguro con encriptacion. Si tienes problemas economicos, revisa el giveaway gratis del evento."],
   [/muerte|morir|suicid[iioa]|matar|violencia|arma/i,
-    "Si estas pasando por un momento dificil, te recomiendo buscar ayuda profesional. En Ecuador puedes llamar a la linea de crisis 171. En DAWGS queremos que estes bien para disfrutar del evento."],
+    "Si estas pasando por un momento dificil, te recomiendo buscar ayuda profesional. En Ecuador puedes llamar a la linea de crisis 171. En NENEZ queremos que estes bien para disfrutar del evento."],
   [/papa|pizza|comida|hambre|cerveza|trago|fumar/i,
     "Dentro del evento habra puntos de venta de comida y bebida. Los detalles exactos se comunican ese dia. No olvides venir con tiempo."],
   [/foto|selfie|camara|video|grabar/i,
@@ -110,7 +110,7 @@ const replies: [RegExp, string][] = [
   [/horoscopo|signo|zodiacal|astrolog[ií]a/i,
     "No manejamos horoscopos. Pero si tu signo es Tauro o Escorpio, probablemente eres fan del trap. No tengo evidencia, pero suena creible."],
   [/pelea|pelear|riña|trancazo|seguridad/i,
-    "La seguridad del evento estara presente. Cualquier incidente reportalo al personal de seguridad. DAWGS promueve un ambiente de respeto y buena musica."],
+    "La seguridad del evento estara presente. Cualquier incidente reportalo al personal de seguridad. NENEZ promueve un ambiente de respeto y buena musica."],
 ];
 
 function getReply(text: string): string {

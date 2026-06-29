@@ -36,12 +36,12 @@ export async function POST(request: Request) {
     const transactionId = crypto.randomUUID();
 
     const phone = sanitizePhone(parsed.phone ?? "");
-    const email = sanitizeEmail(parsed.email ?? `vip+${transactionId.slice(0, 8)}@dawgs.local`);
+    const email = sanitizeEmail(parsed.email ?? `vip+${transactionId.slice(0, 8)}@nenez.local`);
     const documentNumber = "9999999999";
     const store = ensureStore();
     const now = new Date().toISOString();
 
-    const serialNumber = `DAWGS-${crypto.randomInt(1000, 9999)}-${transactionId.split("-")[0].toUpperCase()}`;
+    const serialNumber = `NENEZ-${crypto.randomInt(1000, 9999)}-${transactionId.split("-")[0].toUpperCase()}`;
     const qrToken = crypto.randomUUID();
     const qrPayload = generateSecureQrPayload(serialNumber, qrToken, EVENT_ID);
     const participantId = crypto.randomUUID();

@@ -5,7 +5,7 @@
 export default function SponsorsSection() {
   const sponsors = [
     {
-      name: "DAWGS Burgers",
+      name: "NENEZ Burgers",
       role: "Official Food Partner",
       color: "text-orange-500",
       bg: "bg-orange-500/10",

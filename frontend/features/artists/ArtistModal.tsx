@@ -1,7 +1,7 @@
 /**
  * Autor: Brandon Medina
  * Fecha: 11/05/2026
- * Descripción: Modal glass premium estilo DAWGS para artistas con GSAP.
+ * Descripción: Modal glass premium estilo NENEZ para artistas con GSAP.
  */
 
 "use client";

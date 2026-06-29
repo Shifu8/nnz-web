@@ -45,7 +45,7 @@ export default function MerchCard({ items }: { items: MerchItem[] }) {
         <motion.div key={`${item.id}-zoom`} className="absolute inset-0 bg-black/0" initial={{ scale: 1 }} animate={{ scale: 1.12 }} transition={{ duration: 4, ease: "linear" }} />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.3)_35%,rgba(0,0,0,.96))]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(255,0,24,.4),transparent_45%)] opacity-80 mix-blend-overlay transition-opacity duration-700 group-hover:opacity-100" />
-        <div className="dawgs-lightning absolute left-[-30%] top-[18%] h-px w-[150%] rotate-[14deg] bg-gradient-to-r from-transparent via-red-500 to-transparent blur-[2px] transition-all duration-300 group-hover:blur-[5px] group-hover:opacity-100" />
+        <div className="nenez-lightning absolute left-[-30%] top-[18%] h-px w-[150%] rotate-[14deg] bg-gradient-to-r from-transparent via-red-500 to-transparent blur-[2px] transition-all duration-300 group-hover:blur-[5px] group-hover:opacity-100" />
       </div>
 
       <div className="relative z-10 flex h-full flex-col p-5" style={{ transform: "translateZ(30px)" }}>
@@ -53,7 +53,7 @@ export default function MerchCard({ items }: { items: MerchItem[] }) {
           exclusive merch
         </span>
         <div className="mt-auto transition-transform duration-700 group-hover:-translate-y-3">
-          <p className="text-[10px] font-black uppercase tracking-[0.46em] text-red-300 drop-shadow-[0_0_10px_red]">DAWGS campaign</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.46em] text-red-300 drop-shadow-[0_0_10px_red]">NENEZ campaign</p>
           <h2 className="mt-2 text-5xl font-black leading-[0.88] text-white drop-shadow-[0_0_30px_rgba(255,0,24,0.8)]">WEAR THE SIGNAL</h2>
           <div className="mt-5 rounded-3xl border border-white/15 bg-black/70 p-4 backdrop-blur-2xl shadow-[0_15px_40px_rgba(0,0,0,0.6)]">
             <div className="flex items-end justify-between gap-3">

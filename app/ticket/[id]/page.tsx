@@ -21,7 +21,7 @@ export default async function TicketPage({ params }: Props) {
       <Navbar />
       <section className="flex-1 flex flex-col items-center justify-center px-4 py-28">
         <div className="text-center mb-8">
-          <p className="text-[10px] font-black uppercase tracking-[0.54em] text-[#C8FF00]">DAWGS</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.54em] text-[#C8FF00]">NENEZ</p>
           <h1 className="mt-3 text-3xl md:text-5xl font-black uppercase tracking-tighter text-white">
             TU TICKET
           </h1>

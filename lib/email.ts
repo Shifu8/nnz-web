@@ -36,7 +36,7 @@ function createTransport() {
 }
 
 function fromAddress(): string {
-  return process.env.SMTP_FROM || process.env.GMAIL_FROM || "DAWGS <mrshifu879@gmail.com>";
+  return process.env.SMTP_FROM || process.env.GMAIL_FROM || "NENEZ <mrshifu879@gmail.com>";
 }
 
 async function sendMail(options: SendMailOptions) {
@@ -62,7 +62,7 @@ function wrapHtml(body: string): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>DAWGS</title>
+  <title>NENEZ</title>
 </head>
 <body style="margin:0;padding:0;background-color:#050505;font-family:Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#050505;">
@@ -75,7 +75,7 @@ function wrapHtml(body: string): string {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:32px;border-top:1px solid rgba(255,255,255,0.06);padding-top:20px;">
                 <tr>
                   <td style="text-align:center;">
-                    <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:#C8FF00;">DAWGS</p>
+                    <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:#C8FF00;">NENEZ</p>
                     <p style="margin:8px 0 0;font-size:10px;color:#555;letter-spacing:1px;">underground access</p>
                   </td>
                 </tr>
@@ -91,25 +91,25 @@ function wrapHtml(body: string): string {
 }
 
 export function ticketEmailHtml(pass: TicketPass, qrDataUri: string, resend = false): string {
-  const title = resend ? "REENVÍO DE TU PASE DAWGS" : "TU PASE VIP DAWGS TRAP LOUD";
+  const title = resend ? "REENVÍO DE TU PASE NENEZ" : "TU PASE VIP NENEZ TRAP LOUD";
   const body = `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td style="text-align:center;padding-bottom:20px;">
-          <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#C8FF00;">DAWGS</p>
+          <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#C8FF00;">NENEZ</p>
           <h1 style="color:#fff;font-size:22px;font-weight:900;letter-spacing:1px;margin:12px 0 0;text-transform:uppercase;">${title}</h1>
         </td>
       </tr>
       <tr>
         <td style="padding-bottom:16px;">
           <p style="margin:0;font-size:14px;color:#ccc;">Hola <strong style="color:#fff;">${pass.firstName} ${pass.lastName}</strong>,</p>
-          <p style="margin:8px 0 0;font-size:13px;color:#999;">Tu acceso DAWGS está listo.</p>
+          <p style="margin:8px 0 0;font-size:13px;color:#999;">Tu acceso NENEZ está listo.</p>
           <p style="margin:4px 0 0;font-size:11px;color:#888;">Serial: <strong style="color:#C8FF00;letter-spacing:2px;">${pass.serialNumber}</strong></p>
         </td>
       </tr>
       <tr>
         <td style="background:#0a0a0a;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:24px;text-align:center;">
-          <img src="${qrDataUri}" alt="QR DAWGS" width="260" height="260" style="display:block;margin:0 auto;border-radius:8px;outline:2px solid rgba(200,255,0,0.15);outline-offset:4px;" />
+          <img src="${qrDataUri}" alt="QR NENEZ" width="260" height="260" style="display:block;margin:0 auto;border-radius:8px;outline:2px solid rgba(200,255,0,0.15);outline-offset:4px;" />
           <p style="margin:16px 0 0;font-size:10px;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:#C8FF00;">TRAP LOUD · 18 JUN 2026 · SAN JUAN</p>
           <p style="margin:4px 0 0;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#555;">cuenca · ecuador</p>
         </td>
@@ -130,7 +130,7 @@ export function purchaseConfirmationHtml(pass: TicketPass): string {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td style="text-align:center;padding-bottom:16px;">
-          <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#C8FF00;">DAWGS</p>
+          <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#C8FF00;">NENEZ</p>
           <h1 style="color:#fff;font-size:20px;font-weight:900;margin:12px 0 0;text-transform:uppercase;">COMPRA CONFIRMADA</h1>
         </td>
       </tr>
@@ -158,7 +158,7 @@ export function purchaseConfirmationHtml(pass: TicketPass): string {
             <tr>
               <td style="padding:6px 0;">
                 <p style="margin:0;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#666;">Ver ticket</p>
-                <p style="margin:2px 0 0;font-size:12px;"><a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://dawgs.vercel.app"}/ticket/${pass.serialNumber}" style="color:#C8FF00;text-decoration:underline;">${process.env.NEXT_PUBLIC_SITE_URL || "https://dawgs.vercel.app"}/ticket/${pass.serialNumber}</a></p>
+                <p style="margin:2px 0 0;font-size:12px;"><a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://nenez.vercel.app"}/ticket/${pass.serialNumber}" style="color:#C8FF00;text-decoration:underline;">${process.env.NEXT_PUBLIC_SITE_URL || "https://nenez.vercel.app"}/ticket/${pass.serialNumber}</a></p>
               </td>
             </tr>
           </table>
@@ -172,7 +172,7 @@ export function purchaseConfirmationHtml(pass: TicketPass): string {
 export async function sendTicketEmail(to: string, pass: TicketPass, qrDataUri: string, resend = false): Promise<void> {
   await sendMail({
     to,
-    subject: resend ? "Reenvío de tu pase DAWGS Trap Loud" : "Tu pase DAWGS Trap Loud",
+    subject: resend ? "Reenvío de tu pase NENEZ Trap Loud" : "Tu pase NENEZ Trap Loud",
     html: ticketEmailHtml(pass, qrDataUri, resend),
   });
 }
@@ -180,7 +180,7 @@ export async function sendTicketEmail(to: string, pass: TicketPass, qrDataUri: s
 export async function sendPurchaseConfirmationEmail(to: string, pass: TicketPass): Promise<void> {
   await sendMail({
     to,
-    subject: "Compra confirmada — DAWGS Trap Loud",
+    subject: "Compra confirmada — NENEZ Trap Loud",
     html: purchaseConfirmationHtml(pass),
   });
 }
@@ -190,14 +190,14 @@ export async function sendGiveawayWinnerEmail(to: string, params: { firstName: s
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td style="text-align:center;padding-bottom:16px;">
-          <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#C8FF00;">DAWGS</p>
+          <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#C8FF00;">NENEZ</p>
           <h1 style="color:#fff;font-size:20px;font-weight:900;margin:12px 0 0;text-transform:uppercase;">¡FELICIDADES, GANASTE!</h1>
         </td>
       </tr>
       <tr>
         <td style="padding-bottom:16px;">
           <p style="margin:0;font-size:14px;color:#ccc;">Hola <strong style="color:#fff;">${params.firstName}</strong>,</p>
-          <p style="margin:8px 0 0;font-size:13px;color:#999;">Has ganado en el sorteo DAWGS.</p>
+          <p style="margin:8px 0 0;font-size:13px;color:#999;">Has ganado en el sorteo NENEZ.</p>
         </td>
       </tr>
       <tr>
@@ -209,7 +209,7 @@ export async function sendGiveawayWinnerEmail(to: string, params: { firstName: s
       </tr>
     </table>
   `;
-  await sendMail({ to, subject: "¡Ganaste en el sorteo DAWGS!", html: wrapHtml(body) });
+  await sendMail({ to, subject: "¡Ganaste en el sorteo NENEZ!", html: wrapHtml(body) });
 }
 
 export async function sendSupportEmail(to: string, params: { name: string; message: string; ticketSerial?: string }): Promise<void> {
@@ -229,7 +229,7 @@ export async function sendSupportEmail(to: string, params: { name: string; messa
       </tr>
     </table>
   `;
-  await sendMail({ to, subject: "Soporte DAWGS — Hemos recibido tu mensaje", html: wrapHtml(body) });
+  await sendMail({ to, subject: "Soporte NENEZ — Hemos recibido tu mensaje", html: wrapHtml(body) });
 }
 
 export async function sendRawEmail(options: { to: string; subject: string; html: string }): Promise<void> {

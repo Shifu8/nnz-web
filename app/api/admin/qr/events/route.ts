@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { ApiError, assertSameOrigin, enforceRateLimit, handleApiError } from "@/lib/security";
 import { loadAllEvents } from "@/lib/admin/events-store";
 import { getScansForEvent } from "@/lib/staff/studentScanStore";
-import { events as frontendEvents } from "@/frontend/services/dawgsData";
+import { events as frontendEvents } from "@/frontend/services/nenezData";
 
 export const runtime = "nodejs";
 
@@ -57,7 +57,7 @@ function verifyAdmin(request: Request) {
   if (!auth) throw new ApiError(401, "No autorizado.", "UNAUTHORIZED");
   const decoded = Buffer.from(auth.replace("Bearer ", ""), "base64").toString("utf-8");
   const [user, pass] = decoded.split(":", 2);
-  if (user !== "admin" || pass !== "dawgs2026") {
+  if (user !== "admin" || pass !== "nenez2026") {
     throw new ApiError(401, "Credenciales invalidas.", "UNAUTHORIZED");
   }
 }

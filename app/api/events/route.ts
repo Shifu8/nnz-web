@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { loadAllEvents } from "@/lib/admin/events-store";
-import { events as fallbackEvents } from "@/frontend/services/dawgsData";
+import { events as fallbackEvents } from "@/frontend/services/nenezData";
 import type { Event } from "@/frontend/types/domain";
 
 const MONTHS = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DEC"];

@@ -2,7 +2,7 @@
 
 /**
  * EventDetailOverlay — Premium cinematic full-screen event detail experience.
- * DAWGS Platform — Designed to feel like Apple keynote × Awwwards editorial.
+ * NENEZ Platform — Designed to feel like Apple keynote × Awwwards editorial.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -442,7 +442,7 @@ export default function EventDetailOverlay({
             {/* ─── RELATED EVENTS ─── */}
             {relatedEvents.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.56, ease: "easeOut" }}>
-                <SectionLabel>Otros Eventos DAWGS</SectionLabel>
+                <SectionLabel>Otros Eventos NENEZ</SectionLabel>
                 <div className="overflow-x-auto no-scrollbar -mx-6 sm:-mx-8 mt-4">
                   <div className="flex gap-3 px-6 sm:px-8">
                     {relatedEvents.map((rel) => (
@@ -494,7 +494,7 @@ export default function EventDetailOverlay({
         >
           <div className="flex-1 min-w-0">
             <p className="text-[7px] font-black uppercase tracking-[0.35em] text-zinc-600">
-              {event.organizer || "DAWGS"}
+              {event.organizer || "NENEZ"}
             </p>
             <p className="text-[11px] font-black text-white uppercase tracking-wide truncate">
               {event.title} · {event.dateLabel}

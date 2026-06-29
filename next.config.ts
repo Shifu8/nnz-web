@@ -1,7 +1,7 @@
 /**
  * Autor: Brandon Medina
  * Fecha: 11/05/2026
- * Descripción: Configuración Next.js para assets remotos y seguridad DAWGS.
+ * Descripción: Configuración Next.js para assets remotos y seguridad NENEZ.
  */
 
 import type { NextConfig } from "next";

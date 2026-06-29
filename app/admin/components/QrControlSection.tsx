@@ -59,7 +59,7 @@ export default function QrControlSection() {
   const [selectedEventId, setSelectedEventId] = useState("trap-loud");
   const [showEventDropdown, setShowEventDropdown] = useState(false);
 
-  const authHeader = Buffer.from("admin:dawgs2026").toString("base64");
+  const authHeader = Buffer.from("admin:nenez2026").toString("base64");
   const authOpts = { headers: { Authorization: `Bearer ${authHeader}` } };
 
   const loadCareers = useCallback(async () => {

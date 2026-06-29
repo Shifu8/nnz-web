@@ -12,7 +12,7 @@ export default function ProductCard({ name, price, image, description }: Props) 
         {image ? (
           <img src={image} alt={name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
         ) : (
-          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-700">DAWGS</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-700">NENEZ</span>
         )}
       </div>
       <div className="p-4">

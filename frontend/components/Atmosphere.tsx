@@ -1,7 +1,7 @@
 /**
  * Autor: Brandon Medina
  * Fecha: 2026
- * Descripcion: Atmosfera global DAWGS - Luxury photography studio with ambient lighting depth.
+ * Descripcion: Atmosfera global NENEZ - Luxury photography studio with ambient lighting depth.
  */
 
 export default function Atmosphere() {

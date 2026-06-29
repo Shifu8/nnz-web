@@ -38,7 +38,7 @@ type TurnstileApi = {
 declare global {
   interface Window {
     turnstile?: TurnstileApi;
-    __dawgsTurnstileLoading?: Promise<void>;
+    __nenezTurnstileLoading?: Promise<void>;
   }
 }
 
@@ -72,10 +72,10 @@ function siteKeyForVariant(variant: TurnstileVariant): string {
 function loadTurnstileScript(): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
   if (window.turnstile) return Promise.resolve();
-  if (window.__dawgsTurnstileLoading) return window.__dawgsTurnstileLoading;
+  if (window.__nenezTurnstileLoading) return window.__nenezTurnstileLoading;
 
-  window.__dawgsTurnstileLoading = new Promise<void>((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>('script[data-dawgs-turnstile="true"]');
+  window.__nenezTurnstileLoading = new Promise<void>((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>('script[data-nenez-turnstile="true"]');
     if (existing) {
       existing.addEventListener("load", () => resolve(), { once: true });
       existing.addEventListener("error", () => reject(new Error("TURNSTILE_SCRIPT_ERROR")), { once: true });
@@ -86,13 +86,13 @@ function loadTurnstileScript(): Promise<void> {
     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
     script.async = true;
     script.defer = true;
-    script.dataset.dawgsTurnstile = "true";
+    script.dataset.nenezTurnstile = "true";
     script.onload = () => resolve();
     script.onerror = () => reject(new Error("TURNSTILE_SCRIPT_ERROR"));
     document.head.appendChild(script);
   });
 
-  return window.__dawgsTurnstileLoading;
+  return window.__nenezTurnstileLoading;
 }
 
 export function hasTurnstileSiteKey(variant: TurnstileVariant = "visible"): boolean {

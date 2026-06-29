@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { gsap } from "@/frontend/animations/gsapSetup";
 import Image from "next/image";
-import { getEvents } from "@/frontend/services/dawgsData";
+import { getEvents } from "@/frontend/services/nenezData";
 
 /**
  * Autor: Brandon Medina

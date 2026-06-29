@@ -15,7 +15,7 @@ import QRCode from "qrcode";
 import Image from "next/image";
 
 function createLocalPass(code: string): PartyPass {
-  const id = `DAWGS-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+  const id = `NENEZ-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 21).toISOString();
 
   return {
@@ -23,7 +23,7 @@ function createLocalPass(code: string): PartyPass {
     code,
     eventId: "trap-loud",
     expiresAt,
-    qrPayload: JSON.stringify({ type: "DAWGS_PASS", passId: id, token: code, eventId: "trap-loud", expiresAt, used: false }),
+    qrPayload: JSON.stringify({ type: "NENEZ_PASS", passId: id, token: code, eventId: "trap-loud", expiresAt, used: false }),
   };
 }
 
@@ -90,7 +90,7 @@ export default function RewardClaim() {
           <h2 className="mt-3 text-4xl font-black leading-none text-white md:text-6xl">ACTIVATE PROTOCOL</h2>
           <p className="mt-4 text-sm leading-7 text-zinc-300">Ingresa el código único de tu acceso físico. Al activarlo, se vinculará a este dispositivo generando tu Party Pass digital para el ingreso exclusivo.</p>
           <form onSubmit={handleSubmit} className="mt-7 space-y-3">
-            <input value={code} onChange={(event) => setCode(event.target.value)} placeholder="DAWGS-XXXX" className="h-16 w-full rounded-2xl border border-white/12 bg-black/55 px-5 text-lg font-black uppercase tracking-[0.16em] text-white outline-none ring-red-500/40 transition placeholder:text-zinc-600 focus:ring-4" />
+            <input value={code} onChange={(event) => setCode(event.target.value)} placeholder="NENEZ-XXXX" className="h-16 w-full rounded-2xl border border-white/12 bg-black/55 px-5 text-lg font-black uppercase tracking-[0.16em] text-white outline-none ring-red-500/40 transition placeholder:text-zinc-600 focus:ring-4" />
             {error && <p className="text-sm text-red-300">{error}</p>}
             <button className="flex h-[60px] w-full items-center justify-center gap-2 rounded-2xl bg-white text-xs font-black uppercase tracking-[0.24em] text-black transition hover:scale-[1.01] hover:bg-red-600 hover:text-white">
               {loading ? "VALIDATING..." : "GENERATE PASS"}

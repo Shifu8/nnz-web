@@ -76,7 +76,7 @@ export default function EventCard({ event, onArtistClick, isFirst = false }: Eve
       });
       
       // Animate lightning inside the card
-      gsap.to(".dawgs-dynamic-lightning", {
+      gsap.to(".nenez-dynamic-lightning", {
         autoAlpha: 1,
         duration: 0.05,
         repeat: -1,
@@ -99,8 +99,8 @@ export default function EventCard({ event, onArtistClick, isFirst = false }: Eve
         <Image src={event.poster} alt={event.title} fill priority={event.id === "trap-loud"} sizes="(max-width: 768px) 75vw, 300px" className="poster-parallax object-cover object-top" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.15)_36%,rgba(0,0,0,.94))]" />
         <div className="absolute inset-0 scanlines opacity-25" />
-        <div className="dawgs-dynamic-lightning absolute left-[-35%] top-[25%] h-px w-[160%] rotate-[-13deg] bg-gradient-to-r from-transparent via-red-400 to-transparent blur-[1px] opacity-0" />
-        <div className="dawgs-smoke absolute bottom-10 left-8 h-52 w-72 rounded-full bg-red-600/30 blur-3xl transition duration-500 group-hover:bg-red-500/40" />
+        <div className="nenez-dynamic-lightning absolute left-[-35%] top-[25%] h-px w-[160%] rotate-[-13deg] bg-gradient-to-r from-transparent via-red-400 to-transparent blur-[1px] opacity-0" />
+        <div className="nenez-smoke absolute bottom-10 left-8 h-52 w-72 rounded-full bg-red-600/30 blur-3xl transition duration-500 group-hover:bg-red-500/40" />
       </div>
 
       <div className="relative z-10 flex h-full flex-col p-5" style={{ transform: "translateZ(30px)" }}>

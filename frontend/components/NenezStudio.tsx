@@ -28,7 +28,7 @@ const studioImages = [
 ];
 
 
-export default function DawgsStudio() {
+export default function NenezStudio() {
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
 
   useEffect(() => {
@@ -62,7 +62,7 @@ export default function DawgsStudio() {
             Creative Hub
           </p>
           <h2 className="text-5xl md:text-8xl font-black text-white leading-[0.9] tracking-tighter mb-6">
-            DAWGS<br />STUDIO
+            NENEZ<br />STUDIO
           </h2>
           <p className="text-sm md:text-base text-zinc-400 leading-relaxed">
             Más que un cuarto de grabación. Un ecosistema diseñado para esculpir el sonido de la próxima ola del trap y música urbana.
@@ -132,7 +132,7 @@ export default function DawgsStudio() {
 
             <div className="flex justify-start">
               <a 
-                href="https://wa.me/593988831372?text=Hola%20DAWGS%20Studio,%20quiero%20empezar%20un%20proyecto" 
+                href="https://wa.me/593988831372?text=Hola%20NENEZ%20Studio,%20quiero%20empezar%20un%20proyecto" 
                 target="_blank" 
                 rel="noreferrer" 
                 className="glass-action"

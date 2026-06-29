@@ -7,7 +7,7 @@ import { DEFAULT_HOMEPAGE_CONFIG, COVER_POSITIONS } from "@/lib/homepage-config/
 import { hexToRgb, THEMES } from "@/lib/homepage-config/themes";
 
 const AUTH_HEADERS = {
-  Authorization: `Bearer ${Buffer.from("admin:dawgs2026").toString("base64")}`,
+  Authorization: `Bearer ${Buffer.from("admin:nenez2026").toString("base64")}`,
 };
 
 type SectionKeys = keyof HomepageConfig;

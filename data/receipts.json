@@ -26,8 +26,8 @@
     "createdAt": "2026-05-25T07:23:01.134Z",
     "reviewedAt": "2026-05-25T07:23:53.141Z",
     "reviewedBy": "admin",
-    "serialNumber": "DAWGS-1525-ADB4DCEE",
-    "qrPayload": "{\"type\":\"DAWGS_PASS\",\"serialNumber\":\"DAWGS-1525-ADB4DCEE\",\"token\":\"dc775ea8-69ef-4b54-87a6-da36c91e560e\",\"eventId\":\"trap-loud\",\"issuedAt\":\"2026-05-25T07:23:53.142Z\",\"v\":1}"
+    "serialNumber": "NENEZ-1525-ADB4DCEE",
+    "qrPayload": "{\"type\":\"NENEZ_PASS\",\"serialNumber\":\"NENEZ-1525-ADB4DCEE\",\"token\":\"dc775ea8-69ef-4b54-87a6-da36c91e560e\",\"eventId\":\"trap-loud\",\"issuedAt\":\"2026-05-25T07:23:53.142Z\",\"v\":1}"
   },
   {
     "id": "0b20b5ac-39e3-43ae-a7a2-3588970cc24d",
@@ -162,8 +162,8 @@
     "createdAt": "2026-05-26T03:31:39.424Z",
     "reviewedAt": "2026-05-26T03:31:44.532Z",
     "reviewedBy": "admin",
-    "serialNumber": "DAWGS-7510-2223BBD1",
-    "qrPayload": "{\"type\":\"DAWGS_PASS\",\"serialNumber\":\"DAWGS-7510-2223BBD1\",\"token\":\"b6b969e1-a4d9-4f56-9b58-f7027029341b\",\"eventId\":\"trap-loud\",\"issuedAt\":\"2026-05-26T03:31:44.535Z\",\"v\":1}"
+    "serialNumber": "NENEZ-7510-2223BBD1",
+    "qrPayload": "{\"type\":\"NENEZ_PASS\",\"serialNumber\":\"NENEZ-7510-2223BBD1\",\"token\":\"b6b969e1-a4d9-4f56-9b58-f7027029341b\",\"eventId\":\"trap-loud\",\"issuedAt\":\"2026-05-26T03:31:44.535Z\",\"v\":1}"
   },
   {
     "id": "08a162d6-3ed5-4aba-babb-0ece386a4a1d",
@@ -245,8 +245,8 @@
     "createdAt": "2026-06-13T05:12:28.663Z",
     "reviewedAt": "2026-06-13T05:13:04.302Z",
     "reviewedBy": "admin",
-    "serialNumber": "DAWGS-1244-BB964398",
-    "qrPayload": "{\"type\":\"DAWGS_PASS\",\"serialNumber\":\"DAWGS-1244-BB964398\",\"token\":\"0b1793a0-0cf7-493e-8801-2e73a49bba42\",\"eventId\":\"trap-loud\",\"issuedAt\":\"2026-06-13T05:13:04.307Z\",\"v\":1}",
+    "serialNumber": "NENEZ-1244-BB964398",
+    "qrPayload": "{\"type\":\"NENEZ_PASS\",\"serialNumber\":\"NENEZ-1244-BB964398\",\"token\":\"0b1793a0-0cf7-493e-8801-2e73a49bba42\",\"eventId\":\"trap-loud\",\"issuedAt\":\"2026-06-13T05:13:04.307Z\",\"v\":1}",
     "deliveryChannel": "none",
     "deliveryStatus": "gmail:gmail-api-not-configured; whatsapp-confirm:Baileys backend not configured"
   },
@@ -277,8 +277,8 @@
     "createdAt": "2026-06-13T05:22:54.732Z",
     "reviewedAt": "2026-06-13T05:23:47.356Z",
     "reviewedBy": "admin",
-    "serialNumber": "DAWGS-2218-196BDB55",
-    "qrPayload": "{\"type\":\"DAWGS_PASS\",\"serialNumber\":\"DAWGS-2218-196BDB55\",\"token\":\"f7410003-8fcd-4cfd-be8d-b399b3d2d15d\",\"eventId\":\"trap-loud\",\"issuedAt\":\"2026-06-13T05:23:47.358Z\",\"v\":1}",
+    "serialNumber": "NENEZ-2218-196BDB55",
+    "qrPayload": "{\"type\":\"NENEZ_PASS\",\"serialNumber\":\"NENEZ-2218-196BDB55\",\"token\":\"f7410003-8fcd-4cfd-be8d-b399b3d2d15d\",\"eventId\":\"trap-loud\",\"issuedAt\":\"2026-06-13T05:23:47.358Z\",\"v\":1}",
     "deliveryChannel": "none",
     "deliveryStatus": "gmail:gmail-api-not-configured; whatsapp-confirm:ok",
     "whatsappSentAt": "2026-06-13T05:23:47.660Z"
@@ -310,8 +310,8 @@
     "createdAt": "2026-06-13T05:45:26.533Z",
     "reviewedAt": "2026-06-13T05:45:38.268Z",
     "reviewedBy": "admin",
-    "serialNumber": "DAWGS-4925-43037189",
-    "qrPayload": "{\"type\":\"DAWGS_PASS\",\"serialNumber\":\"DAWGS-4925-43037189\",\"token\":\"16e31c5c-b91a-4352-bec7-4fa1b91cd4ea\",\"eventId\":\"trap-loud\",\"issuedAt\":\"2026-06-13T05:45:38.270Z\",\"v\":1}",
+    "serialNumber": "NENEZ-4925-43037189",
+    "qrPayload": "{\"type\":\"NENEZ_PASS\",\"serialNumber\":\"NENEZ-4925-43037189\",\"token\":\"16e31c5c-b91a-4352-bec7-4fa1b91cd4ea\",\"eventId\":\"trap-loud\",\"issuedAt\":\"2026-06-13T05:45:38.270Z\",\"v\":1}",
     "deliveryChannel": "none",
     "deliveryStatus": "email:email-provider-not-configured; whatsapp:queued:ded4daf8-d0fe-4266-9120-e0e491b74d53",
     "whatsappQueuedAt": "2026-06-13T05:45:38.566Z"

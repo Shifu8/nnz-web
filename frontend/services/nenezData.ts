@@ -1,7 +1,7 @@
 /**
  * Autor: Brandon Medina
  * Fecha: 18/05/2026
- * Descripcion: Datos oficiales DAWGS para eventos, artistas y merch premium.
+ * Descripcion: Datos oficiales NENEZ para eventos, artistas y merch premium.
  */
 
 import type { Artist, Event, MerchItem } from "@/frontend/types/domain";
@@ -66,7 +66,7 @@ export const events: Event[] = [
     dateLabel: "18 JUN 2026",
     startsAt: "2026-06-18T21:00:00-05:00",
     poster: "/images/trap_loud_trio_artists.png",
-    lineup: ["DJ OFICIAL DAWGS"],
+    lineup: ["DJ OFICIAL NENEZ"],
     description:
       "La escena subterranea cobra vida. Trap latino oscuro, bajo retumbante y energia inagotable. Luces rojas, beats pesados y acceso estricto.",
   },

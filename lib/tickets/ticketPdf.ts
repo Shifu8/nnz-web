@@ -33,7 +33,7 @@ export async function generateTicketPdf(ticket: TicketInfo): Promise<Buffer> {
   const regular = await doc.embedStandardFont(StandardFonts.Helvetica);
 
   page.drawRectangle({ x: 0, y: 0, width: W, height: H, color: BLACK });
-  page.drawText("DAWGS", { x: 24, y: H - 44, size: 32, font: bold, color: WHITE });
+  page.drawText("NENEZ", { x: 24, y: H - 44, size: 32, font: bold, color: WHITE });
   page.drawText("ACCESO - ENTRADA UNICA", {
     x: 24,
     y: H - 62,

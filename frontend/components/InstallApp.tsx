@@ -55,7 +55,7 @@ export default function InstallApp({ label, className }: { label?: string; class
     }
 
     if (isMobile && typeof navigator !== "undefined" && navigator.share) {
-      navigator.share({ title: "DAWGS", url: window.location.origin }).catch(() => {});
+      navigator.share({ title: "NENEZ", url: window.location.origin }).catch(() => {});
       return;
     }
 
@@ -105,7 +105,7 @@ export default function InstallApp({ label, className }: { label?: string; class
                   <QRCodeSVG value={installUrl} size={180} bgColor="#ffffff" fgColor="#000000" />
                 </div>
                 <p className="text-[10px] text-zinc-500 leading-relaxed">
-                  Abre la c&aacute;mara y escanea el c&oacute;digo para instalar DAWGS en tu celular
+                  Abre la c&aacute;mara y escanea el c&oacute;digo para instalar NENEZ en tu celular
                 </p>
               </div>
             </motion.div>

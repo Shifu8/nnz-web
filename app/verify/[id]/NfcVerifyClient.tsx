@@ -27,14 +27,14 @@ const careInstructions = [
 ];
 
 const serialPrefixes: Record<string, string> = {
-  "obsession-hoodie": "DAWGS-NIR-H",
-  "obsession-jogger": "DAWGS-NIR-J",
-  "obsession-set": "DAWGS-NIR-S",
+  "obsession-hoodie": "NENEZ-NIR-H",
+  "obsession-jogger": "NENEZ-NIR-J",
+  "obsession-set": "NENEZ-NIR-S",
 };
 
 export default function NfcVerifyClient({ product }: { product: Product }) {
   const serial = useMemo(() => {
-    const prefix = serialPrefixes[product.nfcId] || "DAWGS-NIR-";
+    const prefix = serialPrefixes[product.nfcId] || "NENEZ-NIR-";
     const unique = Math.floor(1000 + Math.random() * 9000);
     return `${prefix}${unique}`;
   }, [product.nfcId]);
@@ -102,7 +102,7 @@ export default function NfcVerifyClient({ product }: { product: Product }) {
                 <NfcChip3D white />
                 <div>
                   <p className="text-[9px] font-black text-[#C8FF00] uppercase tracking-widest">NFC Authenticated</p>
-                  <p className="text-[7px] text-zinc-500 uppercase tracking-wider">Chip integrado · DAWGS ORIGINAL</p>
+                  <p className="text-[7px] text-zinc-500 uppercase tracking-wider">Chip integrado · NENEZ ORIGINAL</p>
                 </div>
               </motion.div>
             </div>
@@ -161,7 +161,7 @@ export default function NfcVerifyClient({ product }: { product: Product }) {
                 </div>
               </div>
 
-              <a href={`https://wa.me/593XXXXXXXXX?text=${encodeURIComponent(`Hola DAWGS, quiero comprar el ${product.name} (${product.type}) de la colección ${product.collection}.`)}`}
+              <a href={`https://wa.me/593XXXXXXXXX?text=${encodeURIComponent(`Hola NENEZ, quiero comprar el ${product.name} (${product.type}) de la colección ${product.collection}.`)}`}
                 target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-center gap-3 w-full h-14 rounded-2xl bg-[#C8FF00] text-black font-black text-xs uppercase tracking-widest hover:bg-[#b5e600] transition shadow-[0_0_30px_rgba(200,255,0,0.2)]"
               >

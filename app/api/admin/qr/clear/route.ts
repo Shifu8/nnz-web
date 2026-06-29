@@ -25,7 +25,7 @@ function verifyAdmin(request: Request) {
   if (!auth) throw new ApiError(401, "No autorizado.", "UNAUTHORIZED");
   const decoded = Buffer.from(auth.replace("Bearer ", ""), "base64").toString("utf-8");
   const [user, pass] = decoded.split(":", 2);
-  if (user !== "admin" || pass !== "dawgs2026") {
+  if (user !== "admin" || pass !== "nenez2026") {
     throw new ApiError(401, "Credenciales invalidas.", "UNAUTHORIZED");
   }
 }

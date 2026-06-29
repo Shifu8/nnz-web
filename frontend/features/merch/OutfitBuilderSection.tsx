@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 
-const STUDIO_HERO_IMAGE = "/images/dawgs-studio-couch.png";
-const STUDIO_PORTRAIT_IMAGE = "/images/dawgs-studio-portrait.png";
+const STUDIO_HERO_IMAGE = "/images/nenez-studio-couch.png";
+const STUDIO_PORTRAIT_IMAGE = "/images/nenez-studio-portrait.png";
 
 export default function OutfitBuilderSection() {
   return (
@@ -18,7 +18,7 @@ export default function OutfitBuilderSection() {
         {/* Ambient background Couch image - Full Color for rich visual contrast */}
         <Image
           src={STUDIO_HERO_IMAGE}
-          alt="Modelos DAWGS usando hoodie y jogger burgundy en sofa de estudio"
+          alt="Modelos NENEZ usando hoodie y jogger burgundy en sofa de estudio"
           fill
           sizes="(max-width: 1600px) 100vw, 1600px"
           className="object-cover object-[center_top] opacity-65 transition-opacity duration-1000"
@@ -33,7 +33,7 @@ export default function OutfitBuilderSection() {
         {/* Left Column: Symmetrical layout typography headers */}
         <div className="relative flex flex-col justify-center">
           <p className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.3em] text-white">
-            DAWGS Wear
+            NENEZ Wear
           </p>
           <h2 className="mt-4 text-4xl font-black uppercase leading-[0.9] tracking-[-0.05em] text-white sm:text-5xl">
             No es outfit.
@@ -54,7 +54,7 @@ export default function OutfitBuilderSection() {
             <div className="relative aspect-[4/5] min-h-[440px] sm:min-h-[480px] overflow-hidden rounded-[18px]">
               <Image
                 src={STUDIO_PORTRAIT_IMAGE}
-                alt="Modelos DAWGS en estudio"
+                alt="Modelos NENEZ en estudio"
                 fill
                 sizes="(max-width: 768px) 100vw, 360px"
                 className="object-cover object-[68%_36%] transition-transform duration-700 hover:scale-[1.02]"

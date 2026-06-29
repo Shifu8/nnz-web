@@ -4,7 +4,7 @@ import type { HomepageConfig } from "@/lib/homepage-config/types";
 
 function isAuthorized(request: NextRequest) {
   const auth = request.headers.get("authorization");
-  const expected = Buffer.from("admin:dawgs2026").toString("base64");
+  const expected = Buffer.from("admin:nenez2026").toString("base64");
   return auth === `Bearer ${expected}`;
 }
 

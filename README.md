@@ -1,4 +1,4 @@
-# DAWGS Web
+# NENEZ Web
 
 Next.js 16 app with PayPhone checkout, one-use QR validation, staff scanner, admin tickets, and live giveaway.
 
@@ -59,7 +59,7 @@ Required env:
 - `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (or Firebase Admin)
 - `DATA_ENCRYPTION_KEY`, `JWT_SECRET`, `QR_HASH_SECRET`
 - `STAFF_PASSWORD_HASH_B64`, `ADMIN_PASSWORD_HASH_B64` (generar con `node scripts/gen-password-hashes.mjs`)
-- `GMAIL_USER=soporte.dawgs@gmail.com`, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`
+- `GMAIL_USER=soporte.nenez@gmail.com`, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`
 - `GMAIL_DAILY_LIMIT=100`
 - `NEXT_PUBLIC_TURNSTILE_SITE_KEY_VISIBLE`, `TURNSTILE_SECRET_KEY_VISIBLE`
 - `NEXT_PUBLIC_TURNSTILE_SITE_KEY_INVISIBLE`, `TURNSTILE_SECRET_KEY_INVISIBLE`

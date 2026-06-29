@@ -1,7 +1,7 @@
 /**
  * Autor: Brandon Medina
  * Fecha: 2026
- * Descripción: Homepage DAWGS - Futuristic Luxury Monochrome Redesign
+ * Descripción: Homepage NENEZ - Futuristic Luxury Monochrome Redesign
  */
 
 "use client";
@@ -33,7 +33,7 @@ import StaffModal from "@/frontend/features/staff/StaffModal";
 import EventTicketCarousel, { CAROUSEL_EVENTS } from "@/frontend/components/EventTicketCarousel";
 import EventDetailOverlay from "@/frontend/features/events/EventDetailOverlay";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
-import { events as fallbackEvents } from "@/frontend/services/dawgsData";
+import { events as fallbackEvents } from "@/frontend/services/nenezData";
 import { useHomepageConfig } from "@/frontend/hooks/useHomepageConfig";
 import type { ThemeColors } from "@/lib/homepage-config/themes";
 import type { HomepageConfig } from "@/lib/homepage-config/types";
@@ -319,7 +319,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               transition={{ duration: 0.5, ease: "easeOut" }}
               className="text-center"
             >
-              <h1 className="text-sm font-black uppercase tracking-[0.6em] text-white">DAWGS</h1>
+              <h1 className="text-sm font-black uppercase tracking-[0.6em] text-white">NENEZ</h1>
               <p className="mt-2 text-[8px] font-black uppercase tracking-[0.4em] text-zinc-500">Exclusivity in live music</p>
               <div className="mt-6 h-0.5 w-16 bg-white/20 mx-auto overflow-hidden rounded">
                 <motion.div 
@@ -351,9 +351,9 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               onTouchEnd={handleTouchEnd}
               className="group flex select-none items-center text-sm sm:text-xs font-black uppercase tracking-[0.45em] text-white outline-none hover:text-white"
               style={{ WebkitTapHighlightColor: "transparent" }}
-              aria-label="DAWGS"
+              aria-label="NENEZ"
             >
-              DAWGS
+              NENEZ
             </button>
           </div>
 
@@ -476,10 +476,10 @@ export default function HomePage({ initialConfig }: HomePageProps) {
           {/* Left Column: Premium Editorial text */}
           <div className="lg:col-span-5 flex flex-col justify-center text-left space-y-8 select-none">
             
-            {/* DAWGS PRESENTA tag */}
+            {/* NENEZ PRESENTA tag */}
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-500">
-                DAWGS presenta
+                NENEZ presenta
               </p>
               
               {/* Dynamic Big Artist Name with elegant AnimatePresence transition */}

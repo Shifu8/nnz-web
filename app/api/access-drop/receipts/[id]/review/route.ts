@@ -13,12 +13,12 @@ import { getActiveTicketEvent } from "@/lib/tickets/activeEvent";
 export const runtime = "nodejs";
 
 function generateSerial(): string {
-  return `DAWGS-${crypto.randomInt(1000, 9999)}-${crypto.randomUUID().split("-")[0].toUpperCase()}`;
+  return `NENEZ-${crypto.randomInt(1000, 9999)}-${crypto.randomUUID().split("-")[0].toUpperCase()}`;
 }
 
 function generateQrPayload(serialNumber: string, eventId: string): string {
   return JSON.stringify({
-    type: "DAWGS_PASS",
+    type: "NENEZ_PASS",
     serialNumber,
     token: crypto.randomUUID(),
     eventId,
@@ -130,7 +130,7 @@ export async function POST(
 
         const waResult = await sendWhatsAppText(
           existing.phone,
-          `DAWGS TRAP LOUD\n\nHola ${existing.firstName}, compra aprobada. Revisa tu Gmail para guardar tu entrada.\n\nSi no aparece, puede que el correo este mal escrito: entra a Recuperar entrada en la web.`,
+          `NENEZ TRAP LOUD\n\nHola ${existing.firstName}, compra aprobada. Revisa tu Gmail para guardar tu entrada.\n\nSi no aparece, puede que el correo este mal escrito: entra a Recuperar entrada en la web.`,
         );
 
         patchReceipt(id, {

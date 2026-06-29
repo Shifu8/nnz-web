@@ -126,7 +126,7 @@ export async function sendTicketPdfViaWhatsApp(
   serialNumber: string,
   pdfPath: string,
 ): Promise<WhatsAppResult> {
-  const caption = `DAWGS TRAP LOUD\n\nHola ${firstName}, tu entrada está lista.\n\nSerial: ${serialNumber}\n\nPresenta el PDF adjunto en puerta. Válido una sola vez.`;
+  const caption = `NENEZ TRAP LOUD\n\nHola ${firstName}, tu entrada está lista.\n\nSerial: ${serialNumber}\n\nPresenta el PDF adjunto en puerta. Válido una sola vez.`;
 
   const result = await sendDocumentViaBaileysBackend(phone, caption, pdfPath, `entrada-${serialNumber}.pdf`);
   if (!result) return { success: false, error: "Baileys backend not configured (BACKEND_URL missing)" };
@@ -138,7 +138,7 @@ export async function sendRejectionViaWhatsApp(
   firstName: string,
   reasonLabel: string,
 ): Promise<WhatsAppResult> {
-  const message = `DAWGS TRAP LOUD\n\nHola ${firstName}, tu comprobante fue revisado pero lamentamos informarte que tu pago no ha sido aprobado.\n\nMotivo: ${reasonLabel}\n\nSi tienes dudas, contáctanos.`;
+  const message = `NENEZ TRAP LOUD\n\nHola ${firstName}, tu comprobante fue revisado pero lamentamos informarte que tu pago no ha sido aprobado.\n\nMotivo: ${reasonLabel}\n\nSi tienes dudas, contáctanos.`;
   const result = await sendViaBaileysBackend(phone, message);
   return result ?? { success: false, error: "Baileys backend not configured" };
 }
@@ -156,5 +156,5 @@ export function createWhatsAppLink(phone: string, text?: string): string {
 }
 
 export function createWhatsAppDeepLink(phone: string, serialNumber: string): string {
-  return createWhatsAppLink(phone, `Hola DAWGS, mi código es ${serialNumber}`);
+  return createWhatsAppLink(phone, `Hola NENEZ, mi código es ${serialNumber}`);
 }

@@ -37,7 +37,7 @@ const EMPTY_EVENT: Omit<AdminEvent, "id" | "createdAt" | "updatedAt"> & { slug: 
   slug: "",
 };
 
-const AUTH_HEADERS = { Authorization: `Bearer ${Buffer.from("admin:dawgs2026").toString("base64")}` };
+const AUTH_HEADERS = { Authorization: `Bearer ${Buffer.from("admin:nenez2026").toString("base64")}` };
 
 export default function EventsSection(_props: EventsSectionProps) {
   const { toast } = useToast();

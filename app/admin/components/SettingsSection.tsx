@@ -9,7 +9,7 @@ export default function SettingsSection() {
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [whatsappConfig, setWhatsappConfig] = useState({
-    messageTemplate: "DAWGS\n\nHola {nombre}, tu entrada está lista.\nSerial: {serial}\n\nPresenta el PDF adjunto en puerta.",
+    messageTemplate: "NENEZ\n\nHola {nombre}, tu entrada está lista.\nSerial: {serial}\n\nPresenta el PDF adjunto en puerta.",
     autoSendOnApprove: true,
     notifyOnReject: true,
   });

@@ -11,7 +11,7 @@ const WHATSAPP_NUMBER = "593XXXXXXXXX";
 const wearCollection = [
   {
     id: "outfit-1",
-    name: "DAWGS Signature Hoodie (Burgundy & Rose)",
+    name: "NENEZ Signature Hoodie (Burgundy & Rose)",
     price: "75",
     image: "/images/kristina_merch.png",
     modelName: "Kristina (@kris_handle)",
@@ -21,7 +21,7 @@ const wearCollection = [
   },
   {
     id: "outfit-2",
-    name: "DAWGS Classic Tracksuit (Deep Cherry)",
+    name: "NENEZ Classic Tracksuit (Deep Cherry)",
     price: "110",
     image: "/images/ariana_merch.png",
     modelName: "Ariana (@ariana_handle)",
@@ -31,7 +31,7 @@ const wearCollection = [
   },
   {
     id: "outfit-3",
-    name: "DAWGS Heavyweight Hoodie (Crimson)",
+    name: "NENEZ Heavyweight Hoodie (Crimson)",
     price: "75",
     image: "/images/johanel_merch.png",
     modelName: "Johanel (@johanel_handle)",
@@ -41,7 +41,7 @@ const wearCollection = [
   },
   {
     id: "outfit-4",
-    name: "DAWGS Tactical Signal Parka (Matte Black)",
+    name: "NENEZ Tactical Signal Parka (Matte Black)",
     price: "135",
     image: "/images/model_one.png",
     modelName: "Leo (@leo_wear)",
@@ -51,7 +51,7 @@ const wearCollection = [
   },
   {
     id: "outfit-5",
-    name: "DAWGS Tech-wear Cyber-vest (Graphite)",
+    name: "NENEZ Tech-wear Cyber-vest (Graphite)",
     price: "95",
     image: "/images/model_two.png",
     modelName: "Dante (@dante_raw)",
@@ -61,7 +61,7 @@ const wearCollection = [
   },
   {
     id: "outfit-6",
-    name: "DAWGS Industrial Utility Jacket (Olive Drab)",
+    name: "NENEZ Industrial Utility Jacket (Olive Drab)",
     price: "120",
     image: "/images/model_three.png",
     modelName: "Kael (@kael_ops)",
@@ -71,7 +71,7 @@ const wearCollection = [
   },
 ];
 
-export default function DawgsWearSection() {
+export default function NenezWearSection() {
   const [currentModel, setCurrentModel] = useState(0);
   const [showScanModal, setShowScanModal] = useState(false);
   const [scanStep, setScanStep] = useState<"idle" | "scanning" | "done">("idle");
@@ -145,7 +145,7 @@ export default function DawgsWearSection() {
 
           {/* Right: Enter + Scan */}
           <div className="lg:col-span-4 flex flex-col items-center lg:items-start gap-4">
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.5em]">DAWGS Collection</p>
+            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.5em]">NENEZ Collection</p>
             <h2 className="text-4xl md:text-6xl font-black text-white leading-none tracking-tighter">
               NOTHING IS{" "}
               <span className="text-red-500 italic">REAL</span>
@@ -188,7 +188,7 @@ export default function DawgsWearSection() {
               </div>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed max-w-lg mx-auto">
-              Cada prenda DAWGS cuenta con un chip NFC en la etiqueta. Escanéalo con tu celular para verificar autenticidad, 
+              Cada prenda NENEZ cuenta con un chip NFC en la etiqueta. Escanéalo con tu celular para verificar autenticidad, 
               acceder a información detallada y conocer los cuidados de la prenda.
             </p>
             <div className="mt-4 flex items-center justify-center gap-2 text-[9px] text-[#C8FF00] font-bold uppercase tracking-widest">
@@ -220,7 +220,7 @@ export default function DawgsWearSection() {
 
               <div className="mb-8 mt-4">
                 <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.5em]">Catálogo</p>
-                <h3 className="text-2xl md:text-3xl font-black text-white mt-1">DAWGS Collection</h3>
+                <h3 className="text-2xl md:text-3xl font-black text-white mt-1">NENEZ Collection</h3>
                 <p className="text-xs text-zinc-500 mt-2 max-w-md">Desliza hacia abajo para ver todas las prendas disponibles.</p>
               </div>
 
@@ -246,7 +246,7 @@ export default function DawgsWearSection() {
                         <p className="text-lg font-mono font-black text-white mt-0.5">${outfit.price}</p>
                       </div>
                       <a
-                        href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hola DAWGS, quiero comprar ${outfit.name} - ${outfit.category}.`)}`}
+                        href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hola NENEZ, quiero comprar ${outfit.name} - ${outfit.category}.`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 rounded-2xl bg-[#C8FF00] hover:bg-[#b5e600] text-black px-4 py-3 text-[10px] font-black uppercase tracking-widest transition shadow-[0_0_20px_rgba(200,255,0,0.15)] active:scale-95"
@@ -313,7 +313,7 @@ export default function DawgsWearSection() {
 
                   </motion.div>
                   <h3 className="text-xl font-black text-white uppercase tracking-wider">Prenda Autenticada</h3>
-                  <p className="text-[9px] text-zinc-400 mt-2 max-w-xs">Chip NFC verificado. Producto original DAWGS.</p>
+                  <p className="text-[9px] text-zinc-400 mt-2 max-w-xs">Chip NFC verificado. Producto original NENEZ.</p>
                   <div className="mt-6 flex gap-3">
                     <Link href="/verify/obsession-hoodie"
                       onClick={() => { setShowScanModal(false); setScanStep("idle"); }}

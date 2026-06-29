@@ -1,7 +1,7 @@
 {
   "theme": "red",
   "hero": {
-    "tagline": "DAWGS presenta",
+    "tagline": "NENEZ presenta",
     "artistNames": [
       {
         "first": "Yan",
@@ -117,9 +117,9 @@
     ]
   },
   "footer": {
-    "brand": "DAWGS",
+    "brand": "NENEZ",
     "tagline": "Live shows · official access · wear",
-    "email": "soporte.dawgs@gmail.com",
-    "copyright": "© 2026 DAWGS. Todos los derechos reservados."
+    "email": "soporte.nenez@gmail.com",
+    "copyright": "© 2026 NENEZ. Todos los derechos reservados."
   }
 }

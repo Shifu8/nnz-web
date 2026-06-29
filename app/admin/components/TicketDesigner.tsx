@@ -36,8 +36,8 @@ const DEFAULT_DESIGN: TicketDesignData = {
   buyerName: "BRANDON MEDINA",
   buyerPhone: "+593 98 765 4321",
   quantity: 2,
-  serialNumber: "DAWGS-1234-ABCD",
-  qrValue: "DAWGS-PASS-1234-ABCD",
+  serialNumber: "NENEZ-1234-ABCD",
+  qrValue: "NENEZ-PASS-1234-ABCD",
   backgroundColor: "#0a0a0a",
   accentColor: "#C8FF00",
   textColor: "#ffffff",
@@ -83,7 +83,7 @@ function TicketTemplate({ data }: { data: TicketDesignData }) {
           }}
         />
         <div style={{ fontSize: "28px", fontWeight: 900, color: "#ffffff", letterSpacing: "0.15em", position: "relative", zIndex: 1 }}>
-          DAWGS
+          NENEZ
         </div>
         <div style={{ fontSize: "9px", fontWeight: 700, color: `${data.accentColor}99`, letterSpacing: "0.3em", textTransform: "uppercase", marginTop: "2px", position: "relative", zIndex: 1 }}>
           Acceso · Entrada Única
@@ -183,7 +183,7 @@ function TicketTemplate({ data }: { data: TicketDesignData }) {
         textAlign: "center",
       }}>
         <div style={{ fontSize: "7px", fontWeight: 700, color: "#52525b", letterSpacing: "0.3em" }}>
-          VÁLIDO POR UNA SOLA OCASIÓN · DAWGS
+          VÁLIDO POR UNA SOLA OCASIÓN · NENEZ
         </div>
       </div>
     </div>
