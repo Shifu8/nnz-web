@@ -77,9 +77,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   const activeEvent = CAROUSEL_EVENTS[activeIndex];
   const [isLoading, setIsLoading] = useState(true);
   
-  // Interpolated mouse coordinates for spotlight glide and 3D parallax
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [targetMousePos, setTargetMousePos] = useState({ x: 0, y: 0 });
+
 
   const { config } = useHomepageConfig(initialConfig);
 
@@ -141,36 +139,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
     return () => clearTimeout(timer);
   }, []);
 
-  // Smooth Spotlight interpolation physics
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setTargetMousePos({ x: e.clientX, y: e.clientY });
-    };
-    window.addEventListener("mousemove", handleMouseMove);
 
-    let animationFrameId: number;
-    const updateMousePos = () => {
-      setMousePos((current) => {
-        const dx = targetMousePos.x - current.x;
-        const dy = targetMousePos.y - current.y;
-        if (Math.abs(dx) < 0.06 && Math.abs(dy) < 0.06) {
-          return current;
-        }
-        return {
-          x: current.x + dx * 0.08,
-          y: current.y + dy * 0.08,
-        };
-      });
-      animationFrameId = requestAnimationFrame(updateMousePos);
-    };
-
-    animationFrameId = requestAnimationFrame(updateMousePos);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [targetMousePos]);
 
   useEffect(() => {
     fetch("/api/events")
@@ -475,13 +444,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             }}
           />
 
-          {/* Dynamic Spotlight following cursor with smooth interpolation */}
-          <div 
-            className="absolute w-[600px] h-[600px] rounded-full bg-white/[0.022] blur-[120px] pointer-events-none mix-blend-screen transition-transform duration-300"
-            style={{
-              transform: `translate3d(${mousePos.x - 300}px, ${mousePos.y - 300}px, 0)`,
-            }}
-          />
+
         </div>
 
         {/* Background Artwork Fade */}
