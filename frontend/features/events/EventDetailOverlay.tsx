@@ -111,6 +111,13 @@ export default function EventDetailOverlay({
   const [activeMerchIdx, setActiveMerchIdx] = useState(0);
   const relatedEvents = allEvents.filter((e) => e.id !== event.id);
 
+  const handleGoToMerch = () => {
+    onClose();
+    setTimeout(() => {
+      document.getElementById("wear")?.scrollIntoView({ behavior: "smooth" });
+    }, 150);
+  };
+
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -387,25 +394,12 @@ export default function EventDetailOverlay({
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.49, ease: "easeOut" }}>
                 <div className="flex items-center justify-between mb-4">
                   <SectionLabel>Merch Oficial</SectionLabel>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[7px] font-black uppercase tracking-[0.3em] text-zinc-600 mr-1">
-                      {activeMerchIdx + 1} / {event.merch!.length}
-                    </span>
-                    <button
-                      onClick={() => setActiveMerchIdx(i => Math.max(0, i - 1))}
-                      disabled={activeMerchIdx === 0}
-                      className="h-7 w-7 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white hover:border-white/25 transition disabled:opacity-20"
-                    >
-                      <ChevronLeft className="h-3 w-3" />
-                    </button>
-                    <button
-                      onClick={() => setActiveMerchIdx(i => Math.min(event.merch!.length - 1, i + 1))}
-                      disabled={activeMerchIdx === event.merch!.length - 1}
-                      className="h-7 w-7 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white hover:border-white/25 transition disabled:opacity-20"
-                    >
-                      <ChevronRight className="h-3 w-3" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleGoToMerch}
+                    className="text-[8px] font-black uppercase tracking-[0.25em] text-zinc-400 hover:text-white transition-colors"
+                  >
+                    Ver Todo
+                  </button>
                 </div>
                 <div className="overflow-x-auto no-scrollbar -mx-6 sm:-mx-8">
                   <div className="flex gap-3 px-6 sm:px-8">

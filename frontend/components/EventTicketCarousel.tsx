@@ -34,7 +34,7 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     poster: "/images/yan_block_card_bg.png",
     featuredImage: "/images/yan_block_card_bg.png",
     miniImage: "/images/yan_block_artist_1779161408288.png",
-    lineup: ["Yan Block", "ROA", "Omar Courtz", "y más"],
+    lineup: ["DJ OFICIAL DAWGS"],
     price: 10,
     currency: "USD",
     badge: "LIVE ACCESS",
@@ -53,9 +53,7 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
       "Acceso strictly limitado. Beats pesados, luces de escenario crudas y una atmósfera que no encontrarás en ningún otro lugar. Esta es la experiencia DAWGS."
     ],
     detailedLineup: [
-      { name: "Yan Block", role: "Headliner", image: "/images/yan_block_artist_1779161408288.png" },
-      { name: "ROA", role: "Supporting", image: "/images/roa_artist_1779161704881.png" },
-      { name: "Omar Courtz", role: "Guest", image: "/images/omar_courtz_card_bg.jpg" },
+      { name: "DJ OFICIAL DAWGS", role: "DJ", image: "/images/roa_artist_1779161704881.png" },
     ],
     schedule: [
       { time: "8:00 PM", label: "Puertas Abren" },
