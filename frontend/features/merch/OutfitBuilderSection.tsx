@@ -48,31 +48,40 @@ export default function OutfitBuilderSection() {
           </p>
         </div>
 
-        {/* Right Column: Premium Visual Product Showcase in Full Color (Vertical Portrait Aspect for Full Visibility) */}
-        <div className="relative z-10 w-full flex flex-col gap-4">
-          <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-zinc-950/60 p-3 shadow-[0_24px_70px_rgba(0,0,0,0.6)] backdrop-blur-md">
-            <div className="relative aspect-[4/5] min-h-[560px] overflow-hidden rounded-[18px]">
+        {/* Right Column: Premium Visual Product Showcase - Scaled Down for Visual Elegance */}
+        <div className="relative z-10 w-full flex flex-col gap-4 items-center lg:items-end">
+          <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-zinc-950/60 p-3 shadow-[0_24px_70px_rgba(0,0,0,0.6)] backdrop-blur-md w-full max-w-[330px] sm:max-w-[360px]">
+            <div className="relative aspect-[4/5] min-h-[440px] sm:min-h-[480px] overflow-hidden rounded-[18px]">
               <Image
                 src={STUDIO_PORTRAIT_IMAGE}
                 alt="Modelos DAWGS en estudio"
                 fill
-                sizes="(max-width: 768px) 100vw, 680px"
+                sizes="(max-width: 768px) 100vw, 360px"
                 className="object-cover object-[68%_36%] transition-transform duration-700 hover:scale-[1.02]"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
               
-              <div className="absolute left-4 top-4 rounded-full border border-white/10 bg-black/60 px-3 py-1 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300 backdrop-blur-md">
+              <div className="absolute left-3 top-3 rounded-full border border-white/10 bg-black/60 px-2 py-1 text-[7px] font-black uppercase tracking-[0.2em] text-zinc-300 backdrop-blur-md">
                 Obsession 01
               </div>
               
-              <div className="absolute bottom-4 left-4">
-                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400">Made by studios</p>
-                <p className="text-sm font-black uppercase text-white mt-1 tracking-tight">Ready to wear</p>
+              <div className="absolute bottom-3 left-3">
+                <p className="text-[7px] font-black uppercase tracking-[0.2em] text-zinc-400">Made by studios</p>
+                <p className="text-xs font-black uppercase text-white mt-0.5 tracking-tight">Ready to wear</p>
               </div>
             </div>
           </div>
 
-
+          {/* Right Box: Editorial Text block - Made more compact */}
+          <div className="hidden max-w-[240px] w-full rounded-2xl border border-white/10 bg-black/60 p-4 text-right backdrop-blur-md lg:block">
+            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500">
+              Obsession 01
+            </p>
+            <p className="mt-2 text-lg font-black uppercase leading-[1.0] tracking-tight text-white">
+              Studio rack
+              <span className="block text-zinc-400 font-medium text-xs mt-1 lowercase italic">ready to wear</span>
+            </p>
+          </div>
         </div>
 
       </div>
