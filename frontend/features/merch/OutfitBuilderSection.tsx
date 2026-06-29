@@ -11,7 +11,7 @@ export default function OutfitBuilderSection() {
       id="wear"
       className="hero-reveal relative z-20 mx-auto w-full max-w-[1600px] px-4 py-16 sm:px-6 md:px-12 lg:px-16"
     >
-      <div 
+      <div
         className="relative overflow-hidden rounded-[32px] border border-white/10 bg-black/45 p-5 backdrop-blur-2xl sm:p-7 lg:p-9 shadow-2xl grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center"
         style={{ boxShadow: "0 24px 90px rgba(255, 255, 255, 0.01)" }}
       >
@@ -24,7 +24,7 @@ export default function OutfitBuilderSection() {
           className="object-cover object-[center_top] opacity-65 transition-opacity duration-1000"
           priority={false}
         />
-        
+
         {/* Soft vignette overlays to integrate colors naturally into the dark theme */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/20 to-black/70" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/15 to-black/85" />
@@ -60,11 +60,11 @@ export default function OutfitBuilderSection() {
                 className="object-cover object-[68%_36%] transition-transform duration-700 hover:scale-[1.02]"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-              
+
               <div className="absolute left-3 top-3 rounded-full border border-white/10 bg-black/60 px-2 py-1 text-[7px] font-black uppercase tracking-[0.2em] text-zinc-300 backdrop-blur-md">
                 Obsession 01
               </div>
-              
+
               <div className="absolute bottom-3 left-3">
                 <p className="text-[7px] font-black uppercase tracking-[0.2em] text-zinc-400">Made by studios</p>
                 <p className="text-xs font-black uppercase text-white mt-0.5 tracking-tight">Ready to wear</p>
@@ -92,7 +92,7 @@ export default function OutfitBuilderSection() {
             rel="noopener noreferrer"
             className="inline-flex h-12 items-center justify-center rounded-xl bg-white px-8 text-[10px] font-black uppercase tracking-[0.25em] text-black transition-all hover:bg-zinc-200 active:scale-[0.98] select-none cursor-pointer"
           >
-            Pedir por WS
+            Pedir por Whats
           </a>
         </div>
 
