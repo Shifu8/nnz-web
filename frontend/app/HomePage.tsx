@@ -295,7 +295,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   };
 
   const scrollToTicketCard = () => {
-    scrollToSection("show", "start", "show");
+    scrollToSection("tickets-stage", "center", "show");
     setIsTicketPulse(true);
     window.setTimeout(() => {
       setIsTicketPulse(false);
@@ -626,7 +626,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             </div>
 
             {/* The 3D Carousel component */}
-            <div className="relative z-10 w-full h-full flex items-center justify-center overflow-visible">
+            <div id="tickets-stage" className="relative z-10 w-full h-full flex items-center justify-center overflow-visible">
               <EventTicketCarousel
                 activeIndex={activeIndex}
                 setActiveIndex={setActiveIndex}
