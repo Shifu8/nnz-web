@@ -21,13 +21,13 @@ export default function OutfitBuilderSection() {
           alt="Modelos DAWGS usando hoodie y jogger burgundy en sofa de estudio"
           fill
           sizes="(max-width: 1600px) 100vw, 1600px"
-          className="object-cover object-[center_top] opacity-40 transition-opacity duration-1000"
+          className="object-cover object-[center_top] opacity-65 transition-opacity duration-1000"
           priority={false}
         />
         
         {/* Soft vignette overlays to integrate colors naturally into the dark theme */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-black/85" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/30 to-black/95" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/20 to-black/70" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/15 to-black/85" />
         <div className="absolute inset-0 opacity-[0.04] [background-image:linear-gradient(rgba(255,255,255,0.6)_1px,transparent_1px)] [background-size:100%_5px]" />
 
         {/* Left Column: Symmetrical layout typography headers */}
