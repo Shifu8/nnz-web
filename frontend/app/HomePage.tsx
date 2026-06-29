@@ -687,7 +687,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         </div>
       </section>
 
-      <TicketRecovery embedded pulse={isRecoveryPulse} className="hero-reveal mt-5 lg:mt-7" />
+      <TicketRecovery pulse={isRecoveryPulse} className="hero-reveal mt-8 lg:mt-10" />
 
       <OutfitBuilderSection />
 
