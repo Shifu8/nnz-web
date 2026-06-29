@@ -446,14 +446,14 @@ export default function HomePage({ initialConfig }: HomePageProps) {
           <div className="absolute inset-0 opacity-[0.02] border-x border-white mx-32 pointer-events-none" />
           <div className="absolute inset-0 opacity-[0.02] border-x border-white mx-64 pointer-events-none" />
 
-          {/* Wall corner gradient shadow (Back wall shadow) */}
-          <div className="absolute top-0 inset-x-0 h-[45%] bg-gradient-to-b from-zinc-950 to-[#030303]" />
+          {/* Wall corner gradient shadow (Back wall shadow) - transitions smoothly to floor base color */}
+          <div className="absolute top-0 inset-x-0 h-[45%] bg-gradient-to-b from-black via-zinc-950/90 to-[#090909]" />
           
           {/* Floor gradient */}
           <div 
             className="absolute bottom-0 inset-x-0 h-[55%] bg-[#080808]"
             style={{
-              backgroundImage: "radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.05) 0%, transparent 60%), linear-gradient(180deg, #090909 0%, #030303 100%)",
+              backgroundImage: "radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.05) 0%, transparent 60%), linear-gradient(180deg, #090909 0%, #060606 40%, #030303 100%)",
             }}
           />
 
