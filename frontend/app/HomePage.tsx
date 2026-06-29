@@ -1,7 +1,7 @@
 /**
  * Autor: Brandon Medina
  * Fecha: 2026
- * Descripción: Homepage DAWGS para presentar el próximo show y vender entradas.
+ * Descripción: Homepage DAWGS - Futuristic Luxury Monochrome Redesign
  */
 
 "use client";
@@ -10,10 +10,20 @@ import Image from "next/image";
 import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-
+import {
+  Calendar,
+  ChevronLeft,
+  KeyRound,
+  LockKeyhole,
+  MapPin,
+  MessageCircle,
+  ShieldCheck,
+  Ticket,
+  X,
+  Share2
+} from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Atmosphere from "@/frontend/components/Atmosphere";
-import AnimatedHeading from "@/frontend/components/AnimatedHeading";
 import AIChatbot from "@/frontend/components/AIChatbot";
 import PurchaseFarewell from "@/frontend/components/PurchaseFarewell";
 import AccessDrop, { type AccessDropHandle } from "@/frontend/features/access-drop/AccessDrop";
@@ -23,9 +33,7 @@ import StaffModal from "@/frontend/features/staff/StaffModal";
 import EventTicketCarousel, { CAROUSEL_EVENTS } from "@/frontend/components/EventTicketCarousel";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
 import { events as fallbackEvents } from "@/frontend/services/dawgsData";
-import { useCountdown } from "@/frontend/hooks/useCountdown";
 import { useHomepageConfig } from "@/frontend/hooks/useHomepageConfig";
-import { getTheme, hexToRgb } from "@/lib/homepage-config/themes";
 import type { ThemeColors } from "@/lib/homepage-config/themes";
 import type { HomepageConfig } from "@/lib/homepage-config/types";
 import type { Event } from "@/frontend/types/domain";
@@ -43,17 +51,12 @@ interface HomePageProps {
   initialConfig: HomepageConfig;
 }
 
-const VENUE_PHOTOS = [
-  "/images/trap_loud_trio_artists.png",
-  "/images/trap_loud_trio_artists.png",
-  "/images/trap_loud_trio_artists.png",
-];
-
 export default function HomePage({ initialConfig }: HomePageProps) {
   const router = useRouter();
   const scope = useRef<HTMLElement>(null);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const manualActiveUntil = useRef(0);
+  
   const [events, setEvents] = useState<Event[]>(fallbackEvents);
   const [activeSection, setActiveSection] = useState<HomeNavId>("show");
   const [showHiddenMenu, setShowHiddenMenu] = useState(false);
@@ -64,30 +67,59 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   const accessDropRef = useRef<AccessDropHandle>(null);
   const [isTicketPulse, setIsTicketPulse] = useState(false);
   const [isRecoveryPulse, setIsRecoveryPulse] = useState(false);
-  const [artistIndex, setArtistIndex] = useState(0);
   const [showEventModal, setShowEventModal] = useState(false);
-  const [eventPhotoIndex, setEventPhotoIndex] = useState(0);
   const [selectedCarouselEvent, setSelectedCarouselEvent] = useState<Event>(CAROUSEL_EVENTS[0]);
+  
+  // Custom states for 3D Carousel & Premium visual effects
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeEvent = CAROUSEL_EVENTS[activeIndex];
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Interpolated mouse coordinates for spotlight glide and 3D parallax
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [targetMousePos, setTargetMousePos] = useState({ x: 0, y: 0 });
+
   const { config } = useHomepageConfig(initialConfig);
-  const theme: ThemeColors = getTheme(config.theme);
-  const primaryRgb = hexToRgb(theme.primary);
+
+  // Forced Strict Monochromatic Grayscale Color Theme (Balenciaga / Apple / Stripe style)
+  const theme: ThemeColors = {
+    primary: "#ffffff",
+    primaryLight: "#e4e4e7",
+    primaryDark: "#27272a",
+    bgFrom: "#000000",
+    bgTo: "#050505",
+    glowRgba: "rgba(255,255,255,0.02)",
+    glowIntense: "rgba(255,255,255,0.05)",
+    borderRgba: "rgba(255,255,255,0.08)",
+    btnFrom: "#ffffff",
+    btnTo: "#ffffff",
+    btnShadow: "rgba(255,255,255,0.05)",
+    textAccent: "#ffffff",
+    badgeBg: "#27272a",
+    cardBorder: "rgba(255,255,255,0.08)",
+    cardShadow: "rgba(0,0,0,0.85)",
+    hoverGlow: "rgba(255,255,255,0.05)",
+    tagBg: "rgba(255,255,255,0.05)",
+  };
+
+  const primaryRgb = "255,255,255";
   const themeStyle = {
     "--theme-primary": theme.primary,
     "--theme-primary-rgb": primaryRgb,
     "--theme-primary-light": theme.primaryLight,
     "--theme-primary-dark": theme.primaryDark,
-    "--theme-bg-tint": `rgba(${primaryRgb}, 0.34)`,
-    "--theme-bg-glow": `rgba(${primaryRgb}, 0.64)`,
-    "--theme-bg-glow-dark": `rgba(${primaryRgb}, 0.5)`,
-    "--theme-bg-accent": `rgba(${primaryRgb}, 0.3)`,
-    "--theme-bg-grid": `rgba(${primaryRgb}, 0.12)`,
+    "--theme-bg-tint": "rgba(255, 255, 255, 0.04)",
+    "--theme-bg-glow": "rgba(255, 255, 255, 0.02)",
+    "--theme-bg-glow-dark": "rgba(255, 255, 255, 0.01)",
+    "--theme-bg-accent": "rgba(255, 255, 255, 0.04)",
+    "--theme-bg-grid": "rgba(255, 255, 255, 0.02)",
     "--theme-btn-from": theme.btnFrom,
     "--theme-btn-to": theme.btnTo,
     "--theme-btn-shadow": theme.btnShadow,
     "--theme-glow-intense": theme.glowIntense,
     "--theme-border-accent": theme.borderRgba,
-    "--theme-border-accent-light": theme.borderRgba.replace("0.3", "0.18"),
-    "--theme-border-accent-xlight": theme.borderRgba.replace("0.3", "0.08"),
+    "--theme-border-accent-light": "rgba(255, 255, 255, 0.12)",
+    "--theme-border-accent-xlight": "rgba(255, 255, 255, 0.06)",
     "--theme-glow-rgba": theme.glowRgba,
     "--theme-text-accent": theme.textAccent,
     "--theme-text-rgb": primaryRgb,
@@ -95,33 +127,48 @@ export default function HomePage({ initialConfig }: HomePageProps) {
     "--theme-card-border": theme.cardBorder,
     "--theme-card-shadow": theme.cardShadow,
     "--theme-hover-glow": theme.hoverGlow,
-    "--theme-bg-pink-500": `rgba(${primaryRgb}, 0.18)`,
-    "--theme-bg-pink-500-hover": `rgba(${primaryRgb}, 0.3)`,
+    "--theme-bg-pink-500": "rgba(255, 255, 255, 0.08)",
+    "--theme-bg-pink-500-hover": "rgba(255, 255, 255, 0.14)",
     "--theme-tag-bg": theme.tagBg,
-    background:
-      "linear-gradient(180deg, rgba(var(--theme-primary-rgb), 0.18), #040404 22%, rgba(var(--theme-primary-rgb), 0.16) 58%, #050505)",
+    background: "black",
   } as CSSProperties;
 
-  const ARTISTS = config.hero.artistNames;
-
+  // Loader transition trigger
   useEffect(() => {
-    const timer = setInterval(() => {
-      setArtistIndex((i) => (i + 1) % ARTISTS.length);
-    }, 7000);
-    return () => clearInterval(timer);
-  }, [ARTISTS.length]);
+    const timer = setTimeout(() => setIsLoading(false), 1400);
+    return () => clearTimeout(timer);
+  }, []);
 
+  // Smooth Spotlight interpolation physics
   useEffect(() => {
-    if (!showEventModal) return;
-    const timer = setInterval(() => {
-      setEventPhotoIndex((i) => (i + 1) % VENUE_PHOTOS.length);
-    }, 3500);
-    return () => clearInterval(timer);
-  }, [showEventModal]);
+    const handleMouseMove = (e: MouseEvent) => {
+      setTargetMousePos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
 
-  const featuredEvent = events[0] ?? fallbackEvents[0];
-  const featuredCovers = config.covers;
-  const ticketCountdown = useCountdown(featuredEvent.startsAt);
+    let animationFrameId: number;
+    const updateMousePos = () => {
+      setMousePos((current) => {
+        const dx = targetMousePos.x - current.x;
+        const dy = targetMousePos.y - current.y;
+        if (Math.abs(dx) < 0.06 && Math.abs(dy) < 0.06) {
+          return current;
+        }
+        return {
+          x: current.x + dx * 0.08,
+          y: current.y + dy * 0.08,
+        };
+      });
+      animationFrameId = requestAnimationFrame(updateMousePos);
+    };
+
+    animationFrameId = requestAnimationFrame(updateMousePos);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [targetMousePos]);
 
   useEffect(() => {
     fetch("/api/events")
@@ -165,13 +212,12 @@ export default function HomePage({ initialConfig }: HomePageProps) {
       const accessTop = accessSection ? accessSection.getBoundingClientRect().top + window.scrollY : 0;
       const wearTop = wearSection ? wearSection.getBoundingClientRect().top + window.scrollY : 0;
 
-      // Línea de activación al 45% de la altura de la pantalla
       const scrollPosition = window.scrollY + window.innerHeight * 0.45;
 
       let currentSection: HomeNavId = "show";
       if (scrollPosition >= wearTop) {
         currentSection = "wear";
-      } else if (scrollPosition >= accessTop) {
+      } else if (scrollPosition >= accessTop - 100) {
         currentSection = "access";
       } else {
         currentSection = "show";
@@ -195,8 +241,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
           reduceMotion: "(prefers-reduced-motion: reduce)",
         },
         (context) => {
-          const { isDesktop, reduceMotion } = context.conditions as {
-            isDesktop: boolean;
+          const { reduceMotion } = context.conditions as {
             reduceMotion: boolean;
           };
 
@@ -212,28 +257,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               y: 28,
               stagger: 0.08,
               duration: 0.85,
-            })
-            .from(
-              ".album-orbit",
-              {
-                autoAlpha: 0,
-                scale: 0.6,
-                stagger: 0.07,
-                duration: 0.65,
-                ease: "back.out(1.5)",
-              },
-              "-=0.4",
-            );
-
-          gsap.to(".mascot-float", {
-            y: isDesktop ? -18 : -10,
-            rotation: isDesktop ? 1.2 : 0.6,
-            repeat: -1,
-            yoyo: true,
-            duration: 4.8,
-            ease: "sine.inOut",
-          });
-
+            });
         },
         scope.current ?? undefined,
       );
@@ -271,11 +295,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   };
 
   const scrollToTicketCard = () => {
-    scrollToSection("tickets", "center", "show");
-    window.setTimeout(() => {
-      setIsTicketPulse(true);
-      window.setTimeout(() => setIsTicketPulse(false), 2600);
-    }, 650);
+    setIsTicketModalOpen(true);
   };
 
   const scrollToRecovery = () => {
@@ -286,17 +306,60 @@ export default function HomePage({ initialConfig }: HomePageProps) {
     }, 650);
   };
 
+  const onBuy = (event: Event) => {
+    setSelectedCarouselEvent(event);
+    setIsTicketModalOpen(true);
+  };
+
+  const onViewDetails = (event: Event) => {
+    setSelectedCarouselEvent(event);
+    setShowEventModal(true);
+  };
+
   return (
     <main
       ref={scope}
       className="relative min-h-screen overflow-x-hidden bg-black text-white"
       style={themeStyle}
     >
+      {/* Premium cinematic intro loader overlay */}
+      <AnimatePresence>
+        {isLoading && (
+          <motion.div 
+            key="loader"
+            exit={{ opacity: 0, filter: "blur(12px)" }}
+            transition={{ duration: 0.75, ease: "easeInOut" }}
+            className="fixed inset-0 z-[999] flex flex-col items-center justify-center bg-black"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="text-center"
+            >
+              <h1 className="text-sm font-black uppercase tracking-[0.6em] text-white">DAWGS</h1>
+              <p className="mt-2 text-[8px] font-black uppercase tracking-[0.4em] text-zinc-500">Exclusivity in live music</p>
+              <div className="mt-6 h-0.5 w-16 bg-white/20 mx-auto overflow-hidden rounded">
+                <motion.div 
+                  initial={{ x: "-100%" }}
+                  animate={{ x: "100%" }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                  className="h-full w-1/2 bg-white"
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <Atmosphere />
 
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] bg-black/35 backdrop-blur-2xl">
+      {/* Modern, minimalist top navigation bar */}
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] bg-black/45 backdrop-blur-2xl">
         <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-3 px-4 py-3 sm:px-6 md:px-12 lg:px-16">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          
+          {/* Logo on the left (No puppy image, text visible on mobile and desktop) */}
+          <div className="flex min-w-0 items-center">
             <button
               type="button"
               onMouseDown={handleTouchStart}
@@ -304,21 +367,16 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               onMouseLeave={handleTouchEnd}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
-              className="group flex shrink-0 select-none items-center gap-2 text-sm font-black uppercase tracking-[0.38em] text-white outline-none transition hover:text-pink-300"
+              className="group flex select-none items-center text-sm sm:text-xs font-black uppercase tracking-[0.45em] text-white outline-none hover:text-white"
               style={{ WebkitTapHighlightColor: "transparent" }}
               aria-label="DAWGS"
             >
-              <AnimatedHeading
-                text="DAWGS"
-                as="span"
-                staggerMs={55}
-                durationMs={420}
-                className="text-sm font-black uppercase tracking-[0.38em] text-white"
-              />
+              DAWGS
             </button>
           </div>
 
-          <nav className="hidden items-center gap-7 lg:flex">
+          {/* Centered nav links */}
+          <nav className="hidden items-center gap-8 lg:flex">
             {HOME_NAV_ITEMS.map((item) => (
               <button
                 type="button"
@@ -326,13 +384,13 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 onClick={() => {
                   scrollToSection(item.id, item.id === "show" ? "start" : "center");
                 }}
-                className={`relative py-2 text-[10px] font-black uppercase tracking-[0.24em] transition ${
-                  activeSection === item.id ? "text-white" : "text-zinc-500 hover:text-zinc-200"
+                className={`relative py-2 text-[9px] font-black uppercase tracking-[0.28em] transition ${
+                  activeSection === item.id ? "text-white font-bold" : "text-zinc-500 hover:text-zinc-200"
                 }`}
               >
                 {item.label}
                 <span
-                  className={`absolute inset-x-0 -bottom-0.5 h-px bg-pink-400 transition-transform duration-300 ${
+                  className={`absolute inset-x-0 -bottom-0.5 h-px bg-white transition-transform duration-300 ${
                     activeSection === item.id ? "scale-x-100" : "scale-x-0"
                   }`}
                 />
@@ -340,193 +398,261 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             ))}
           </nav>
 
-          <div className="flex shrink-0 items-center gap-2">
+          {/* Two rounded CTA buttons on the right */}
+          <div className="flex shrink-0 items-center gap-3">
             <button
               type="button"
               onClick={scrollToRecovery}
-              className={`inline-flex h-10 items-center gap-1.5 rounded-full border border-pink-300/25 bg-white/[0.04] px-3 text-[8px] font-black uppercase tracking-[0.14em] text-pink-100 transition hover:border-pink-300/45 hover:bg-pink-500/15 sm:gap-2 sm:px-4 sm:text-[9px] sm:tracking-[0.18em] ${
+              className={`inline-flex h-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] px-5 text-[8px] font-black uppercase tracking-[0.16em] text-zinc-300 transition hover:border-white/30 hover:bg-white/5 hover:text-white ${
                 isRecoveryPulse ? "top-recovery-pulse" : ""
               }`}
             >
               Recuperar
             </button>
+            
             <button
               type="button"
               onClick={scrollToTicketCard}
-              className="inline-flex h-10 items-center gap-1.5 rounded-full border border-pink-300/25 bg-pink-500/10 px-3 text-[8px] font-black uppercase tracking-[0.14em] text-pink-100 transition hover:border-pink-300/45 hover:bg-pink-500/20 sm:gap-2 sm:px-4 sm:text-[9px] sm:tracking-[0.18em]"
+              className="inline-flex h-9 items-center justify-center rounded-full bg-white px-5 text-[8px] font-black uppercase tracking-[0.16em] text-black transition hover:bg-zinc-200"
             >
               Comprar
             </button>
           </div>
+
         </div>
       </header>
 
+      {/* Monochromatic 3D Concrete Room backdrop */}
       <section
         id="show"
-        className="relative z-10 flex min-h-[100svh] w-full flex-col overflow-hidden px-4 pb-8 pt-24 sm:px-8 md:px-14 lg:px-20 lg:pb-10"
+        className="relative z-10 flex min-h-[100svh] w-full flex-col overflow-hidden px-4 pb-8 pt-24 sm:px-8 md:px-14 lg:px-20 lg:pb-10 justify-center"
       >
-        <div aria-hidden className="absolute inset-0 -z-20 overflow-hidden border-b border-white/[0.05] bg-[#08070b]">
-          <div
-            className="absolute inset-0"
+        {/* Cinematic Concrete Room Environment */}
+        <div aria-hidden className="absolute inset-0 -z-20 overflow-hidden bg-black select-none pointer-events-none">
+          {/* Wall guidelines / vertical lines */}
+          <div className="absolute inset-0 opacity-[0.02] border-x border-white mx-32 pointer-events-none" />
+          <div className="absolute inset-0 opacity-[0.02] border-x border-white mx-64 pointer-events-none" />
+
+          {/* Wall corner gradient shadow (Back wall shadow) */}
+          <div className="absolute top-0 inset-x-0 h-[45%] bg-gradient-to-b from-zinc-950 to-[#030303] border-b border-zinc-900" />
+          
+          {/* Floor gradient */}
+          <div 
+            className="absolute bottom-0 inset-x-0 h-[55%] bg-[#080808]"
             style={{
-              background:
-                "radial-gradient(circle at 50% 38%, rgba(var(--theme-primary-rgb), 0.34), transparent 31%), radial-gradient(circle at 16% 56%, rgba(var(--theme-primary-rgb), 0.22), transparent 32%), radial-gradient(circle at 88% 40%, rgba(var(--theme-primary-rgb), 0.16), transparent 26%), linear-gradient(180deg, #08070b 0%, rgba(var(--theme-primary-rgb), 0.14) 52%, #060607 100%)",
+              backgroundImage: "radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.05) 0%, transparent 60%), linear-gradient(180deg, #090909 0%, #030303 100%)",
+            }}
+          />
+
+          {/* Glowing Skylight (centered above platform) */}
+          <div 
+            className="absolute top-0 lg:left-[64%] left-1/2 -translate-x-1/2 w-[70vw] h-[22vw] bg-white opacity-[0.98]"
+            style={{
+              clipPath: "polygon(12% 0%, 88% 0%, 100% 100%, 0% 100%)",
+              boxShadow: "0 0 120px rgba(255, 255, 255, 0.95), 0 0 240px rgba(255, 255, 255, 0.5)",
+              transform: "perspective(800px) rotateX(28deg) translateZ(0)",
+              transformOrigin: "top center",
+            }}
+          />
+          
+          {/* Volumetric light cone from the skylight */}
+          <div 
+            className="absolute top-[18vw] lg:left-[64%] left-1/2 -translate-x-1/2 w-[90vw] h-[95vh] opacity-25 bg-gradient-to-b from-white via-white/5 to-transparent pointer-events-none mix-blend-screen"
+            style={{
+              clipPath: "polygon(34% 0%, 66% 0%, 100% 100%, 0% 100%)",
+            }}
+          />
+
+          {/* Dynamic Spotlight following cursor with smooth interpolation */}
+          <div 
+            className="absolute w-[600px] h-[600px] rounded-full bg-white/[0.022] blur-[120px] pointer-events-none mix-blend-screen transition-transform duration-300"
+            style={{
+              transform: `translate3d(${mousePos.x - 300}px, ${mousePos.y - 300}px, 0)`,
             }}
           />
         </div>
 
-        <p
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-[18%] -z-10 -translate-x-1/2 select-none whitespace-nowrap text-[27vw] font-black leading-none tracking-[-0.09em] text-white/[0.025] lg:top-[10%] lg:text-[19vw]"
-        >
-          DAWGS
-        </p>
+        {/* Background Artwork Fade */}
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden opacity-40">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeEvent.id}
+              initial={{ opacity: 0, scale: 1.05 }}
+              animate={{ opacity: 0.08, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 1.2, ease: "easeInOut" }}
+              className="absolute inset-0 grayscale filter blur-[50px] pointer-events-none"
+            >
+              <Image
+                src={activeEvent.poster}
+                alt=""
+                fill
+                className="object-cover"
+                sizes="100vw"
+                priority
+              />
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
-        <div className="relative grid flex-1 items-center gap-8 lg:grid-cols-12 lg:gap-4">
-          <div className="contents lg:relative lg:z-30 lg:order-1 lg:col-span-6 lg:block">
-            <div className="hero-reveal relative z-30 order-1 flex flex-col pt-1 text-center lg:block lg:pt-0 lg:text-left">
-
-              <p className="mt-6 text-[11px] font-black uppercase tracking-[0.52em] text-zinc-400 sm:text-xs">
-                {config.hero.tagline}
+        {/* Columns Grid Layout */}
+        <div className="relative z-10 w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center flex-1">
+          
+          {/* Left Column: Premium Editorial text */}
+          <div className="lg:col-span-5 flex flex-col justify-center text-left space-y-8 select-none">
+            
+            {/* DAWGS PRESENTA tag */}
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-500">
+                DAWGS presenta
               </p>
-              <div className="relative mt-3 h-[8.8rem] overflow-visible sm:h-[10.2rem] lg:h-[11.2rem] xl:h-[13.2rem]">
+              
+              {/* Dynamic Big Artist Name with elegant AnimatePresence transition */}
+              <div className="relative h-[8.5rem] overflow-visible mt-2">
                 <AnimatePresence mode="wait">
-                  {ARTISTS.map((a, i) => i === artistIndex && (
-                    <motion.h1
-                      key={a.first}
-                      initial={{ opacity: 0, y: 40, rotateX: 15 }}
-                      animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                      exit={{ opacity: 0, y: -40, rotateX: -15 }}
-                      transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
-                      className="absolute inset-0 text-6xl font-black uppercase leading-[0.82] tracking-[-0.06em] text-white sm:text-7xl lg:text-[5rem] xl:text-[6.4rem]"
-                    >
-                      {a.second ? (
-                        <>
-                          {a.first}
-                          <br />
-                          <span
-                            className="inline-block bg-clip-text pr-2 text-transparent"
-                            style={{
-                              backgroundImage:
-                                "linear-gradient(to right, var(--theme-primary-light), var(--theme-primary), var(--theme-primary-dark))",
-                            }}
-                          >
-                            {a.second}
-                          </span>
-                        </>
-                      ) : (
-                        <span
-                          className="inline-block bg-clip-text pr-2 text-transparent"
-                          style={{
-                            backgroundImage:
-                              "linear-gradient(to right, var(--theme-primary-light), var(--theme-primary), var(--theme-primary-dark))",
-                          }}
-                        >
-                          {a.first}
-                        </span>
-                      )}
-                    </motion.h1>
-                  ))}
+                  <motion.h1
+                    key={activeEvent.id}
+                    initial={{ opacity: 0, y: 35, rotateX: 12 }}
+                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                    exit={{ opacity: 0, y: -35, rotateX: -12 }}
+                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                    className="absolute inset-0 text-7xl md:text-8xl font-black uppercase leading-none tracking-tighter text-white"
+                  >
+                    {activeEvent.id === "trap-loud" ? "ROA" : activeEvent.id === "dawg-night" ? "COURTZ" : "RAUW"}
+                  </motion.h1>
                 </AnimatePresence>
               </div>
-              <p className="mx-auto mt-5 max-w-sm text-xs leading-6 text-zinc-400 lg:hidden">
-                {config.hero.mobileDescription}
+              
+              {/* Luxury descriptive subtitle */}
+              <p className="text-zinc-400 text-xs mt-2 max-w-sm leading-relaxed">
+                {activeEvent.id === "trap-loud" 
+                  ? "Eventos exclusivos. Experiencias que se viven en la clandestinidad." 
+                  : activeEvent.id === "dawg-night" 
+                  ? "La calle se viste de gala. Autenticidad y flows de otro nivel." 
+                  : "El futuro del ritmo latino. Vanguardia y movimiento en directo."}
               </p>
-              <div className="mt-6 flex flex-wrap justify-center gap-2 lg:hidden">
-                {featuredEvent.lineup.slice(0, 4).map((artist) => (
+            </div>
+
+            {/* NEXT EVENT section */}
+            <div className="space-y-4 pt-6 border-t border-white/5">
+              <p className="text-[8px] font-black tracking-[0.3em] text-zinc-500 uppercase">
+                Próximo Evento
+              </p>
+              <div>
+                <h2 className="text-2xl font-black uppercase tracking-tight text-white">
+                  {activeEvent.title}
+                </h2>
+                <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">
+                  {activeEvent.subtitle}
+                </p>
+              </div>
+
+              {/* Event Location & Date info */}
+              <div className="flex flex-wrap gap-2 text-zinc-300">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest">
+                  <Calendar className="h-3 w-3 text-white/50" />
+                  {activeEvent.dateLabel}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest">
+                  <MapPin className="h-3 w-3 text-white/50" />
+                  {activeEvent.city}
+                </span>
+              </div>
+
+              {/* Lineup tags */}
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {activeEvent.lineup.map((artist) => (
                   <span
                     key={artist}
-                    className="rounded-full border border-white/10 bg-white/[0.035] px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.18em] text-zinc-300"
+                    className="rounded-full border border-white/15 bg-white/[0.03] px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.2em] text-zinc-300"
                   >
                     {artist}
                   </span>
                 ))}
               </div>
             </div>
-            <div
-              id="tickets"
-              className="relative order-3 z-30 mx-auto mt-0 w-full max-w-[420px] transition sm:max-w-[500px] lg:order-none lg:mx-0 lg:mt-8 lg:max-w-[650px]"
-            >
-              <EventTicketCarousel
-                isTicketPulse={isTicketPulse}
-                onBuy={(event) => {
-                  setSelectedCarouselEvent(event);
-                  setIsTicketModalOpen(true);
-                }}
-                onViewDetails={(event) => {
-                  setSelectedCarouselEvent(event);
-                  setShowEventModal(true);
-                }}
-              />
+
+            {/* Action buttons */}
+            <div className="flex gap-4 pt-4">
+              <button
+                type="button"
+                onClick={() => onViewDetails(activeEvent)}
+                className="flex h-12 px-6 items-center justify-center rounded-full border border-white/10 bg-black/20 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-300 transition hover:border-white/30 hover:bg-white/5 hover:text-white"
+              >
+                Ver Evento
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => onBuy(activeEvent)}
+                className="flex h-12 px-6 items-center justify-center rounded-full bg-white text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200"
+              >
+                Comprar Entrada
+              </button>
             </div>
+
           </div>
 
-          <div className="order-2 lg:order-2 lg:col-span-6">
-            <div className="relative mx-auto h-[365px] w-full max-w-[680px] sm:h-[545px] lg:h-[650px]">
-              <div
-                className="absolute left-1/2 top-1/2 h-[64%] w-[64%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[90px]"
-                style={{ background: "rgba(var(--theme-primary-rgb), 0.32)" }}
+          {/* Right Column: Circular Stage Platform & 3D Carousel */}
+          <div className="lg:col-span-7 relative h-[600px] w-full flex items-center justify-center overflow-visible">
+            
+            {/* Circular Concrete Stage Platform */}
+            <div 
+              className="absolute bottom-[8%] left-1/2 -translate-x-1/2 w-[550px] h-[160px] pointer-events-none z-0"
+              style={{ perspective: 1000 }}
+            >
+              {/* Dark rim thickness shadow */}
+              <div className="absolute inset-0 bg-black/90 blur-xl rounded-full translate-y-4" />
+              {/* Concrete edge rim */}
+              <div className="absolute inset-x-[15px] bottom-0 h-6 bg-[#040404] border-b border-zinc-900 rounded-full" />
+              {/* Platform top face */}
+              <div 
+                className="absolute inset-0 bg-gradient-to-b from-zinc-800 to-[#080808] border border-white/5 rounded-full"
+                style={{
+                  transform: "rotateX(72deg) translateZ(0)",
+                }}
               />
-              <div
-                className="absolute inset-x-[12%] bottom-[6%] h-[18%] rounded-full blur-[55px]"
-                style={{ background: "rgba(var(--theme-primary-rgb), 0.28)" }}
+              {/* Subtle light rim highlight */}
+              <div 
+                className="absolute inset-[3px] bg-transparent border border-white/10 rounded-full"
+                style={{
+                  transform: "rotateX(72deg) translateZ(1px)",
+                }}
               />
-
-              {featuredCovers.map((cover) => (
-                <div
-                  key={cover.label}
-                  className={`album-orbit absolute z-20 ${cover.className}`}
-                  style={{
-                    transform: `rotate(${cover.rotation}deg)`,
-                    animationDelay: `${cover.delay}s`,
-                  }}
-                >
-                  <div className="group relative aspect-square overflow-hidden rounded-[18px] border border-white/15 bg-black" style={{ boxShadow: "0 18px 46px rgba(0,0,0,0.68), 0 0 28px rgba(var(--theme-primary-rgb), 0.14)" }}>
-                    <Image
-                      src={cover.src}
-                      alt={cover.label}
-                      fill
-                      sizes="144px"
-                      className="object-cover transition duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
-                    <p className="absolute inset-x-1 bottom-2 truncate text-center text-[5.5px] font-black uppercase tracking-[0.12em] text-white/90 sm:text-[6.5px]">
-                      {cover.label}
-                    </p>
-                  </div>
-                </div>
-              ))}
-
-              <div className="mascot-float absolute inset-0 z-10">
-                <Image
-                  src="/images/dawgs-mascot-drink-v2.png"
-                  alt="Mascota 3D de DAWGS"
-                  fill
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 680px"
-                  className="object-contain object-bottom"
-                  style={{
-                    filter:
-                      "drop-shadow(0 0 46px rgba(var(--theme-primary-rgb), 0.38))",
-                  }}
-                />
-              </div>
             </div>
+
+            {/* The 3D Carousel component */}
+            <div className="relative z-10 w-full h-full flex items-center justify-center overflow-visible">
+              <EventTicketCarousel
+                activeIndex={activeIndex}
+                setActiveIndex={setActiveIndex}
+                onBuy={onBuy}
+                onViewDetails={onViewDetails}
+                isTicketPulse={isTicketPulse}
+              />
+            </div>
+
           </div>
         </div>
 
+      </section>
+
+      {/* Access protected description section */}
+      <section
+        id="access"
+        className="relative z-20 mx-auto w-full max-w-[1600px] px-4 py-16 sm:px-6 md:px-12 lg:px-16"
+      >
         <div
-          id="access"
-          className="hero-reveal relative z-20 mt-8 overflow-hidden rounded-[32px] border border-pink-300/15 bg-black/45 p-5 backdrop-blur-2xl sm:p-7 lg:mt-10 lg:p-9" style={{ boxShadow: "0 24px 90px rgba(var(--theme-primary-rgb), 0.12)" }}
+          className="relative z-20 mt-8 overflow-hidden rounded-[32px] border border-white/10 bg-black/45 p-5 backdrop-blur-2xl sm:p-7 lg:mt-10 lg:p-9 shadow-2xl"
         >
-          <div className="pointer-events-none absolute -left-20 top-1/2 h-56 w-56 -translate-y-1/2 rounded-full bg-pink-500/15 blur-3xl" />
+          <div className="pointer-events-none absolute -left-20 top-1/2 h-56 w-56 -translate-y-1/2 rounded-full bg-white/[0.02] blur-3xl" />
           <div
             className="pointer-events-none absolute -right-24 bottom-0 h-64 w-64 rounded-full blur-3xl"
-            style={{ background: "rgba(var(--theme-primary-rgb), 0.08)" }}
+            style={{ background: "rgba(255,255,255,0.01)" }}
           />
           <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             <div className="relative z-10">
-              <p className="inline-flex items-center gap-2 rounded-full border border-pink-300/20 bg-pink-500/[0.08] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.3em] text-pink-300">
+              <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.3em] text-white">
                 {config.accessSection.badge}
               </p>
               <h2 className="mt-4 text-4xl font-black uppercase leading-[0.9] tracking-[-0.05em] text-white sm:text-5xl">
@@ -535,6 +661,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 {config.accessSection.headingLine2}
               </h2>
               <p className="mt-5 inline-flex items-center gap-2 text-xl font-black uppercase tracking-[-0.03em] text-white">
+                <LockKeyhole className="h-5 w-5 text-white/50" />
                 {config.accessSection.qrSubtitle}
               </p>
               <p className="mt-5 max-w-lg text-sm leading-7 text-zinc-400">
@@ -546,7 +673,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               {config.accessSection.steps.map((data) => (
                 <article
                   key={data.step}
-                  className="rounded-[24px] border border-pink-300/[0.08] bg-black/45 p-5 shadow-[0_16px_46px_rgba(0,0,0,0.24)] transition hover:border-pink-300/25 hover:bg-pink-500/[0.055]"
+                  className="rounded-[24px] border border-white/10 bg-black/45 p-5 shadow-[0_16px_46px_rgba(0,0,0,0.4)] transition hover:border-white/20 hover:bg-white/[0.02]"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[8px] font-black tracking-[0.24em] text-zinc-600">{data.step}</span>
@@ -558,11 +685,9 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             </div>
           </div>
         </div>
-
-        <TicketRecovery embedded pulse={isRecoveryPulse} className="hero-reveal mt-5 lg:mt-7" />
-
-
       </section>
+
+      <TicketRecovery embedded pulse={isRecoveryPulse} className="hero-reveal mt-5 lg:mt-7" />
 
       <OutfitBuilderSection />
 
@@ -573,6 +698,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
       <AIChatbot />
       <StaffModal isOpen={isStaffModalOpen} onClose={() => setIsStaffModalOpen(false)} />
 
+      {/* Monochromatic minimalist footer */}
       <footer
         id="support"
         className="relative z-10 -mx-4 border-t border-white/[0.06] bg-[#050404] px-4 py-16 sm:-mx-8 sm:px-6 md:-mx-14 md:px-12 lg:-mx-20 lg:px-16"
@@ -598,6 +724,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         </div>
       </footer>
 
+      {/* Purchasing Access Modal Dialog */}
       <AnimatePresence>
         {isTicketModalOpen && (
           <motion.div
@@ -638,7 +765,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         )}
       </AnimatePresence>
 
-      {/* Event info modal */}
+      {/* Event Details Modal Dialog */}
       <AnimatePresence>
         {showEventModal && (
           <motion.div
@@ -655,37 +782,24 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             >
               <button
                 onClick={() => setShowEventModal(false)}
-                className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/70 text-[7px] font-black uppercase tracking-[0.1em] text-white/60 transition hover:text-white"
+                className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/70 text-[7px] font-black uppercase tracking-[0.15em] text-white/60 transition hover:text-white"
               >
                 Cerrar
               </button>
 
               <div className="relative aspect-[4/3] overflow-hidden rounded-t-[28px] bg-zinc-900">
                 <img
-                  src={[
-                    selectedCarouselEvent.poster,
-                    (selectedCarouselEvent as any).miniImage || selectedCarouselEvent.poster,
-                    selectedCarouselEvent.poster
-                  ][eventPhotoIndex] || VENUE_PHOTOS[0]}
+                  src={selectedCarouselEvent.poster}
                   alt="Lugar del evento"
                   className="h-full w-full object-cover transition-opacity duration-700"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
-                  {[0, 1, 2].map((i) => (
-                    <button
-                      key={i}
-                      onClick={() => setEventPhotoIndex(i)}
-                      className={`h-1.5 rounded-full transition-all ${i === eventPhotoIndex ? "w-6 bg-pink-300" : "w-1.5 bg-white/40 hover:bg-white/60"}`}
-                    />
-                  ))}
-                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 to-transparent" />
               </div>
 
               <div className="p-6 space-y-5">
                 <div>
                   <h3 className="text-lg font-black uppercase tracking-wider text-white">
-                    {selectedCarouselEvent.city}, {selectedCarouselEvent.id === 'trap-loud' ? 'Ecuador' : selectedCarouselEvent.id === 'dawg-night' ? 'EUA' : 'Colombia'}
+                    {selectedCarouselEvent.city}
                   </h3>
                   <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-400">Casa privada · Dirección confirmada al comprar</p>
                 </div>
@@ -707,10 +821,10 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
                 <div className="flex flex-col gap-2">
                   <a
-                    href={`https://maps.google.com/?q=${selectedCarouselEvent.city}+${selectedCarouselEvent.id === 'trap-loud' ? 'Ecuador' : selectedCarouselEvent.id === 'dawg-night' ? 'EUA' : 'Colombia'}`}
+                    href={`https://maps.google.com/?q=${selectedCarouselEvent.city}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-pink-500 text-[9px] font-black uppercase tracking-[0.2em] text-white transition hover:bg-pink-400"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-white text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200"
                   >
                     Abrir en Google Maps
                   </a>
@@ -722,7 +836,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                         url: window.location.href
                       });
                     }}
-                    className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300 transition hover:border-pink-400/30 hover:text-pink-300"
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300 transition hover:border-white/30 hover:text-white"
                   >
                     Compartir evento
                   </button>
@@ -733,6 +847,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         )}
       </AnimatePresence>
 
+      {/* Hidden agent modules menu */}
       <AnimatePresence>
         {showHiddenMenu && (
           <motion.div
@@ -745,7 +860,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-               className="relative flex w-full max-w-sm flex-col items-center rounded-[40px] border border-white/[0.08] bg-white/[0.03] p-10 text-center backdrop-blur-2xl" style={{ boxShadow: "0 0 80px rgba(var(--theme-primary-rgb), 0.08)" }}
+               className="relative flex w-full max-w-sm flex-col items-center rounded-[40px] border border-white/[0.08] bg-white/[0.03] p-10 text-center backdrop-blur-2xl" style={{ boxShadow: "0 0 80px rgba(255,255,255,0.02)" }}
             >
               <button
                 type="button"
@@ -769,7 +884,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                     setShowHiddenMenu(false);
                     setIsStaffModalOpen(true);
                   }}
-                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-[11px] font-black uppercase tracking-wider text-zinc-300 transition hover:border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-400"
+                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-[11px] font-black uppercase tracking-wider text-zinc-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white"
                 >
                   Agente Staff
                 </button>
@@ -779,7 +894,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                     setShowHiddenMenu(false);
                     router.push("/admin");
                   }}
-                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-[11px] font-black uppercase tracking-wider text-zinc-300 transition hover:border-pink-500/30 hover:bg-pink-500/10 hover:text-pink-300"
+                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-[11px] font-black uppercase tracking-wider text-zinc-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white"
                 >
                   Admin
                 </button>
@@ -789,24 +904,25 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         )}
       </AnimatePresence>
 
+      {/* Styled overridden stylesheet for total monochromatic consistency */}
       <style dangerouslySetInnerHTML={{ __html: `
         :root {
           --theme-primary: ${theme.primary};
           --theme-primary-rgb: ${primaryRgb};
           --theme-primary-light: ${theme.primaryLight};
           --theme-primary-dark: ${theme.primaryDark};
-          --theme-bg-tint: rgba(${primaryRgb}, 0.34);
-          --theme-bg-glow: rgba(${primaryRgb}, 0.64);
-          --theme-bg-glow-dark: rgba(${primaryRgb}, 0.5);
-          --theme-bg-accent: rgba(${primaryRgb}, 0.3);
-          --theme-bg-grid: rgba(${primaryRgb}, 0.12);
+          --theme-bg-tint: rgba(255,255,255,0.04);
+          --theme-bg-glow: rgba(255,255,255,0.01);
+          --theme-bg-glow-dark: rgba(255,255,255,0.01);
+          --theme-bg-accent: rgba(255,255,255,0.04);
+          --theme-bg-grid: rgba(255,255,255,0.02);
           --theme-btn-from: ${theme.btnFrom};
           --theme-btn-to: ${theme.btnTo};
           --theme-btn-shadow: ${theme.btnShadow};
           --theme-glow-intense: ${theme.glowIntense};
           --theme-border-accent: ${theme.borderRgba};
-          --theme-border-accent-light: ${theme.borderRgba.replace("0.3", "0.18")};
-          --theme-border-accent-xlight: ${theme.borderRgba.replace("0.3", "0.08")};
+          --theme-border-accent-light: rgba(255,255,255,0.12);
+          --theme-border-accent-xlight: rgba(255,255,255,0.06);
           --theme-glow-rgba: ${theme.glowRgba};
           --theme-text-accent: ${theme.textAccent};
           --theme-text-rgb: ${primaryRgb};
@@ -814,123 +930,54 @@ export default function HomePage({ initialConfig }: HomePageProps) {
           --theme-card-border: ${theme.cardBorder};
           --theme-card-shadow: ${theme.cardShadow};
           --theme-hover-glow: ${theme.hoverGlow};
-          --theme-bg-pink-500: rgba(var(--theme-primary-rgb), 0.18);
-          --theme-bg-pink-500-hover: rgba(var(--theme-primary-rgb), 0.3);
+          --theme-bg-pink-500: rgba(255,255,255,0.08);
+          --theme-bg-pink-500-hover: rgba(255,255,255,0.14);
           --theme-tag-bg: ${theme.tagBg};
         }
-        .theme-btn { background: linear-gradient(135deg, var(--theme-btn-from), var(--theme-btn-to)); }
-        .theme-btn:hover { box-shadow: 0 0 40px var(--theme-btn-shadow); }
-        .theme-text { color: var(--theme-text-accent); }
-        .theme-border { border-color: var(--theme-border-accent); }
-        .theme-border-light { border-color: var(--theme-border-accent-light); }
-        .theme-border-xlight { border-color: var(--theme-border-accent-xlight); }
-        .theme-glow { box-shadow: 0 0 40px var(--theme-glow-rgba); }
-        .theme-badge { background: var(--theme-badge-bg); }
-        .theme-tag { background: var(--theme-tag-bg); }
-        .theme-glow-sm { box-shadow: 0 0 24px rgba(var(--theme-primary-rgb), 0.12); }
-        .theme-ring { box-shadow: 0 0 28px rgba(var(--theme-primary-rgb), 0.18); }
-        .text-pink-100, .text-pink-50 { color: var(--theme-text-accent) !important; }
-        .text-pink-300 { color: var(--theme-primary-light) !important; }
-        .hover\\:text-pink-300:hover { color: var(--theme-primary-light) !important; }
-        .border-pink-300\\/25 { border-color: var(--theme-border-accent) !important; }
-        .border-pink-200\\/35, .border-pink-200\\/25, .border-pink-200\\/20, .border-pink-200\\/18, .border-pink-200\\/16 { border-color: rgba(var(--theme-primary-rgb), 0.16) !important; }
-        .border-pink-300\\/35 { border-color: rgba(var(--theme-primary-rgb), 0.35) !important; }
-        .border-pink-300\\/20 { border-color: var(--theme-border-accent) !important; }
-        .border-pink-300\\/[0.08] { border-color: rgba(var(--theme-primary-rgb), 0.08) !important; }
-        .hover\\:border-pink-300\\/45:hover { border-color: rgba(var(--theme-primary-rgb), 0.45) !important; }
-        .hover\\:border-pink-400\\/30:hover, .hover\\:border-pink-300\\/25:hover, .hover\\:border-pink-500\\/30:hover { border-color: rgba(var(--theme-primary-rgb), 0.3) !important; }
-        .bg-pink-500\\/10 { background: rgba(var(--theme-primary-rgb), 0.1) !important; }
-        .bg-pink-500\\/15 { background: rgba(var(--theme-primary-rgb), 0.15) !important; }
-        .bg-pink-500\\/18 { background: rgba(var(--theme-primary-rgb), 0.18) !important; }
-        .bg-pink-500\\/20 { background: rgba(var(--theme-primary-rgb), 0.2) !important; }
-        .bg-pink-500\\/14, .bg-pink-500\\/16 { background: rgba(var(--theme-primary-rgb), 0.16) !important; }
-        .bg-pink-500\\/[0.08] { background: rgba(var(--theme-primary-rgb), 0.08) !important; }
-        .bg-pink-500\\/[0.055] { background: rgba(var(--theme-primary-rgb), 0.055) !important; }
-        .bg-pink-500\\/12 { background: rgba(var(--theme-primary-rgb), 0.12) !important; }
-        .bg-pink-500 { background: var(--theme-primary) !important; }
-        .hover\\:bg-pink-500\\/15:hover { background: rgba(var(--theme-primary-rgb), 0.15) !important; }
-        .hover\\:bg-pink-500\\/20:hover { background: rgba(var(--theme-primary-rgb), 0.2) !important; }
-        .hover\\:bg-pink-500\\/10:hover { background: rgba(var(--theme-primary-rgb), 0.1) !important; }
-        .hover\\:bg-pink-400:hover { background: var(--theme-primary-light) !important; }
-        .bg-pink-400 { background: var(--theme-primary) !important; }
-        .text-pink-200 { color: rgba(var(--theme-primary-rgb), 0.6) !important; }
-        .text-pink-400 { color: var(--theme-primary) !important; }
-        .hover\\:bg-pink-100:hover { background: rgba(var(--theme-primary-rgb), 0.12) !important; }
-        .bg-pink-600\\/20 { background: rgba(var(--theme-primary-rgb), 0.12) !important; }
-        .bg-pink-300 { background: var(--theme-primary-light) !important; }
-        .bg-pink-300\\/60 { background: rgba(var(--theme-primary-rgb), 0.35) !important; }
-        .ring-pink-200\\/\\[0\\.05\\] { --tw-ring-color: rgba(var(--theme-primary-rgb), 0.05) !important; }
-        .border-pink-300\\/15 { border-color: rgba(var(--theme-primary-rgb), 0.15) !important; }
-        .border-pink-300\\/\\[0\\.12\\] { border-color: rgba(var(--theme-primary-rgb), 0.12) !important; }
+        .theme-btn { background: #ffffff !important; color: #000000 !important; }
+        .theme-btn:hover { background: #e4e4e7 !important; }
+        .theme-text { color: #ffffff !important; }
+        .theme-border { border-color: rgba(255,255,255,0.08) !important; }
+        .theme-border-light { border-color: rgba(255,255,255,0.12) !important; }
+        .theme-border-xlight { border-color: rgba(255,255,255,0.06) !important; }
+        .theme-glow { box-shadow: 0 0 40px rgba(255,255,255,0.02) !important; }
+        .theme-badge { background: #27272a !important; color: #ffffff !important; border: 1px solid rgba(255,255,255,0.1) !important; }
+        .theme-tag { background: rgba(255,255,255,0.05) !important; color: #e4e4e7 !important; }
+        .theme-glow-sm { box-shadow: 0 0 24px rgba(255,255,255,0.02); }
+        .theme-ring { box-shadow: 0 0 28px rgba(255,255,255,0.05); }
+        .text-pink-100, .text-pink-50 { color: #ffffff !important; }
+        .text-pink-300 { color: #e4e4e7 !important; }
+        .hover\\:text-pink-300:hover { color: #ffffff !important; }
+        .border-pink-300\\/25 { border-color: rgba(255,255,255,0.08) !important; }
+        .border-pink-200\\/35, .border-pink-200\\/25, .border-pink-200\\/20, .border-pink-200\\/18, .border-pink-200\\/16 { border-color: rgba(255,255,255,0.08) !important; }
+        .border-pink-300\\/35 { border-color: rgba(255,255,255,0.12) !important; }
+        .border-pink-300\\/20 { border-color: rgba(255,255,255,0.08) !important; }
+        .border-pink-300\\/[0.08] { border-color: rgba(255,255,255,0.06) !important; }
+        .hover\\:border-pink-300\\/45:hover { border-color: rgba(255,255,255,0.2) !important; }
+        .hover\\:border-pink-400\\/30:hover, .hover\\:border-pink-300\\/25:hover, .hover\\:border-pink-500\\/30:hover { border-color: rgba(255,255,255,0.15) !important; }
+        .bg-pink-500\\/10 { background: rgba(255,255,255,0.04) !important; }
+        .bg-pink-500\\/15 { background: rgba(255,255,255,0.06) !important; }
+        .bg-pink-500\\/18 { background: rgba(255,255,255,0.08) !important; }
+        .bg-pink-500\\/20 { background: rgba(255,255,255,0.1) !important; }
+        .bg-pink-500\\/14, .bg-pink-500\\/16 { background: rgba(255,255,255,0.05) !important; }
+        .bg-pink-500\\/[0.08] { background: rgba(255,255,255,0.04) !important; }
+        .bg-pink-500\\/[0.055] { background: rgba(255,255,255,0.03) !important; }
+        .bg-pink-500\\/12 { background: rgba(255,255,255,0.05) !important; }
+        .bg-pink-500 { background: #ffffff !important; color: #000000 !important; }
+        .hover\\:bg-pink-500\\/15:hover { background: rgba(255,255,255,0.08) !important; }
+        .hover\\:bg-pink-500\\/20:hover { background: rgba(255,255,255,0.12) !important; }
+        .hover\\:bg-pink-500\\/10:hover { background: rgba(255,255,255,0.06) !important; }
+        .hover\\:bg-pink-400:hover { background: #e4e4e7 !important; }
+        .bg-pink-400 { background: #ffffff !important; }
+        .text-pink-200 { color: #a1a1aa !important; }
+        .text-pink-400 { color: #ffffff !important; }
+        .hover\\:bg-pink-100:hover { background: rgba(255,255,255,0.06) !important; }
+        .bg-pink-600\\/20 { background: rgba(255,255,255,0.05) !important; }
+        .bg-pink-300 { background: #ffffff !important; }
+        .bg-pink-300\\/60 { background: rgba(255,255,255,0.4) !important; }
+        .border-pink-300\\/15 { border-color: rgba(255,255,255,0.08) !important; }
+        .border-pink-300\\/\\[0\\.12\\] { border-color: rgba(255,255,255,0.08) !important; }
         .bg-white\\/\\[0.04\\] { background: rgba(255,255,255,0.04) !important; }
-        .album-orbit {
-          animation: albumFloat 3.7s ease-in-out infinite;
-        }
-        .album-orbit:nth-child(even) {
-          animation-delay: 0.18s;
-          animation-name: albumFloatEven;
-        }
-        @keyframes albumFloat { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-12px) rotate(2deg); } }
-        @keyframes albumFloatEven { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(12px) rotate(-2deg); } }
-        .ticket-card-pulse {
-          animation: ticketCardPulse 1.25s ease-in-out 2;
-        }
-        .ticket-button-pulse {
-          animation: ticketButtonPulse 1.25s ease-in-out 2;
-        }
-        .recovery-card-pulse {
-          animation: recoveryCardPulse 1.25s ease-in-out 2;
-        }
-        .recovery-button-pulse {
-          animation: ticketButtonPulse 1.25s ease-in-out 2;
-        }
-        .top-recovery-pulse {
-          animation: recoveryButtonPulse 1.25s ease-in-out 2;
-        }
-        @keyframes ticketCardPulse {
-          0%, 100% {
-            border-color: var(--theme-border-accent-light);
-            box-shadow: 0 28px 100px var(--theme-card-shadow);
-          }
-          50% {
-            border-color: var(--theme-primary-light);
-            box-shadow: 0 0 0 5px var(--theme-border-accent), 0 30px 120px var(--theme-glow-rgba);
-          }
-        }
-        @keyframes ticketButtonPulse {
-          0%, 100% {
-            background: #ffffff;
-            color: #000000;
-            box-shadow: none;
-          }
-          50% {
-            background: rgba(var(--theme-primary-rgb), 0.7);
-            color: #12020b;
-            box-shadow: 0 0 0 6px var(--theme-border-accent), 0 0 46px var(--theme-glow-rgba);
-          }
-        }
-        @keyframes recoveryCardPulse {
-          0%, 100% {
-            border-color: var(--theme-border-accent-xlight);
-            box-shadow: 0 24px 90px var(--theme-card-shadow);
-          }
-          50% {
-            border-color: var(--theme-primary-light);
-            box-shadow: 0 0 0 5px var(--theme-border-accent-light), 0 28px 110px var(--theme-glow-rgba);
-          }
-        }
-        @keyframes recoveryButtonPulse {
-          0%, 100% {
-            background: rgba(255, 255, 255, 0.04);
-            color: var(--theme-text-accent);
-            box-shadow: none;
-          }
-          50% {
-            background: var(--theme-tag-bg);
-            color: #ffffff;
-            box-shadow: 0 0 0 6px var(--theme-border-accent), 0 0 42px var(--theme-glow-rgba);
-          }
-        }
         .hide-scrollbar::-webkit-scrollbar {
           display: none;
         }

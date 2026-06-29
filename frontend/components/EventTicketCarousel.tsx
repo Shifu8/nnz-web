@@ -2,20 +2,22 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import Image from "next/image";
+import { MapPin, Calendar, Compass, ArrowRight, ChevronLeft, ChevronRight, DollarSign } from "lucide-react";
 import type { Event } from "@/frontend/types/domain";
 
-// Extend domain Event with price and mini image for our editorial card requirements
 export interface CarouselEvent extends Event {
   price: number;
   currency: string;
   miniImage: string;
   featuredImage: string;
   badge?: string;
-  accentColor: string; // e.g. 'pink', 'purple', 'cyan'
+  accentColor: string;
   useFullBackground?: boolean;
 }
 
 interface EventTicketCarouselProps {
+  activeIndex: number;
+  setActiveIndex: (idx: number) => void;
   onBuy: (event: Event) => void;
   onViewDetails: (event: Event) => void;
   isTicketPulse?: boolean;
@@ -35,10 +37,10 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     lineup: ["Yan Block", "ROA", "Omar Courtz", "y más"],
     price: 10,
     currency: "USD",
-    badge: "LIVE PICK",
-    accentColor: "#ff0066",
+    badge: "LIVE ACCESS",
+    accentColor: "#ffffff",
     useFullBackground: true,
-    description: "La escena subterránea cobra vida. Trap latino oscuro, bajo retumbante y energía inagotable. Luces rojas, beats pesados y acceso estricto."
+    description: "La escena subterránea cobra vida. Trap latino oscuro, bajo retumbante y energía inagotable. Luces de escenario crudas, beats pesados y acceso restringido."
   },
   {
     id: "dawg-night",
@@ -53,10 +55,10 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     lineup: ["Omar Courtz", "Anuel AA", "y más"],
     price: 15,
     currency: "USD",
-    badge: "TRENDING NOW",
-    accentColor: "#6d5dfc",
+    badge: "TRENDING PRESET",
+    accentColor: "#ffffff",
     useFullBackground: true,
-    description: "Voz única y flows de la calle. Autenticidad reggaetonera premium en una atmósfera diseñada para vivirse al máximo."
+    description: "Voz única y flows de la calle. Autenticidad reggaetonera premium en una atmósfera brutal de luz cenital diseñada para vivirse al límite."
   },
   {
     id: "urban-drop",
@@ -71,304 +73,260 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     lineup: ["Bad Bunny", "Rauw Alejandro", "y más"],
     price: 20,
     currency: "USD",
-    badge: "VIP CHOICE",
-    accentColor: "#00b4d8",
+    badge: "COLLECTIBLE PASS",
+    accentColor: "#ffffff",
     useFullBackground: true,
-    description: "Energía sin límites y orgullo latino. Una experiencia masiva, brillante y premium que redefine la fiesta urbana underground a gran escala."
+    description: "Energía sin límites y orgullo latino. Una experiencia masiva, de alto contraste y estética editorial que redefine la cultura urbana a gran escala."
   }
 ];
 
 export default function EventTicketCarousel({
+  activeIndex,
+  setActiveIndex,
   onBuy,
   onViewDetails,
   isTicketPulse = false
 }: EventTicketCarouselProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef(0);
+  const dragOffsetRef = useRef(0);
 
-  // Sync index based on scroll position (handles touch swipes on mobile natively)
-  const handleScroll = () => {
-    if (!scrollRef.current) return;
-    const container = scrollRef.current;
-    const scrollLeft = container.scrollLeft;
-    const item = container.querySelector('[data-carousel-item]');
-    if (!item) return;
-    const itemWidth = item.clientWidth;
-    const gap = 24; // matches gap-6 (24px)
-    const newIndex = Math.round(scrollLeft / (itemWidth + gap));
-    if (newIndex >= 0 && newIndex < CAROUSEL_EVENTS.length) {
-      setActiveIndex(newIndex);
-    }
+  // Mouse tilt parallax offsets
+  const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const { innerWidth, innerHeight } = window;
+      const x = (e.clientX - innerWidth / 2) / (innerWidth / 2); // -1 to 1
+      const y = (e.clientY - innerHeight / 2) / (innerHeight / 2); // -1 to 1
+      setMouseOffset({ x, y });
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    dragStartRef.current = e.clientX;
+    dragOffsetRef.current = 0;
   };
 
-  const scrollTo = (index: number) => {
-    if (!scrollRef.current) return;
-    const container = scrollRef.current;
-    const item = container.querySelector('[data-carousel-item]');
-    if (!item) return;
-    const itemWidth = item.clientWidth;
-    const gap = 24; // matches gap-6 (24px)
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const deltaX = e.clientX - dragStartRef.current;
+    const deg = deltaX * 0.15;
+    dragOffsetRef.current = deg;
+    setDragOffset(deg);
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
     
-    container.scrollTo({
-      left: index * (itemWidth + gap),
-      behavior: "smooth"
-    });
-    setActiveIndex(index);
+    // Snapping threshold
+    const finalOffset = dragOffsetRef.current;
+    if (Math.abs(finalOffset) > 6) {
+      if (finalOffset > 0) {
+        const prev = (activeIndex - 1 + CAROUSEL_EVENTS.length) % CAROUSEL_EVENTS.length;
+        setActiveIndex(prev);
+      } else {
+        const next = (activeIndex + 1) % CAROUSEL_EVENTS.length;
+        setActiveIndex(next);
+      }
+    }
+    setDragOffset(0);
+  };
+
+  // Touch Support for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    dragStartRef.current = e.touches[0].clientX;
+    dragOffsetRef.current = 0;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const deltaX = e.touches[0].clientX - dragStartRef.current;
+    const deg = deltaX * 0.22;
+    dragOffsetRef.current = deg;
+    setDragOffset(deg);
+  };
+
+  const handleTouchEnd = () => {
+    handleMouseUp();
   };
 
   const handlePrev = () => {
-    const nextIndex = activeIndex === 0 ? CAROUSEL_EVENTS.length - 1 : activeIndex - 1;
-    scrollTo(nextIndex);
+    const prev = (activeIndex - 1 + CAROUSEL_EVENTS.length) % CAROUSEL_EVENTS.length;
+    setActiveIndex(prev);
   };
 
   const handleNext = () => {
-    const nextIndex = activeIndex === CAROUSEL_EVENTS.length - 1 ? 0 : activeIndex + 1;
-    scrollTo(nextIndex);
+    const next = (activeIndex + 1) % CAROUSEL_EVENTS.length;
+    setActiveIndex(next);
   };
 
+  const transitionStyle = isDragging
+    ? "none"
+    : "transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease";
+
   return (
-    <div className="relative w-full flex flex-col pt-3 pb-8">
-      {/* Editorial top section labels */}
-      <div className="flex justify-between items-center mb-4 px-2">
-        <p className="text-[10px] font-black uppercase tracking-[0.34em] text-zinc-500 hover:text-white transition">
-          TOP TRENDING
-        </p>
-        <p className="text-[10px] font-black uppercase tracking-[0.34em] text-zinc-500 hover:text-white transition">
-          LIVE PICK
-        </p>
+    <div className="relative w-full h-[520px] flex items-center justify-center select-none overflow-visible">
+      {/* 3D Scene Wrapper */}
+      <div 
+        className="relative w-full h-full flex items-center justify-center overflow-visible"
+        style={{ perspective: 1200, transformStyle: "preserve-3d" }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {CAROUSEL_EVENTS.map((event, idx) => {
+          let diff = idx - activeIndex;
+          
+          if (diff < -1) diff += CAROUSEL_EVENTS.length;
+          if (diff > 1) diff -= CAROUSEL_EVENTS.length;
+
+          const angleStep = 45;
+          const baseAngle = diff * angleStep;
+          const angle = baseAngle + dragOffset;
+          const rad = (angle * Math.PI) / 180;
+          
+          const radius = 320;
+          const translateX = Math.sin(rad) * radius;
+          const translateZ = Math.cos(rad) * radius - radius + (diff === 0 ? 60 : 0);
+          
+          const rotateY = angle * 0.9;
+
+          const px = mouseOffset.x * (diff === 0 ? 24 : 10);
+          const py = mouseOffset.y * (diff === 0 ? 16 : 8);
+          const prX = -mouseOffset.y * (diff === 0 ? 12 : 5);
+          const prY = mouseOffset.x * (diff === 0 ? 14 : 6);
+
+          const scale = diff === 0 ? 1 : 0.82;
+          const opacity = diff === 0 ? 1 : 0.42;
+          const zIndex = diff === 0 ? 30 : 10;
+          const blur = diff === 0 ? 0 : 5;
+
+          return (
+            <div
+              key={event.id}
+              onClick={() => {
+                if (diff !== 0) {
+                  setActiveIndex(idx);
+                }
+              }}
+              className="absolute w-[290px] h-[410px] md:w-[310px] md:h-[440px] rounded-[32px] overflow-hidden cursor-pointer origin-center transition-all animate-float"
+              style={{
+                transform: `translate3d(${translateX + px}px, ${diff === 0 ? -15 + py : py}px, ${translateZ}px) rotateY(${rotateY + prY}deg) rotateX(${prX}deg) scale(${scale})`,
+                zIndex,
+                opacity,
+                filter: `blur(${blur}px)`,
+                transition: transitionStyle,
+                transformStyle: "preserve-3d",
+                boxShadow: diff === 0 
+                  ? "0 40px 100px rgba(0,0,0,0.85), 0 0 50px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.15)"
+                  : "0 20px 40px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05)",
+                background: "rgba(10, 10, 10, 0.72)",
+                backdropFilter: "blur(24px)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            >
+              <div className="relative w-full h-full p-5 flex flex-col justify-between" style={{ transform: "translateZ(20px)" }}>
+                
+                {/* Grayscale Artist Cover */}
+                <div className="relative w-full h-[62%] rounded-[20px] overflow-hidden bg-zinc-900 border border-white/5">
+                  <Image
+                    src={event.poster}
+                    alt={event.title}
+                    fill
+                    sizes="(max-width: 768px) 290px, 310px"
+                    className="object-cover grayscale contrast-[1.15] brightness-[0.82] transition duration-1000 group-hover:scale-105"
+                    priority={idx === 0}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                  
+                  {/* Minimal Monochrome Price Badge */}
+                  <div className="absolute top-3 left-3 rounded-full border border-white/10 bg-black/75 px-3 py-1.5 backdrop-blur-md">
+                    <span className="text-[10px] font-black text-white tracking-wider">
+                      ${event.price} <span className="text-zinc-500 font-bold text-[8px]">{event.currency}</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Event info details */}
+                <div className="flex-1 flex flex-col justify-end mt-3 text-left">
+                  <div>
+                    <span className="text-[7px] font-black tracking-[0.3em] text-zinc-500 uppercase">
+                      {event.badge || "DAWGS EXPERIENCE"}
+                    </span>
+                    <h4 className="text-xl font-black text-white uppercase mt-0.5 tracking-tight">
+                      {event.title}
+                    </h4>
+                    <p className="text-[9px] font-bold text-zinc-400 uppercase mt-0.5 tracking-wider">
+                      {event.subtitle}
+                    </p>
+                  </div>
+
+                  {/* Horizontal dividers & metadata details */}
+                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/5 text-zinc-400">
+                    <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-wider">
+                      <Calendar className="h-3 w-3 text-white/40" />
+                      <span>{event.dateLabel.split(" ")[0]} {event.dateLabel.split(" ")[1]}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-wider">
+                      <MapPin className="h-3 w-3 text-white/40" />
+                      <span>{event.city}</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Carousel container with Desktop arrows */}
-      <div className="relative group/carousel flex items-center justify-center">
-        {/* Left Arrow (Desktop only) */}
+      {/* Manual Minimal Navigation Indicators */}
+      <div className="absolute bottom-4 inset-x-0 flex items-center justify-center gap-6 z-40">
         <button
           type="button"
           onClick={handlePrev}
           aria-label="Anterior evento"
-          className="absolute -left-5 lg:-left-12 z-40 hidden md:flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white/60 backdrop-blur-md transition hover:border-white/30 hover:bg-black/80 hover:text-white active:scale-95"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white/60 backdrop-blur-md transition hover:border-white/30 hover:bg-black/80 hover:text-white active:scale-90"
         >
+          <ChevronLeft className="h-5 w-5" />
         </button>
 
-        {/* Horizontal Snap Scroll container */}
-        <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          className="flex w-full overflow-x-auto snap-x snap-mandatory scroll-smooth hide-scrollbar gap-6 pb-2"
-          style={{ scrollbarWidth: "none" }}
-        >
-          {CAROUSEL_EVENTS.map((event, idx) => {
-            const isCurrent = idx === activeIndex;
-            return (
-              <div
-                key={event.id}
-                data-carousel-item
-                className="snap-center shrink-0 w-full"
-              >
-                {/* Premium Editorial Ticket Card */}
-                <div
-                  className={`relative w-full min-h-[420px] sm:min-h-[460px] overflow-hidden rounded-[32px] border transition-all duration-500 ${
-                    isCurrent 
-                      ? isTicketPulse 
-                        ? "border-[var(--theme-primary-light)] scale-[1.01]" 
-                        : "border-white/25" 
-                      : "border-white/10"
-                  } ${event.useFullBackground ? "bg-black/35" : "bg-gradient-to-br from-[#0c0a15]/95 via-[#0e0c1a]/95 to-[#16122d]/80"}`}
-                  style={{
-                    boxShadow: isCurrent
-                      ? `0 24px 60px rgba(0,0,0,0.65), 0 0 45px rgba(${event.accentColor === "#ff0066" ? "255,0,102" : event.accentColor === "#6d5dfc" ? "109,93,252" : "0,180,216"}, 0.18)`
-                      : "none"
-                  }}
-                >
-                  {/* Subtle Grain Overlay */}
-                  <div className="pointer-events-none absolute inset-0 bg-repeat bg-[url('data:image/svg+xml,%3Csvg%20viewBox=%220%200%20200%20200%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter%20id=%22noiseFilter%22%3E%3CfeTurbulence%20type=%22fractalNoise%22%20baseFrequency=%220.75%22%20numOctaves=%223%22%20stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect%20width=%22100%25%22%20height=%22100%25%22%20filter=%22url(%23noiseFilter)%22%20opacity=%220.015%22/%3E%3C/svg%3E')] opacity-50" />
-
-                  {/* Backdrop blur effect */}
-                  <div className="absolute inset-0 backdrop-blur-3xl -z-10" />
-
-                  {/* Glowing background circles for visual depth */}
-                  <div 
-                    className="absolute -right-20 -bottom-20 h-72 w-72 rounded-full blur-[90px] opacity-25 transition-all duration-700" 
-                    style={{ background: event.accentColor }}
-                  />
-                  <div 
-                    className="absolute left-1/3 top-1/4 h-56 w-56 rounded-full blur-[100px] opacity-10" 
-                    style={{ background: event.accentColor }}
-                  />
-
-                  {/* Dynamic card background representation */}
-                  {event.useFullBackground ? (
-                    <div className="absolute inset-0 pointer-events-none -z-10">
-                      <Image
-                        src={event.featuredImage}
-                        alt=""
-                        fill
-                        sizes="(max-width: 768px) 100vw, 800px"
-                        className="object-cover"
-                        priority={idx === 0}
-                      />
-                      {/* Highlight mask overlay to keep text highly readable on narrow screens */}
-                      <div className="absolute inset-0 bg-black/45 sm:bg-black/10" />
-                    </div>
-                  ) : (
-                    /* Large Artist Image (Right side blend) */
-                    <div className="absolute top-0 right-0 h-full w-[46%] sm:w-[48%] pointer-events-none hidden sm:block -z-10">
-                      <div className="relative h-full w-full">
-                        <Image
-                          src={event.featuredImage}
-                          alt={event.title}
-                          fill
-                          sizes="(max-width: 768px) 100vw, 360px"
-                          className="object-cover object-center"
-                        />
-                        {/* Gradient overlay to seamlessly blend artist photo with dark card background */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#0c0a15] via-[#0c0a15]/90 via-[#0c0a15]/45 to-transparent" />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Main content grid (Left aligned) */}
-                  <div className="relative z-10 flex flex-col justify-between h-full min-h-[420px] sm:min-h-[460px] p-6 sm:p-8 sm:w-[58%] text-left">
-                    {/* Top Row: Dynamic Badge + Price Badge */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div />
-                      
-                      {/* Price Badge */}
-                      <div
-                        className="rounded-[16px] border px-3 py-1.5 text-center"
-                        style={{
-                          borderColor: "rgba(255, 0, 102, 0.48)",
-                          background: "rgba(255, 0, 102, 0.18)",
-                          boxShadow: "0 0 34px rgba(255, 0, 102, 0.24)",
-                        }}
-                      >
-                        <p className="text-xl font-black leading-none text-white">${event.price}</p>
-                        <p className="mt-1 text-[5px] font-black uppercase tracking-widest text-zinc-500">{event.currency}</p>
-                      </div>
-                    </div>
-
-                    {/* Middle Section: Titles + Info badges */}
-                    <div className="mt-3 space-y-3">
-                      <div>
-                        <h3 className="text-3xl sm:text-4xl font-black uppercase leading-none tracking-[-0.05em] text-white">
-                          {event.title}
-                        </h3>
-                        <p 
-                          className="mt-1 text-[8px] font-black uppercase tracking-[0.24em]"
-                          style={{ color: event.accentColor }}
-                        >
-                          {event.subtitle}
-                        </p>
-                      </div>
-
-                      {/* Event location & date badges */}
-                      <div className="flex flex-wrap gap-1.5">
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-200/18 bg-white/[0.08] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.18em] text-zinc-100">
-                          {event.city}
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-200/18 bg-white/[0.08] px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.18em] text-zinc-100">
-                          {event.dateLabel}
-                        </span>
-                      </div>
-
-                      {/* Lineup */}
-                      <div className="flex flex-wrap gap-1.5 pt-0.5">
-                        {event.lineup.map((artist) => (
-                          <span
-                            key={artist}
-                            className="rounded-full border border-pink-200/25 bg-pink-500/16 px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.17em] text-pink-50"
-                          >
-                            {artist}
-                          </span>
-                        ))}
-                        <a
-                          href="https://instagram.com/brandon.mdna"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 rounded-full border border-blue-400/30 bg-blue-950/40 px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.17em] text-blue-200 transition hover:bg-blue-900/50"
-                        >
-                          DAWG DJ
-                        </a>
-                      </div>
-
-                      {/* Description */}
-                      <p className="text-[9px] leading-relaxed text-zinc-200/90 max-w-sm">
-                        Tu entrada empieza aquí: diseno, registro, Gmail y pago. Si no llega, recuperala con tu correo.
-                      </p>
-
-                      {/* Sponsors row at the bottom */}
-                      <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-white/5">
-                        <p className="mr-1 text-[7px] font-black uppercase tracking-[0.2em] text-zinc-400">
-                          Con apoyo de
-                        </p>
-                        <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-pink-200/20 bg-pink-500/14 px-2 py-0.5">
-                          <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full border border-pink-300/20 bg-black/40 text-[5.5px] font-black text-pink-100">
-                            KS
-                          </span>
-                          <span className="truncate text-[6px] font-black uppercase tracking-[0.1em] text-white">
-                            Kyoto Sushi
-                          </span>
-                        </span>
-                        <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-pink-200/20 bg-pink-500/14 px-2 py-0.5">
-                          <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full border border-pink-300/20 bg-black/40 text-[5.5px] font-black text-pink-100">
-                            IA
-                          </span>
-                          <span className="truncate text-[6px] font-black uppercase tracking-[0.1em] text-white">
-                            Iron Athletics
-                          </span>
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Bottom Section: Action buttons */}
-                    <div className="mt-4 grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => onViewDetails(event)}
-                        className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] text-[8px] font-black uppercase tracking-[0.18em] text-zinc-200 transition hover:border-pink-400/30 hover:bg-pink-500/10 hover:text-pink-300"
-                      >
-                        VER EVENTO
-                      </button>
-                      
-                      <button
-                        type="button"
-                        onClick={() => onBuy(event)}
-                        className="group/buy inline-flex h-11 items-center justify-between rounded-xl bg-white px-4 text-[8px] sm:text-[9px] font-black uppercase tracking-[0.18em] text-black shadow-lg transition hover:bg-zinc-200"
-                      >
-                        COMPRAR ENTRADA
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="flex gap-1.5">
+          {CAROUSEL_EVENTS.map((_, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setActiveIndex(idx)}
+              aria-label={`Ir al evento ${idx + 1}`}
+              className={`h-1 rounded-full transition-all duration-500 ${
+                idx === activeIndex
+                  ? "w-5 bg-white"
+                  : "w-1 bg-white/20 hover:bg-white/40"
+              }`}
+            />
+          ))}
         </div>
 
-        {/* Right Arrow (Desktop only) */}
         <button
           type="button"
           onClick={handleNext}
           aria-label="Siguiente evento"
-          className="absolute -right-5 lg:-right-12 z-40 hidden md:flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white/60 backdrop-blur-md transition hover:border-white/30 hover:bg-black/80 hover:text-white active:scale-95"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/40 text-white/60 backdrop-blur-md transition hover:border-white/30 hover:bg-black/80 hover:text-white active:scale-90"
         >
+          <ChevronRight className="h-5 w-5" />
         </button>
-      </div>
-
-      {/* Dots Indicator */}
-      <div className="flex justify-center gap-2 mt-4">
-        {CAROUSEL_EVENTS.map((_, idx) => (
-          <button
-            key={idx}
-            type="button"
-            onClick={() => scrollTo(idx)}
-            aria-label={`Ir al evento ${idx + 1}`}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
-              idx === activeIndex
-                ? "w-6 bg-white"
-                : "w-1.5 bg-white/20 hover:bg-white/40"
-            }`}
-          />
-        ))}
       </div>
     </div>
   );
