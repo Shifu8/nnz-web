@@ -662,25 +662,27 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
       </section>
 
-      {/* Access protected description section */}
+      {/* ACCESS & INFORMATION SECTION (Side-by-side desktop layout) */}
       <section
         id="access"
         className="relative z-20 mx-auto w-full max-w-[1600px] px-4 py-16 sm:px-6 md:px-12 lg:px-16"
       >
-        <div
-          className="relative z-20 mt-8 overflow-hidden rounded-[32px] border border-white/10 bg-black/45 p-5 backdrop-blur-2xl sm:p-7 lg:mt-10 lg:p-9 shadow-2xl"
-        >
-          <div className="pointer-events-none absolute -left-20 top-1/2 h-56 w-56 -translate-y-1/2 rounded-full bg-white/[0.02] blur-3xl" />
-          <div
-            className="pointer-events-none absolute -right-24 bottom-0 h-64 w-64 rounded-full blur-3xl"
-            style={{ background: "rgba(255,255,255,0.01)" }}
-          />
-          <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-            <div className="relative z-10">
-              <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.3em] text-white">
+        <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
+          
+          {/* Card 1: Protected Access */}
+          <div 
+            className="relative overflow-hidden rounded-[32px] border border-white/10 bg-black/45 p-5 backdrop-blur-2xl sm:p-7 lg:p-9 shadow-2xl flex flex-col justify-between gap-6"
+            style={{ boxShadow: "0 24px 90px rgba(255, 255, 255, 0.01)" }}
+          >
+            {/* Soft static monochrome lighting vignette details */}
+            <div className="pointer-events-none absolute -right-20 top-1/2 h-64 w-64 -translate-y-1/2 rounded-full bg-white/[0.01] blur-3xl" />
+            <div className="pointer-events-none absolute -left-24 bottom-0 h-52 w-52 rounded-full bg-white/[0.005] blur-3xl" />
+
+            <div className="relative z-10 flex flex-col justify-center">
+              <p className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.3em] text-white">
                 {config.accessSection.badge}
               </p>
-              <h2 className="mt-4 text-4xl font-black uppercase leading-[0.9] tracking-[-0.05em] text-white sm:text-5xl">
+              <h2 className="mt-4 text-3xl font-black uppercase leading-[0.9] tracking-[-0.05em] text-white sm:text-4xl">
                 {config.accessSection.headingLine1}
                 <br />
                 {config.accessSection.headingLine2}
@@ -693,14 +695,16 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               </p>
             </div>
 
-            <div className="relative z-10 grid gap-3 sm:grid-cols-3">
+            <div className="relative z-10 grid gap-3 sm:grid-cols-3 w-full">
               {config.accessSection.steps.map((data) => (
                 <article
                   key={data.step}
                   className="rounded-[24px] border border-white/10 bg-black/45 p-5 shadow-[0_16px_46px_rgba(0,0,0,0.4)] transition hover:border-white/20 hover:bg-white/[0.02]"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[8px] font-black tracking-[0.24em] text-zinc-600">{data.step}</span>
+                    <span className="text-[8px] font-black tracking-[0.24em] text-zinc-600">
+                      {data.step}
+                    </span>
                   </div>
                   <h3 className="mt-8 text-lg font-black uppercase text-white">{data.title}</h3>
                   <p className="mt-2 text-[10px] leading-5 text-zinc-500">{data.copy}</p>
@@ -708,10 +712,12 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               ))}
             </div>
           </div>
+
+          {/* Card 2: Ticket Recovery */}
+          <TicketRecovery embedded pulse={isRecoveryPulse} className="hero-reveal h-full" />
+
         </div>
       </section>
-
-      <TicketRecovery pulse={isRecoveryPulse} className="hero-reveal mt-8 lg:mt-10" />
 
       <OutfitBuilderSection />
 

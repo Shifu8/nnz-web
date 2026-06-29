@@ -169,9 +169,11 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
       }
     >
       <div
-        className={`relative overflow-hidden rounded-[32px] border border-white/10 bg-black/45 p-5 backdrop-blur-2xl sm:p-7 lg:p-9 shadow-2xl grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center ${
-          pulse ? "recovery-card-pulse" : ""
-        }`}
+        className={`relative overflow-hidden rounded-[32px] border border-white/10 bg-black/45 p-5 backdrop-blur-2xl sm:p-7 lg:p-9 shadow-2xl ${
+          embedded
+            ? "flex flex-col gap-6"
+            : "grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center"
+        } ${pulse ? "recovery-card-pulse" : ""}`}
         style={{ boxShadow: "0 24px 90px rgba(255, 255, 255, 0.01)" }}
       >
         {/* Soft static monochrome lighting vignette details */}
@@ -183,13 +185,12 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
           <p className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.3em] text-white">
             Recuperar entrada
           </p>
-          <h2 className="mt-4 text-4xl font-black uppercase leading-[0.9] tracking-[-0.05em] text-white sm:text-5xl">
+          <h2 className="mt-4 text-3xl font-black uppercase leading-[0.9] tracking-[-0.05em] text-white sm:text-4xl">
             Tu entrada.
             <br />
             Sin vueltas.
           </h2>
-          <p className="mt-5 inline-flex items-center gap-2 text-xl font-black uppercase tracking-[-0.03em] text-white">
-            <KeyRound className="h-5 w-5 text-white/50" />
+          <p className="mt-5 inline-flex items-center text-xl font-black uppercase tracking-[-0.03em] text-white">
             Recuperación OTP
           </p>
           <p className="mt-5 max-w-lg text-sm leading-7 text-zinc-400">
