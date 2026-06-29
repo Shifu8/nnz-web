@@ -730,12 +730,12 @@ body {
 /* Slower, breathing opacity pulse for the glowing backdrop */
 @keyframes backdrop-glow-breath {
   0%, 100% {
-    opacity: 0.25;
+    opacity: 0;
   }
   50% {
     opacity: 0.85;
   }
 }
 .animate-glow-backdrop {
-  animation: backdrop-glow-breath 2s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+  animation: backdrop-glow-breath 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
 }
