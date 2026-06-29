@@ -13,7 +13,7 @@ import {
   getEmailSuggestion,
 } from "@/frontend/utils/emailInput";
 
-type RecoveryPhase = "idle" | "email" | "code" | "done";
+type RecoveryPhase = "email" | "code" | "done";
 
 type RecoveredTicket = {
   eventName: string;
@@ -38,7 +38,7 @@ const genericMessage =
   "Si existe una entrada aprobada para este correo, enviaremos un código de recuperación.";
 
 export default function TicketRecovery({ embedded = false, className = "", pulse = false }: TicketRecoveryProps) {
-  const [phase, setPhase] = useState<RecoveryPhase>("idle");
+  const [phase, setPhase] = useState<RecoveryPhase>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [token, setToken] = useState("");
@@ -150,7 +150,7 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
   };
 
   const resetRecovery = () => {
-    setPhase("idle");
+    setPhase("email");
     setCode("");
     setToken("");
     setTicket(null);
@@ -197,269 +197,278 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
           </p>
         </div>
 
-        {/* Right Column: Switcher between Step Cards (idle) and Form Card (active) */}
-        <div className="relative z-10 w-full min-h-[220px] flex items-center justify-center">
+        {/* Right Column: Steps Tracker + Active Form Container */}
+        <div className="relative z-10 w-full flex flex-col gap-6">
           
-          {phase === "idle" ? (
-            /* Recovery Steps Cards - Identical grid structure, border radius, typography, shadows and padding */
-            <div 
-              onClick={() => setPhase("email")}
-              className="grid gap-3 sm:grid-cols-3 w-full cursor-pointer group/recovery"
-            >
-              {[
-                ["01", "Correo", "Escribe tu email."],
-                ["02", "Código", "Copia el PIN."],
-                ["03", "Entrada", "Baja tu pase."],
-              ].map(([number, title, copy]) => (
+          {/* Recovery Process Cards Tracker */}
+          <div className="grid gap-3 sm:grid-cols-3 w-full">
+            {[
+              ["01", "Correo", "Escribe tu email."],
+              ["02", "Código", "Copia el PIN."],
+              ["03", "Entrada", "Baja tu pase."],
+            ].map(([number, title, copy], index) => {
+              const activeIndex = phase === "email" ? 0 : phase === "code" ? 1 : 2;
+              const isActive = index === activeIndex;
+              return (
                 <article
                   key={number}
-                  className="rounded-[24px] border border-white/10 bg-black/45 p-5 shadow-[0_16px_46px_rgba(0,0,0,0.4)] transition duration-300 group-hover/recovery:border-white/20 group-hover/recovery:bg-white/[0.02] hover:!border-white/30 hover:!bg-white/[0.04] text-left"
+                  className={`rounded-[24px] border p-5 shadow-[0_16px_46px_rgba(0,0,0,0.4)] transition duration-300 ${
+                    isActive
+                      ? "border-white/20 bg-white/5"
+                      : "border-white/[0.06] bg-white/[0.01]"
+                  }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[8px] font-black tracking-[0.24em] text-zinc-600 transition group-hover/recovery:text-zinc-400">
+                    <span className={`text-[8px] font-black tracking-[0.24em] transition ${isActive ? "text-white" : "text-zinc-600"}`}>
                       {number}
                     </span>
                   </div>
                   <h3 className="mt-8 text-lg font-black uppercase text-white">{title}</h3>
                   <p className="mt-2 text-[10px] leading-5 text-zinc-500">{copy}</p>
                 </article>
-              ))}
-            </div>
-          ) : (
-            /* Active Form Container Card */
-            <div className="relative w-full rounded-[24px] border border-white/10 bg-black/60 p-6 sm:p-8 backdrop-blur-2xl shadow-xl flex flex-col justify-between">
-              
-              {/* Back Button */}
-              <div className="flex justify-between items-center mb-4 border-b border-white/5 pb-3">
-                <button
-                  type="button"
-                  onClick={resetRecovery}
-                  className="text-[8px] font-black uppercase tracking-[0.18em] text-zinc-400 hover:text-white transition inline-flex items-center gap-1.5"
-                >
-                  <ChevronLeft className="h-3 w-3" /> Volver a pasos
-                </button>
-                <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest">
-                  Fase {phase === "email" ? "1" : phase === "code" ? "2" : "3"} de 3
-                </span>
-              </div>
+              );
+            })}
+          </div>
 
-              {phase === "email" && (
-                <form onSubmit={requestCode} className="space-y-6">
-                  <div>
-                    <label className="text-[9px] font-black uppercase tracking-[0.26em] text-zinc-400">correo de compra</label>
-                    <div className="mt-2 flex items-center rounded-2xl border border-white/10 bg-black/40 px-4 py-1 transition-all duration-300 focus-within:border-white/30 focus-within:bg-black/70">
-                      <Mail className="h-4 w-4 text-zinc-500 shrink-0" />
-                      <input
-                        required
-                        type="email"
-                        maxLength={120}
-                        inputMode="email"
-                        autoComplete="email"
-                        autoCapitalize="none"
-                        spellCheck={false}
-                        list="recovery-email-domains"
-                        value={email}
-                        onChange={(event) => setEmail(cleanEmailInput(event.target.value))}
-                        placeholder="tu@gmail.com"
-                        className="h-12 w-full bg-transparent px-3 text-sm font-bold text-white outline-none placeholder:text-zinc-700"
-                      />
-                    </div>
-                    <datalist id="recovery-email-domains">
-                      {emailDomains.map((domain) => {
-                        const local = email.split("@")[0] || "tu";
-                        return <option key={domain} value={`${local}@${domain}`} />;
-                      })}
-                    </datalist>
-                    
-                    {/* Suggestions and Hints */}
-                    <div className="mt-3 flex flex-wrap items-center gap-2 min-h-[24px]">
-                      <p
-                        className={`text-[8px] font-bold uppercase tracking-wider ${
-                          emailHint.tone === "ok"
-                            ? "text-white/80"
-                            : emailHint.tone === "warn"
-                              ? "text-zinc-400"
-                              : "text-zinc-600"
-                        }`}
+          {/* Symmetrical Form / Result Card */}
+          <div className="relative rounded-[24px] border border-white/10 bg-black/60 p-6 sm:p-8 backdrop-blur-2xl shadow-xl flex flex-col justify-between">
+            
+            {phase === "email" && (
+              <form onSubmit={requestCode} className="space-y-6">
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-[0.26em] text-zinc-400">correo de compra</label>
+                  <div className="mt-2 flex items-center rounded-2xl border border-white/10 bg-black/40 px-4 py-1 transition-all duration-300 focus-within:border-white/30 focus-within:bg-black/70">
+                    <Mail className="h-4 w-4 text-zinc-500 shrink-0" />
+                    <input
+                      required
+                      type="email"
+                      maxLength={120}
+                      inputMode="email"
+                      autoComplete="email"
+                      autoCapitalize="none"
+                      spellCheck={false}
+                      list="recovery-email-domains"
+                      value={email}
+                      onChange={(event) => setEmail(cleanEmailInput(event.target.value))}
+                      placeholder="tu@gmail.com"
+                      className="h-12 w-full bg-transparent px-3 text-sm font-bold text-white outline-none placeholder:text-zinc-700"
+                    />
+                  </div>
+                  <datalist id="recovery-email-domains">
+                    {emailDomains.map((domain) => {
+                      const local = email.split("@")[0] || "tu";
+                      return <option key={domain} value={`${local}@${domain}`} />;
+                    })}
+                  </datalist>
+                  
+                  {/* Suggestions and Hints */}
+                  <div className="mt-3 flex flex-wrap items-center gap-2 min-h-[24px]">
+                    <p
+                      className={`text-[8px] font-bold uppercase tracking-wider ${
+                        emailHint.tone === "ok"
+                          ? "text-white/80"
+                          : emailHint.tone === "warn"
+                            ? "text-zinc-400"
+                            : "text-zinc-600"
+                      }`}
+                    >
+                      {emailHint.text}
+                    </p>
+                    {emailSuggestion && (
+                      <button
+                        type="button"
+                        onClick={() => setEmail(applyEmailSuggestion(email))}
+                        className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[7px] font-black uppercase tracking-wider text-white transition hover:bg-white/10 active:scale-95"
                       >
-                        {emailHint.text}
-                      </p>
-                      {emailSuggestion && (
-                        <button
-                          type="button"
-                          onClick={() => setEmail(applyEmailSuggestion(email))}
-                          className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[7px] font-black uppercase tracking-wider text-white transition hover:bg-white/10 active:scale-95"
-                        >
-                          usar {emailSuggestion}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <TurnstileWidget
-                    action="ticket_recovery"
-                    variant="invisible"
-                    resetKey={turnstileResetKey}
-                    onVerify={setTurnstileToken}
-                    onExpire={() => setTurnstileToken("")}
-                    onError={() => setTurnstileToken("")}
-                  />
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="inline-flex h-12 w-full items-center justify-between rounded-2xl bg-white px-6 text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <span>{loading ? "Procesando..." : "Enviar código"}</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </button>
-                </form>
-              )}
-
-              {phase === "code" && (
-                <form onSubmit={verifyCode} className="space-y-6">
-                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500">verificando</p>
-                    <p className="mt-1 truncate text-xs font-bold text-zinc-300">{email}</p>
-                  </div>
-                  
-                  <div>
-                    <label className="text-[9px] font-black uppercase tracking-[0.26em] text-zinc-400">código de 6 dígitos</label>
-                    <div className="mt-2 flex items-center rounded-2xl border border-white/10 bg-black/40 px-4 py-1 transition-all duration-300 focus-within:border-white/30 focus-within:bg-black/70">
-                      <KeyRound className="h-4 w-4 text-zinc-500 shrink-0" />
-                      <input
-                        required
-                        autoFocus
-                        inputMode="numeric"
-                        autoComplete="one-time-code"
-                        maxLength={6}
-                        value={code}
-                        onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
-                        placeholder="000000"
-                        className="h-12 w-full bg-transparent px-3 text-center text-xl font-black tracking-[0.2em] text-white outline-none placeholder:text-zinc-800"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={loading || code.length !== 6}
-                    className="inline-flex h-12 w-full items-center justify-between rounded-2xl bg-white px-6 text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <span>{loading ? "Validando..." : "Verificar código"}</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </button>
-                  
-                  <div className="grid grid-cols-2 gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={resetRecovery}
-                      className="h-10 rounded-2xl border border-white/10 bg-white/[0.03] text-[8px] font-black uppercase tracking-[0.15em] text-zinc-400 transition hover:border-white/20 hover:text-white"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPhase("email");
-                        setCode("");
-                        setMessage("");
-                        setError("");
-                      }}
-                      className="h-10 rounded-2xl border border-white/10 bg-white/[0.03] text-[8px] font-black uppercase tracking-[0.15em] text-zinc-400 transition hover:border-white/20 hover:text-white"
-                    >
-                      Reenviar PIN
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {phase === "done" && ticket && (
-                <div className="space-y-6 w-full">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[8px] font-black uppercase tracking-[0.25em] text-zinc-400">Entrada recuperada</p>
-                      <h3 className="mt-1 text-2xl font-black uppercase leading-none text-white">{ticket.eventName}</h3>
-                      <p className="mt-1 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500">{ticket.seriesName}</p>
-                    </div>
-                    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.16em] text-white">
-                      <Check className="h-3 w-3 text-white" />
-                      Aprobada
-                    </span>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-[1fr_156px]">
-                    <div className="space-y-2">
-                      {[
-                        ["Titular", ticket.holderName],
-                        ["Artistas", ticket.artist],
-                        ["Fecha", ticket.date],
-                        ["Lugar", ticket.venue],
-                      ].map(([label, value]) => {
-                        return (
-                          <div key={String(label)} className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
-                            <div className="min-w-0">
-                              <p className="text-[7px] font-black uppercase tracking-[0.18em] text-zinc-500">{String(label)}</p>
-                              <p className="mt-0.5 truncate text-[10px] font-black uppercase text-zinc-300">{String(value)}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div className="rounded-[22px] border border-white/10 bg-zinc-950 p-3 text-center flex flex-col justify-center items-center shadow-inner">
-                      <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-white p-1">
-                        <Image
-                          src={ticket.qrUrl}
-                          alt={`QR oficial ${ticket.ticketCode}`}
-                          fill
-                          unoptimized
-                          referrerPolicy="no-referrer"
-                          className="object-contain"
-                        />
-                      </div>
-                      <p className="mt-3 text-[7px] font-black uppercase tracking-[0.16em] text-zinc-500">Código oficial</p>
-                      <p className="mt-1 break-all font-mono text-[8px] font-bold text-white tracking-widest">{ticket.ticketCode}</p>
-                    </div>
-                  </div>
-
-                  <p className="rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3 text-[9px] font-bold leading-5 text-zinc-400">
-                    Entrada válida para un solo uso. No compartas capturas ni el código QR.
-                  </p>
-
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <a
-                      href={`/api/tickets/recovery/download?token=${encodeURIComponent(token)}`}
-                      className="inline-flex h-12 items-center justify-center rounded-2xl bg-white text-[9px] font-black uppercase tracking-[0.17em] text-black transition hover:bg-zinc-200"
-                    >
-                      Descargar entrada
-                    </a>
-                    <button
-                      type="button"
-                      disabled={resending}
-                      onClick={resendTicket}
-                      className="inline-flex h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-[9px] font-black uppercase tracking-[0.17em] text-zinc-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {resending ? "Reenviando..." : "Reenviar al correo"}
-                    </button>
+                        usar {emailSuggestion}
+                      </button>
+                    )}
                   </div>
                 </div>
-              )}
 
-              {(message || error) && (
-                <p
-                  role={error ? "alert" : "status"}
-                  className={`mt-4 rounded-2xl border px-4 py-3 text-[10px] font-bold leading-5 transition-all ${
-                    error
-                      ? "border-red-400/20 bg-red-500/10 text-red-300"
-                      : "border-white/10 bg-white/5 text-zinc-200"
-                  }`}
+                <TurnstileWidget
+                  action="ticket_recovery"
+                  variant="invisible"
+                  resetKey={turnstileResetKey}
+                  onVerify={setTurnstileToken}
+                  onExpire={() => setTurnstileToken("")}
+                  onError={() => setTurnstileToken("")}
+                />
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="inline-flex h-12 w-full items-center justify-between rounded-2xl bg-white px-6 text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {error || message}
+                  <span>{loading ? "Procesando..." : "Enviar código"}</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+              </form>
+            )}
+
+            {phase === "code" && (
+              <form onSubmit={verifyCode} className="space-y-6">
+                <div className="flex justify-between items-center mb-4 border-b border-white/5 pb-2">
+                  <button
+                    type="button"
+                    onClick={resetRecovery}
+                    className="text-[8px] font-black uppercase tracking-[0.18em] text-zinc-400 hover:text-white transition inline-flex items-center gap-1.5"
+                  >
+                    <ChevronLeft className="h-3 w-3" /> Cambiar correo
+                  </button>
+                </div>
+                
+                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500">verificando</p>
+                  <p className="mt-1 truncate text-xs font-bold text-zinc-300">{email}</p>
+                </div>
+                
+                <div>
+                  <label className="text-[9px] font-black uppercase tracking-[0.26em] text-zinc-400">código de 6 dígitos</label>
+                  <div className="mt-2 flex items-center rounded-2xl border border-white/10 bg-black/40 px-4 py-1 transition-all duration-300 focus-within:border-white/30 focus-within:bg-black/70">
+                    <KeyRound className="h-4 w-4 text-zinc-500 shrink-0" />
+                    <input
+                      required
+                      autoFocus
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      value={code}
+                      onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
+                      placeholder="000000"
+                      className="h-12 w-full bg-transparent px-3 text-center text-xl font-black tracking-[0.2em] text-white outline-none placeholder:text-zinc-800"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading || code.length !== 6}
+                  className="inline-flex h-12 w-full items-center justify-between rounded-2xl bg-white px-6 text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span>{loading ? "Validando..." : "Verificar código"}</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+                
+                <div className="grid grid-cols-2 gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={resetRecovery}
+                    className="h-10 rounded-2xl border border-white/10 bg-white/[0.03] text-[8px] font-black uppercase tracking-[0.15em] text-zinc-400 transition hover:border-white/20 hover:text-white"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhase("email");
+                      setCode("");
+                      setMessage("");
+                      setError("");
+                    }}
+                    className="h-10 rounded-2xl border border-white/10 bg-white/[0.03] text-[8px] font-black uppercase tracking-[0.15em] text-zinc-400 transition hover:border-white/20 hover:text-white"
+                  >
+                    Reenviar PIN
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {phase === "done" && ticket && (
+              <div className="space-y-6 w-full">
+                <div className="flex justify-between items-center mb-4 border-b border-white/5 pb-2">
+                  <button
+                    type="button"
+                    onClick={resetRecovery}
+                    className="text-[8px] font-black uppercase tracking-[0.18em] text-zinc-400 hover:text-white transition inline-flex items-center gap-1.5"
+                  >
+                    <ChevronLeft className="h-3 w-3" /> Nueva consulta
+                  </button>
+                </div>
+                
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[8px] font-black uppercase tracking-[0.25em] text-zinc-400">Entrada recuperada</p>
+                    <h3 className="mt-1 text-2xl font-black uppercase leading-none text-white">{ticket.eventName}</h3>
+                    <p className="mt-1 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500">{ticket.seriesName}</p>
+                  </div>
+                  <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.16em] text-white">
+                    <Check className="h-3 w-3 text-white" />
+                    Aprobada
+                  </span>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-[1fr_156px]">
+                  <div className="space-y-2">
+                    {[
+                      ["Titular", ticket.holderName],
+                      ["Artistas", ticket.artist],
+                      ["Fecha", ticket.date],
+                      ["Lugar", ticket.venue],
+                    ].map(([label, value]) => {
+                      return (
+                        <div key={String(label)} className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+                          <div className="min-w-0">
+                            <p className="text-[7px] font-black uppercase tracking-[0.18em] text-zinc-500">{String(label)}</p>
+                            <p className="mt-0.5 truncate text-[10px] font-black uppercase text-zinc-300">{String(value)}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="rounded-[22px] border border-white/10 bg-zinc-950 p-3 text-center flex flex-col justify-center items-center shadow-inner">
+                    <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-white p-1">
+                      <Image
+                        src={ticket.qrUrl}
+                        alt={`QR oficial ${ticket.ticketCode}`}
+                        fill
+                        unoptimized
+                        referrerPolicy="no-referrer"
+                        className="object-contain"
+                      />
+                    </div>
+                    <p className="mt-3 text-[7px] font-black uppercase tracking-[0.16em] text-zinc-500">Código oficial</p>
+                    <p className="mt-1 break-all font-mono text-[8px] font-bold text-white tracking-widest">{ticket.ticketCode}</p>
+                  </div>
+                </div>
+
+                <p className="rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3 text-[9px] font-bold leading-5 text-zinc-400">
+                  Entrada válida para un solo uso. No compartas capturas ni el código QR.
                 </p>
-              )}
-            </div>
-          )}
+
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <a
+                    href={`/api/tickets/recovery/download?token=${encodeURIComponent(token)}`}
+                    className="inline-flex h-12 items-center justify-center rounded-2xl bg-white text-[9px] font-black uppercase tracking-[0.17em] text-black transition hover:bg-zinc-200"
+                  >
+                    Descargar entrada
+                  </a>
+                  <button
+                    type="button"
+                    disabled={resending}
+                    onClick={resendTicket}
+                    className="inline-flex h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-[9px] font-black uppercase tracking-[0.17em] text-zinc-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {resending ? "Reenviando..." : "Reenviar al correo"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {(message || error) && (
+              <p
+                role={error ? "alert" : "status"}
+                className={`mt-4 rounded-2xl border px-4 py-3 text-[10px] font-bold leading-5 transition-all ${
+                  error
+                    ? "border-red-400/20 bg-red-500/10 text-red-300"
+                    : "border-white/10 bg-white/5 text-zinc-200"
+                }`}
+              >
+                {error || message}
+              </p>
+            )}
+          </div>
 
         </div>
       </div>
