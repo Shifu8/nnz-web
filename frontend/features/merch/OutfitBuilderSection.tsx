@@ -79,7 +79,7 @@ export default function OutfitBuilderSection() {
             </p>
             <p className="mt-2 text-lg font-black uppercase leading-[1.0] tracking-tight text-white">
               Studio rack
-              <span className="block text-zinc-400 font-medium text-xs mt-1 lowercase italic">ready to wear</span>
+              <span className="block text-zinc-500 font-black text-[8px] uppercase tracking-[0.22em] mt-1.5">ready to wear</span>
             </p>
           </div>
         </div>
