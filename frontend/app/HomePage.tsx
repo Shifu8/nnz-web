@@ -457,22 +457,19 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             }}
           />
 
-          {/* Glowing Skylight (centered above platform) */}
+          {/* Soft diffused spotlight source at the top (replaces the solid white skylight) */}
           <div 
-            className="absolute top-0 lg:left-[64%] left-1/2 -translate-x-1/2 w-[70vw] h-[22vw] bg-white opacity-[0.98]"
+            className="absolute top-0 lg:left-[64%] left-1/2 -translate-x-1/2 w-[110vw] lg:w-[75vw] h-[30vh] pointer-events-none mix-blend-screen"
             style={{
-              clipPath: "polygon(12% 0%, 88% 0%, 100% 100%, 0% 100%)",
-              boxShadow: "0 0 120px rgba(255, 255, 255, 0.95), 0 0 240px rgba(255, 255, 255, 0.5)",
-              transform: "perspective(800px) rotateX(28deg) translateZ(0)",
-              transformOrigin: "top center",
+              background: "radial-gradient(ellipse at top, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 50%, transparent 80%)",
             }}
           />
           
-          {/* Volumetric light cone from the skylight */}
+          {/* Volumetric light cone with soft blurred edges */}
           <div 
-            className="absolute top-[18vw] lg:left-[64%] left-1/2 -translate-x-1/2 w-[90vw] h-[95vh] opacity-25 bg-gradient-to-b from-white via-white/5 to-transparent pointer-events-none mix-blend-screen"
+            className="absolute top-0 lg:left-[64%] left-1/2 -translate-x-1/2 w-[90vw] lg:w-[50vw] h-[100vh] opacity-20 bg-gradient-to-b from-white/12 via-white/2 to-transparent pointer-events-none mix-blend-screen filter blur-[12px]"
             style={{
-              clipPath: "polygon(34% 0%, 66% 0%, 100% 100%, 0% 100%)",
+              clipPath: "polygon(48% 0%, 52% 0%, 100% 100%, 0% 100%)",
             }}
           />
 
