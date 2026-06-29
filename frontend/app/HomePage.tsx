@@ -1009,12 +1009,13 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             transform: scale(1) !important;
           }
           50% {
-            box-shadow: 0 0 0 12px rgba(255, 255, 255, 0), 0 0 26px 14px rgba(255, 255, 255, 0.7) !important;
-            transform: scale(1.06) !important;
+            box-shadow: 0 0 0 14px rgba(255, 255, 255, 0), 0 0 35px 20px rgba(255, 255, 255, 0.85) !important;
+            transform: scale(1.08) !important;
           }
         }
         .button-pulse-active {
           animation: button-glow-pulse 0.5s ease-in-out infinite !important;
+          transition: none !important;
         }
       `}} />
     </main>
