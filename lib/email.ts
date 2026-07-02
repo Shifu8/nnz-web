@@ -36,7 +36,7 @@ function createTransport() {
 }
 
 function fromAddress(): string {
-  return process.env.SMTP_FROM || process.env.GMAIL_FROM || "NENEZ <mrshifu879@gmail.com>";
+  return process.env.SMTP_FROM || process.env.GMAIL_FROM || "NENEZ <soporte.nenez@gmail.com>";
 }
 
 async function sendMail(options: SendMailOptions) {

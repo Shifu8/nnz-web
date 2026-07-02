@@ -56,7 +56,7 @@ const getArtistDetails = (eventId: string) => {
   }
 };
 
-export type AccessDropHandle = { isSuccess: boolean; firstName: string };
+export type AccessDropHandle = { isSuccess: boolean; firstName: string; reset: () => void };
 
 const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewell?: (name: string) => void; event?: Event }>(({ onClose, onFarewell, event }, ref) => {
   const scope = useRef<HTMLElement>(null);

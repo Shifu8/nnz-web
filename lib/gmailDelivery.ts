@@ -48,6 +48,7 @@ type GmailMessageInput = {
   to: string;
   subject: string;
   html: string;
+  text?: string;
   attachments?: GmailAttachment[];
   logLabel?: string;
 };
@@ -175,7 +176,7 @@ function ticketHtml(input: TicketPdfEmailInput): string {
           <tr>
             <td style="padding:30px 24px 18px;text-align:center;">
               <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:#ff8acb;">NENEZ</p>
-              <h1 style="margin:12px 0 0;font-size:26px;line-height:1;font-weight:900;letter-spacing:-1px;text-transform:uppercase;color:#ffffff;">Tu entrada esta lista</h1>
+              <h1 style="margin:12px 0 0;font-size:26px;line-height:1;font-weight:900;letter-spacing:-1px;text-transform:uppercase;color:#ffffff;">¡Tu entrada está lista!</h1>
               <p style="margin:10px 0 0;font-size:12px;color:#b8a9b4;">${eventTitle} - ${eventName}</p>
             </td>
           </tr>
@@ -185,7 +186,7 @@ function ticketHtml(input: TicketPdfEmailInput): string {
                 <tr>
                   <td style="padding:22px;">
                     <p style="margin:0;font-size:14px;color:#d8d0d6;">Hola <strong style="color:#ffffff;">${fullName}</strong>,</p>
-                    <p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#a99da6;">Tu acceso oficial va adjunto en PDF. Presenta el QR en puerta; es valido una sola vez.</p>
+                    <p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#a99da6;">Tu pase de acceso oficial ha sido generado con éxito y se encuentra adjunto en este correo electrónico en formato PDF. Por favor, descarga el archivo y presenta el código QR en la entrada del evento; recuerda que cada código es de un único uso.</p>
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px;">
                       <tr>
                         <td style="padding:8px 0;border-top:1px solid rgba(255,255,255,0.06);">
@@ -203,7 +204,14 @@ function ticketHtml(input: TicketPdfEmailInput): string {
                   </td>
                 </tr>
               </table>
-              <p style="margin:18px 0 0;text-align:center;font-size:11px;line-height:1.5;color:#7d7079;">No compartas capturas ni reenvies el codigo antes del show.</p>
+              <p style="margin:18px 0 0;text-align:center;font-size:11px;line-height:1.5;color:#7d7079;">Por razones de seguridad, te recomendamos no compartir capturas de pantalla ni reenviar este archivo a terceros antes del espectáculo.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 24px 28px;text-align:center;font-size:10px;color:#665b64;line-height:1.6;border-top:1px solid rgba(255,111,188,0.08);background:rgba(0,0,0,0.15);">
+              <p style="margin:0;">Este es un mensaje de confirmación de compra transaccional enviado automáticamente por el sistema de tickets de NENEZ.</p>
+              <p style="margin:4px 0 0;">Si tienes alguna duda o necesitas soporte con tus pases de acceso, contáctanos escribiendo directamente a <a href="mailto:soporte.nenez@gmail.com" style="color: #ff8acb; text-decoration: none;">soporte.nenez@gmail.com</a>.</p>
+              <p style="margin:8px 0 0;font-weight:bold;">NENEZ Inc. · Cuenca, Ecuador</p>
             </td>
           </tr>
         </table>
@@ -214,27 +222,74 @@ function ticketHtml(input: TicketPdfEmailInput): string {
 </html>`;
 }
 
+function ticketText(input: TicketPdfEmailInput): string {
+  const fullName = `${input.firstName} ${input.lastName}`.trim();
+  const serial = input.serialNumber;
+  const quantity = Math.max(1, Number(input.quantity) || 1);
+  const eventTitle = input.eventTitle || "TRAP LOUD";
+  const eventName = input.eventName || "YAN BLOCK EXPERIENCE";
+  const eventDate = input.eventDate || "18 JUN 2026";
+  const eventVenue = input.eventVenue || "San Juan";
+
+  return `¡Tu entrada está lista!
+
+Hola ${fullName},
+
+Tu pase de acceso oficial ha sido generado con éxito y se encuentra adjunto en este correo electrónico en formato PDF. Por favor, descarga el archivo y presenta el código QR en la entrada del evento. Recuerda que cada código es de un único uso y válido para un solo ingreso.
+
+Detalles del pase:
+- Código de pase: ${serial}
+- Evento: ${eventTitle} - ${eventName}
+- Fecha y Lugar: ${eventDate} - ${eventVenue}
+- Cantidad: ${quantity} entrada${quantity === 1 ? "" : "s"}
+
+Por razones de seguridad, te recomendamos no compartir capturas de pantalla ni reenviar este archivo a terceros antes del espectáculo.
+
+Este es un mensaje de confirmación de compra transaccional enviado automáticamente por el sistema de tickets de NENEZ.
+Si tienes alguna duda o necesitas soporte con tus pases de acceso, contáctanos escribiendo directamente a soporte.nenez@gmail.com.
+
+NENEZ · Cuenca, Ecuador`;
+}
+
 function buildMimeMessage(input: GmailMessageInput): string {
-  const boundary = `nenez_${randomUUID().replace(/-/g, "")}`;
-  const message = [
+  const mixedBoundary = `nenez_mixed_${randomUUID().replace(/-/g, "")}`;
+  const altBoundary = `nenez_alt_${randomUUID().replace(/-/g, "")}`;
+
+  const headers = [
     `From: ${cleanHeader(gmailFrom())}`,
     `To: ${cleanHeader(input.to)}`,
     `Subject: ${encodeSubject(input.subject)}`,
     "MIME-Version: 1.0",
-    `Content-Type: multipart/mixed; boundary="${boundary}"`,
+    `Content-Type: multipart/mixed; boundary="${mixedBoundary}"`,
     "",
-    `--${boundary}`,
+  ];
+
+  const bodyParts = [
+    `--${mixedBoundary}`,
+    `Content-Type: multipart/alternative; boundary="${altBoundary}"`,
+    "",
+    `--${altBoundary}`,
+    'Content-Type: text/plain; charset="UTF-8"',
+    "Content-Transfer-Encoding: base64",
+    "",
+    chunkBase64(Buffer.from(input.text || "", "utf-8").toString("base64")),
+    "",
+    `--${altBoundary}`,
     'Content-Type: text/html; charset="UTF-8"',
     "Content-Transfer-Encoding: base64",
     "",
     chunkBase64(Buffer.from(input.html, "utf-8").toString("base64")),
     "",
+    `--${altBoundary}--`,
+    "",
   ];
+
+  const message = [...headers, ...bodyParts];
 
   for (const attachment of input.attachments || []) {
     const fileName = cleanHeader(attachment.filename);
     message.push(
-      `--${boundary}`,
+      `--${mixedBoundary}`,
       `${cleanHeader(attachment.contentType)}; name="${fileName}"`.replace(/^/, "Content-Type: "),
       `Content-Disposition: attachment; filename="${fileName}"`,
       "Content-Transfer-Encoding: base64",
@@ -244,7 +299,7 @@ function buildMimeMessage(input: GmailMessageInput): string {
     );
   }
 
-  message.push(`--${boundary}--`, "");
+  message.push(`--${mixedBoundary}--`, "");
   return message.join("\r\n");
 }
 
@@ -337,6 +392,7 @@ async function sendViaSmtp(input: GmailMessageInput): Promise<string | undefined
     to: input.to,
     subject: cleanHeader(input.subject),
     html: input.html,
+    text: input.text,
     attachments: (input.attachments || []).map((attachment) => ({
       filename: cleanHeader(attachment.filename),
       contentType: cleanHeader(attachment.contentType),
@@ -414,6 +470,7 @@ export async function sendTicketPdfViaGmailWithLimit(input: TicketPdfEmailInput)
     to: input.to,
     subject: `Tu entrada NENEZ - ${cleanHeader(input.eventTitle || "TRAP LOUD")}`,
     html: ticketHtml(input),
+    text: ticketText(input),
     logLabel: "ticket-pdf",
     attachments: [
       {
@@ -443,9 +500,15 @@ function recoveryOtpHtml(code: string): string {
             <td style="padding:30px 24px;text-align:center;">
               <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:#ff8acb;">NENEZ</p>
               <h1 style="margin:12px 0 0;font-size:24px;line-height:1;font-weight:900;text-transform:uppercase;color:#ffffff;">Recuperar entrada</h1>
-              <p style="margin:12px auto 0;max-width:360px;font-size:13px;line-height:1.6;color:#a99da6;">Usa este codigo para validar tu correo. Expira en 10 minutos.</p>
+              <p style="margin:12px auto 0;max-width:360px;font-size:13px;line-height:1.6;color:#a99da6;">Usa este código de verificación para validar tu correo electrónico. Este código expira en 10 minutos por razones de seguridad.</p>
               <p style="margin:24px 0 0;display:inline-block;border:1px solid rgba(255,111,188,0.28);border-radius:18px;background:rgba(255,111,188,0.08);padding:14px 22px;font-size:28px;font-weight:900;letter-spacing:8px;color:#ffffff;">${cleanCode}</p>
-              <p style="margin:20px 0 0;font-size:11px;line-height:1.5;color:#74636f;">Si no pediste este codigo, puedes ignorar este correo.</p>
+              <p style="margin:20px 0 0;font-size:11px;line-height:1.5;color:#74636f;">Si tú no solicitaste este código, puedes ignorar este correo de forma segura.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 24px 24px;text-align:center;font-size:10px;color:#665b64;line-height:1.6;border-top:1px solid rgba(255,111,188,0.08);background:rgba(0,0,0,0.15);">
+              <p style="margin:0;">Este es un mensaje de seguridad transaccional enviado automáticamente por NENEZ.</p>
+              <p style="margin:4px 0 0;">Si necesitas ayuda, escríbenos a <a href="mailto:soporte.nenez@gmail.com" style="color: #ff8acb; text-decoration: none;">soporte.nenez@gmail.com</a>.</p>
             </td>
           </tr>
         </table>
@@ -456,11 +519,25 @@ function recoveryOtpHtml(code: string): string {
 </html>`;
 }
 
+function recoveryOtpText(code: string): string {
+  return `Recuperar entrada - Código de verificación
+
+Usa este código de verificación para validar tu correo electrónico en el portal de NENEZ:
+
+Código: ${code}
+
+Este código expira en 10 minutos por razones de seguridad. Si tú no solicitaste este código, puedes ignorar este correo de forma segura.
+
+Si necesitas ayuda, escríbenos a soporte.nenez@gmail.com.
+NENEZ · Cuenca, Ecuador`;
+}
+
 export async function sendRecoveryOtpViaGmail(to: string, code: string): Promise<GmailDeliveryResult> {
   return sendGmailMessageWithLimit({
     to,
-    subject: "Codigo para recuperar tu entrada NENEZ",
+    subject: "Código de verificación — Recuperar entrada NENEZ",
     html: recoveryOtpHtml(code),
+    text: recoveryOtpText(code),
     logLabel: "recovery-otp",
   });
 }

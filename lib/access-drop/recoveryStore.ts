@@ -9,8 +9,8 @@ import type { RecoveryTicketSource } from "@/lib/tickets/recoveryTicket";
 
 export const RECOVERY_OTP_TTL_MS = 10 * 60_000;
 export const RECOVERY_MAX_ATTEMPTS = 5;
-export const RECOVERY_MAX_OTPS_PER_DAY = 3;
-export const RECOVERY_MAX_RESENDS_PER_DAY = 3;
+export const RECOVERY_MAX_OTPS_PER_DAY = 100;
+export const RECOVERY_MAX_RESENDS_PER_DAY = 100;
 export const RECOVERY_RESEND_COOLDOWN_MS = 2 * 60_000;
 
 export type RecoveryLogAction =

@@ -141,13 +141,13 @@ PAYPHONE_DEMO_MODE=false
 
 ## 6. Gmail API (email + entradas PDF)
 
-Canal principal: `soporte.dawgs@gmail.com`. El sistema cuenta envios diarios exitosos en `data/gmail-usage.json`. WhatsApp/Baileys solo confirma la compra y dirige al usuario a Gmail o Recuperar entrada.
+Canal principal: `soporte.nenez@gmail.com`. El sistema cuenta envios diarios exitosos en `data/gmail-usage.json`. WhatsApp/Baileys solo confirma la compra y dirige al usuario a Gmail o Recuperar entrada.
 
 Variables:
 
 ```env
-GMAIL_USER=soporte.dawgs@gmail.com
-GMAIL_FROM=DAWGS <soporte.dawgs@gmail.com>
+GMAIL_USER=soporte.nenez@gmail.com
+GMAIL_FROM=NENEZ <soporte.nenez@gmail.com>
 GMAIL_CLIENT_ID=...
 GMAIL_CLIENT_SECRET=...
 GMAIL_REFRESH_TOKEN=...

@@ -862,3 +862,34 @@ body {
     display: none;
   }
 }
+
+/* NENEZ - Animaciones de alta estética */
+@keyframes smoothFadeIn {
+  from {
+    opacity: 0;
+    background-color: rgba(0, 0, 0, 0);
+  }
+  to {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.95);
+  }
+}
+
+@keyframes smoothScaleUp {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-smooth-fade {
+  animation: smoothFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-smooth-scale {
+  animation: smoothScaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

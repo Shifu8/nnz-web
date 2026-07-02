@@ -37,7 +37,7 @@ function genericOk() {
   return NextResponse.json({
     ok: true,
     success: true,
-    message: "Si existe una entrada aprobada para este correo, enviaremos un codigo de recuperacion.",
+    message: "Código enviado. Si tu compra con este correo ya fue aprobada, recibirás el PIN de 6 dígitos en tu bandeja de entrada.",
   });
 }
 

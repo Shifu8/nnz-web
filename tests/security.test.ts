@@ -38,7 +38,7 @@ test("sanitizes names without preserving markup", () => {
 test("generates and parses DAWGS QR payload", () => {
   const payload = generateSecureQrPayload("DAWGS-1234-ABCDEF", crypto.randomUUID(), "trap-loud");
   const parsed = parseSecureQrPayload(payload);
-  assert.equal(parsed.type, "DAWGS_PASS");
+  assert.equal(parsed.type, "NENEZ_PASS");
   assert.equal(parsed.serialNumber, "DAWGS-1234-ABCDEF");
   assert.equal(parsed.eventId, "trap-loud");
 });

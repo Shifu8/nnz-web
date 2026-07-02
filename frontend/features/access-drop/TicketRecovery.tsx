@@ -35,7 +35,7 @@ type TicketRecoveryProps = {
 };
 
 const genericMessage =
-  "Si existe una entrada aprobada para este correo, enviaremos un código de recuperación.";
+  "Código enviado. Si tu compra con este correo ya fue aprobada, recibirás el PIN de 6 dígitos en tu bandeja de entrada.";
 
 export default function TicketRecovery({ embedded = false, className = "", pulse = false }: TicketRecoveryProps) {
   const [phase, setPhase] = useState<RecoveryPhase>("email");
@@ -49,6 +49,7 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
   const [resending, setResending] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
   const emailHint = getEmailHint(email);
   const emailSuggestion = getEmailSuggestion(email);
 
@@ -141,7 +142,13 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
       });
       const data = (await response.json()) as { error?: string; message?: string };
       if (!response.ok) throw new Error(data.error || "No pudimos reenviar la entrada.");
-      setMessage(data.message || "La entrada fue reenviada a tu correo.");
+
+      setShowSuccessOverlay(true);
+
+      setTimeout(() => {
+        setShowSuccessOverlay(false);
+        resetRecovery();
+      }, 4000);
     } catch (resendError) {
       setError(resendError instanceof Error ? resendError.message : "No pudimos reenviar la entrada.");
     } finally {
@@ -169,11 +176,10 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
       }
     >
       <div
-        className={`relative overflow-hidden rounded-[32px] border border-white/10 bg-black/45 p-5 backdrop-blur-2xl sm:p-7 lg:p-9 shadow-2xl ${
-          embedded
-            ? "flex flex-col gap-6"
-            : "grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center"
-        } ${pulse ? "recovery-card-pulse" : ""}`}
+        className={`relative overflow-hidden rounded-[32px] border border-white/10 bg-black/45 p-5 backdrop-blur-2xl sm:p-7 lg:p-9 shadow-2xl ${embedded
+          ? "flex flex-col gap-6"
+          : "grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center"
+          } ${pulse ? "recovery-card-pulse" : ""}`}
         style={{ boxShadow: "0 24px 90px rgba(255, 255, 255, 0.01)" }}
       >
         {/* Soft static monochrome lighting vignette details */}
@@ -200,7 +206,7 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
 
         {/* Right Column: Steps Tracker + Active Form Container */}
         <div className="relative z-10 w-full flex flex-col gap-6">
-          
+
           {/* Recovery Process Cards Tracker */}
           <div className="grid gap-3 sm:grid-cols-3 w-full">
             {[
@@ -213,11 +219,10 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
               return (
                 <article
                   key={number}
-                  className={`rounded-[24px] border p-5 shadow-[0_16px_46px_rgba(0,0,0,0.4)] transition duration-300 ${
-                    isActive
-                      ? "border-white/20 bg-white/5"
-                      : "border-white/[0.06] bg-white/[0.01]"
-                  }`}
+                  className={`rounded-[24px] border p-5 shadow-[0_16px_46px_rgba(0,0,0,0.4)] transition duration-300 ${isActive
+                    ? "border-white/20 bg-white/5"
+                    : "border-white/[0.06] bg-white/[0.01]"
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className={`text-[8px] font-black tracking-[0.24em] transition ${isActive ? "text-white" : "text-zinc-600"}`}>
@@ -232,8 +237,34 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
           </div>
 
           {/* Symmetrical Form / Result Card */}
-          <div className="relative rounded-[24px] border border-white/10 bg-black/60 p-6 sm:p-8 backdrop-blur-2xl shadow-xl flex flex-col justify-between">
-            
+          <div className="relative rounded-[24px] border border-white/10 bg-black/60 p-6 sm:p-8 backdrop-blur-2xl shadow-xl flex flex-col justify-between overflow-hidden">
+            {showSuccessOverlay && (
+              <div className="absolute inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-6 text-center animate-smooth-fade">
+                <div className="flex flex-col items-center justify-center animate-smooth-scale">
+                  <div className="h-16 w-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
+                    <Check className="h-8 w-8 text-emerald-400" />
+                  </div>
+                  <h3 className="text-xl font-black uppercase tracking-wider text-white">¡Envío Exitoso!</h3>
+                  <p className="mt-2 text-xs text-zinc-400 max-w-xs leading-5">
+                    La entrada fue reenviada con éxito al correo asociado.
+                  </p>
+                  <p className="mt-2 text-[9px] text-zinc-600 font-bold uppercase tracking-wider">
+                    Redireccionando...
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowSuccessOverlay(false);
+                      resetRecovery();
+                    }}
+                    className="mt-6 inline-flex h-10 px-6 items-center justify-center rounded-2xl bg-white text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200"
+                  >
+                    Entendido
+                  </button>
+                </div>
+              </div>
+            )}
+
             {phase === "email" && (
               <form onSubmit={requestCode} className="space-y-6">
                 <div>
@@ -261,17 +292,16 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                       return <option key={domain} value={`${local}@${domain}`} />;
                     })}
                   </datalist>
-                  
+
                   {/* Suggestions and Hints */}
                   <div className="mt-3 flex flex-wrap items-center gap-2 min-h-[24px]">
                     <p
-                      className={`text-[8px] font-bold uppercase tracking-wider ${
-                        emailHint.tone === "ok"
-                          ? "text-white/80"
-                          : emailHint.tone === "warn"
-                            ? "text-zinc-400"
-                            : "text-zinc-600"
-                      }`}
+                      className={`text-[8px] font-bold uppercase tracking-wider ${emailHint.tone === "ok"
+                        ? "text-white/80"
+                        : emailHint.tone === "warn"
+                          ? "text-zinc-400"
+                          : "text-zinc-600"
+                        }`}
                     >
                       {emailHint.text}
                     </p>
@@ -304,6 +334,9 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                   <span>{loading ? "Procesando..." : "Enviar código"}</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </button>
+                <p className="text-[7.5px] text-zinc-500 text-center font-bold uppercase tracking-[0.08em] mt-3">
+                  * Límite de seguridad: máximo 2 recuperaciones de entrada por evento.
+                </p>
               </form>
             )}
 
@@ -318,12 +351,12 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                     <ChevronLeft className="h-3 w-3" /> Cambiar correo
                   </button>
                 </div>
-                
+
                 <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
                   <p className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500">verificando</p>
                   <p className="mt-1 truncate text-xs font-bold text-zinc-300">{email}</p>
                 </div>
-                
+
                 <div>
                   <label className="text-[9px] font-black uppercase tracking-[0.26em] text-zinc-400">código de 6 dígitos</label>
                   <div className="mt-2 flex items-center rounded-2xl border border-white/10 bg-black/40 px-4 py-1 transition-all duration-300 focus-within:border-white/30 focus-within:bg-black/70">
@@ -350,7 +383,7 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                   <span>{loading ? "Validando..." : "Verificar código"}</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </button>
-                
+
                 <div className="grid grid-cols-2 gap-2 pt-2">
                   <button
                     type="button"
@@ -376,8 +409,8 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
             )}
 
             {phase === "done" && ticket && (
-              <div className="space-y-6 w-full">
-                <div className="flex justify-between items-center mb-4 border-b border-white/5 pb-2">
+              <div className="space-y-4 w-full animate-smooth-scale">
+                <div className="flex justify-between items-center border-b border-white/5 pb-2">
                   <button
                     type="button"
                     onClick={resetRecovery}
@@ -386,21 +419,21 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                     <ChevronLeft className="h-3 w-3" /> Nueva consulta
                   </button>
                 </div>
-                
+
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[8px] font-black uppercase tracking-[0.25em] text-zinc-400">Entrada recuperada</p>
-                    <h3 className="mt-1 text-2xl font-black uppercase leading-none text-white">{ticket.eventName}</h3>
+                    <h3 className="mt-1 text-xl font-black uppercase leading-none text-white">{ticket.eventName}</h3>
                     <p className="mt-1 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500">{ticket.seriesName}</p>
                   </div>
-                  <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.16em] text-white">
-                    <Check className="h-3 w-3 text-white" />
+                  <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.16em] text-white">
+                    <Check className="h-2.5 w-2.5 text-white" />
                     Aprobada
                   </span>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-[1fr_156px]">
-                  <div className="space-y-2">
+                <div className="grid gap-3 sm:grid-cols-[1fr_130px]">
+                  <div className="grid grid-cols-2 gap-2">
                     {[
                       ["Titular", ticket.holderName],
                       ["Artistas", ticket.artist],
@@ -408,18 +441,18 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                       ["Lugar", ticket.venue],
                     ].map(([label, value]) => {
                       return (
-                        <div key={String(label)} className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+                        <div key={String(label)} className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-2 min-w-0">
                           <div className="min-w-0">
                             <p className="text-[7px] font-black uppercase tracking-[0.18em] text-zinc-500">{String(label)}</p>
-                            <p className="mt-0.5 truncate text-[10px] font-black uppercase text-zinc-300">{String(value)}</p>
+                            <p className="mt-0.5 truncate text-[9px] font-black uppercase text-zinc-300">{String(value)}</p>
                           </div>
                         </div>
                       );
                     })}
                   </div>
 
-                  <div className="rounded-[22px] border border-white/10 bg-zinc-950 p-3 text-center flex flex-col justify-center items-center shadow-inner">
-                    <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-white p-1">
+                  <div className="rounded-[18px] border border-white/10 bg-zinc-950 p-2 text-center flex flex-col justify-center items-center shadow-inner">
+                    <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-white p-0.5">
                       <Image
                         src={ticket.qrUrl}
                         alt={`QR oficial ${ticket.ticketCode}`}
@@ -429,27 +462,21 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                         className="object-contain"
                       />
                     </div>
-                    <p className="mt-3 text-[7px] font-black uppercase tracking-[0.16em] text-zinc-500">Código oficial</p>
-                    <p className="mt-1 break-all font-mono text-[8px] font-bold text-white tracking-widest">{ticket.ticketCode}</p>
+                    <p className="mt-2 text-[6px] font-black uppercase tracking-[0.16em] text-zinc-500">Código oficial</p>
+                    <p className="mt-0.5 break-all font-mono text-[7px] font-bold text-white tracking-widest">{ticket.ticketCode}</p>
                   </div>
                 </div>
 
-                <p className="rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-3 text-[9px] font-bold leading-5 text-zinc-400">
+                <p className="rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2 text-[8px] font-bold leading-4 text-zinc-400">
                   Entrada válida para un solo uso. No compartas capturas ni el código QR.
                 </p>
 
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <a
-                    href={`/api/tickets/recovery/download?token=${encodeURIComponent(token)}`}
-                    className="inline-flex h-12 items-center justify-center rounded-2xl bg-white text-[9px] font-black uppercase tracking-[0.17em] text-black transition hover:bg-zinc-200"
-                  >
-                    Descargar entrada
-                  </a>
+                <div className="w-full">
                   <button
                     type="button"
                     disabled={resending}
                     onClick={resendTicket}
-                    className="inline-flex h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-[9px] font-black uppercase tracking-[0.17em] text-zinc-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-white text-[8px] font-black uppercase tracking-[0.17em] text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {resending ? "Reenviando..." : "Reenviar al correo"}
                   </button>
@@ -460,11 +487,10 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
             {(message || error) && (
               <p
                 role={error ? "alert" : "status"}
-                className={`mt-4 rounded-2xl border px-4 py-3 text-[10px] font-bold leading-5 transition-all ${
-                  error
-                    ? "border-red-400/20 bg-red-500/10 text-red-300"
-                    : "border-white/10 bg-white/5 text-zinc-200"
-                }`}
+                className={`mt-4 rounded-2xl border px-4 py-3 text-[10px] font-bold leading-5 transition-all ${error
+                  ? "border-red-400/20 bg-red-500/10 text-red-300"
+                  : "border-white/10 bg-white/5 text-zinc-200"
+                  }`}
               >
                 {error || message}
               </p>

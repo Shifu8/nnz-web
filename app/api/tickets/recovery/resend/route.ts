@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     const sentToday = await countRecoveryLogs(payload.emailHash, event.id, "RECOVERY_RESEND");
     if (sentToday >= RECOVERY_MAX_RESENDS_PER_DAY) {
       return NextResponse.json(
-        { ok: false, error: "Alcanzaste el limite de 3 reenvios por hoy." },
+        { ok: false, error: "Alcanzaste el límite de 100 reenvíos para este evento." },
         { status: 429 },
       );
     }

@@ -628,7 +628,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
           {/* Card 1: Protected Access */}
           <div
-            className="relative overflow-hidden rounded-[32px] border border-white/10 bg-black/45 p-5 backdrop-blur-2xl sm:p-7 lg:p-9 shadow-2xl flex flex-col justify-between gap-6"
+            className="relative overflow-hidden rounded-[32px] border border-white/10 bg-black/45 p-5 backdrop-blur-2xl sm:p-7 lg:p-9 shadow-2xl flex flex-col justify-start gap-8"
             style={{ boxShadow: "0 24px 90px rgba(255, 255, 255, 0.01)" }}
           >
             {/* Soft static monochrome lighting vignette details */}
