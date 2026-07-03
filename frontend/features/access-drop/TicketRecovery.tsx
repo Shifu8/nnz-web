@@ -432,7 +432,7 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                   </span>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-[1fr_130px]">
+                <div className="grid gap-3 sm:grid-cols-[1fr_130px] border-b border-white/5 pb-4">
                   <div className="grid grid-cols-2 gap-2">
                     {[
                       ["Titular", ticket.holderName],
@@ -450,25 +450,51 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                       );
                     })}
                   </div>
-
-                  <div className="rounded-[18px] border border-white/10 bg-zinc-950 p-2 text-center flex flex-col justify-center items-center shadow-inner">
-                    <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-white p-0.5">
-                      <Image
-                        src={ticket.qrUrl}
-                        alt={`QR oficial ${ticket.ticketCode}`}
-                        fill
-                        unoptimized
-                        referrerPolicy="no-referrer"
-                        className="object-contain"
-                      />
-                    </div>
-                    <p className="mt-2 text-[6px] font-black uppercase tracking-[0.16em] text-zinc-500">Código oficial</p>
-                    <p className="mt-0.5 break-all font-mono text-[7px] font-bold text-white tracking-widest">{ticket.ticketCode}</p>
+                  <div className="flex flex-col justify-center text-left">
+                    <p className="text-[7px] font-black uppercase tracking-[0.18em] text-zinc-500">Cantidad total</p>
+                    <p className="mt-1 text-xl font-black text-white">{ticket.ticketCode.split(",").length} pase(s)</p>
                   </div>
                 </div>
 
+                {/* Individual passes list */}
+                <div className="space-y-3 pt-2">
+                  <p className="text-[8px] font-black uppercase tracking-[0.25em] text-zinc-500 text-left">Tus entradas individuales:</p>
+                  {ticket.ticketCode.split(",").map((code, idx, arr) => {
+                    const qrUrl = `/api/tickets/recovery/qr?token=${encodeURIComponent(token)}&serial=${encodeURIComponent(code)}`;
+                    const downloadUrl = `/api/tickets/recovery/download?token=${encodeURIComponent(token)}&serial=${encodeURIComponent(code)}`;
+                    
+                    return (
+                      <div key={code} className="flex items-center justify-between gap-4 rounded-2xl border border-white/5 bg-zinc-950/60 p-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-12 h-12 rounded-lg overflow-hidden bg-white p-0.5 shrink-0 flex items-center justify-center">
+                            <img
+                              src={qrUrl}
+                              alt={`QR Pase ${idx + 1}`}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                          <div className="min-w-0 text-left">
+                            <span className="inline-flex rounded-full bg-white/10 px-2 py-0.5 text-[6px] font-black tracking-widest text-zinc-300">
+                              PASE {idx + 1} DE {arr.length}
+                            </span>
+                            <p className="mt-1 font-mono text-[8px] font-bold text-white tracking-wider truncate">{code}</p>
+                          </div>
+                        </div>
+                        
+                        <a
+                          href={downloadUrl}
+                          download
+                          className="shrink-0 inline-flex h-8 items-center justify-center rounded-xl bg-white px-4 text-[7px] font-black uppercase tracking-wider text-black transition hover:bg-zinc-200"
+                        >
+                          Descargar
+                        </a>
+                      </div>
+                    );
+                  })}
+                </div>
+
                 <p className="rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2 text-[8px] font-bold leading-4 text-zinc-400">
-                  Entrada válida para un solo uso. No compartas capturas ni el código QR.
+                  Cada entrada es válida para un solo uso. No compartas capturas ni los códigos QR.
                 </p>
 
                 <div className="w-full">
@@ -478,7 +504,7 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                     onClick={resendTicket}
                     className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-white text-[8px] font-black uppercase tracking-[0.17em] text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {resending ? "Reenviando..." : "Reenviar al correo"}
+                    {resending ? "Reenviando..." : "Reenviar todas al correo"}
                   </button>
                 </div>
               </div>

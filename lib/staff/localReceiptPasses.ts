@@ -12,8 +12,13 @@ export function validateLocalReceiptPassOnce(input: {
 }): PassValidationResult {
   const payload = parseSecureQrPayload(input.qrPayload);
   const receipts = loadAllReceipts();
+  
+  // Find receipt that contains the scanned serial number
   const receiptIndex = receipts.findIndex(
-    (receipt) => receipt.status === "aprobado" && receipt.serialNumber === payload.serialNumber,
+    (receipt) =>
+      receipt.status === "aprobado" &&
+      (receipt.serialNumber === payload.serialNumber ||
+        receipt.serialNumber?.split(",").includes(payload.serialNumber))
   );
 
   if (receiptIndex === -1) {
@@ -21,14 +26,23 @@ export function validateLocalReceiptPassOnce(input: {
   }
 
   const receipt = receipts[receiptIndex];
-  if (receipt.qrPayload !== input.qrPayload) {
+  
+  // Verify that the scanned QR payload matches the registered one for this serial
+  const serials = receipt.serialNumber?.split(",") || [];
+  const payloads = receipt.qrPayload?.split(",") || [];
+  const serialIdx = serials.indexOf(payload.serialNumber);
+  
+  if (serialIdx === -1 || payloads[serialIdx] !== input.qrPayload) {
     return { valid: false, error: "QR NO COINCIDE CON ESTE PASE", reason: "invalid_token" };
   }
 
-  const quantity = Math.max(1, Number(receipt.quantity) || 1);
-  const usedCount = Math.max(0, receipt.passScanCount ?? (receipt.passScannedAt ? 1 : 0));
+  // Check scanned serials tracking
+  // We will store scanned serials as a comma-separated list in a custom property on receipt
+  const scannedList = (receipt as any).scannedSerials
+    ? String((receipt as any).scannedSerials).split(",")
+    : [];
 
-  if (usedCount >= quantity) {
+  if (scannedList.includes(payload.serialNumber)) {
     return {
       valid: false,
       error: "QR YA USADO",
@@ -38,12 +52,16 @@ export function validateLocalReceiptPassOnce(input: {
   }
 
   const now = new Date().toISOString();
-  const nextCount = usedCount + 1;
+  scannedList.push(payload.serialNumber);
+  const nextCount = scannedList.length;
+  const quantity = serials.length;
+
   receipts[receiptIndex] = {
     ...receipt,
     passScannedAt: now,
     passScannedBy: input.staffSessionId,
     passScanCount: nextCount,
+    scannedSerials: scannedList.join(","),
     passScans: [
       ...(receipt.passScans || []),
       {
@@ -53,7 +71,8 @@ export function validateLocalReceiptPassOnce(input: {
         userAgentHash: hashLookup(input.userAgent),
       },
     ].slice(-50),
-  };
+  } as any;
+  
   saveAllReceipts(receipts);
 
   return {

@@ -15,6 +15,9 @@ import {
   getEmailSuggestion,
 } from "@/frontend/utils/emailInput";
 import { validateReceiptFileMetadata } from "@/lib/access-drop/fileValidation";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { getEventDesigns, type TicketDesign } from "@/lib/tickets/designs";
+
 
 const BANKS = [
   {
@@ -78,6 +81,32 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
+
+  const [selectedDesignIndex, setSelectedDesignIndex] = useState<number | null>(null);
+  const [currentViewedDesignIndex, setCurrentViewedDesignIndex] = useState<number>(0);
+  const [designs, setDesigns] = useState<TicketDesign[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    // Set default static designs first
+    setDesigns(getEventDesigns(currentEvent.id));
+    
+    // Fetch custom designs from the API
+    fetch(`/api/access-drop/ticket-designs?eventId=${currentEvent.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (active && data.success && data.designs && data.designs.length > 0) {
+          setDesigns(data.designs);
+        }
+      })
+      .catch((err) => {
+        console.warn("[ACCESS_DROP] Failed to fetch custom designs, using defaults:", err);
+      });
+    return () => {
+      active = false;
+    };
+  }, [currentEvent.id]);
+
   const resetForm = () => {
     setFormData({ firstName: "", lastName: "", email: "" });
     setQuantity(1);
@@ -94,6 +123,8 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
     setIsSubmitting(false);
     setDragOver(false);
     resetTurnstile();
+    setSelectedDesignIndex(null);
+    setCurrentViewedDesignIndex(0);
   };
 
   useImperativeHandle(ref, () => ({
@@ -215,6 +246,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
     const email = formData.email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setErrorMsg("CORREO INVALIDO. USA UN GMAIL O EMAIL ACTIVO."); return; }
     if (!selectedFile) { setErrorMsg("SELECCIONA UN COMPROBANTE."); return; }
+    if (selectedDesignIndex === null) { setErrorMsg("ELIGE TU DISEÑO DE ENTRADA EN LA VISTA PREVIA PARA PODER CONTINUAR."); return; }
     if (hasTurnstileSiteKey("visible") && !turnstileToken) { setErrorMsg("COMPLETA EL CAPTCHA DE SEGURIDAD."); return; }
     setIsSubmitting(true);
     setUploadMessage("REVISANDO COMPROBANTE...");
@@ -228,6 +260,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
       body.append("quantity", quantity.toString());
       body.append("paymentMethod", selectedBank);
       body.append("cf-turnstile-response", turnstileToken);
+      body.append("ticketDesign", selectedDesignIndex !== null ? selectedDesignIndex.toString() : "0");
       const res = await fetch("/api/access-drop/upload", { method: "POST", body });
       const data = await res.json() as { error?: string; code?: string; message?: string; receiptId?: string };
       if (!res.ok) {
@@ -410,11 +443,10 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                             key={bank.id}
                             type="button"
                             onClick={() => setSelectedBank(bank.id)}
-                            className={`relative overflow-hidden rounded-xl border p-3.5 text-left transition-all duration-300 focus:outline-none ${
-                              isActive
-                                ? "border-white/30 bg-zinc-900 scale-[1.02] shadow-[0_0_24px_rgba(255,255,255,0.07)]"
-                                : "border-zinc-900 bg-zinc-950/60 hover:border-zinc-800 hover:bg-zinc-900/60"
-                            }`}
+                            className={`relative overflow-hidden rounded-xl border p-3.5 text-left transition-all duration-300 focus:outline-none ${isActive
+                              ? "border-white/30 bg-zinc-900 scale-[1.02] shadow-[0_0_24px_rgba(255,255,255,0.07)]"
+                              : "border-zinc-900 bg-zinc-950/60 hover:border-zinc-800 hover:bg-zinc-900/60"
+                              }`}
                             style={isActive ? { boxShadow: `0 0 0 1px ${bank.color}30, 0 8px 32px ${bank.color}15` } : {}}
                           >
                             {/* Active indicator */}
@@ -554,9 +586,8 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                         onDragLeave={() => setDragOver(false)}
                         onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFileSelect(e.dataTransfer.files?.[0] || null); }}
                         onClick={() => fileInputRef.current?.click()}
-                        className={`group flex min-h-[96px] w-full flex-col items-center justify-center rounded-xl border border-dashed p-4 text-center transition-all duration-300 focus:outline-none ${
-                          dragOver ? "border-white bg-zinc-900" : "border-zinc-800 bg-black/40 hover:border-zinc-700 hover:bg-zinc-950"
-                        }`}
+                        className={`group flex min-h-[96px] w-full flex-col items-center justify-center rounded-xl border border-dashed p-4 text-center transition-all duration-300 focus:outline-none ${dragOver ? "border-white bg-zinc-900" : "border-zinc-800 bg-black/40 hover:border-zinc-700 hover:bg-zinc-950"
+                          }`}
                       >
                         <div className="relative w-8 h-8 border border-zinc-700 rounded-lg flex items-center justify-center bg-zinc-950 mb-2 group-hover:border-zinc-500 transition duration-300">
                           <div className="w-0.5 h-3.5 bg-zinc-400 absolute transition-transform group-hover:-translate-y-0.5 duration-300" />
@@ -635,11 +666,23 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                     <div className="flex items-center gap-2.5 py-2 border-y border-zinc-900/60">
                       <div
                         className="w-1 h-8 rounded-full shrink-0"
-                        style={{ background: `linear-gradient(to bottom, ${artistDetails.accentColor}, ${artistDetails.accentColor}40)` }}
+                        style={{
+                          background: `linear-gradient(to bottom, ${selectedDesignIndex !== null && designs[selectedDesignIndex]
+                            ? designs[selectedDesignIndex].accentColor
+                            : "#52525b"
+                            }, ${selectedDesignIndex !== null && designs[selectedDesignIndex]
+                              ? designs[selectedDesignIndex].accentColor
+                              : "#52525b"
+                            }40)`,
+                        }}
                       />
                       <div>
                         <p className="text-xs font-black text-white uppercase tracking-tight leading-tight">{currentEvent.title}</p>
-                        <p className="text-[7px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">{artistDetails.name}</p>
+                        <p className="text-[7px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">
+                          {selectedDesignIndex !== null && designs[selectedDesignIndex]
+                            ? designs[selectedDesignIndex].name
+                            : "SELECCIONA UN DISEÑO"}
+                        </p>
                       </div>
                     </div>
 
@@ -685,28 +728,58 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                   <button
                     type="button"
                     onClick={openModal}
-                    className="group w-full rounded-2xl border border-zinc-900 bg-zinc-950 p-4 flex items-center justify-between gap-3 transition-all duration-300 hover:border-zinc-800 hover:bg-zinc-900/60 focus:outline-none"
+                    className={`group w-full rounded-2xl border p-4 flex items-center justify-between gap-3 transition-all duration-300 focus:outline-none ${selectedDesignIndex === null
+                      ? "border-red-500/30 bg-red-950/5 hover:border-red-500/50 hover:bg-red-950/10 shadow-[0_0_15px_rgba(239,68,68,0.05)]"
+                      : "border-zinc-900 bg-zinc-950 hover:border-zinc-800 hover:bg-zinc-900/60"
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       {/* Miniature ticket thumbnail */}
                       <div
                         className="w-9 h-12 rounded-lg overflow-hidden border border-zinc-800 shrink-0 relative"
-                        style={{ boxShadow: `0 4px 12px ${artistDetails.shadowColor}` }}
+                        style={{
+                          boxShadow: `0 4px 12px ${selectedDesignIndex !== null && designs[selectedDesignIndex]
+                            ? designs[selectedDesignIndex].shadowColor
+                            : "rgba(255,255,255,0.05)"
+                            }`,
+                          filter: selectedDesignIndex === null ? "grayscale(1) opacity(0.4)" : "none",
+                        }}
                       >
                         <img
-                          src={artistDetails.photo}
-                          alt={artistDetails.name}
+                          src={
+                            selectedDesignIndex !== null && designs[selectedDesignIndex]
+                              ? designs[selectedDesignIndex].photo
+                              : designs[0]?.photo || ""
+                          }
+                          alt="Ticket preview"
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                         <div
                           className="absolute inset-x-0 bottom-0 h-0.5"
-                          style={{ background: artistDetails.accentColor }}
+                          style={{
+                            background:
+                              selectedDesignIndex !== null && designs[selectedDesignIndex]
+                                ? designs[selectedDesignIndex].accentColor
+                                : "#52525b",
+                          }}
                         />
                       </div>
-                      <div className="text-left">
-                        <p className="text-[9px] font-black text-white uppercase tracking-wider">Vista previa</p>
-                        <p className="text-[7px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">Ver tu entrada VIP</p>
+                      <div className="text-left font-sans">
+                        <p className="text-[9px] font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                          Vista previa
+                          {selectedDesignIndex === null && (
+                            <span className="rounded bg-red-500/10 border border-red-500/20 px-1 py-0.2 text-[6px] font-black tracking-widest text-red-400 animate-pulse">
+                              OBLIGATORIO
+                            </span>
+                          )}
+                        </p>
+                        <p className={`text-[7px] font-bold uppercase tracking-widest mt-0.5 ${selectedDesignIndex === null ? "text-red-400" : "text-zinc-500"
+                          }`}>
+                          {selectedDesignIndex !== null && designs[selectedDesignIndex]
+                            ? `Diseño: ${designs[selectedDesignIndex].name}`
+                            : "Elige tu diseño de entrada"}
+                        </p>
                       </div>
                     </div>
                     {/* Arrow icon */}
@@ -792,7 +865,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
 
           {/* Modal content */}
           <div
-            className="relative z-10 flex flex-col items-center gap-5 transition-all duration-350"
+            className="relative z-10 flex flex-col items-center gap-4 transition-all duration-350 w-full max-w-[360px]"
             style={{
               opacity: modalVisible ? 1 : 0,
               transform: modalVisible ? "scale(1) translateY(0)" : "scale(0.88) translateY(32px)",
@@ -800,7 +873,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
             }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between w-full max-w-[320px]">
+            <div className="flex items-center justify-between w-full px-2">
               <div>
                 <p className="text-[8px] font-black uppercase tracking-[0.35em] text-zinc-500">NENEZ · Vista Previa</p>
                 <p className="text-xs font-black text-white uppercase tracking-tight mt-0.5">{currentEvent.title}</p>
@@ -817,104 +890,157 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
               </button>
             </div>
 
-            {/* Ticket 3D — grande */}
-            <div
-              ref={modalTicketRef}
-              onMouseMove={handleModalMouseMove}
-              onMouseLeave={handleModalMouseLeave}
-              className="relative w-full max-w-[300px] aspect-[1/1.75] rounded-2xl overflow-hidden bg-zinc-950 border border-zinc-800 cursor-default flex flex-col justify-between"
-              style={{
-                transformStyle: "preserve-3d",
-                boxShadow: `0 32px 80px -12px rgba(0,0,0,0.95), 0 0 60px ${artistDetails.shadowColor}`,
-                transition: "transform 0.15s ease",
-              }}
-            >
-              {/* Light reflection */}
-              <div
-                className="absolute inset-0 z-30 pointer-events-none"
-                style={{ background: "radial-gradient(circle 200px at var(--mx, -1000px) var(--my, -1000px), rgba(255,255,255,0.08), transparent 80%)" }}
-              />
-              {/* Accent glow */}
-              <div
-                className="absolute inset-0 rounded-2xl z-20 pointer-events-none"
-                style={{ boxShadow: `inset 0 0 12px ${artistDetails.accentColor}30` }}
-              />
+            {/* Ticket with navigation buttons */}
+            <div className="flex items-center justify-between w-full gap-2 relative">
+              {/* Left switch button */}
+              <button
+                type="button"
+                onClick={() => setCurrentViewedDesignIndex((prev) => (prev - 1 + designs.length) % Math.max(1, designs.length))}
+                className="shrink-0 w-8 h-8 rounded-full border border-zinc-800 bg-zinc-950/80 text-zinc-400 hover:text-white hover:border-zinc-700 flex items-center justify-center transition active:scale-90"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
 
-              {/* Artist photo */}
-              <div className="relative aspect-[4/5] w-full overflow-hidden bg-black shrink-0">
-                <img
-                  src={artistDetails.photo}
-                  alt={artistDetails.name}
-                  className="w-full h-full object-cover"
+              {/* Ticket 3D — grande */}
+              <div
+                ref={modalTicketRef}
+                onMouseMove={handleModalMouseMove}
+                onMouseLeave={handleModalMouseLeave}
+                className="relative w-full max-w-[260px] sm:max-w-[270px] aspect-[1/1.75] rounded-2xl overflow-hidden bg-zinc-950 border border-zinc-800 cursor-default flex flex-col justify-between"
+                style={{
+                  transformStyle: "preserve-3d",
+                  boxShadow: `0 32px 80px -12px rgba(0,0,0,0.95), 0 0 60px ${designs[currentViewedDesignIndex]?.shadowColor || "rgba(255,255,255,0.05)"}`,
+                  transition: "transform 0.15s ease",
+                }}
+              >
+                {/* Light reflection */}
+                <div
+                  className="absolute inset-0 z-30 pointer-events-none"
+                  style={{ background: "radial-gradient(circle 200px at var(--mx, -1000px) var(--my, -1000px), rgba(255,255,255,0.08), transparent 80%)" }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-black/60 z-10" />
-                <div className="absolute top-4 inset-x-4 z-20 flex justify-between items-center text-[8px] font-black uppercase tracking-[0.25em] text-white/90">
-                  <span>NENEZ</span>
-                  <span
-                    className="rounded border border-white/20 bg-black/45 px-2 py-0.5 backdrop-blur-md"
-                    style={{ borderColor: `${artistDetails.accentColor}40`, color: artistDetails.accentColor }}
-                  >
-                    VIP ACCESS
-                  </span>
-                </div>
-                <div className="absolute bottom-4 inset-x-4 z-20">
-                  <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400">{currentEvent.title}</span>
-                  <h4 className="text-xl font-black uppercase tracking-tight text-white mt-0.5 leading-none">{artistDetails.name}</h4>
-                </div>
-              </div>
+                {/* Accent glow */}
+                <div
+                  className="absolute inset-0 rounded-2xl z-20 pointer-events-none"
+                  style={{ boxShadow: `inset 0 0 12px ${designs[currentViewedDesignIndex]?.accentColor || "#52525b"}30` }}
+                />
 
-              {/* Perforated line */}
-              <div className="relative w-full h-px shrink-0 z-20">
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-[#060606] border border-zinc-800 z-20" />
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-5 h-5 rounded-full bg-[#060606] border border-zinc-800 z-20" />
-                <div className="absolute left-3.5 right-3.5 top-1/2 h-0.5 border-t border-dashed border-zinc-800 z-10" />
-              </div>
-
-              {/* Stub */}
-              <div className="relative p-5 flex-1 flex flex-col justify-between bg-zinc-950 text-left">
-                <div className="grid grid-cols-2 gap-3 text-[9px] font-bold uppercase tracking-wider text-zinc-500">
-                  <div>
-                    <span className="block text-[7px] font-black tracking-widest text-zinc-600">CIUDAD</span>
-                    <span className="text-white font-bold">{currentEvent.city}</span>
+                {/* Artist photo */}
+                <div className="relative aspect-[4/5] w-full overflow-hidden bg-black shrink-0">
+                  <img
+                    src={designs[currentViewedDesignIndex]?.photo || ""}
+                    alt={designs[currentViewedDesignIndex]?.name || "Artist"}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-black/60 z-10" />
+                  <div className="absolute top-4 inset-x-4 z-20 flex justify-between items-center text-[8px] font-black uppercase tracking-[0.25em] text-white/90">
+                    <span>NENEZ</span>
+                    <span
+                      className="rounded border border-white/20 bg-black/45 px-2 py-0.5 backdrop-blur-md"
+                      style={{
+                        borderColor: `${designs[currentViewedDesignIndex]?.accentColor || "#52525b"}40`,
+                        color: designs[currentViewedDesignIndex]?.accentColor || "#ffffff"
+                      }}
+                    >
+                      {designs[currentViewedDesignIndex]?.badge || "VIP ACCESS"}
+                    </span>
                   </div>
-                  <div>
-                    <span className="block text-[7px] font-black tracking-widest text-zinc-600">FECHA</span>
-                    <span className="text-white font-bold">{currentEvent.dateLabel}</span>
+                  <div className="absolute bottom-4 inset-x-4 z-20">
+                    <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400">{currentEvent.title}</span>
+                    <h4 className="text-xl font-black uppercase tracking-tight text-white mt-0.5 leading-none">
+                      {designs[currentViewedDesignIndex]?.name || "VIP"}
+                    </h4>
                   </div>
                 </div>
-                <div className="text-[8px] font-mono font-bold tracking-widest text-zinc-600 uppercase">
-                  TICKET NO: #NENEZ-{2026 + quantity}-{102 + quantity}VIP
+
+                {/* Perforated line */}
+                <div className="relative w-full h-px shrink-0 z-20">
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-[#060606] border border-zinc-800 z-20" />
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-5 h-5 rounded-full bg-[#060606] border border-zinc-800 z-20" />
+                  <div className="absolute left-3.5 right-3.5 top-1/2 h-0.5 border-t border-dashed border-zinc-800 z-10" />
                 </div>
-                <div className="flex items-center justify-between gap-4 mt-3">
-                  <div className="flex-1 flex flex-col gap-1.5 min-w-0">
-                    <div className="flex items-end justify-start h-8 w-full opacity-60">
-                      <div className="w-1.5 h-full bg-white shrink-0" />
-                      <div className="w-0.5 h-full bg-white shrink-0 ml-0.5" />
-                      <div className="w-2.5 h-full bg-white shrink-0 ml-1" />
-                      <div className="w-0.5 h-full bg-white shrink-0 ml-0.5" />
-                      <div className="w-1 h-full bg-white shrink-0 ml-0.5" />
-                      <div className="w-2 h-full bg-white shrink-0 ml-1" />
-                      <div className="w-0.5 h-full bg-white shrink-0 ml-0.5" />
-                      <div className="w-1.5 h-full bg-white shrink-0 ml-0.5" />
-                      <div className="w-0.5 h-full bg-white shrink-0 ml-1" />
-                      <div className="w-1 h-full bg-white shrink-0 ml-0.5" />
-                      <div className="w-2.5 h-full bg-white shrink-0 ml-1" />
+
+                {/* Stub */}
+                <div className="relative p-5 flex-1 flex flex-col justify-between bg-zinc-950 text-left">
+                  <div className="grid grid-cols-2 gap-3 text-[9px] font-bold uppercase tracking-wider text-zinc-500">
+                    <div>
+                      <span className="block text-[7px] font-black tracking-widest text-zinc-600">CIUDAD</span>
+                      <span className="text-white font-bold">{currentEvent.city}</span>
                     </div>
-                    <span className="text-[6.5px] font-mono tracking-widest text-zinc-600 uppercase block truncate">*VIP-ONLY-ENTRY*</span>
+                    <div>
+                      <span className="block text-[7px] font-black tracking-widest text-zinc-600">FECHA</span>
+                      <span className="text-white font-bold">{currentEvent.dateLabel}</span>
+                    </div>
                   </div>
-                  <div className="w-12 h-12 bg-white p-1 rounded shrink-0 flex items-center justify-center shadow-md">
-                    <svg className="w-full h-full text-black" viewBox="0 0 29 29" fill="currentColor">
-                      <path d="M0 0h9v9H0zm1 1h7v7H1zm1 1h5v5H2zm12-2h1v1h-1zm2 0h2v1h-2zm3 0h1v1h-1zm1 0h3v1h-3zm5 0h1v1h-1zm-9 2h1v2h-1zm2 0h1v1h-1zm1 0h2v1h-2zm3 0h2v2h-2zm2 0h1v1h-1zm1 0h1v2h-1zm2 0h1v1h-1zm-10 2h2v1h-2zm3 0h1v1h-1zm2 0h2v1h-2zm3 0h1v1h-1zm-10 2h1v1h-1zm2 0h1v1h-1zm2 0h1v1h-1zm2 0h1v2h-1zm2 0h2v1h-2zm-9 2h1v1h-1zm3 0h1v1h-1zm1 0h1v1h-1zm3 0h1v1h-1zm2 0h3v1h-3zm-10 2h1v1h-1zm3 0h1v1h-1zm2 0h1v1h-1zm1 0h2v1h-2zm3 0h1v1h-1zm2 0h1v1h-1zm-12 2h9v9H0zm1 1h7v7H1zm1 1h5v5H2zm12-2h1v1h-1zm2 0h2v1h-2zm3 0h1v1h-1zm1 0h3v1h-3zm5 0h1v1h-1z" />
-                    </svg>
+                  <div className="text-[8px] font-mono font-bold tracking-widest text-zinc-600 uppercase">
+                    TICKET NO: #NENEZ-{2026 + quantity}-{102 + quantity}VIP
+                  </div>
+                  <div className="flex items-center justify-between gap-4 mt-3">
+                    <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+                      <div className="flex items-end justify-start h-8 w-full opacity-60">
+                        <div className="w-1.5 h-full bg-white shrink-0" />
+                        <div className="w-0.5 h-full bg-white shrink-0 ml-0.5" />
+                        <div className="w-2.5 h-full bg-white shrink-0 ml-1" />
+                        <div className="w-0.5 h-full bg-white shrink-0 ml-0.5" />
+                        <div className="w-1 h-full bg-white shrink-0 ml-0.5" />
+                        <div className="w-2 h-full bg-white shrink-0 ml-1" />
+                        <div className="w-0.5 h-full bg-white shrink-0 ml-0.5" />
+                        <div className="w-1.5 h-full bg-white shrink-0 ml-0.5" />
+                        <div className="w-0.5 h-full bg-white shrink-0 ml-1" />
+                        <div className="w-1 h-full bg-white shrink-0 ml-0.5" />
+                        <div className="w-2.5 h-full bg-white shrink-0 ml-1" />
+                      </div>
+                      <span className="text-[6.5px] font-mono tracking-widest text-zinc-600 uppercase block truncate">*VIP-ONLY-ENTRY*</span>
+                    </div>
+                    <div className="w-12 h-12 bg-white p-1 rounded shrink-0 flex items-center justify-center shadow-md">
+                      <svg className="w-full h-full text-black" viewBox="0 0 29 29" fill="currentColor">
+                        <path d="M0 0h9v9H0zm1 1h7v7H1zm1 1h5v5H2zm12-2h1v1h-1zm2 0h2v1h-2zm3 0h1v1h-1zm1 0h3v1h-3zm5 0h1v1h-1zm-9 2h1v2h-1zm2 0h1v1h-1zm1 0h2v1h-2zm3 0h2v2h-2zm2 0h1v1h-1zm1 0h1v2h-1zm2 0h1v1h-1zm-10 2h2v1h-2zm3 0h1v1h-1zm2 0h2v1h-2zm3 0h1v1h-1zm-10 2h1v1h-1zm2 0h1v1h-1zm2 0h1v1h-1zm2 0h1v2h-1zm2 0h2v1h-2zm-9 2h1v1h-1zm3 0h1v1h-1zm1 0h1v1h-1zm3 0h1v1h-1zm2 0h3v1h-3zm-10 2h1v1h-1zm3 0h1v1h-1zm2 0h1v1h-1zm1 0h2v1h-2zm3 0h1v1h-1zm2 0h1v1h-1zm-12 2h9v9H0zm1 1h7v7H1zm1 1h5v5H2zm12-2h1v1h-1zm2 0h2v1h-2zm3 0h1v1h-1zm1 0h3v1h-3zm5 0h1v1h-1z" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {/* Right switch button */}
+              <button
+                type="button"
+                onClick={() => setCurrentViewedDesignIndex((prev) => (prev + 1) % Math.max(1, designs.length))}
+                className="shrink-0 w-8 h-8 rounded-full border border-zinc-800 bg-zinc-950/80 text-zinc-400 hover:text-white hover:border-zinc-700 flex items-center justify-center transition active:scale-90"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
             </div>
 
-            {/* Footer hint */}
-            <p className="text-[7.5px] font-black uppercase tracking-[0.3em] text-zinc-600 text-center">
-              Toca fuera de la tarjeta para cerrar · Mueve el cursor para el efecto 3D
-            </p>
+            {/* Selector dots (just like homepage carousel) */}
+            <div className="flex gap-1.5 justify-center py-1">
+              {designs.map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setCurrentViewedDesignIndex(idx)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentViewedDesignIndex
+                    ? "w-4 bg-white"
+                    : "w-1.5 bg-white/20 hover:bg-white/40"
+                    }`}
+                />
+              ))}
+            </div>
+
+            {/* ELEGIR DISEÑO BUTTON (monochrome, no buttons on card) */}
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedDesignIndex(currentViewedDesignIndex);
+                closeModal();
+              }}
+              className={`w-full max-w-[270px] flex h-11 items-center justify-center rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${selectedDesignIndex === currentViewedDesignIndex
+                ? "bg-emerald-500 text-black shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                : "bg-white text-black hover:bg-zinc-200"
+                }`}
+            >
+              {selectedDesignIndex === currentViewedDesignIndex
+                ? "✓ DISEÑO SELECCIONADO"
+                : "ELEGIR ESTE DISEÑO"}
+            </button>
           </div>
         </div>
       )}

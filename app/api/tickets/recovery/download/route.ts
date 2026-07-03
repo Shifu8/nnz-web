@@ -4,26 +4,41 @@ import {
 } from "@/lib/access-drop/recoveryStore";
 import { getClientIp, hashLookup } from "@/lib/security";
 import { authorizeRecoveryToken } from "@/lib/tickets/recoveryAccess";
-import { generateTicketPdf } from "@/lib/tickets/ticketPdf";
+import { generateTicketImage } from "@/lib/tickets/ticketImage";
 
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token") || "";
+  const serial = request.nextUrl.searchParams.get("serial") || "";
   if (!token) return NextResponse.json({ error: "Token requerido." }, { status: 400 });
 
   try {
     const { event, payload, ticket } = await authorizeRecoveryToken(token);
-    const pdf = await generateTicketPdf({
+    
+    let targetSerialNumber = ticket.serialNumber;
+    let targetQrPayload = ticket.qrPayload;
+    
+    if (serial && ticket.serialNumber && ticket.qrPayload) {
+      const serials = ticket.serialNumber.split(",");
+      const payloads = ticket.qrPayload.split(",");
+      const idx = serials.indexOf(serial);
+      if (idx !== -1 && payloads[idx]) {
+        targetSerialNumber = serial;
+        targetQrPayload = payloads[idx];
+      }
+    }
+
+    const png = await generateTicketImage({
       firstName: ticket.firstName,
       lastName: ticket.lastName,
-      serialNumber: ticket.serialNumber,
-      qrPayload: ticket.qrPayload,
-      quantity: ticket.quantity,
+      serialNumber: targetSerialNumber,
+      qrPayload: targetQrPayload,
+      quantity: 1, // downloading an individual ticket
       eventTitle: event.title,
-      eventSubtitle: event.eventName,
-      eventDate: event.dateLabel,
       eventCity: event.venue,
+      eventDate: event.dateLabel,
+      ticketDesign: ticket.ticketDesign,
     });
 
     await recordRecoveryLog({
@@ -32,13 +47,13 @@ export async function GET(request: NextRequest) {
       action: "RECOVERY_DOWNLOAD",
       ipHash: hashLookup(getClientIp(request)),
       userAgentHash: hashLookup(request.headers.get("user-agent") || "unknown"),
-      metadata: { serialNumber: ticket.serialNumber },
+      metadata: { serialNumber: targetSerialNumber },
     });
 
-    return new NextResponse(new Uint8Array(pdf), {
+    return new NextResponse(new Uint8Array(png), {
       headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="entrada-${ticket.serialNumber}.pdf"`,
+        "Content-Type": "image/png",
+        "Content-Disposition": `attachment; filename="entrada-${targetSerialNumber}.png"`,
         "Cache-Control": "private, no-store, max-age=0",
         "X-Content-Type-Options": "nosniff",
       },

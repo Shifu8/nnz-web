@@ -29,6 +29,7 @@ export type RecoveryTicket = {
   qrPayload: string;
   quantity: number;
   status: "APPROVED";
+  ticketDesign?: string;
 };
 
 function decryptStoredValue(value: unknown): string {
@@ -69,6 +70,7 @@ function receiptToTicket(receipt: ReceiptRecord, event: ActiveTicketEvent): Reco
     qrPayload: receipt.qrPayload,
     quantity: Math.max(1, receipt.quantity || 1),
     status: "APPROVED",
+    ticketDesign: receipt.ticketDesign,
   };
 }
 

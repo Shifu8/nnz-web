@@ -3,7 +3,9 @@ import path from "path";
 import { BANKS, ReceiptRecord, ReceiptStatus } from "./types";
 
 function getMetadataFile(): string {
-  return path.join(process.cwd(), "data", "receipts.json");
+  const file = path.join(process.cwd(), "data", "receipts.json");
+  console.log(`[RECEIPT_STORE] Resolved metadata path: ${file} (exists: ${fs.existsSync(file)})`);
+  return file;
 }
 
 function ensureDataDir(): void {

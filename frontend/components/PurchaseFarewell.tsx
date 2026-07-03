@@ -8,7 +8,7 @@ interface PurchaseFarewellProps {
   onComplete: () => void;
 }
 
-const COLORS = ["var(--theme-primary-light)", "#FFD700", "#FF6B6B", "#00E5FF", "#FF4081", "#FFFFFF", "#FFA500", "#C8FF00"];
+const COLORS = ["#FFFFFF", "#E4E4E7", "#A1A1AA", "#52525B", "#18181B", "#000000"];
 const SIZES = [1.5, 2, 2.5, 3, 3.5];
 
 const PARTICLES = Array.from({ length: 24 }, (_, i) => {

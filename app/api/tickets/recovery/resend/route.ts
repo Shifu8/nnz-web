@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import fs from "fs";
+import path from "path";
 import {
   RECOVERY_MAX_RESENDS_PER_DAY,
   RECOVERY_RESEND_COOLDOWN_MS,
@@ -19,7 +21,7 @@ import {
   secureLog,
 } from "@/lib/security";
 import { authorizeRecoveryToken } from "@/lib/tickets/recoveryAccess";
-import { generateTicketPdf } from "@/lib/tickets/ticketPdf";
+import { generateTicketImage } from "@/lib/tickets/ticketImage";
 
 export const runtime = "nodejs";
 
@@ -60,17 +62,37 @@ export async function POST(request: Request) {
       }
     }
 
-    const pdf = await generateTicketPdf({
-      firstName: ticket.firstName,
-      lastName: ticket.lastName,
-      serialNumber: ticket.serialNumber,
-      qrPayload: ticket.qrPayload,
-      quantity: ticket.quantity,
-      eventTitle: event.title,
-      eventSubtitle: event.eventName,
-      eventDate: event.dateLabel,
-      eventCity: event.venue,
-    });
+    const serials = ticket.serialNumber.split(",");
+    const payloads = ticket.qrPayload.split(",");
+    const pngBuffers: Buffer[] = [];
+
+    const ticketsDir = path.join(process.cwd(), "public", "uploads", "tickets");
+    if (!fs.existsSync(ticketsDir)) fs.mkdirSync(ticketsDir, { recursive: true });
+
+    for (let idx = 0; idx < serials.length; idx++) {
+      const s = serials[idx];
+      const p = payloads[idx] || payloads[0] || "";
+      const pngPath = path.join(ticketsDir, `${s}.png`);
+      
+      let pngBuffer: Buffer;
+      if (fs.existsSync(pngPath)) {
+        pngBuffer = fs.readFileSync(pngPath);
+      } else {
+        pngBuffer = await generateTicketImage({
+          firstName: ticket.firstName,
+          lastName: ticket.lastName,
+          serialNumber: s,
+          qrPayload: p,
+          quantity: 1,
+          eventTitle: event.title,
+          eventCity: event.venue,
+          eventDate: event.dateLabel,
+          ticketDesign: ticket.ticketDesign,
+        });
+        fs.writeFileSync(pngPath, pngBuffer);
+      }
+      pngBuffers.push(pngBuffer);
+    }
 
     const delivery = await sendTicketPdfViaGmailWithLimit({
       to: ticket.email,
@@ -78,7 +100,7 @@ export async function POST(request: Request) {
       lastName: ticket.lastName,
       serialNumber: ticket.serialNumber,
       quantity: ticket.quantity,
-      pdfBuffer: pdf,
+      pdfBuffer: pngBuffers,
       eventTitle: event.title,
       eventName: event.eventName,
       eventDate: event.dateLabel,

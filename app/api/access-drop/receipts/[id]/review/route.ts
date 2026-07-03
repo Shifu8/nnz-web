@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getReceiptById, updateReceiptStatus, loadAllReceipts, saveAllReceipts } from "@/lib/access-drop/receiptStore";
 import type { ReceiptRecord, ReceiptStatus } from "@/lib/access-drop/types";
 import { REJECTION_REASONS } from "@/lib/access-drop/types";
-import { generateTicketPdf } from "@/lib/tickets/ticketPdf";
+import { generateTicketImage } from "@/lib/tickets/ticketImage";
 import { sendRejectionViaWhatsApp, sendWhatsAppText } from "@/lib/whatsapp";
 import { sendTicketPdfViaGmailWithLimit } from "@/lib/gmailDelivery";
 import crypto from "crypto";
@@ -65,6 +65,7 @@ export async function POST(
 
     const existing = getReceiptById(id);
     if (!existing) {
+      console.warn(`[REVIEW_API] Receipt not found for ID: "${id}". Resolved DB path: ${path.join(process.cwd(), "data", "receipts.json")}. Total receipts loaded: ${loadAllReceipts().length}`);
       return NextResponse.json({ error: "COMPROBANTE NO ENCONTRADO." }, { status: 404 });
     }
 
@@ -85,32 +86,48 @@ export async function POST(
       try {
         const event = getActiveTicketEvent();
         const eventId = existing.eventId || event.id;
-        const serialNumber = generateSerial();
-        const qrPayload = generateQrPayload(serialNumber, eventId);
+        const quantity = Math.max(1, existing.quantity || 1);
 
-        const pdfBuffer = await generateTicketPdf({
-          firstName: existing.firstName,
-          lastName: existing.lastName,
-          serialNumber,
-          qrPayload,
-          quantity: existing.quantity,
-          eventTitle: event.title,
-          eventSubtitle: event.eventName,
-          eventDate: event.dateLabel,
-          eventCity: event.venue,
-        });
+        const serials: string[] = [];
+        const qrPayloads: string[] = [];
+        const pngBuffers: Buffer[] = [];
 
         const ticketsDir = path.join(process.cwd(), "public", "uploads", "tickets");
         if (!fs.existsSync(ticketsDir)) fs.mkdirSync(ticketsDir, { recursive: true });
 
-        const pdfFileName = `${serialNumber}.pdf`;
-        const pdfPath = path.join(ticketsDir, pdfFileName);
-        fs.writeFileSync(pdfPath, pdfBuffer);
+        for (let i = 0; i < quantity; i++) {
+          const serialNumber = generateSerial();
+          const qrPayload = generateQrPayload(serialNumber, eventId);
+          
+          serials.push(serialNumber);
+          qrPayloads.push(qrPayload);
+
+          const pngBuffer = await generateTicketImage({
+            firstName: existing.firstName,
+            lastName: existing.lastName,
+            serialNumber,
+            qrPayload,
+            quantity: 1, // each ticket is a single pass
+            eventTitle: event.title,
+            eventCity: event.venue,
+            eventDate: event.dateLabel,
+            ticketDesign: existing.ticketDesign,
+          });
+
+          pngBuffers.push(pngBuffer);
+
+          const pngFileName = `${serialNumber}.png`;
+          const pngPath = path.join(ticketsDir, pngFileName);
+          fs.writeFileSync(pngPath, pngBuffer);
+        }
+
+        const serialsString = serials.join(",");
+        const qrPayloadsString = qrPayloads.join(",");
 
         patchReceipt(id, {
           eventId,
-          serialNumber,
-          qrPayload,
+          serialNumber: serialsString,
+          qrPayload: qrPayloadsString,
           deliveryChannel: "none",
           deliveryStatus: "ticket-generated",
         });
@@ -119,9 +136,9 @@ export async function POST(
           to: existing.email,
           firstName: existing.firstName,
           lastName: existing.lastName,
-          serialNumber,
+          serialNumber: serialsString,
           quantity: existing.quantity,
-          pdfBuffer,
+          pdfBuffer: pngBuffers, // pass the array of buffers
           eventTitle: event.title,
           eventName: event.eventName,
           eventDate: event.dateLabel,
@@ -141,7 +158,7 @@ export async function POST(
         });
 
         console.log(
-          `[TICKET] ${serialNumber} generado. Gmail: ${gmailResult.success ? "ok" : gmailResult.reason || "no enviado"}. WA confirm: ${waResult?.success}.`,
+          `[TICKET] ${serialsString} generado. Gmail: ${gmailResult.success ? "ok" : gmailResult.reason || "no enviado"}. WA confirm: ${waResult?.success}.`,
         );
       } catch (ticketErr) {
         console.error("[TICKET] Error generando o enviando ticket:", ticketErr);

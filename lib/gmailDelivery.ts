@@ -31,7 +31,7 @@ type TicketPdfEmailInput = {
   lastName: string;
   serialNumber: string;
   quantity: number;
-  pdfBuffer: Buffer;
+  pdfBuffer: Buffer | Buffer[];
   eventTitle?: string;
   eventName?: string;
   eventDate?: string;
@@ -42,6 +42,7 @@ type GmailAttachment = {
   filename: string;
   contentType: string;
   content: Buffer;
+  cid?: string;
 };
 
 type GmailMessageInput = {
@@ -154,12 +155,23 @@ function escapeHtml(value: string): string {
 
 function ticketHtml(input: TicketPdfEmailInput): string {
   const fullName = escapeHtml(`${input.firstName} ${input.lastName}`.trim());
-  const serial = escapeHtml(input.serialNumber);
+  const serials = input.serialNumber.split(",");
   const quantity = Math.max(1, Number(input.quantity) || 1);
   const eventTitle = escapeHtml(input.eventTitle || "TRAP LOUD");
   const eventName = escapeHtml(input.eventName || "YAN BLOCK EXPERIENCE");
   const eventDate = escapeHtml(input.eventDate || "18 JUN 2026");
   const eventVenue = escapeHtml(input.eventVenue || "San Juan");
+
+  const serialsHtml = serials.map((s) => `
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;background-color:#f4f4f5;border:1px solid #e4e4e7;border-radius:12px;">
+                      <tr>
+                        <td style="padding:12px;text-align:center;">
+                          <p style="margin:0;font-size:8px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#71717a;">SERIAL DE SEGURIDAD</p>
+                          <p style="margin:6px 0 0;font-family:'Courier New',Courier,monospace;font-size:14px;font-weight:bold;letter-spacing:1px;color:#18181b;">${escapeHtml(s)}</p>
+                        </td>
+                      </tr>
+                    </table>
+  `).join("");
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -168,50 +180,53 @@ function ticketHtml(input: TicketPdfEmailInput): string {
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>NENEZ</title>
 </head>
-<body style="margin:0;padding:0;background:#050306;font-family:Arial,Helvetica,sans-serif;color:#ffffff;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050306;">
+<body style="margin:0;padding:0;background-color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#18181b;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;padding:24px 0;">
     <tr>
-      <td align="center" style="padding:32px 16px;">
-        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;border:1px solid rgba(255,111,188,0.22);border-radius:28px;background:linear-gradient(180deg,#120611 0%,#070307 100%);overflow:hidden;">
+      <td align="center">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;border:1px solid #e4e4e7;border-radius:24px;background-color:#ffffff;box-shadow:0 4px 12px rgba(0,0,0,0.03);overflow:hidden;">
           <tr>
-            <td style="padding:30px 24px 18px;text-align:center;">
-              <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:#ff8acb;">NENEZ</p>
-              <h1 style="margin:12px 0 0;font-size:26px;line-height:1;font-weight:900;letter-spacing:-1px;text-transform:uppercase;color:#ffffff;">¡Tu entrada está lista!</h1>
-              <p style="margin:10px 0 0;font-size:12px;color:#b8a9b4;">${eventTitle} - ${eventName}</p>
+            <td style="padding:40px 32px 20px;text-align:center;">
+              <p style="margin:0;font-size:11px;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:#71717a;">NENEZ</p>
+              <h1 style="margin:12px 0 0;font-size:26px;line-height:1.2;font-weight:800;letter-spacing:-0.5px;color:#18181b;">¡Tu entrada está lista!</h1>
+              <p style="margin:8px 0 0;font-size:13px;font-weight:600;color:#71717a;">${eventTitle} - ${eventName}</p>
             </td>
           </tr>
           <tr>
-            <td style="padding:0 24px 24px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid rgba(255,255,255,0.08);border-radius:22px;background:rgba(0,0,0,0.35);">
+            <td style="padding:0 32px 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="padding:22px;">
-                    <p style="margin:0;font-size:14px;color:#d8d0d6;">Hola <strong style="color:#ffffff;">${fullName}</strong>,</p>
-                    <p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#a99da6;">Tu pase de acceso oficial ha sido generado con éxito y se encuentra adjunto en este correo electrónico en formato PDF. Por favor, descarga el archivo y presenta el código QR en la entrada del evento; recuerda que cada código es de un único uso.</p>
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px;">
+                  <td style="font-size:14px;line-height:1.6;color:#3f3f46;">
+                    <p style="margin:0;font-size:15px;color:#18181b;">Hola <strong>${fullName}</strong>,</p>
+                    <p style="margin:12px 0 0;">Tu pase de acceso oficial ha sido generado con éxito y se encuentra <strong>adjunto en este correo electrónico en formato de imagen</strong>. Por favor, descarga la imagen y presenta el código QR en la entrada del evento; recuerda que cada código es de un único uso.</p>
+                    
+                    ${serialsHtml}
+
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;border-top:1px solid #f4f4f5;">
                       <tr>
-                        <td style="padding:8px 0;border-top:1px solid rgba(255,255,255,0.06);">
-                          <p style="margin:0;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#725d6b;">Serial</p>
-                          <p style="margin:4px 0 0;font-size:14px;font-weight:900;letter-spacing:1px;color:#ff8acb;">${serial}</p>
+                        <td style="padding:14px 0 0;">
+                          <p style="margin:0;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#71717a;">EVENTO</p>
+                          <p style="margin:4px 0 0;font-size:14px;font-weight:800;color:#18181b;">${eventTitle} (${quantity} entrada${quantity === 1 ? "" : "s"})</p>
                         </td>
                       </tr>
                       <tr>
-                        <td style="padding:8px 0;border-top:1px solid rgba(255,255,255,0.06);">
-                          <p style="margin:0;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#725d6b;">Evento</p>
-                          <p style="margin:4px 0 0;font-size:13px;font-weight:800;color:#ffffff;">${eventDate} - ${eventVenue} - ${quantity} entrada${quantity === 1 ? "" : "s"}</p>
+                        <td style="padding:14px 0 0;">
+                          <p style="margin:0;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#71717a;">FECHA Y LUGAR</p>
+                          <p style="margin:4px 0 0;font-size:14px;font-weight:700;color:#18181b;">${eventDate} - ${eventVenue}</p>
                         </td>
                       </tr>
                     </table>
                   </td>
                 </tr>
               </table>
-              <p style="margin:18px 0 0;text-align:center;font-size:11px;line-height:1.5;color:#7d7079;">Por razones de seguridad, te recomendamos no compartir capturas de pantalla ni reenviar este archivo a terceros antes del espectáculo.</p>
+              <p style="margin:18px 0 0;text-align:center;font-size:11px;line-height:1.5;color:#71717a;">Por razones de seguridad, te recomendamos no compartir capturas de pantalla ni reenviar este archivo a terceros antes del espectáculo.</p>
             </td>
           </tr>
           <tr>
-            <td style="padding:20px 24px 28px;text-align:center;font-size:10px;color:#665b64;line-height:1.6;border-top:1px solid rgba(255,111,188,0.08);background:rgba(0,0,0,0.15);">
+            <td style="padding:28px 32px;text-align:center;font-size:11px;color:#71717a;line-height:1.6;border-top:1px solid #f4f4f5;background-color:#fafafa;">
               <p style="margin:0;">Este es un mensaje de confirmación de compra transaccional enviado automáticamente por el sistema de tickets de NENEZ.</p>
-              <p style="margin:4px 0 0;">Si tienes alguna duda o necesitas soporte con tus pases de acceso, contáctanos escribiendo directamente a <a href="mailto:soporte.nenez@gmail.com" style="color: #ff8acb; text-decoration: none;">soporte.nenez@gmail.com</a>.</p>
-              <p style="margin:8px 0 0;font-weight:bold;">NENEZ Inc. · Cuenca, Ecuador</p>
+              <p style="margin:6px 0 0;">Si tienes alguna duda o necesitas soporte con tus pases de acceso, contáctanos escribiendo directamente a <a href="mailto:soporte.nenez@gmail.com" style="color: #18181b; text-decoration: underline; font-weight: bold;">soporte.nenez@gmail.com</a>.</p>
+              <p style="margin:10px 0 0;font-weight:bold;color:#18181b;">NENEZ ® · Loja, Ecuador</p>
             </td>
           </tr>
         </table>
@@ -224,21 +239,23 @@ function ticketHtml(input: TicketPdfEmailInput): string {
 
 function ticketText(input: TicketPdfEmailInput): string {
   const fullName = `${input.firstName} ${input.lastName}`.trim();
-  const serial = input.serialNumber;
+  const serials = input.serialNumber.split(",");
   const quantity = Math.max(1, Number(input.quantity) || 1);
   const eventTitle = input.eventTitle || "TRAP LOUD";
   const eventName = input.eventName || "YAN BLOCK EXPERIENCE";
   const eventDate = input.eventDate || "18 JUN 2026";
   const eventVenue = input.eventVenue || "San Juan";
 
+  const serialsTextStr = serials.map((s, idx) => `- Pase ${idx + 1} (Serial): ${s}`).join("\n");
+
   return `¡Tu entrada está lista!
 
 Hola ${fullName},
 
-Tu pase de acceso oficial ha sido generado con éxito y se encuentra adjunto en este correo electrónico en formato PDF. Por favor, descarga el archivo y presenta el código QR en la entrada del evento. Recuerda que cada código es de un único uso y válido para un solo ingreso.
+Tu pase de acceso oficial ha sido generado con éxito y se encuentra adjunto en este correo electrónico en formato de imagen PNG. Por favor, descarga la imagen y presenta el código QR en la entrada del evento. Recuerda que cada código es de un único uso y válido para un solo ingreso.
 
-Detalles del pase:
-- Código de pase: ${serial}
+Detalles de los pases:
+${serialsTextStr}
 - Evento: ${eventTitle} - ${eventName}
 - Fecha y Lugar: ${eventDate} - ${eventVenue}
 - Cantidad: ${quantity} entrada${quantity === 1 ? "" : "s"}
@@ -248,7 +265,7 @@ Por razones de seguridad, te recomendamos no compartir capturas de pantalla ni r
 Este es un mensaje de confirmación de compra transaccional enviado automáticamente por el sistema de tickets de NENEZ.
 Si tienes alguna duda o necesitas soporte con tus pases de acceso, contáctanos escribiendo directamente a soporte.nenez@gmail.com.
 
-NENEZ · Cuenca, Ecuador`;
+NENEZ ® · Loja, Ecuador`;
 }
 
 function buildMimeMessage(input: GmailMessageInput): string {
@@ -291,7 +308,9 @@ function buildMimeMessage(input: GmailMessageInput): string {
     message.push(
       `--${mixedBoundary}`,
       `${cleanHeader(attachment.contentType)}; name="${fileName}"`.replace(/^/, "Content-Type: "),
-      `Content-Disposition: attachment; filename="${fileName}"`,
+      attachment.cid 
+        ? `Content-ID: <${cleanHeader(attachment.cid)}>\r\nContent-Disposition: inline; filename="${fileName}"` 
+        : `Content-Disposition: attachment; filename="${fileName}"`,
       "Content-Transfer-Encoding: base64",
       "",
       chunkBase64(attachment.content.toString("base64")),
@@ -397,6 +416,7 @@ async function sendViaSmtp(input: GmailMessageInput): Promise<string | undefined
       filename: cleanHeader(attachment.filename),
       contentType: cleanHeader(attachment.contentType),
       content: attachment.content,
+      cid: attachment.cid,
     })),
   });
 
@@ -465,20 +485,25 @@ async function sendGmailMessageWithLimit(input: GmailMessageInput): Promise<Gmai
 }
 
 export async function sendTicketPdfViaGmailWithLimit(input: TicketPdfEmailInput): Promise<GmailDeliveryResult> {
-  const serial = cleanHeader(input.serialNumber);
+  const serials = input.serialNumber.split(",");
+  const buffers = Array.isArray(input.pdfBuffer) ? input.pdfBuffer : [input.pdfBuffer];
+  
+  const attachments = buffers.map((buf, idx) => {
+    const s = serials[idx] || serials[0] || "ticket";
+    return {
+      filename: `entrada-${s}.png`,
+      contentType: "image/png",
+      content: buf,
+    };
+  });
+
   return sendGmailMessageWithLimit({
     to: input.to,
     subject: `Tu entrada NENEZ - ${cleanHeader(input.eventTitle || "TRAP LOUD")}`,
     html: ticketHtml(input),
     text: ticketText(input),
-    logLabel: "ticket-pdf",
-    attachments: [
-      {
-        filename: `entrada-${serial}.pdf`,
-        contentType: "application/pdf",
-        content: input.pdfBuffer,
-      },
-    ],
+    logLabel: "ticket-image",
+    attachments,
   });
 }
 
@@ -491,24 +516,27 @@ function recoveryOtpHtml(code: string): string {
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>NENEZ</title>
 </head>
-<body style="margin:0;padding:0;background:#050306;font-family:Arial,Helvetica,sans-serif;color:#ffffff;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050306;">
+<body style="margin:0;padding:0;background-color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#18181b;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;padding:24px 0;">
     <tr>
-      <td align="center" style="padding:32px 16px;">
-        <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;border:1px solid rgba(255,111,188,0.22);border-radius:26px;background:linear-gradient(180deg,#120611 0%,#070307 100%);overflow:hidden;">
+      <td align="center">
+        <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;border:1px solid #e4e4e7;border-radius:24px;background-color:#ffffff;box-shadow:0 4px 12px rgba(0,0,0,0.03);overflow:hidden;">
           <tr>
-            <td style="padding:30px 24px;text-align:center;">
-              <p style="margin:0;font-size:10px;font-weight:900;letter-spacing:5px;text-transform:uppercase;color:#ff8acb;">NENEZ</p>
-              <h1 style="margin:12px 0 0;font-size:24px;line-height:1;font-weight:900;text-transform:uppercase;color:#ffffff;">Recuperar entrada</h1>
-              <p style="margin:12px auto 0;max-width:360px;font-size:13px;line-height:1.6;color:#a99da6;">Usa este código de verificación para validar tu correo electrónico. Este código expira en 10 minutos por razones de seguridad.</p>
-              <p style="margin:24px 0 0;display:inline-block;border:1px solid rgba(255,111,188,0.28);border-radius:18px;background:rgba(255,111,188,0.08);padding:14px 22px;font-size:28px;font-weight:900;letter-spacing:8px;color:#ffffff;">${cleanCode}</p>
-              <p style="margin:20px 0 0;font-size:11px;line-height:1.5;color:#74636f;">Si tú no solicitaste este código, puedes ignorar este correo de forma segura.</p>
+            <td style="padding:40px 32px 20px;text-align:center;">
+              <p style="margin:0;font-size:11px;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:#71717a;">NENEZ</p>
+              <h1 style="margin:12px 0 0;font-size:24px;line-height:1.2;font-weight:800;color:#18181b;">Recuperar entrada</h1>
+              <p style="margin:10px auto 0;max-width:360px;font-size:13px;line-height:1.6;color:#71717a;">Usa este código de verificación para validar tu correo electrónico. Este código expira en 10 minutos por razones de seguridad.</p>
+              
+              <p style="margin:24px 0 0;display:inline-block;border:1px solid #e4e4e7;border-radius:18px;background-color:#f4f4f5;padding:14px 22px;font-size:28px;font-weight:800;letter-spacing:8px;color:#18181b;">${cleanCode}</p>
+              
+              <p style="margin:20px 0 0;font-size:11px;line-height:1.5;color:#a1a1aa;">Si tú no solicitaste este código, puedes ignorar este correo de forma segura.</p>
             </td>
           </tr>
           <tr>
-            <td style="padding:20px 24px 24px;text-align:center;font-size:10px;color:#665b64;line-height:1.6;border-top:1px solid rgba(255,111,188,0.08);background:rgba(0,0,0,0.15);">
+            <td style="padding:20px 32px;text-align:center;font-size:11px;color:#71717a;line-height:1.6;border-top:1px solid #f4f4f5;background-color:#fafafa;">
               <p style="margin:0;">Este es un mensaje de seguridad transaccional enviado automáticamente por NENEZ.</p>
-              <p style="margin:4px 0 0;">Si necesitas ayuda, escríbenos a <a href="mailto:soporte.nenez@gmail.com" style="color: #ff8acb; text-decoration: none;">soporte.nenez@gmail.com</a>.</p>
+              <p style="margin:4px 0 0;">Si necesitas ayuda, escríbenos a <a href="mailto:soporte.nenez@gmail.com" style="color: #18181b; text-decoration: underline; font-weight: bold;">soporte.nenez@gmail.com</a>.</p>
+              <p style="margin:8px 0 0;font-weight:bold;color:#18181b;">NENEZ ® · Loja, Ecuador</p>
             </td>
           </tr>
         </table>
@@ -529,7 +557,7 @@ Código: ${code}
 Este código expira en 10 minutos por razones de seguridad. Si tú no solicitaste este código, puedes ignorar este correo de forma segura.
 
 Si necesitas ayuda, escríbenos a soporte.nenez@gmail.com.
-NENEZ · Cuenca, Ecuador`;
+NENEZ ® · Loja, Ecuador`;
 }
 
 export async function sendRecoveryOtpViaGmail(to: string, code: string): Promise<GmailDeliveryResult> {

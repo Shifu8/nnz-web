@@ -34,6 +34,7 @@ import SettingsSection from "./components/SettingsSection";
 import QrControlSection from "./components/QrControlSection";
 import TurnstileWidget, { hasTurnstileSiteKey } from "@/frontend/components/TurnstileWidget";
 import HomepageEditor from "./components/HomepageEditor";
+import TicketDesignsManager from "./components/TicketDesignsManager";
 
 type ChartTooltipProps = {
   active?: boolean;
@@ -956,6 +957,7 @@ function AdminDashboardInner({ onLogout, onOpenDesigner }: { onLogout: () => voi
                 <Palette className="h-4 w-4" /> Disenar Entrada
               </button>
             </div>
+            <TicketDesignsManager events={events} />
           </div>
         );
       case "qr-control":

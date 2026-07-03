@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
     const quantityRaw = String(formData.get("quantity") || "1");
     const paymentMethodValue = String(formData.get("paymentMethod") || "banco-loja");
     const turnstileToken = String(formData.get("cf-turnstile-response") || "");
+    const ticketDesign = String(formData.get("ticketDesign") || "0");
 
     await verifyTurnstileToken(request, turnstileToken, {
       variant: "visible",
@@ -202,6 +203,7 @@ export async function POST(request: NextRequest) {
       status: "pendiente",
       ocrResult: analysis,
       createdAt: new Date().toISOString(),
+      ticketDesign,
     };
 
     try {
