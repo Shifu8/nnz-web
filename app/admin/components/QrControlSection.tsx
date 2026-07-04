@@ -43,6 +43,52 @@ type EventOption = {
   subtitle: string;
 };
 
+const pieColors = [
+  "#C8FF00", "#FF6B6B", "#4ECDC4", "#FFE66D", "#A78BFA",
+  "#FB923C", "#34D399", "#F472B6", "#60A5FA", "#FBBF24",
+];
+
+function DonutChart({ data, total }: { data: [string, number][]; total: number }) {
+  const cx = 80, cy = 80, r = 60, strokeWidth = 28;
+  const circumference = 2 * Math.PI * r;
+  let offset = 0;
+  const segments = data.map(([label, count], i) => {
+    const pct = count / total;
+    const length = pct * circumference;
+    const seg = { label, count, pct, color: pieColors[i % pieColors.length], offset, length };
+    offset -= length;
+    return seg;
+  });
+
+  return (
+    <svg viewBox="0 0 160 160" className="w-full h-full">
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth={strokeWidth} />
+      {segments.map((seg) => (
+        <circle
+          key={seg.label}
+          cx={cx}
+          cy={cy}
+          r={r}
+          fill="none"
+          stroke={seg.color}
+          strokeWidth={strokeWidth}
+          strokeDasharray={`${seg.length} ${circumference - seg.length}`}
+          strokeDashoffset={seg.offset}
+          strokeLinecap="butt"
+          transform={`rotate(-90 ${cx} ${cy})`}
+          className="transition-all duration-700"
+        />
+      ))}
+      <text x={cx} y={cy - 8} textAnchor="middle" className="fill-white text-[11px] font-black">
+        {total}
+      </text>
+      <text x={cx} y={cy + 10} textAnchor="middle" className="fill-zinc-500 text-[5px] font-bold uppercase tracking-wider">
+        Total
+      </text>
+    </svg>
+  );
+}
+
 export default function QrControlSection() {
   const [careers, setCareers] = useState<CareerEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -232,51 +278,7 @@ export default function QrControlSection() {
     ? `${selectedEvent.title}${selectedEvent.subtitle ? ` — ${selectedEvent.subtitle}` : ""}`
     : selectedEventId.replace(/-/g, " ").toUpperCase();
 
-  const pieColors = [
-    "#C8FF00", "#FF6B6B", "#4ECDC4", "#FFE66D", "#A78BFA",
-    "#FB923C", "#34D399", "#F472B6", "#60A5FA", "#FBBF24",
-  ];
 
-  function DonutChart({ data, total }: { data: [string, number][]; total: number }) {
-    const cx = 80, cy = 80, r = 60, strokeWidth = 28;
-    const circumference = 2 * Math.PI * r;
-    let offset = 0;
-    const segments = data.map(([label, count], i) => {
-      const pct = count / total;
-      const length = pct * circumference;
-      const seg = { label, count, pct, color: pieColors[i % pieColors.length], offset, length };
-      offset -= length;
-      return seg;
-    });
-
-    return (
-      <svg viewBox="0 0 160 160" className="w-full h-full">
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth={strokeWidth} />
-        {segments.map((seg) => (
-          <circle
-            key={seg.label}
-            cx={cx}
-            cy={cy}
-            r={r}
-            fill="none"
-            stroke={seg.color}
-            strokeWidth={strokeWidth}
-            strokeDasharray={`${seg.length} ${circumference - seg.length}`}
-            strokeDashoffset={seg.offset}
-            strokeLinecap="butt"
-            transform={`rotate(-90 ${cx} ${cy})`}
-            className="transition-all duration-700"
-          />
-        ))}
-        <text x={cx} y={cy - 8} textAnchor="middle" className="fill-white text-[11px] font-black">
-          {total}
-        </text>
-        <text x={cx} y={cy + 10} textAnchor="middle" className="fill-zinc-500 text-[5px] font-bold uppercase tracking-wider">
-          Total
-        </text>
-      </svg>
-    );
-  }
 
   return (
     <div className="p-6 space-y-6">

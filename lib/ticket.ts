@@ -39,7 +39,6 @@ function generateSerial(transactionId: string): string {
   return `NENEZ-${num}-${short}`;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = () => (requireSupabase().from("tickets") as any);
 
 export async function createTicket(input: TicketInput): Promise<Ticket> {

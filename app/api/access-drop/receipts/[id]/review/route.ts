@@ -3,7 +3,6 @@ import { getReceiptById, updateReceiptStatus, loadAllReceipts, saveAllReceipts }
 import type { ReceiptRecord, ReceiptStatus } from "@/lib/access-drop/types";
 import { REJECTION_REASONS } from "@/lib/access-drop/types";
 import { generateTicketImage } from "@/lib/tickets/ticketImage";
-import { sendRejectionViaWhatsApp, sendWhatsAppText } from "@/lib/whatsapp";
 import { sendTicketPdfViaGmailWithLimit } from "@/lib/gmailDelivery";
 import crypto from "crypto";
 import fs from "fs";
@@ -98,7 +97,7 @@ export async function POST(
         for (let i = 0; i < quantity; i++) {
           const serialNumber = generateSerial();
           const qrPayload = generateQrPayload(serialNumber, eventId);
-          
+
           serials.push(serialNumber);
           qrPayloads.push(qrPayload);
 
@@ -107,7 +106,7 @@ export async function POST(
             lastName: existing.lastName,
             serialNumber,
             qrPayload,
-            quantity: 1, // each ticket is a single pass
+            quantity: 1,
             eventTitle: event.title,
             eventCity: event.venue,
             eventDate: event.dateLabel,
@@ -128,7 +127,7 @@ export async function POST(
           eventId,
           serialNumber: serialsString,
           qrPayload: qrPayloadsString,
-          deliveryChannel: "none",
+          deliveryChannel: "gmail",
           deliveryStatus: "ticket-generated",
         });
 
@@ -138,43 +137,24 @@ export async function POST(
           lastName: existing.lastName,
           serialNumber: serialsString,
           quantity: existing.quantity,
-          pdfBuffer: pngBuffers, // pass the array of buffers
+          pdfBuffer: pngBuffers,
           eventTitle: event.title,
           eventName: event.eventName,
           eventDate: event.dateLabel,
           eventVenue: event.venue,
         });
 
-        const waResult = await sendWhatsAppText(
-          existing.phone,
-          `NENEZ TRAP LOUD\n\nHola ${existing.firstName}, compra aprobada. Revisa tu Gmail para guardar tu entrada.\n\nSi no aparece, puede que el correo este mal escrito: entra a Recuperar entrada en la web.`,
-        );
-
         patchReceipt(id, {
           deliveryChannel: gmailResult.success ? "gmail" : "none",
-          deliveryStatus: `email:${gmailResult.success ? gmailResult.messageId || "ok" : gmailResult.reason || "failed"}; whatsapp:${waResult?.success ? `queued:${waResult.messageId || "ok"}` : waResult?.error || "failed"}`,
+          deliveryStatus: `email:${gmailResult.success ? gmailResult.messageId || "ok" : gmailResult.reason || "failed"}`,
           emailSentAt: gmailResult.success ? new Date().toISOString() : undefined,
-          whatsappQueuedAt: waResult?.success ? new Date().toISOString() : undefined,
         });
 
         console.log(
-          `[TICKET] ${serialsString} generado. Gmail: ${gmailResult.success ? "ok" : gmailResult.reason || "no enviado"}. WA confirm: ${waResult?.success}.`,
+          `[TICKET] ${serialsString} generado. Gmail: ${gmailResult.success ? "ok" : gmailResult.reason || "no enviado"}.`,
         );
       } catch (ticketErr) {
         console.error("[TICKET] Error generando o enviando ticket:", ticketErr);
-      }
-    }
-
-    if (status === "rechazado" && reasonLabel) {
-      try {
-        const waResult = await sendRejectionViaWhatsApp(
-          existing.phone,
-          existing.firstName,
-          reasonLabel,
-        );
-        console.log(`[REJECT] Notificación enviada a ${existing.phone}. WA: ${waResult?.success}`);
-      } catch (rejectErr) {
-        console.error("[REJECT] Error enviando notificación:", rejectErr);
       }
     }
 
@@ -183,8 +163,8 @@ export async function POST(
       receipt: updated,
       message:
         status === "aprobado"
-          ? "COMPROBANTE APROBADO. EL USUARIO RECIBIRÁ SU ACCESO."
-          : `COMPROBANTE RECHAZADO: ${reasonLabel || "Sin motivo"}. SE NOTIFICÓ AL USUARIO.`,
+          ? "COMPROBANTE APROBADO. EL USUARIO RECIBIRÁ SU ENTRADA POR EMAIL."
+          : `COMPROBANTE RECHAZADO: ${reasonLabel || "Sin motivo"}.`,
     });
   } catch (err) {
     console.error("Error reviewing receipt:", err);

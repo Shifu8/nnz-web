@@ -1,0 +1,92 @@
+version: "3.8"
+
+services:
+  # ─── MySQL 8.0 Database ────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: dawgs-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: dawgs_db
+      MYSQL_USER: dawgs_user
+      MYSQL_PASSWORD: dawgs_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - dawgs-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis Cache ────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7.0-alpine
+    container_name: dawgs-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - dawgs-network
+
+  # ─── FastAPI Backend (Python) ───────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dawgs-backend
+    restart: always
+    environment:
+      DATABASE_URL: mysql+pymysql://dawgs_user:dawgs_password@mysql:3306/dawgs_db
+      REDIS_URL: redis://redis:6379/0
+      ALLOWED_ORIGINS: http://localhost:3000
+      ENV_MODE: development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./public/uploads:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - dawgs-network
+
+  # ─── WhatsApp Gateway (Node.js) ─────────────────────────────────────────────
+  whatsapp-gateway:
+    image: node:20-alpine
+    container_name: dawgs-whatsapp
+    restart: always
+    working_dir: /app
+    command: sh -c "npm install && npx tsx server.ts"
+    environment:
+      PORT: 4000
+      WHATSAPP_ENABLED: "false"
+      ALLOWED_ORIGINS: http://localhost:3000
+      REDIS_URL: redis://redis:6379/1
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./services/whatsapp-gateway:/app
+      - wa_session_data:/app/wa_session
+    depends_on:
+      - redis
+    networks:
+      - dawgs-network
+
+networks:
+  dawgs-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:
+  wa_session_data:

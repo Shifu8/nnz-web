@@ -1,15 +1,66 @@
+# Dependencies
 node_modules/
+
+# Next.js builds
 .next/
-.env
-.env.local
-.vercel/
 dist/
 build/
+
+# Environment files (NEVER commit secrets)
+.env
+.env.local
+.env.production
+
+# Deployment
+.vercel/
+
+# Logs (all log files)
 *.log
+*.out.log
+*.err.log
+
+# TypeScript build info
 tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# WhatsApp session data (sensitive)
 wa_session/
 auth_info*/
+.wa_session/
+
+# Verification artifacts
+.verification/
+
+# Gmail token cache
+get-gmail-token.mjs
 data/gmail-usage.json
 data/ticket-recovery.json
-get-gmail-token.mjs
-.verification/
+
+# ─── OCR Trained Data (heavy binary files - load from S3 or volume in production) ───
+# These are 5MB+ binary files that should not be in Git
+# Uncomment the lines below if you want to exclude them from Git
+# eng.traineddata
+# spa.traineddata
+
+# ─── User-uploaded files (MUST be on persistent storage, not Git) ─────────────
+# Upload these to S3 or similar cloud storage in production
+public/uploads/receipts/
+public/uploads/tickets/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+.venv/
+venv/
+backend/.venv/
+backend/venv/
+backend/.env
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Docker volumes
+.docker-data/

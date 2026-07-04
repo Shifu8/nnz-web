@@ -11,18 +11,16 @@ import {
 } from "@/lib/security";
 import { ensureStore } from "@/lib/db/passStore";
 import { recordAdminLog } from "@/lib/db/adminLogs";
-import { createWhatsAppDeepLink } from "@/lib/whatsapp";
 import { encryptSensitive, hashLookup, hashToken, generateSecureQrPayload } from "@/lib/security";
 
 const EVENT_ID = "trap-loud";
 
-const generateSchema = z
-  .object({
-    firstName: z.string().min(2).max(40),
-    lastName: z.string().min(2).max(40),
-    phone: z.string().max(15),
-    email: z.string().max(120).optional(),
-  });
+const generateSchema = z.object({
+  firstName: z.string().min(2).max(40),
+  lastName: z.string().min(2).max(40),
+  phone: z.string().max(15),
+  email: z.string().max(120).optional(),
+});
 
 export async function POST(request: Request) {
   try {
@@ -115,21 +113,16 @@ export async function POST(request: Request) {
       });
     }
 
-    const waLink = createWhatsAppDeepLink(phone, serialNumber);
-
     await recordAdminLog("admin_generate_ticket", {
       serialNumber,
       firstName,
       lastName,
-      waLink,
     });
 
     return NextResponse.json({
       success: true,
       serialNumber,
-      waLink,
-      instructions: "Comparte este enlace con el usuario para que reciba su ticket por WhatsApp autom\u00e1ticamente.",
-      waConfigured: true,
+      instructions: `Ticket generado para ${firstName} ${lastName}. Número de serie: ${serialNumber}`,
     });
   } catch (error) {
     return handleApiError(error);

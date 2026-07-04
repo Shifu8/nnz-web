@@ -1,8 +1,12 @@
 import { secureLog } from "./security";
 import { generateTicketQrPng } from "./tickets/ticketImage";
 import { ticketImagePublicUrl } from "./tickets/ticketImageToken";
-import { createWhatsAppDeepLink } from "./whatsapp";
 import { loadAllEvents } from "./admin/events-store";
+
+export function createWhatsAppDeepLink(phone: string, serialNumber: string): string {
+  const cleanPhone = phone.replace(/\D/g, "");
+  return `https://wa.me/${cleanPhone}?text=NENEZ%20TRAP%20LOUD%20-%20Mi%20entrada%20es%20${serialNumber}`;
+}
 
 export type DeliveryChannel = "whatsapp";
 
