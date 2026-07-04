@@ -716,7 +716,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
       {/* Purchasing Access Modal Dialog */}
       <div
-        className={`fixed inset-0 z-[150] flex items-end md:items-center justify-center bg-black/90 backdrop-blur-xl transition-all duration-300 ${
+        className={`fixed inset-0 z-[350] flex items-end md:items-center justify-center bg-black/90 backdrop-blur-xl transition-all duration-300 ${
           isTicketModalOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
       >
@@ -736,6 +736,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 setFarewellName(accessDropRef.current.firstName);
                 setShowFarewell(true);
                 accessDropRef.current?.reset();
+                setShowDetailOverlay(false);
               }
               setIsTicketModalOpen(false);
             }}
@@ -752,6 +753,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               onFarewell={(name) => {
                 setFarewellName(name);
                 setShowFarewell(true);
+                setShowDetailOverlay(false);
               }}
               onClose={() => {
                 setIsTicketModalOpen(false);
@@ -770,13 +772,13 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             allEvents={CAROUSEL_EVENTS}
             onClose={() => setShowDetailOverlay(false)}
             onBuy={(event) => {
-              setShowDetailOverlay(false);
               onBuy(event);
             }}
             onSelectEvent={(event) => {
               onSelectRelatedEvent(event);
               setSelectedCarouselEvent(event);
             }}
+            isCheckoutOpen={isTicketModalOpen}
           />
         )}
       </AnimatePresence>

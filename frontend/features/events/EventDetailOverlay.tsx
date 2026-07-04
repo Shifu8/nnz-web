@@ -33,6 +33,7 @@ interface EventDetailOverlayProps {
   onClose: () => void;
   onBuy: (event: Event) => void;
   onSelectEvent: (event: Event) => void;
+  isCheckoutOpen?: boolean;
 }
 
 const ROLE_ORDER = ["Headliner", "Supporting", "Guest", "DJ", "Live Act", "Surprise"] as const;
@@ -105,6 +106,7 @@ export default function EventDetailOverlay({
   onClose,
   onBuy,
   onSelectEvent,
+  isCheckoutOpen = false,
 }: EventDetailOverlayProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -178,9 +180,9 @@ export default function EventDetailOverlay({
     >
       <motion.div
         initial={overlayTransition.hidden}
-        animate={overlayTransition.visible}
+        animate={isCheckoutOpen ? { opacity: 0.4, scale: 0.95, y: -12 } : overlayTransition.visible}
         exit={overlayTransition.exit}
-        transition={{ duration: 0.45, ease: "easeOut" }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="relative w-full h-[96dvh] md:h-[96vh] md:max-w-[860px] overflow-hidden flex flex-col rounded-t-[32px] md:rounded-[36px] bg-[#060606]"
         style={{
           border: "1px solid rgba(255,255,255,0.07)",
