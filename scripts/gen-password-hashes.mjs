@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 
-const staff = "D@wgs-St4ff#9Kp2!Qm7&Vx4";
-const admin = "D@wgs-@dm1n#R7n!Wq3$Zp8&Kf5";
+const staff = "staff123";
+const admin = "admin123";
 
 const staffHash = await bcrypt.hash(staff, 12);
 const adminHash = await bcrypt.hash(admin, 12);

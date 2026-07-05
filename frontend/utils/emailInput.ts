@@ -34,7 +34,7 @@ export function getEmailSuggestion(value: string): string | null {
 
 export function getEmailHint(value: string): { tone: "idle" | "ok" | "warn"; text: string } {
   if (!value) {
-    return { tone: "idle", text: "Usa el correo donde quieres recibir tu entrada." };
+    return { tone: "idle", text: "Usa el correo que usaste para el registro." };
   }
 
   const suggestion = getEmailSuggestion(value);
@@ -50,7 +50,7 @@ export function getEmailHint(value: string): { tone: "idle" | "ok" | "warn"; tex
     return { tone: "warn", text: "Escribe solo un correo valido, sin espacios ni texto extra." };
   }
 
-  return { tone: "ok", text: "Formato listo para recibir la entrada." };
+  return { tone: "ok", text: "Formato de correo listo." };
 }
 
 export function applyEmailSuggestion(value: string): string {

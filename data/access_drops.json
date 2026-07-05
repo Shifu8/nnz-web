@@ -1,0 +1,17 @@
+[
+  {
+    "id": "c4db173c-916d-42ef-a04c-1910ddcb7726",
+    "firstName": "VBBV",
+    "lastName": "BVBV",
+    "phoneHash": "c9d0a96cb727f208056e6cf0952d89dc596f2df370b33073416bbd802ff1391a",
+    "phoneEncrypted": "v1:XJLqloaBw6oXNpVz:VTu6E/c41alnzty2vlek3w==:",
+    "emailHash": "eac2f5e12afbf5664510d050928ea1154fa7f0ba92b82d6ee544a6b5ecee004d",
+    "emailEncrypted": "v1:6zhN4ht4CzvOih8J:ODeyqcdlMRxXsJLF/r4IlA==:Vk3C5Akdvd933ZloaumTwrd56Q==",
+    "documentHash": "3e92f4cce6a0128dda6dd05b49974fbacfbd2af8b713f0f69ad1261533973c7a",
+    "documentEncrypted": "v1:m585TPuqjDW/HrGT:FerYaQII0ePfFmQfQ4MIAw==:3amDN2c/BUpywQ==",
+    "eventId": "trap-loud",
+    "serialNumber": "NENEZ-4498-B97E6EDC",
+    "status": "confirmed",
+    "registeredAt": "2026-07-04T18:05:10.785Z"
+  }
+]

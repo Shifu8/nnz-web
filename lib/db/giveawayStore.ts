@@ -17,7 +17,9 @@ const memStore = new Map<string, GiveawayEntry>();
 
 function tryEnsureStore() {
   try {
-    return ensureStore();
+    const store = ensureStore();
+    if (store.kind === "local-json") return null;
+    return store;
   } catch (err) {
     if (err instanceof ApiError && err.code === "DB_UNAVAILABLE") {
       return null;

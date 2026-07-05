@@ -32,6 +32,7 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
 
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "" });
+  const [quantity, setQuantity] = useState(1);
   const [deliveryChannel, setDeliveryChannel] = useState<DeliveryChannel>("both");
   const [success, setSuccess] = useState(false);
   const [lastSerial, setLastSerial] = useState("");
@@ -83,7 +84,7 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
       const res = await fetch("/api/admin/generate-ticket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, deliveryChannel }),
+        body: JSON.stringify({ ...form, quantity, deliveryChannel }),
       });
 
       const data = await res.json();
@@ -106,6 +107,7 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
     setSuccess(false);
     setLastSerial("");
     setForm({ firstName: "", lastName: "", email: "", phone: "" });
+    setQuantity(1);
     setDeliveryChannel("both");
   };
 
@@ -236,16 +238,29 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
                     onChange={(e) => setForm({ ...form, email: e.target.value.toLowerCase() })}
                   />
 
-                  <input
-                    required={deliveryChannel !== "email"}
-                    type="tel"
-                    maxLength={10}
-                    placeholder="TELÉFONO (09XXXXXXXX)"
-                    className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-600 outline-none focus:border-[#C8FF00]/50 disabled:opacity-40"
-                    value={form.phone}
-                    disabled={deliveryChannel === "email"}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^\d]/g, "") })}
-                  />
+                  <div className="grid grid-cols-3 gap-3">
+                    <input
+                      required={deliveryChannel !== "email"}
+                      type="tel"
+                      maxLength={10}
+                      placeholder="TELÉFONO (09XXXXXXXX)"
+                      className="col-span-2 w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-600 outline-none focus:border-[#C8FF00]/50 disabled:opacity-40"
+                      value={form.phone}
+                      disabled={deliveryChannel === "email"}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^\d]/g, "") })}
+                    />
+                    <select
+                      className="col-span-1 w-full rounded-xl border border-white/10 bg-black/50 px-2 py-3 text-xs font-bold text-white outline-none focus:border-[#C8FF00]/50"
+                      value={quantity}
+                      onChange={(e) => setQuantity(Number(e.target.value))}
+                    >
+                      {[1, 2, 3, 4, 5, 10, 15, 20, 50].map((n) => (
+                        <option key={n} value={n} className="bg-black text-white text-center">
+                          {n} Qty
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
                   <div className="space-y-2">
                     <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">

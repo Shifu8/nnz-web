@@ -2,6 +2,8 @@ import "server-only";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
 import { adminDb } from "@/lib/firebase/adminApp";
 import {
   ApiError,
@@ -75,6 +77,25 @@ export type ActivatedPass = {
 
 async function loadPendingTicketForActivation(transactionId: string): Promise<ActivateTicketInput> {
   const store = ensureStore();
+
+  if (store.kind === "local-json") {
+    const tickets = readJsonFile<any>("tickets");
+    const data = tickets.find((t: any) => t.id === transactionId);
+    if (!data) throw new ApiError(404, "Orden no encontrada.", "TICKET_NOT_FOUND");
+    return {
+      transactionId,
+      firstName: data.firstName || data.first_name,
+      lastName: data.lastName || data.last_name,
+      phone: decryptSensitive(data.phoneEncrypted || data.phone_encrypted),
+      email: decryptSensitive(data.emailEncrypted || data.email_encrypted),
+      documentNumber: decryptSensitive(data.documentEncrypted || data.document_encrypted),
+      eventId: data.eventId || data.event_id,
+      amount: Number(data.amount),
+      processorTicketNumber: String(data.processorTicketNumber || data.processor_ticket_number || transactionId),
+      processorResponse: data.processorResponse || data.processor_response || {},
+      fromPendingOnly: true,
+    };
+  }
 
   if (store.kind === "supabase") {
     const { data, error } = await store.supabase
@@ -163,6 +184,20 @@ async function loadPendingTicketForActivation(transactionId: string): Promise<Ac
 export async function getActivatedPassByTransactionId(transactionId: string): Promise<ActivatedPass | null> {
   const store = ensureStore();
 
+  if (store.kind === "local-json") {
+    const tickets = readJsonFile<any>("tickets");
+    const data = tickets.find((t: any) => t.id === transactionId && (t.status === "approved" || t.status === "confirmed"));
+    if (!data || !(data.serialNumber || data.serial_number) || !(data.qrPayloadEncrypted || data.qr_payload_encrypted)) return null;
+    return {
+      firstName: data.firstName || data.first_name,
+      lastName: data.lastName || data.last_name,
+      serialNumber: data.serialNumber || data.serial_number,
+      qrPayload: decryptSensitive(data.qrPayloadEncrypted || data.qr_payload_encrypted),
+      email: decryptSensitive(data.emailEncrypted || data.email_encrypted),
+      phone: decryptSensitive(data.phoneEncrypted || data.phone_encrypted),
+    };
+  }
+
   if (store.kind === "supabase") {
     const { data } = await store.supabase
       .from("tickets")
@@ -208,7 +243,7 @@ export function ensureStore() {
   const supabase = getSupabase();
   if (supabase) return { kind: "supabase" as const, supabase };
   if (adminDb) return { kind: "firestore" as const, db: adminDb };
-  throw new ApiError(503, "Base de datos no configurada. Configura Supabase o Firebase Admin.", "DB_UNAVAILABLE");
+  return { kind: "local-json" as const };
 }
 
 function normalizeTicket(input: PendingTicketInput | ActivateTicketInput) {
@@ -228,6 +263,18 @@ function serialFor(transactionId: string): string {
 
 async function assertNoActivePassForPhone(phoneHash: string, eventId: string) {
   const store = ensureStore();
+
+  if (store.kind === "local-json") {
+    const accessDrops = readJsonFile<any>("access_drops");
+    const existing = accessDrops.find(
+      (ad: any) =>
+        (ad.phoneHash === phoneHash || ad.phone_hash === phoneHash) &&
+        (ad.eventId === eventId || ad.event_id === eventId) &&
+        ad.status === "confirmed",
+    );
+    if (existing) throw new ApiError(409, "Este telefono ya tiene un ticket activo.", "DUPLICATE_TICKET");
+    return;
+  }
 
   if (store.kind === "supabase") {
     const { data, error } = await store.supabase
@@ -286,6 +333,13 @@ export async function createPendingTicket(input: PendingTicketInput) {
     updatedAt: now,
   };
 
+  if (store.kind === "local-json") {
+    const tickets = readJsonFile<any>("tickets");
+    tickets.push(record);
+    writeJsonFile("tickets", tickets);
+    return;
+  }
+
   if (store.kind === "supabase") {
     const { error } = await store.supabase.from("tickets").insert({
       id: record.id,
@@ -323,6 +377,35 @@ export async function fulfillApprovedTicketFromWebhook(input: {
   processorResponse: unknown;
 }): Promise<{ fulfilled: boolean; alreadyFulfilled?: boolean }> {
   const store = ensureStore();
+
+  if (store.kind === "local-json") {
+    const tickets = readJsonFile<any>("tickets");
+    const ticket = tickets.find((t: any) => t.id === input.transactionId);
+    if (!ticket) return { fulfilled: false };
+
+    if ((ticket.status === "approved" || ticket.status === "confirmed") && (ticket.serialNumber || ticket.serial_number)) {
+      return { fulfilled: false, alreadyFulfilled: true };
+    }
+
+    if (ticket.status !== "pending") {
+      return { fulfilled: false };
+    }
+
+    await activateTicket({
+      transactionId: input.transactionId,
+      firstName: ticket.firstName || ticket.first_name,
+      lastName: ticket.lastName || ticket.last_name,
+      phone: decryptSensitive(ticket.phoneEncrypted || ticket.phone_encrypted),
+      email: decryptSensitive(ticket.emailEncrypted || ticket.email_encrypted),
+      documentNumber: decryptSensitive(ticket.documentEncrypted || ticket.document_encrypted),
+      eventId: ticket.eventId || ticket.event_id,
+      amount: Number(ticket.amount),
+      processorTicketNumber: input.processorTicketNumber,
+      processorResponse: input.processorResponse,
+    });
+
+    return { fulfilled: true };
+  }
 
   if (store.kind === "supabase") {
     const { data: ticket, error } = await store.supabase
@@ -393,6 +476,19 @@ export async function markTicketDeclined(input: DeclineTicketInput) {
   const now = new Date().toISOString();
   const safeReason = input.reason.slice(0, 240);
 
+  if (store.kind === "local-json") {
+    const tickets = readJsonFile<any>("tickets");
+    const idx = tickets.findIndex((t: any) => t.id === input.transactionId);
+    if (idx !== -1) {
+      tickets[idx].status = "declined";
+      tickets[idx].declineReason = safeReason;
+      tickets[idx].processorResponse = input.processorResponse ?? null;
+      tickets[idx].updatedAt = now;
+      writeJsonFile("tickets", tickets);
+    }
+    return;
+  }
+
   if (store.kind === "supabase") {
     await store.supabase
       .from("tickets")
@@ -447,6 +543,97 @@ export async function activateTicket(input: ActivateTicketInput): Promise<Activa
   const emailHash = hashLookup(ticket.email);
   const documentHash = hashLookup(ticket.documentNumber);
   const encryptedQrPayload = encryptSensitive(qrPayload);
+
+  if (store.kind === "local-json") {
+    const accessDrops = readJsonFile<any>("access_drops");
+    const existingDup = accessDrops.find(
+      (ad: any) =>
+        (ad.phoneHash === phoneHash || ad.phone_hash === phoneHash) &&
+        (ad.eventId === ticket.eventId || ad.event_id === ticket.eventId) &&
+        ad.status === "confirmed",
+    );
+    if (existingDup) {
+      throw new ApiError(409, "Este telefono ya tiene un ticket activo.", "DUPLICATE_TICKET");
+    }
+
+    const tickets = readJsonFile<any>("tickets");
+    const tIdx = tickets.findIndex((t: any) => t.id === ticket.transactionId);
+    if (tIdx !== -1) {
+      tickets[tIdx].status = "approved";
+      tickets[tIdx].processorTicketNumber = ticket.processorTicketNumber;
+      tickets[tIdx].processorResponse = ticket.processorResponse;
+      tickets[tIdx].serialNumber = serialNumber;
+      tickets[tIdx].qrPayloadEncrypted = encryptedQrPayload;
+      tickets[tIdx].activatedAt = now;
+      tickets[tIdx].updatedAt = now;
+      writeJsonFile("tickets", tickets);
+    } else {
+      // If manual ticket generation, the ticket record might not exist yet, let's create it!
+      tickets.push({
+        id: ticket.transactionId,
+        firstName: ticket.firstName,
+        lastName: ticket.lastName,
+        phoneHash,
+        phoneEncrypted: encryptSensitive(ticket.phone),
+        emailHash,
+        emailEncrypted: encryptSensitive(ticket.email),
+        documentHash,
+        documentEncrypted: encryptSensitive(ticket.documentNumber),
+        eventId: ticket.eventId,
+        amount: ticket.amount,
+        status: "approved",
+        processor: ticket.processorTicketNumber ? "payphone" : "admin_manual",
+        processorTicketNumber: ticket.processorTicketNumber,
+        processorResponse: ticket.processorResponse,
+        serialNumber,
+        qrPayloadEncrypted: encryptedQrPayload,
+        activatedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      });
+      writeJsonFile("tickets", tickets);
+    }
+
+    accessDrops.push({
+      id: participantId,
+      firstName: ticket.firstName,
+      lastName: ticket.lastName,
+      phoneHash,
+      phoneEncrypted: encryptSensitive(ticket.phone),
+      emailHash,
+      emailEncrypted: encryptSensitive(ticket.email),
+      documentHash,
+      documentEncrypted: encryptSensitive(ticket.documentNumber),
+      eventId: ticket.eventId,
+      serialNumber,
+      status: "confirmed",
+      registeredAt: now,
+    });
+    writeJsonFile("access_drops", accessDrops);
+
+    const partyPasses = readJsonFile<any>("party_passes");
+    partyPasses.push({
+      serialNumber,
+      codeHash: hashToken(qrToken),
+      eventId: ticket.eventId,
+      participantId,
+      used: false,
+      expiresAt,
+      qrPayloadEncrypted: encryptedQrPayload,
+      type: "FOUNDING_DAWG",
+      createdAt: now,
+    });
+    writeJsonFile("party_passes", partyPasses);
+
+    return {
+      firstName: ticket.firstName,
+      lastName: ticket.lastName,
+      serialNumber,
+      qrPayload,
+      email: ticket.email,
+      phone: ticket.phone,
+    };
+  }
 
   if (store.kind === "supabase") {
     const { data: existingDup, error: dupError } = await store.supabase
@@ -607,6 +794,19 @@ export async function recordTicketResend(input: {
     created_at: now,
   };
 
+  if (store.kind === "local-json") {
+    const resends = readJsonFile<any>("ticket_resends");
+    resends.push({
+      serialNumber: input.serialNumber,
+      channel: input.channel,
+      ipHash: hashLookup(input.ip),
+      userAgentHash: hashLookup(input.userAgent),
+      createdAt: now,
+    });
+    writeJsonFile("ticket_resends", resends);
+    return;
+  }
+
   if (store.kind === "supabase") {
     await store.supabase.from("ticket_resends").insert(record);
     return;
@@ -624,6 +824,16 @@ export async function recordTicketResend(input: {
 export async function countRecentResends(serialNumber: string, windowMs: number): Promise<number> {
   const store = ensureStore();
   const since = new Date(Date.now() - windowMs).toISOString();
+
+  if (store.kind === "local-json") {
+    const resends = readJsonFile<any>("ticket_resends");
+    const count = resends.filter(
+      (r: any) =>
+        (r.serialNumber === serialNumber || r.serial_number === serialNumber) &&
+        (r.createdAt || r.created_at) >= since,
+    ).length;
+    return count;
+  }
 
   if (store.kind === "supabase") {
     const { count, error } = await store.supabase
@@ -646,6 +856,28 @@ export async function countRecentResends(serialNumber: string, windowMs: number)
 export async function recoverPassByPhone(phone: string): Promise<(ActivatedPass & { used: boolean }) | null> {
   const store = ensureStore();
   const phoneHash = hashLookup(sanitizePhone(phone));
+
+  if (store.kind === "local-json") {
+    const accessDrops = readJsonFile<any>("access_drops");
+    const access = accessDrops.find(
+      (ad: any) =>
+        (ad.phoneHash === phoneHash || ad.phone_hash === phoneHash || ad.phone === sanitizePhone(phone)) &&
+        ad.status === "confirmed",
+    );
+    if (!access) return null;
+
+    const partyPasses = readJsonFile<any>("party_passes");
+    const pass = partyPasses.find((p: any) => (p.serialNumber === access.serialNumber || p.serial_number === access.serial_number));
+    if (!pass) throw new ApiError(500, "No se pudo recuperar el QR.", "DB_ERROR");
+
+    return {
+      firstName: access.firstName || access.first_name,
+      lastName: access.lastName || access.last_name,
+      serialNumber: access.serialNumber || access.serial_number,
+      qrPayload: decryptSensitive(pass.qrPayloadEncrypted || pass.qr_payload_encrypted),
+      used: Boolean(pass.used),
+    };
+  }
 
   if (store.kind === "supabase") {
     const { data: access, error } = await store.supabase
@@ -713,6 +945,42 @@ export async function validatePassOnce(input: {
   const store = ensureStore();
   const now = new Date().toISOString();
   const tokenHash = hashToken(input.token);
+
+  if (store.kind === "local-json") {
+    const partyPasses = readJsonFile<any>("party_passes");
+    const passIdx = partyPasses.findIndex(
+      (p: any) =>
+        (p.serialNumber === input.serialNumber || p.serial_number === input.serialNumber) &&
+        (p.eventId === input.eventId || p.event_id === input.eventId) &&
+        (p.codeHash === tokenHash || p.code_hash === tokenHash),
+    );
+
+    if (passIdx === -1) {
+      const pass = partyPasses.find((p: any) => (p.serialNumber === input.serialNumber || p.serial_number === input.serialNumber));
+      if (!pass) return { valid: false, error: "PASE NO ENCONTRADO", reason: "not_found" };
+      if ((pass.codeHash || pass.code_hash) !== tokenHash) return { valid: false, error: "QR NO COINCIDE CON ESTE PASE", reason: "invalid_token" };
+      if (pass.used) return { valid: false, error: "QR YA USADO", reason: "used", scannedAt: pass.scannedAt || pass.scanned_at };
+      if (new Date(pass.expiresAt || pass.expires_at) <= new Date()) return { valid: false, error: "PASE EXPIRADO", reason: "expired" };
+      return { valid: false, error: "NO SE PUDO VALIDAR EL PASE", reason: "db_unavailable" };
+    }
+
+    const pass = partyPasses[passIdx];
+    if (pass.used) return { valid: false, error: "QR YA USADO", reason: "used", scannedAt: pass.scannedAt || pass.scanned_at };
+    if (new Date(pass.expiresAt || pass.expires_at) <= new Date()) return { valid: false, error: "PASE EXPIRADO", reason: "expired" };
+
+    partyPasses[passIdx].used = true;
+    partyPasses[passIdx].scannedAt = now;
+    partyPasses[passIdx].scannedBy = input.staffSessionId;
+    partyPasses[passIdx].scanIpHash = hashLookup(input.ip);
+    partyPasses[passIdx].scanUserAgentHash = hashLookup(input.userAgent);
+    writeJsonFile("party_passes", partyPasses);
+
+    return {
+      valid: true,
+      message: "ACCESO PERMITIDO",
+      passInfo: { serialNumber: pass.serialNumber || pass.serial_number, eventId: pass.eventId || pass.event_id, scannedAt: now },
+    };
+  }
 
   if (store.kind === "supabase") {
     const { data, error } = await store.supabase
@@ -794,4 +1062,25 @@ export async function validatePassOnce(input: {
       },
     };
   });
+}
+
+function getJsonFile(name: string): string {
+  const dir = path.join(process.cwd(), "data");
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return path.join(dir, `${name}.json`);
+}
+
+export function readJsonFile<T>(name: string): T[] {
+  const file = getJsonFile(name);
+  if (!fs.existsSync(file)) return [];
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8")) as T[];
+  } catch {
+    return [];
+  }
+}
+
+export function writeJsonFile<T>(name: string, data: T[]): void {
+  const file = getJsonFile(name);
+  fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf8");
 }

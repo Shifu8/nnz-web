@@ -203,6 +203,9 @@ export default function EventTicketCarousel({
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef(0);
   const dragOffsetRef = useRef(0);
+  const clickStartRef = useRef<{ x: number; y: number } | null>(null);
+  const clickMovedRef = useRef(false);
+  const clickThreshold = 8;
 
   // Mouse tilt parallax offsets
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
@@ -233,6 +236,8 @@ export default function EventTicketCarousel({
     setIsDragging(true);
     dragStartRef.current = e.clientX;
     dragOffsetRef.current = 0;
+    clickStartRef.current = { x: e.clientX, y: e.clientY };
+    clickMovedRef.current = false;
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -241,12 +246,20 @@ export default function EventTicketCarousel({
     const deg = deltaX * 0.15;
     dragOffsetRef.current = deg;
     setDragOffset(deg);
+    if (clickStartRef.current) {
+      const moveX = Math.abs(e.clientX - clickStartRef.current.x);
+      const moveY = Math.abs(e.clientY - clickStartRef.current.y);
+      if (moveX > clickThreshold || moveY > clickThreshold) {
+        clickMovedRef.current = true;
+      }
+    }
   };
 
   const handleMouseUp = () => {
     if (!isDragging) return;
     setIsDragging(false);
-    
+    clickStartRef.current = null;
+
     // Snapping threshold
     const finalOffset = dragOffsetRef.current;
     if (Math.abs(finalOffset) > 6) {
@@ -266,6 +279,8 @@ export default function EventTicketCarousel({
     setIsDragging(true);
     dragStartRef.current = e.touches[0].clientX;
     dragOffsetRef.current = 0;
+    clickStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    clickMovedRef.current = false;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -274,6 +289,13 @@ export default function EventTicketCarousel({
     const deg = deltaX * 0.22;
     dragOffsetRef.current = deg;
     setDragOffset(deg);
+    if (clickStartRef.current) {
+      const moveX = Math.abs(e.touches[0].clientX - clickStartRef.current.x);
+      const moveY = Math.abs(e.touches[0].clientY - clickStartRef.current.y);
+      if (moveX > clickThreshold || moveY > clickThreshold) {
+        clickMovedRef.current = true;
+      }
+    }
   };
 
   const handleTouchEnd = () => {
@@ -339,9 +361,15 @@ export default function EventTicketCarousel({
             <div
               key={event.id}
               onClick={() => {
+                if (clickMovedRef.current) {
+                  clickMovedRef.current = false;
+                  return;
+                }
                 if (diff !== 0) {
                   setActiveIndex(idx);
+                  return;
                 }
+                onBuy(event);
               }}
               className={`absolute w-[290px] h-[410px] md:w-[330px] md:h-[460px] lg:w-[370px] lg:h-[520px] rounded-[32px] overflow-hidden cursor-pointer origin-center transition-all animate-float ${
                 diff === 0 && isTicketPulse ? "ticket-pulse-active" : ""

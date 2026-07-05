@@ -1,0 +1,13 @@
+[
+  {
+    "serialNumber": "NENEZ-4498-B97E6EDC",
+    "codeHash": "b7eb018b2025c0af7d898f0434fdbb384a45ea634091a684c26786cbe40e5c95",
+    "eventId": "trap-loud",
+    "participantId": "c4db173c-916d-42ef-a04c-1910ddcb7726",
+    "used": false,
+    "expiresAt": "2026-07-11T18:05:10.785Z",
+    "qrPayloadEncrypted": "v1:sjdS7GafP9L5Znw+:yDodiY6GbxZmgFrh1CZnnA==:j+Dmae2043FFoVjX91JCf4kIcANzaj/EVvMMyWdGOfAD/xLd60cNwfuDg8PBYz70+8FMehInY6bDT3rRkXWkwY/E4xlLzqON56mWotahWJMI2C1J2mG5jzr/TUFouUKQ6ycY4wEe9KUA/cE0oXCbURIYZQXIe26DddaUGB+N6U7dRM/1Ji0s0gccjZtBF49unMV1ViEujLefFbw/WMOse0IqJljWC147fKr3",
+    "type": "ADMIN_GUEST",
+    "createdAt": "2026-07-04T18:05:10.785Z"
+  }
+]

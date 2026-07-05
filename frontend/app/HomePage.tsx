@@ -22,7 +22,7 @@ import {
   X,
   Share2
 } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useDragControls } from "framer-motion";
 import Atmosphere from "@/frontend/components/Atmosphere";
 import AIChatbot from "@/frontend/components/AIChatbot";
 import PurchaseFarewell from "@/frontend/components/PurchaseFarewell";
@@ -66,6 +66,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   const [showFarewell, setShowFarewell] = useState(false);
   const [farewellName, setFarewellName] = useState("");
   const accessDropRef = useRef<AccessDropHandle>(null);
+  const checkoutDragControls = useDragControls();
   const [isTicketPulse, setIsTicketPulse] = useState(false);
   const [isRecoveryPulse, setIsRecoveryPulse] = useState(false);
   const [showEventModal, setShowEventModal] = useState(false);
@@ -697,9 +698,6 @@ export default function HomePage({ initialConfig }: HomePageProps) {
           <p className="text-xl font-black uppercase tracking-[0.4em] text-white/90">
             {config.footer.brand}
           </p>
-          <p className="text-[9px] uppercase tracking-[0.24em] text-zinc-600">
-            {config.footer.tagline}
-          </p>
           <a
             href={`https://mail.google.com/mail/?view=cm&fs=1&to=${config.footer.email}`}
             target="_blank"
@@ -723,11 +721,30 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         <motion.div
           animate={isTicketModalOpen ? { y: 0, opacity: 1 } : { y: 60, opacity: 0 }}
           transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          drag="y"
+          dragControls={checkoutDragControls}
+          dragListener={false}
+          dragConstraints={{ top: 0, bottom: 0 }}
+          dragElastic={{ top: 0.05, bottom: 0.85 }}
+          onDragEnd={(event, info) => {
+            if (info.offset.y > 150 || info.velocity.y > 500) {
+              if (accessDropRef.current?.isSuccess) {
+                setFarewellName(accessDropRef.current.firstName);
+                setShowFarewell(true);
+                accessDropRef.current?.reset();
+                setShowDetailOverlay(false);
+              }
+              setIsTicketModalOpen(false);
+            }
+          }}
           className="relative w-full h-[96dvh] md:h-[92vh] md:max-w-[1020px] md:mx-4 overflow-hidden flex flex-col rounded-t-[32px] md:rounded-[36px] border border-white/[0.07] bg-[#060606] shadow-[0_-20px_80px_rgba(0,0,0,0.8)] md:shadow-[0_40px_120px_rgba(0,0,0,0.9)]"
         >
           {/* Drag handle — mobile only */}
-          <div className="md:hidden flex justify-center pt-3 pb-1 shrink-0">
-            <div className="h-1 w-10 rounded-full bg-white/20" />
+          <div
+            className="md:hidden flex justify-center pt-3 pb-3 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+            onPointerDown={(e) => checkoutDragControls.start(e)}
+          >
+            <div className="h-1.5 w-12 rounded-full bg-white/20" />
           </div>
 
           <button

@@ -7,7 +7,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useDragControls } from "framer-motion";
 import {
   X,
   MapPin,
@@ -112,6 +112,7 @@ export default function EventDetailOverlay({
   const [scrolled, setScrolled] = useState(false);
   const [activeMerchIdx, setActiveMerchIdx] = useState(0);
   const relatedEvents = allEvents.filter((e) => e.id !== event.id);
+  const dragControls = useDragControls();
 
   const handleGoToMerch = () => {
     onClose();
@@ -183,6 +184,16 @@ export default function EventDetailOverlay({
         animate={isCheckoutOpen ? { opacity: 0.4, scale: 0.95, y: -12 } : overlayTransition.visible}
         exit={overlayTransition.exit}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        drag="y"
+        dragControls={dragControls}
+        dragListener={false}
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0.05, bottom: 0.85 }}
+        onDragEnd={(event, info) => {
+          if (info.offset.y > 150 || info.velocity.y > 500) {
+            onClose();
+          }
+        }}
         className="relative w-full h-[96dvh] md:h-[96vh] md:max-w-[860px] overflow-hidden flex flex-col rounded-t-[32px] md:rounded-[36px] bg-[#060606]"
         style={{
           border: "1px solid rgba(255,255,255,0.07)",
@@ -190,8 +201,11 @@ export default function EventDetailOverlay({
         }}
       >
         {/* Drag handle — mobile only */}
-        <div className="md:hidden flex justify-center pt-3 pb-1 shrink-0">
-          <div className="h-1 w-10 rounded-full bg-white/20" />
+        <div
+          className="md:hidden flex justify-center pt-3 pb-3 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          onPointerDown={(e) => dragControls.start(e)}
+        >
+          <div className="h-1.5 w-12 rounded-full bg-white/20" />
         </div>
         {/* Sticky close button — always on top */}
         <button

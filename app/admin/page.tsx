@@ -48,7 +48,7 @@ const tooltipNumber = (value: unknown) => {
   return 0;
 };
 
-const ADMIN_CREDENTIALS = { user: "admin", pass: "nenez2026" };
+const ADMIN_CREDENTIALS = { user: "admin" };
 
 const SIDEBAR_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -197,8 +197,8 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
     event.preventDefault();
     setError("");
 
-    if (user.trim().toLowerCase() !== ADMIN_CREDENTIALS.user || pass !== ADMIN_CREDENTIALS.pass) {
-      setError("Credenciales incorrectas");
+    if (user.trim().toLowerCase() !== ADMIN_CREDENTIALS.user) {
+      setError("Usuario incorrecto");
       return;
     }
 
@@ -209,14 +209,14 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/turnstile/verify", {
+      const res = await fetch("/api/staff/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "admin_login", variant: "invisible", turnstileToken }),
+        body: JSON.stringify({ password: pass, role: "admin", turnstileToken }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
-        setError(data.error || "Verificacion invalida");
+        setError(data.error || "Credenciales incorrectas");
         resetTurnstile();
         return;
       }
@@ -945,18 +945,6 @@ function AdminDashboardInner({ onLogout, onOpenDesigner }: { onLogout: () => voi
       case "entradas":
         return (
           <div className="space-y-5 p-4 md:p-6">
-            <div className="flex items-center justify-between rounded-[26px] border border-[#ffd36a]/20 bg-[#ffd36a]/[0.06] p-5 shadow-[0_0_40px_rgba(255,211,106,0.04)]">
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/[0.42]">Personalizacion</p>
-                <p className="text-xl font-black text-white">Disena tu entrada</p>
-              </div>
-              <button
-                onClick={onOpenDesigner}
-                className="flex items-center gap-2 rounded-full border border-[#ffd36a]/25 bg-[#ffd36a]/[0.12] px-5 py-3 text-[10px] font-black uppercase tracking-[0.1em] text-[#ffd36a] transition hover:bg-[#ffd36a]/[0.18]"
-              >
-                <Palette className="h-4 w-4" /> Disenar Entrada
-              </button>
-            </div>
             <TicketDesignsManager events={events} />
           </div>
         );

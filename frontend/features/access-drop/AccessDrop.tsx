@@ -15,7 +15,7 @@ import {
   getEmailSuggestion,
 } from "@/frontend/utils/emailInput";
 import { validateReceiptFileMetadata } from "@/lib/access-drop/fileValidation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardCopy, ClipboardCheck } from "lucide-react";
 import { getEventDesigns, type TicketDesign } from "@/lib/tickets/designs";
 
 
@@ -307,6 +307,24 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
 
   const totalPrice = quantity * pricePerTicket;
   const selectedBankData = BANKS.find((b) => b.id === selectedBank)!;
+  const [copiedAccount, setCopiedAccount] = useState<string | null>(null);
+  const [showCopyToast, setShowCopyToast] = useState(false);
+
+  const handleCopyAccount = async () => {
+    const digitsOnly = selectedBankData.account.replace(/\D+/g, "");
+    try {
+      await navigator.clipboard.writeText(digitsOnly);
+      setCopiedAccount(selectedBankData.id);
+      setShowCopyToast(true);
+      window.setTimeout(() => {
+        setCopiedAccount(null);
+        setShowCopyToast(false);
+      }, 1800);
+    } catch {
+      setCopiedAccount(null);
+      setShowCopyToast(false);
+    }
+  };
 
   return (
     <>
@@ -406,9 +424,6 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                       </datalist>
                       {/* Hint única vez */}
                       <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                        <span className="text-[7px] text-zinc-600 font-medium tracking-wide">
-                          Usa el correo donde recibirás tu entrada.
-                        </span>
                         {emailHint.text && (
                           <span className={`text-[7px] font-bold uppercase tracking-wider ${emailHint.tone === "ok" ? "text-zinc-500" : "text-zinc-600"}`}>
                             {emailHint.text}
@@ -487,12 +502,48 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                             <span className="block text-[7px] font-black uppercase tracking-widest text-zinc-600">A nombre de</span>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <span className="text-xs font-black text-white uppercase tracking-wide">MEDINA BRANDON</span>
-                              <span className="rounded-full border border-zinc-800 bg-zinc-900 px-1.5 py-0.5 text-[6px] font-black uppercase tracking-wider text-zinc-500">NENEZ</span>
+                              <span className="rounded-full border border-zinc-800 bg-zinc-900 px-1.5 py-0.5 text-[6px] font-black uppercase tracking-wider text-zinc-500">NENEZ MEMBER</span>
                             </div>
                           </div>
                           <div>
                             <span className="block text-[7px] font-black uppercase tracking-widest text-zinc-600">Cuenta</span>
-                            <p className="text-xs font-black text-white tracking-wider mt-0.5">{selectedBankData.account}</p>
+                            <div className="relative mt-0.5">
+                              <div
+                                className="flex items-center gap-1 rounded-xl border border-white/10 bg-zinc-950/90 px-2.5 py-2"
+                                onClick={handleCopyAccount}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    handleCopyAccount();
+                                  }
+                                }}
+                              >
+                                <p className="flex-1 min-w-0 text-xs font-black text-white tracking-wider">{selectedBankData.account}</p>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCopyAccount();
+                                  }}
+                                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition hover:bg-white/15"
+                                  aria-label="Copiar cuenta"
+                                >
+                                  {copiedAccount === selectedBankData.id ? (
+                                    <ClipboardCheck className="h-4 w-4" />
+                                  ) : (
+                                    <ClipboardCopy className="h-4 w-4" />
+                                  )}
+                                </button>
+                              </div>
+                              <div
+                                className={`absolute right-0 top-0 -translate-y-full rounded-full bg-white/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-white shadow-lg backdrop-blur-xl transition-all duration-300 ease-out ${showCopyToast ? "opacity-100 translate-y-0" : "opacity-0"}`}
+                                aria-live="polite"
+                              >
+                                Texto copiado
+                              </div>
+                            </div>
                           </div>
                           <div>
                             <span className="block text-[7px] font-black uppercase tracking-widest text-zinc-600">Se aceptan</span>

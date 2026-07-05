@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ensureStore } from "@/lib/db/passStore";
+import { ensureStore, readJsonFile } from "@/lib/db/passStore";
 import { decryptSensitive, handleApiError } from "@/lib/security";
 import { generateTicketQrPng } from "@/lib/tickets/ticketImage";
 import { verifyTicketImageToken } from "@/lib/tickets/ticketImageToken";
@@ -21,7 +21,14 @@ export async function GET(request: Request, context: RouteContext) {
     const store = ensureStore();
     let qrPayload = "";
 
-    if (store.kind === "supabase") {
+    if (store.kind === "local-json") {
+      const partyPasses = readJsonFile<any>("party_passes");
+      const pass = partyPasses.find((p: any) => p.serialNumber === serialNumber || p.serial_number === serialNumber);
+      if (!pass?.qrPayloadEncrypted && !pass?.qr_payload_encrypted) {
+        return new NextResponse("Not found", { status: 404 });
+      }
+      qrPayload = decryptSensitive(pass.qrPayloadEncrypted || pass.qr_payload_encrypted);
+    } else if (store.kind === "supabase") {
       const { data } = await store.supabase
         .from("party_passes")
         .select("qr_payload_encrypted")

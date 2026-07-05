@@ -5,6 +5,7 @@ import { Trash2, Plus, Loader2, Palette, Image as ImageIcon, Check } from "lucid
 import type { AdminEvent } from "@/lib/admin/types";
 import { useToast } from "./Toast";
 import type { TicketDesign } from "@/lib/tickets/designs";
+import { emailDomains, cleanEmailInput } from "@/frontend/utils/emailInput";
 
 type TicketDesignsManagerProps = {
   events: AdminEvent[];
@@ -24,6 +25,12 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Send Tickets State
+  const [recipientForm, setRecipientForm] = useState({ firstName: "", lastName: "", email: "" });
+  const [ticketQuantity, setTicketQuantity] = useState(1);
+  const [selectedDesignId, setSelectedDesignId] = useState<string>("");
+  const [sendingTickets, setSendingTickets] = useState(false);
+
   // Set default event
   useEffect(() => {
     if (events.length > 0 && !selectedEventId) {
@@ -41,7 +48,11 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
       const res = await fetch(`/api/admin/ticket-designs?eventId=${selectedEventId}`);
       const data = await res.json();
       if (data.success) {
-        setDesigns(data.designs || []);
+        const loaded = data.designs || [];
+        setDesigns(loaded);
+        if (loaded.length > 0) {
+          setSelectedDesignId(loaded[0].id);
+        }
       } else {
         toast("error", "Error al cargar diseños", data.error);
       }
@@ -118,6 +129,45 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
     } catch (err) {
       console.error(err);
       toast("error", "Error de red", "No se pudo eliminar el diseño.");
+    }
+  };
+
+  // Handle Send Tickets
+  const handleSendTickets = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!recipientForm.firstName || !recipientForm.lastName) {
+      toast("error", "Campos incompletos", "Por favor completa el nombre y apellido.");
+      return;
+    }
+
+    setSendingTickets(true);
+    try {
+      const res = await fetch("/api/admin/generate-ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: recipientForm.firstName,
+          lastName: recipientForm.lastName,
+          email: recipientForm.email || undefined,
+          quantity: ticketQuantity,
+          ticketDesign: selectedDesignId || undefined,
+          deliveryChannel: "email",
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        toast("success", "Entradas enviadas", `Se generaron y enviaron ${ticketQuantity} entrada(s) correctamente.`);
+        setRecipientForm({ firstName: "", lastName: "", email: "" });
+        setTicketQuantity(1);
+      } else {
+        toast("error", "Error al enviar", data.error || "No se pudieron enviar las entradas.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast("error", "Error de red", "No se pudo conectar con el servidor.");
+    } finally {
+      setSendingTickets(false);
     }
   };
 
@@ -313,6 +363,129 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
                 ) : (
                   <>
                     <Plus className="h-4 w-4" /> Agregar Diseño
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+
+          {/* Send Tickets Form */}
+          <div className="rounded-2xl border border-white/5 bg-zinc-950/20 p-5 space-y-4">
+            <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+              <Plus className="h-4 w-4 text-[#C8FF00]" /> Enviar Entradas VIP (Gmail)
+            </h3>
+
+            <form onSubmit={handleSendTickets} className="space-y-4">
+              <div>
+                <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1.5">
+                  Seleccionar Diseño de Entrada
+                </label>
+                <select
+                  className="w-full rounded-xl border border-white/10 bg-zinc-900/60 px-3 py-2 text-xs font-bold text-white outline-none focus:border-red-500/50"
+                  value={selectedDesignId}
+                  onChange={(e) => setSelectedDesignId(e.target.value)}
+                >
+                  {designs.map((design) => (
+                    <option key={design.id} value={design.id} className="bg-black text-white">
+                      {design.name} ({design.badge})
+                    </option>
+                  ))}
+                  {designs.length === 0 && (
+                    <option value="" className="bg-black text-white">
+                      Diseño por defecto (1)
+                    </option>
+                  )}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1.5">
+                    Nombre
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej: JUAN"
+                    value={recipientForm.firstName}
+                    onChange={(e) => setRecipientForm({ ...recipientForm, firstName: e.target.value.toUpperCase() })}
+                    className="w-full rounded-xl border border-white/10 bg-zinc-900/60 px-3 py-2 text-xs font-bold text-white outline-none focus:border-red-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1.5">
+                    Apellido
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej: PEREZ"
+                    value={recipientForm.lastName}
+                    onChange={(e) => setRecipientForm({ ...recipientForm, lastName: e.target.value.toUpperCase() })}
+                    className="w-full rounded-xl border border-white/10 bg-zinc-900/60 px-3 py-2 text-xs font-bold text-white outline-none focus:border-red-500/50"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1.5">
+                  Correo Electrónico (Gmail)
+                </label>
+                <input
+                  type="email"
+                  required
+                  list="admin-ticket-email-domains"
+                  placeholder="ejemplo@gmail.com"
+                  value={recipientForm.email}
+                  onChange={(e) => setRecipientForm({ ...recipientForm, email: cleanEmailInput(e.target.value) })}
+                  className="w-full rounded-xl border border-white/10 bg-zinc-900/60 px-3 py-2 text-xs font-bold text-white outline-none focus:border-red-500/50"
+                />
+                <datalist id="admin-ticket-email-domains">
+                  {emailDomains.map((domain) => {
+                    const local = recipientForm.email.split("@")[0] || "ejemplo";
+                    return <option key={domain} value={`${local}@${domain}`} />;
+                  })}
+                </datalist>
+              </div>
+
+              <div className="flex items-center justify-between rounded-xl border border-white/10 bg-zinc-900/40 p-3">
+                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                  Cantidad de Entradas
+                </span>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setTicketQuantity((q) => Math.max(1, q - 1))}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-zinc-950 text-xs font-bold text-white hover:bg-zinc-800 transition select-none"
+                  >
+                    -
+                  </button>
+                  <span className="w-6 text-center text-xs font-bold text-white select-none">
+                    {ticketQuantity}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setTicketQuantity((q) => Math.min(50, q + 1))}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-zinc-950 text-xs font-bold text-white hover:bg-zinc-800 transition select-none"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={sendingTickets}
+                className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-black uppercase tracking-wider text-black transition disabled:opacity-50"
+                style={{ backgroundColor: "#C8FF00" }}
+              >
+                {sendingTickets ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Enviando...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4" /> Generar y Enviar
                   </>
                 )}
               </button>

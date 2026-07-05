@@ -1,0 +1,22 @@
+[
+  {
+    "id": "b97e6edc-4d57-44f7-a5d4-b8de81a766f2",
+    "firstName": "VBBV",
+    "lastName": "BVBV",
+    "phoneHash": "c9d0a96cb727f208056e6cf0952d89dc596f2df370b33073416bbd802ff1391a",
+    "phoneEncrypted": "v1:nj4MqI5snyYMQPLA:M8nDfN44gdaXH3AUnEEkGQ==:",
+    "emailHash": "eac2f5e12afbf5664510d050928ea1154fa7f0ba92b82d6ee544a6b5ecee004d",
+    "emailEncrypted": "v1:J5adV1K6g+Zx+oRk:eK3FWMcDetCBqXnONVETpQ==:DgWwjBcepT/fHNVn0bkESwPI9g==",
+    "documentHash": "3e92f4cce6a0128dda6dd05b49974fbacfbd2af8b713f0f69ad1261533973c7a",
+    "documentEncrypted": "v1:5Z2e96ti+sUcetYn:LclLzXbXnD5q86Ih2lRlAA==:vf450lrdMY6ESQ==",
+    "eventId": "trap-loud",
+    "amount": 0,
+    "status": "approved",
+    "processor": "admin_manual",
+    "serialNumber": "NENEZ-4498-B97E6EDC",
+    "qrPayloadEncrypted": "v1:sjdS7GafP9L5Znw+:yDodiY6GbxZmgFrh1CZnnA==:j+Dmae2043FFoVjX91JCf4kIcANzaj/EVvMMyWdGOfAD/xLd60cNwfuDg8PBYz70+8FMehInY6bDT3rRkXWkwY/E4xlLzqON56mWotahWJMI2C1J2mG5jzr/TUFouUKQ6ycY4wEe9KUA/cE0oXCbURIYZQXIe26DddaUGB+N6U7dRM/1Ji0s0gccjZtBF49unMV1ViEujLefFbw/WMOse0IqJljWC147fKr3",
+    "activatedAt": "2026-07-04T18:05:10.785Z",
+    "createdAt": "2026-07-04T18:05:10.785Z",
+    "updatedAt": "2026-07-04T18:05:10.785Z"
+  }
+]

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { ensureStore } from "@/lib/db/passStore";
+import { ensureStore, readJsonFile, writeJsonFile } from "@/lib/db/passStore";
 import {
   ApiError,
   decryptSensitive,
@@ -37,7 +37,19 @@ export async function POST(request: Request) {
 
     const store = ensureStore();
 
-    if (store.kind === "supabase") {
+    if (store.kind === "local-json") {
+      const partyPasses = readJsonFile<any>("party_passes");
+      const pass = partyPasses.find((p: any) => p.serialNumber === parsed.serialNumber || p.serial_number === parsed.serialNumber);
+      if (!pass) throw new ApiError(404, "Pase no encontrado.");
+
+      const accessDrops = readJsonFile<any>("access_drops");
+      const idx = accessDrops.findIndex((ad: any) => ad.id === (pass.participantId || pass.participant_id));
+      if (idx !== -1) {
+        accessDrops[idx].phoneEncrypted = encryptSensitive(cleanPhone);
+        accessDrops[idx].phoneHash = hashLookup(cleanPhone);
+        writeJsonFile("access_drops", accessDrops);
+      }
+    } else if (store.kind === "supabase") {
       const { data: pass, error } = await store.supabase
         .from("party_passes")
         .select("participant_id")
