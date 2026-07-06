@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Users, Phone, Mail, Search, Ticket, DollarSign, Calendar } from "lucide-react";
+import { useToast } from "./Toast";
 import type { ReceiptRecord } from "@/lib/access-drop/types";
 import type { ClientInfo } from "@/lib/admin/types";
 
@@ -12,6 +13,30 @@ type ClientsSectionProps = {
 
 export default function ClientsSection({ receipts }: ClientsSectionProps) {
   const [search, setSearch] = useState("");
+  const { toast } = useToast();
+  const [resettingEmail, setResettingEmail] = useState<string | null>(null);
+
+  const handleResetRecovery = async (email: string) => {
+    if (resettingEmail) return;
+    setResettingEmail(email);
+
+    try {
+      const res = await fetch("/api/admin/reset-recovery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo resetear.");
+
+      toast("success", "Límite Reseteado", `Las solicitudes para ${email} se han restablecido a 0.`);
+    } catch (err: any) {
+      toast("error", "Error", err.message || "Error al intentar resetear.");
+    } finally {
+      setResettingEmail(null);
+    }
+  };
 
   const clients = useMemo(() => {
     const map = new Map<string, ClientInfo>();
@@ -121,20 +146,34 @@ export default function ClientsSection({ receipts }: ClientsSectionProps) {
               </div>
             </div>
 
-            {client.tickets.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-white/[0.06]">
-                <p className="text-[8px] font-bold text-zinc-600 uppercase tracking-wider mb-2">Entradas adquiridas</p>
-                <div className="flex flex-wrap gap-2">
-                  {client.tickets.map((t, i) => (
-                    <div key={i} className="flex items-center gap-2 rounded-lg border border-white/[0.04] bg-black/30 px-2.5 py-1.5">
-                      <Ticket className="h-3 w-3 text-zinc-500" />
-                      <span className="text-[7px] text-zinc-400">{t.eventTitle} x{t.quantity}</span>
-                      {t.serial && <span className="text-[7px] text-green-400 font-bold">{t.serial}</span>}
+            <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between flex-wrap gap-2">
+              <div>
+                {client.tickets.length > 0 && (
+                  <div>
+                    <p className="text-[8px] font-bold text-zinc-600 uppercase tracking-wider mb-2">Entradas adquiridas</p>
+                    <div className="flex flex-wrap gap-2">
+                      {client.tickets.map((t, i) => (
+                        <div key={i} className="flex items-center gap-2 rounded-lg border border-white/[0.04] bg-black/30 px-2.5 py-1.5">
+                          <Ticket className="h-3 w-3 text-zinc-500" />
+                          <span className="text-[7px] text-zinc-400">{t.eventTitle} x{t.quantity}</span>
+                          {t.serial && <span className="text-[7px] text-green-400 font-bold">{t.serial}</span>}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
               </div>
-            )}
+              {client.email && (
+                <button
+                  type="button"
+                  disabled={resettingEmail === client.email}
+                  onClick={() => handleResetRecovery(client.email)}
+                  className="rounded-xl border border-red-500/20 bg-red-950/10 px-3 py-1.5 text-[8px] font-black uppercase tracking-wider text-red-400 transition hover:bg-red-950/30 active:scale-95 disabled:opacity-50"
+                >
+                  {resettingEmail === client.email ? "Reseteando..." : "Resetear OTP"}
+                </button>
+              )}
+            </div>
           </motion.div>
         ))}
       </div>

@@ -392,3 +392,28 @@ export async function verifyRecoveryOtp(
     ticketSource: record.ticketSource,
   };
 }
+
+export async function resetRecoveryAttempts(email: string, eventId: string): Promise<void> {
+  const emailHash = recoveryEmailHash(email);
+  const db = getDbOrNull();
+  if (db) {
+    await db`
+      DELETE FROM ticket_recovery_logs
+      WHERE email_hash = ${emailHash}
+        AND event_id = ${eventId}
+        AND action = 'RECOVERY_OTP_SENT'
+    `;
+    return;
+  }
+
+  const file = loadRecoveryFile();
+  file.logs = file.logs.filter(
+    (log) =>
+      !(
+        log.emailHash === emailHash &&
+        log.eventId === eventId &&
+        log.action === "RECOVERY_OTP_SENT"
+      )
+  );
+  saveRecoveryFile(file);
+}
