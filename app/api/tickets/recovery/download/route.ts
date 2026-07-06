@@ -50,13 +50,20 @@ export async function GET(request: NextRequest) {
       metadata: { serialNumber: targetSerialNumber },
     });
 
+    const isPreview = request.nextUrl.searchParams.get("preview") === "true";
+    const responseHeaders: Record<string, string> = {
+      "Content-Type": "image/png",
+      "Cache-Control": "private, no-store, max-age=0",
+      "X-Content-Type-Options": "nosniff",
+    };
+    if (isPreview) {
+      responseHeaders["Content-Disposition"] = `inline; filename="entrada-${targetSerialNumber}.png"`;
+    } else {
+      responseHeaders["Content-Disposition"] = `attachment; filename="entrada-${targetSerialNumber}.png"`;
+    }
+
     return new NextResponse(new Uint8Array(png), {
-      headers: {
-        "Content-Type": "image/png",
-        "Content-Disposition": `attachment; filename="entrada-${targetSerialNumber}.png"`,
-        "Cache-Control": "private, no-store, max-age=0",
-        "X-Content-Type-Options": "nosniff",
-      },
+      headers: responseHeaders,
     });
   } catch (error) {
     console.error("[RECOVERY] download failed", error);

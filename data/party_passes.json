@@ -97,5 +97,16 @@
     "qrPayloadEncrypted": "v1:tIud2MwLuv6ADHnk:7F1rKUI022pocSFN3YC50A==:VfwDmxH8L4bNHR2JtVCqC6MSZl/IbqhGTcR9an0+gnRerxIwzmNU/w+bRI1KyEn6YDkaHvnxdCsPrvZNLILyuQsoviwdj83caqD0q5O8ZU/tat3m3GutaC14FgTeR1eBQiap7ZuuPSRLdQ2RuXgnlsALdVk/6YHipz1Kgh/qQYBvqZYrNfv/7vI09xwcm+Firbcbri1nklEW5/51llYolAu+kYU9iy3JIs5B",
     "type": "ADMIN_GUEST",
     "createdAt": "2026-07-06T15:05:50.587Z"
+  },
+  {
+    "serialNumber": "NENEZ-8800-5718760B",
+    "codeHash": "7d2a394f1883ab0c717f47046355abb50416748200d793e90ab0a873dcd77708",
+    "eventId": "trap-loud",
+    "participantId": "7e9b296a-9896-408a-a02a-7ec8a6de59b6",
+    "used": false,
+    "expiresAt": "2026-07-13T15:39:00.295Z",
+    "qrPayloadEncrypted": "v1:97ekaQohoh18b2f5:Ql/9e5udNnthYyL6JhfScA==:T2okeBovyZ1VfoLBCgMtzsIi+hPJImOgBbeilWrOuKoXy6wTli8nGZ4wPxHgGVt06iWlaIiM2P9YrbN40FNrrVLTLdSd37v2D35v1AfbqzZvCVuSOgxSxKe4Lt7IJ7bSY6SRdWA5Vd2BoWPmmQe7N/WP0LzUAiWTRDyJK7i62xVefPn5MLDiJlS9siAQcelGM7yPGPSqWcozewzpMXkSC5zfSwc5bSUTUV9u",
+    "type": "ADMIN_GUEST",
+    "createdAt": "2026-07-06T15:39:00.295Z"
   }
 ]

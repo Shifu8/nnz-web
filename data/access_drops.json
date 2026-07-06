@@ -133,5 +133,20 @@
     "serialNumber": "NENEZ-9432-5CB361A0",
     "status": "confirmed",
     "registeredAt": "2026-07-06T15:05:50.587Z"
+  },
+  {
+    "id": "7e9b296a-9896-408a-a02a-7ec8a6de59b6",
+    "firstName": "FRRF",
+    "lastName": "FRRF",
+    "phoneHash": "c9d0a96cb727f208056e6cf0952d89dc596f2df370b33073416bbd802ff1391a",
+    "phoneEncrypted": "v1:TauEsBoaWtsxbPSs:AqymLE29UN600xnAy9C8pg==:",
+    "emailHash": "728371457e962cdc920df96541847174f50e78987046b1ccfb7a90a4a6f90b10",
+    "emailEncrypted": "v1:GiWXZlfPxoszYNOz:w9AmWmxr9I+6+2+WwsLnzQ==:iilpYg54LLzbTio5AbUui3x3f3o=",
+    "documentHash": "3e92f4cce6a0128dda6dd05b49974fbacfbd2af8b713f0f69ad1261533973c7a",
+    "documentEncrypted": "v1:YDJ3dd8vWU2cLZAb:mJh6ILvAOWWUwjp58/8gjA==:0leqVHSUn9hlEg==",
+    "eventId": "trap-loud",
+    "serialNumber": "NENEZ-8800-5718760B",
+    "status": "confirmed",
+    "registeredAt": "2026-07-06T15:39:00.295Z"
   }
 ]

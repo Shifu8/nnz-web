@@ -93,7 +93,12 @@ export async function POST(request: Request) {
     }
 
     const sentToday = await countRecoveryLogs(emailHash, event.id, "RECOVERY_OTP_SENT");
-    if (sentToday >= RECOVERY_MAX_OTPS_PER_DAY) return genericOk();
+    if (sentToday >= 2) {
+      return NextResponse.json(
+        { ok: false, error: "Límite alcanzado: Máximo 2 solicitudes de recuperación de entrada por evento." },
+        { status: 400 }
+      );
+    }
 
     const otp = await createRecoveryOtp({
       email,

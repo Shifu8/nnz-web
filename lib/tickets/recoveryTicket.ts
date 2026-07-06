@@ -219,10 +219,90 @@ export async function findRecoverableTicketByEmail(
   event: ActiveTicketEvent,
 ): Promise<RecoveryTicket | null> {
   const email = sanitizeEmail(rawEmail);
-  return (
-    (await tryTicketSource("postgres", () => findPostgresTicket(email, event))) ||
-    findReceiptTicket(email, event)
-  );
+
+  const db = getDbOrNull();
+  let pgTickets: any[] = [];
+  if (db) {
+    pgTickets = await db`
+      SELECT id, first_name, last_name, email_encrypted, event_id, serial_number, qr_payload_encrypted, status
+      FROM tickets
+      WHERE email_hash = ${hashLookup(email)}
+        AND status = 'approved'
+        AND event_id IN (${event.aliases})
+        AND serial_number IS NOT NULL
+        AND qr_payload_encrypted IS NOT NULL
+      ORDER BY updated_at DESC
+    `;
+  } else {
+    try {
+      const tickets = readJsonFile<any>("tickets");
+      pgTickets = tickets.filter(
+        (t: any) =>
+          t.emailHash === hashLookup(email) &&
+          t.status === "approved" &&
+          eventMatchesActiveEvent(t.eventId || t.event_id, event) &&
+          (t.serialNumber || t.serial_number) &&
+          (t.qrPayloadEncrypted || t.qr_payload_encrypted)
+      );
+    } catch {
+      pgTickets = [];
+    }
+  }
+
+  const pgRecoveryTickets: RecoveryTicket[] = pgTickets.map((t: any) => {
+    const sNum = t.serial_number || t.serialNumber;
+    const qrEnc = t.qr_payload_encrypted || t.qrPayloadEncrypted;
+    const emailEnc = t.email_encrypted || t.emailEncrypted;
+    return {
+      id: String(t.id),
+      source: "postgres" as const,
+      eventId: String(t.event_id || t.eventId),
+      email,
+      firstName: String(t.first_name || t.firstName || ""),
+      lastName: String(t.last_name || t.lastName || ""),
+      serialNumber: sNum,
+      qrPayload: decryptStoredValue(qrEnc),
+      quantity: 1,
+      status: "APPROVED" as const,
+    };
+  });
+
+  const receiptRecoveryTickets: RecoveryTicket[] = loadAllReceipts()
+    .filter((receipt) => sanitizeEmail(receipt.email) === email)
+    .map((receipt) => receiptToTicket(receipt, event))
+    .filter((ticket): ticket is RecoveryTicket => Boolean(ticket));
+
+  const allTickets = [...pgRecoveryTickets, ...receiptRecoveryTickets];
+  if (allTickets.length === 0) return null;
+
+  const first = allTickets[0];
+  const allSerials: string[] = [];
+  const allPayloads: string[] = [];
+  for (const t of allTickets) {
+    if (t.serialNumber && t.qrPayload) {
+      const serials = t.serialNumber.split(",");
+      const payloads = t.qrPayload.split(",");
+      for (let i = 0; i < serials.length; i++) {
+        if (serials[i] && !allSerials.includes(serials[i])) {
+          allSerials.push(serials[i]);
+          allPayloads.push(payloads[i] || "");
+        }
+      }
+    }
+  }
+
+  return {
+    id: first.id,
+    source: first.source,
+    eventId: event.id,
+    email,
+    firstName: first.firstName,
+    lastName: first.lastName,
+    serialNumber: allSerials.join(","),
+    qrPayload: allPayloads.join(","),
+    quantity: allSerials.length,
+    status: "APPROVED",
+  };
 }
 
 export async function getRecoverableTicket(
@@ -230,8 +310,17 @@ export async function getRecoverableTicket(
   id: string,
   event: ActiveTicketEvent,
 ): Promise<RecoveryTicket | null> {
-  if (source === "postgres") return getPostgresTicket(id, event);
+  let targetEmail = "";
+  if (source === "postgres") {
+    const t = await getPostgresTicket(id, event);
+    if (t) targetEmail = t.email;
+  } else {
+    const receipt = loadAllReceipts().find((item) => item.id === id);
+    const t = receipt ? receiptToTicket(receipt, event) : null;
+    if (t) targetEmail = t.email;
+  }
 
-  const receipt = loadAllReceipts().find((item) => item.id === id);
-  return receipt ? receiptToTicket(receipt, event) : null;
+  if (!targetEmail) return null;
+
+  return findRecoverableTicketByEmail(targetEmail, event);
 }

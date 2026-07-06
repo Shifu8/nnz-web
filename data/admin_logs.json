@@ -109,5 +109,17 @@
       "expiresAt": "2026-07-07T03:33:27.653Z"
     },
     "createdAt": "2026-07-06T15:33:27.660Z"
+  },
+  {
+    "action": "admin_generate_ticket",
+    "metadata": {
+      "serialNumber": "NENEZ-8800-5718760B",
+      "firstName": "FRRF",
+      "lastName": "FRRF",
+      "quantity": 1,
+      "emailSent": true,
+      "emailError": ""
+    },
+    "createdAt": "2026-07-06T15:39:04.152Z"
   }
 ]

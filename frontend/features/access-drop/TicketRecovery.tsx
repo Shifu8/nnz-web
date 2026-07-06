@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import Image from "next/image";
-import { Mail, KeyRound, Check, ArrowRight, ChevronLeft } from "lucide-react";
+import { Mail, KeyRound, Check, ArrowRight, ChevronLeft, Eye, Download } from "lucide-react";
 
 import TurnstileWidget, { hasTurnstileSiteKey } from "@/frontend/components/TurnstileWidget";
 import {
@@ -50,6 +49,8 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+  const [downloadedSerials, setDownloadedSerials] = useState<string[]>([]);
+  const [previewSerial, setPreviewSerial] = useState<string | null>(null);
   const emailHint = getEmailHint(email);
   const emailSuggestion = getEmailSuggestion(email);
 
@@ -156,6 +157,20 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
     }
   };
 
+  const handleDownload = (serial: string) => {
+    const downloadUrl = `/api/tickets/recovery/download?token=${encodeURIComponent(token)}&serial=${encodeURIComponent(serial)}`;
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = `entrada-${serial}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    if (!downloadedSerials.includes(serial)) {
+      setDownloadedSerials((prev) => [...prev, serial]);
+    }
+  };
+
   const resetRecovery = () => {
     setPhase("email");
     setCode("");
@@ -163,6 +178,8 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
     setTicket(null);
     setMessage("");
     setError("");
+    setDownloadedSerials([]);
+    setPreviewSerial(null);
     resetTurnstile();
   };
 
@@ -461,7 +478,7 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                   <p className="text-[8px] font-black uppercase tracking-[0.25em] text-zinc-500 text-left">Tus entradas individuales:</p>
                   {ticket.ticketCode.split(",").map((code, idx, arr) => {
                     const qrUrl = `/api/tickets/recovery/qr?token=${encodeURIComponent(token)}&serial=${encodeURIComponent(code)}`;
-                    const downloadUrl = `/api/tickets/recovery/download?token=${encodeURIComponent(token)}&serial=${encodeURIComponent(code)}`;
+                    const isDownloaded = downloadedSerials.includes(code);
                     
                     return (
                       <div key={code} className="flex items-center justify-between gap-4 rounded-2xl border border-white/5 bg-zinc-950/60 p-3">
@@ -481,13 +498,25 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                           </div>
                         </div>
                         
-                        <a
-                          href={downloadUrl}
-                          download
-                          className="shrink-0 inline-flex h-8 items-center justify-center rounded-xl bg-white px-4 text-[7px] font-black uppercase tracking-wider text-black transition hover:bg-zinc-200"
-                        >
-                          Descargar
-                        </a>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setPreviewSerial(code)}
+                            className="inline-flex h-8 items-center justify-center rounded-xl border border-white/10 bg-white/5 px-3.5 text-[7px] font-black uppercase tracking-wider text-white transition hover:bg-white/15"
+                          >
+                            <Eye className="h-3.5 w-3.5 mr-1" />
+                            Ver
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isDownloaded}
+                            onClick={() => handleDownload(code)}
+                            className="inline-flex h-8 items-center justify-center rounded-xl bg-white px-3.5 text-[7px] font-black uppercase tracking-wider text-black transition hover:bg-zinc-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            <Download className="h-3.5 w-3.5 mr-1" />
+                            {isDownloaded ? "Bloqueado" : "Descargar"}
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -504,7 +533,7 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                     onClick={resendTicket}
                     className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-white text-[8px] font-black uppercase tracking-[0.17em] text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {resending ? "Reenviando..." : "Reenviar todas al correo"}
+                    {resending ? "Reenviando..." : "Reenviar todo"}
                   </button>
                 </div>
               </div>
@@ -525,6 +554,40 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
 
         </div>
       </div>
+      {/* ── PREVIEW MODAL ── */}
+      {previewSerial && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="relative rounded-3xl border border-white/10 bg-zinc-950 p-6 shadow-2xl max-w-sm w-full flex flex-col items-center gap-5 text-center animate-in zoom-in-95 duration-200">
+            <h4 className="text-xs font-black uppercase tracking-widest text-white">Vista Previa de Entrada</h4>
+            <div className="relative w-full aspect-[3/4.2] rounded-xl overflow-hidden border border-white/5 bg-black flex items-center justify-center">
+              <img
+                src={`/api/tickets/recovery/download?token=${encodeURIComponent(token)}&serial=${encodeURIComponent(previewSerial)}&preview=true`}
+                alt={`Pase ${previewSerial}`}
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3 w-full">
+              <button
+                type="button"
+                onClick={() => setPreviewSerial(null)}
+                className="h-11 rounded-2xl border border-white/10 bg-white/[0.03] text-[9px] font-black uppercase tracking-[0.15em] text-zinc-400 transition hover:border-white/20 hover:text-white"
+              >
+                Cerrar
+              </button>
+              <button
+                type="button"
+                disabled={downloadedSerials.includes(previewSerial)}
+                onClick={() => {
+                  handleDownload(previewSerial);
+                }}
+                className="h-11 rounded-2xl bg-white text-[9px] font-black uppercase tracking-[0.15em] text-black transition hover:bg-zinc-200 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                {downloadedSerials.includes(previewSerial) ? "Bloqueado" : "Descargar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
