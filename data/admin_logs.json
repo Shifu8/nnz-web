@@ -100,5 +100,14 @@
       "expiresAt": "2026-07-07T03:06:23.713Z"
     },
     "createdAt": "2026-07-06T15:06:23.713Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "32e58cce-c222-4ee1-a536-4146b844c7c5",
+      "expiresAt": "2026-07-07T03:33:27.653Z"
+    },
+    "createdAt": "2026-07-06T15:33:27.660Z"
   }
 ]
