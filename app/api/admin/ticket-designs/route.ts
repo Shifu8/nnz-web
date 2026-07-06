@@ -128,3 +128,63 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: false, error: "Error al eliminar diseño." }, { status: 500 });
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    const formData = await request.formData();
+    const id = formData.get("id") as string;
+    const eventId = formData.get("eventId") as string;
+    const name = formData.get("name") as string;
+    const badge = formData.get("badge") as string;
+    const accentColor = formData.get("accentColor") as string;
+    const file = formData.get("image") as File | null;
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: "ID requerido para editar." }, { status: 400 });
+    }
+
+    const all = loadAllCustomDesigns();
+    const idx = all.findIndex((d) => d.id === id);
+    if (idx === -1) {
+      return NextResponse.json({ success: false, error: "Diseño no encontrado." }, { status: 404 });
+    }
+
+    const target = all[idx];
+
+    if (file && file.size > 0) {
+      const rootDir = getWorkspaceRootDir();
+      const absoluteOldImagePath = path.join(rootDir, "public", target.photo.replace(/^\//, ""));
+      if (fs.existsSync(absoluteOldImagePath)) {
+        try {
+          fs.unlinkSync(absoluteOldImagePath);
+        } catch {}
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      const uploadDir = path.join(rootDir, "public", "uploads", "ticket-designs");
+      const ext = path.extname(file.name).toLowerCase() || ".png";
+      const fileName = `${id}${ext}`;
+      const filePath = path.join(uploadDir, fileName);
+
+      fs.writeFileSync(filePath, buffer);
+      target.photo = `/uploads/ticket-designs/${fileName}`;
+    }
+
+    if (eventId) target.eventId = eventId;
+    if (name) target.name = name;
+    if (badge) target.badge = badge;
+    if (accentColor) {
+      target.accentColor = accentColor;
+      target.shadowColor = `${accentColor}40`;
+    }
+
+    saveAllCustomDesigns(all);
+
+    return NextResponse.json({ success: true, message: "Diseño actualizado con éxito." });
+  } catch (err) {
+    console.error("[DESIGNS_API] Error updating design:", err);
+    return NextResponse.json({ success: false, error: "Error al actualizar diseño." }, { status: 500 });
+  }
+}

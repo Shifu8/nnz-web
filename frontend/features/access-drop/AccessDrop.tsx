@@ -91,8 +91,8 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
     // Set default static designs first
     setDesigns(getEventDesigns(currentEvent.id));
     
-    // Fetch custom designs from the API
-    fetch(`/api/access-drop/ticket-designs?eventId=${currentEvent.id}`)
+    // Fetch custom designs from the API (using cache-breaking parameter)
+    fetch(`/api/access-drop/ticket-designs?eventId=${currentEvent.id}&t=${Date.now()}`, { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
         if (active && data.success && data.designs && data.designs.length > 0) {

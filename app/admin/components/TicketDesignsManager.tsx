@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Trash2, Plus, Loader2, Image as ImageIcon, Check, Send, Mail, Hash, Clock, User } from "lucide-react";
+import { Trash2, Plus, Loader2, Image as ImageIcon, Check, Send, Mail, Hash, Clock, User, Edit } from "lucide-react";
 import type { AdminEvent } from "@/lib/admin/types";
 import { useToast } from "./Toast";
 import type { TicketDesign } from "@/lib/tickets/designs";
@@ -33,6 +33,7 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
   const [accentColor, setAccentColor] = useState("#C8FF00");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [editingDesignId, setEditingDesignId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Send Tickets State
@@ -107,10 +108,20 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
     loadSentLog();
   }, [loadSentLog]);
 
-  // Handle Add Design
+  // Handle Start Edit
+  const handleStartEdit = (design: TicketDesign) => {
+    setName(design.name);
+    setBadge(design.badge);
+    setAccentColor(design.accentColor);
+    setEditingDesignId(design.id || null);
+    setImageFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // Handle Add/Edit Design
   const handleAddDesign = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedEventId || !name || !badge || !accentColor || !imageFile) {
+    if (!selectedEventId || !name || !badge || !accentColor || (!editingDesignId && !imageFile)) {
       toast("error", "Campos incompletos", "Por favor completa todos los campos.");
       return;
     }
@@ -118,24 +129,37 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
     setUploading(true);
     try {
       const formData = new FormData();
+      if (editingDesignId) {
+        formData.append("id", editingDesignId);
+      }
       formData.append("eventId", selectedEventId);
       formData.append("name", name);
       formData.append("badge", badge);
       formData.append("accentColor", accentColor);
-      formData.append("image", imageFile);
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
 
-      const res = await fetch("/api/admin/ticket-designs", {
-        method: "POST",
+      const url = "/api/admin/ticket-designs";
+      const method = editingDesignId ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         body: formData,
       });
 
       const data = await res.json();
       if (data.success) {
-        toast("success", "Diseño agregado", "El diseño de entrada fue guardado con éxito.");
+        toast(
+          "success",
+          editingDesignId ? "Diseño actualizado" : "Diseño agregado",
+          editingDesignId ? "El diseño fue actualizado con éxito." : "El diseño de entrada fue guardado con éxito."
+        );
         setName("");
         setBadge("VIP ACCESS");
         setAccentColor("#C8FF00");
         setImageFile(null);
+        setEditingDesignId(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
         loadDesigns();
       } else {
@@ -143,7 +167,7 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
       }
     } catch (err) {
       console.error(err);
-      toast("error", "Error de red", "Ocurrió un error al subir el diseño.");
+      toast("error", "Error de red", "Ocurrió un error al guardar el diseño.");
     } finally {
       setUploading(false);
     }
@@ -302,13 +326,24 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
                         </p>
                       </div>
 
-                      <button
-                        onClick={() => handleDeleteDesign(design.id)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-red-500/20 text-red-500/80 hover:bg-red-500 hover:text-white transition"
-                        title="Eliminar diseño"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleStartEdit(design)}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 text-white/80 hover:bg-white hover:text-black transition"
+                          title="Editar diseño"
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteDesign(design.id)}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-red-500/20 text-red-500/80 hover:bg-red-500 hover:text-white transition"
+                          title="Eliminar diseño"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -319,7 +354,8 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
           {/* Upload Form */}
           <div className="rounded-2xl border border-white/5 bg-zinc-950/20 p-5 space-y-4">
             <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
-              <Plus className="h-4 w-4 text-red-500" /> Cargar Nuevo Diseño
+              {editingDesignId ? <Edit className="h-4 w-4 text-red-500" /> : <Plus className="h-4 w-4 text-red-500" />}
+              {editingDesignId ? "Editar Diseño" : "Cargar Nuevo Diseño"}
             </h3>
 
             <form onSubmit={handleAddDesign} className="space-y-4">
@@ -381,7 +417,7 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
                   <input
                     type="file"
                     ref={fileInputRef}
-                    required
+                    required={!editingDesignId}
                     accept="image/*"
                     onChange={(e) => setImageFile(e.target.files?.[0] || null)}
                     className="hidden"
@@ -418,12 +454,32 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" /> Guardando...
                   </>
+                ) : editingDesignId ? (
+                  <>
+                    <Check className="h-4 w-4" /> Guardar Cambios
+                  </>
                 ) : (
                   <>
                     <Plus className="h-4 w-4" /> Agregar Diseño
                   </>
                 )}
               </button>
+              {editingDesignId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingDesignId(null);
+                    setName("");
+                    setBadge("VIP ACCESS");
+                    setAccentColor("#C8FF00");
+                    setImageFile(null);
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] py-2.5 text-xs font-black uppercase tracking-wider text-zinc-400 transition hover:border-white/20 hover:text-white mt-2"
+                >
+                  Cancelar Edición
+                </button>
+              )}
             </form>
           </div>
 

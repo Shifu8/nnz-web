@@ -88,5 +88,14 @@
     "accentColor": "#FF2E2E",
     "shadowColor": "rgba(255, 46, 46, 0.25)",
     "badge": "SPECIAL PASS"
+  },
+  {
+    "id": "800bce3f-e65f-4289-a308-d648d1b2bb30",
+    "eventId": "trap-loud",
+    "name": "TICKET ELEVA",
+    "photo": "/uploads/ticket-designs/800bce3f-e65f-4289-a308-d648d1b2bb30.png",
+    "accentColor": "#ff0000",
+    "shadowColor": "#ff000040",
+    "badge": "HOLA"
   }
 ]
