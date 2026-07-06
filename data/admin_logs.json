@@ -129,5 +129,14 @@
       "eventId": "trap-loud"
     },
     "createdAt": "2026-07-06T15:50:55.536Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "48d49672-1eb4-46c5-b2b2-449cd760d7b9",
+      "expiresAt": "2026-07-07T04:03:17.395Z"
+    },
+    "createdAt": "2026-07-06T16:03:17.398Z"
   }
 ]
