@@ -787,15 +787,11 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                     <div className="flex items-center gap-3">
                       {/* Miniature ticket thumbnail */}
                       <div
-                        className="w-9 h-12 rounded-lg overflow-hidden shrink-0 relative"
+                        className="w-9 h-12 rounded-lg overflow-hidden border border-zinc-800 shrink-0 relative"
                         style={{
-                          border: `1px solid ${selectedDesignIndex !== null && designs[selectedDesignIndex]
-                            ? designs[selectedDesignIndex].accentColor
-                            : "#ff0055"
-                            }33`,
                           boxShadow: `0 4px 12px ${selectedDesignIndex !== null && designs[selectedDesignIndex]
                             ? designs[selectedDesignIndex].shadowColor
-                            : "rgba(255, 0, 85, 0.25)"
+                            : "rgba(255,255,255,0.05)"
                             }`,
                           filter: selectedDesignIndex === null ? "grayscale(1) opacity(0.4)" : "none",
                         }}
@@ -907,11 +903,11 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
           style={{ perspective: "1200px" }}
           onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}
         >
-          {/* Backdrop with premium pinkish-red ambient radial glow */}
+          {/* Backdrop */}
           <div
             className="absolute inset-0 transition-all duration-350"
             style={{
-              background: `radial-gradient(circle 380px at center, rgba(255, 0, 85, 0.15), rgba(0,0,0,0.93))`,
+              background: "rgba(0,0,0,0.88)",
               backdropFilter: `blur(${modalVisible ? "20px" : "0px"})`,
               opacity: modalVisible ? 1 : 0,
               transition: "opacity 0.35s ease, backdrop-filter 0.35s ease",
@@ -961,12 +957,11 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                 ref={modalTicketRef}
                 onMouseMove={handleModalMouseMove}
                 onMouseLeave={handleModalMouseLeave}
-                className="relative w-full max-w-[260px] sm:max-w-[270px] aspect-[1/1.75] rounded-2xl overflow-hidden bg-zinc-950 cursor-default flex flex-col justify-between"
+                className="relative w-full max-w-[260px] sm:max-w-[270px] aspect-[1/1.75] rounded-2xl overflow-hidden bg-zinc-950 border border-zinc-800 cursor-default flex flex-col justify-between"
                 style={{
                   transformStyle: "preserve-3d",
-                  border: `1px solid ${designs[currentViewedDesignIndex]?.accentColor || "#ff0055"}33`,
-                  boxShadow: `0 32px 80px -12px rgba(0,0,0,0.95), 0 0 60px ${designs[currentViewedDesignIndex]?.shadowColor || "rgba(255, 0, 85, 0.25)"}`,
-                  transition: "transform 0.15s ease, border-color 0.35s ease, box-shadow 0.35s ease",
+                  boxShadow: `0 32px 80px -12px rgba(0,0,0,0.95), 0 0 60px ${designs[currentViewedDesignIndex]?.shadowColor || "rgba(255,255,255,0.05)"}`,
+                  transition: "transform 0.15s ease",
                 }}
               >
                 {/* Light reflection */}
