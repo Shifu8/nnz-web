@@ -121,5 +121,13 @@
       "emailError": ""
     },
     "createdAt": "2026-07-06T15:39:04.152Z"
+  },
+  {
+    "action": "admin_reset_recovery",
+    "metadata": {
+      "email": "mrshifu879@gmail.com",
+      "eventId": "trap-loud"
+    },
+    "createdAt": "2026-07-06T15:50:55.536Z"
   }
 ]

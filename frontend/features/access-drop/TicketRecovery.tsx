@@ -514,7 +514,7 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                             className="inline-flex h-8 items-center justify-center rounded-xl bg-white px-3.5 text-[7px] font-black uppercase tracking-wider text-black transition hover:bg-zinc-200 disabled:opacity-30 disabled:cursor-not-allowed"
                           >
                             <Download className="h-3.5 w-3.5 mr-1" />
-                            {isDownloaded ? "Bloqueado" : "Descargar"}
+                            Descargar
                           </button>
                         </div>
                       </div>
@@ -582,7 +582,7 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                 }}
                 className="h-11 rounded-2xl bg-white text-[9px] font-black uppercase tracking-[0.15em] text-black transition hover:bg-zinc-200 disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                {downloadedSerials.includes(previewSerial) ? "Bloqueado" : "Descargar"}
+                Descargar
               </button>
             </div>
           </div>
