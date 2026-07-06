@@ -1,4 +1,4 @@
-# NENEZ Web — Plataforma Premium de Venta de Entradas y Accesos
+# NENEZ Web — Plataforma de Venta de Entradas y Accesos
 
 NENEZ Web es una aplicación web moderna, de alta gama y lista para producción, diseñada para la venta de entradas, gestión de accesos VIP y validación segura de tickets en eventos masivos. Construida con tecnologías de última generación, ofrece una interfaz de usuario inmersiva con animaciones de nivel cinematográfico y una arquitectura en la nube robusta y escalable.
 
