@@ -34,6 +34,7 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [editingDesignId, setEditingDesignId] = useState<string | null>(null);
+  const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Send Tickets State
@@ -114,6 +115,7 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
     setBadge(design.badge);
     setAccentColor(design.accentColor);
     setEditingDesignId(design.id || null);
+    setExistingPhotoUrl(design.photo || null);
     setImageFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -121,8 +123,8 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
   // Handle Add/Edit Design
   const handleAddDesign = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedEventId || !name || !badge || !accentColor || (!editingDesignId && !imageFile)) {
-      toast("error", "Campos incompletos", "Por favor completa todos los campos.");
+    if (!selectedEventId || !name || !badge || !accentColor || (!existingPhotoUrl && !imageFile)) {
+      toast("error", "Campos incompletos", "Por favor completa todos los campos, incluyendo la imagen.");
       return;
     }
 
@@ -160,6 +162,7 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
         setAccentColor("#C8FF00");
         setImageFile(null);
         setEditingDesignId(null);
+        setExistingPhotoUrl(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
         loadDesigns();
       } else {
@@ -417,31 +420,82 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
                   <input
                     type="file"
                     ref={fileInputRef}
-                    required={!editingDesignId}
+                    required={!editingDesignId && !existingPhotoUrl}
                     accept="image/*"
-                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                    onChange={(e) => {
+                      const selected = e.target.files?.[0] || null;
+                      setImageFile(selected);
+                      if (selected) setExistingPhotoUrl(null);
+                    }}
                     className="hidden"
                     id="design-file-input"
                   />
-                  <label
-                    htmlFor="design-file-input"
-                    className="flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-white/15 bg-zinc-900/40 py-6 hover:bg-zinc-900/70 transition"
-                  >
-                    {imageFile ? (
+                  {imageFile ? (
+                    <div className="flex w-full flex-col items-center justify-center rounded-xl border border-dashed border-white/15 bg-zinc-900/40 py-6">
                       <div className="flex flex-col items-center text-center">
                         <Check className="h-6 w-6 text-green-500 mb-1" />
-                        <span className="text-[10px] font-bold text-white px-3 max-w-[200px] truncate">
+                        <span className="text-[10px] font-bold text-white px-3 max-w-[200px] truncate mb-2">
                           {imageFile.name}
                         </span>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[8px] font-black uppercase tracking-wider text-white transition hover:bg-white/10"
+                          >
+                            Cambiar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setImageFile(null);
+                              if (fileInputRef.current) fileInputRef.current.value = "";
+                            }}
+                            className="rounded-lg border border-red-500/20 bg-red-950/20 px-2.5 py-1 text-[8px] font-black uppercase tracking-wider text-red-400 transition hover:bg-red-950/40"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
                       </div>
-                    ) : (
-                      <>
-                        <ImageIcon className="h-6 w-6 text-zinc-500 mb-1" />
-                        <span className="text-[10px] font-bold text-zinc-400">Seleccionar Imagen</span>
-                        <span className="text-[8px] text-zinc-600 mt-0.5">PNG o JPG de alta calidad</span>
-                      </>
-                    )}
-                  </label>
+                    </div>
+                  ) : existingPhotoUrl ? (
+                    <div className="flex w-full flex-col items-center justify-center rounded-xl border border-dashed border-white/15 bg-zinc-900/40 py-6">
+                      <div className="flex flex-col items-center text-center">
+                        <div className="w-12 h-16 rounded overflow-hidden border border-white/10 bg-black mb-2 relative">
+                          <img src={existingPhotoUrl} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[8px] font-black uppercase tracking-wider text-white transition hover:bg-white/10"
+                          >
+                            Cambiar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setExistingPhotoUrl(null);
+                              setImageFile(null);
+                              if (fileInputRef.current) fileInputRef.current.value = "";
+                            }}
+                            className="rounded-lg border border-red-500/20 bg-red-950/20 px-2.5 py-1 text-[8px] font-black uppercase tracking-wider text-red-400 transition hover:bg-red-950/40"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="design-file-input"
+                      className="flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-white/15 bg-zinc-900/40 py-6 hover:bg-zinc-900/70 transition"
+                    >
+                      <ImageIcon className="h-6 w-6 text-zinc-500 mb-1" />
+                      <span className="text-[10px] font-bold text-zinc-400">Seleccionar Imagen</span>
+                      <span className="text-[8px] text-zinc-600 mt-0.5">PNG o JPG de alta calidad</span>
+                    </label>
+                  )}
                 </div>
               </div>
 
