@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ApiError, assertSameOrigin, enforceRateLimit, handleApiError } from "@/lib/security";
 import { getScansForEvent } from "@/lib/staff/studentScanStore";
+import { ensureStore, readJsonFile } from "@/lib/db/passStore";
 
 export const runtime = "nodejs";
 
@@ -36,23 +37,18 @@ export async function GET(request: Request) {
 
     let entradasUsadas = 0;
     try {
-      const { ensureStore } = await import("@/lib/db/passStore");
       const store = ensureStore();
-      if (store.kind === "supabase") {
-        const { count } = await store.supabase
-          .from("party_passes")
-          .select("*", { count: "exact", head: true })
-          .eq("event_id", eventId)
-          .eq("used", true);
-        entradasUsadas = count || 0;
-      } else if (store.kind === "firestore") {
-        const snap = await store.db
-          .collection("partyPasses")
-          .where("eventId", "==", eventId)
-          .where("used", "==", true)
-          .count()
-          .get();
-        entradasUsadas = snap.data().count || 0;
+      if (store.kind === "postgres") {
+        const [row] = await store.db`
+          SELECT COUNT(*) as count FROM party_passes
+          WHERE event_id = ${eventId} AND used = true
+        `;
+        entradasUsadas = Number(row?.count || 0);
+      } else if (store.kind === "local-json") {
+        const partyPasses = readJsonFile<any>("party_passes");
+        entradasUsadas = partyPasses.filter(
+          (p: any) => (p.eventId === eventId || p.event_id === eventId) && p.used
+        ).length;
       }
     } catch {
       // DB not configured — entradasUsadas stays 0

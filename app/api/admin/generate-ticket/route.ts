@@ -25,7 +25,7 @@ const generateSchema = z.object({
   email: z.string().max(120).optional(),
   quantity: z.number().int().min(1).max(50).optional(),
   ticketDesign: z.string().optional(),
-  deliveryChannel: z.enum(["both", "email", "whatsapp"]).optional(),
+  deliveryChannel: z.enum(["email"]).optional(),
 });
 
 export async function POST(request: Request) {
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     const firstName = sanitizeName(parsed.firstName);
     const lastName = sanitizeName(parsed.lastName);
     const quantity = parsed.quantity || 1;
-    const deliveryChannel = parsed.deliveryChannel || "both";
+    const deliveryChannel = parsed.deliveryChannel || "email";
 
     const phone = sanitizePhone(parsed.phone ?? "");
     const emailProvided = parsed.email && parsed.email.trim().length > 0;
@@ -62,16 +62,16 @@ export async function POST(request: Request) {
     const event = getActiveTicketEvent();
     const eventId = EVENT_ID;
 
-    if (store.kind === "supabase" && phone !== "") {
-      const { data: existing } = await store.supabase
-        .from("access_drops")
-        .select("id")
-        .eq("phone_hash", phoneHash)
-        .eq("event_id", eventId)
-        .eq("status", "confirmed")
-        .limit(1);
+    if (store.kind === "postgres" && phone !== "") {
+      const existing = await store.db`
+        SELECT id FROM access_drops
+        WHERE phone_hash = ${phoneHash}
+          AND event_id = ${eventId}
+          AND status = 'confirmed'
+        LIMIT 1
+      `;
 
-      if (existing?.length) {
+      if (existing.length) {
         throw new ApiError(409, "Este telefono ya tiene un ticket activo.");
       }
     }
@@ -142,55 +142,50 @@ export async function POST(request: Request) {
           createdAt: now,
         });
         writeJsonFile("party_passes", partyPasses);
-      } else if (store.kind === "supabase") {
-        await store.supabase.from("tickets").insert({
-          id: transactionId,
-          first_name: firstName,
-          last_name: lastName,
-          phone_hash: phoneHash,
-          phone_encrypted: encryptSensitive(phone),
-          email_hash: emailHash,
-          email_encrypted: encryptSensitive(email),
-          document_hash: documentHash,
-          document_encrypted: encryptSensitive(documentNumber),
-          event_id: eventId,
-          amount: 0,
-          status: "approved",
-          processor: "admin_manual",
-          serial_number: serialNumber,
-          qr_payload_encrypted: encryptedQrPayload,
-          activated_at: now,
-          created_at: now,
-          updated_at: now,
-        });
+      } else if (store.kind === "postgres") {
+        const ticketPhone = phone || `vip-phone-${transactionId}`;
+        const ticketPhoneHash = hashLookup(ticketPhone);
+        const ticketPhoneEncrypted = encryptSensitive(ticketPhone);
 
-        await store.supabase.from("access_drops").insert({
-          id: participantId,
-          first_name: firstName,
-          last_name: lastName,
-          phone_hash: phoneHash,
-          phone_encrypted: encryptSensitive(phone),
-          email_hash: emailHash,
-          email_encrypted: encryptSensitive(email),
-          document_hash: documentHash,
-          document_encrypted: encryptSensitive(documentNumber),
-          event_id: eventId,
-          serial_number: serialNumber,
-          status: "confirmed",
-          registered_at: now,
-        });
+        try {
+          await store.db`
+            INSERT INTO tickets (
+              id, first_name, last_name, phone_hash, phone_encrypted,
+              email_hash, email_encrypted, document_hash, document_encrypted,
+              event_id, amount, status, processor, serial_number,
+              qr_payload_encrypted, activated_at, created_at, updated_at
+            ) VALUES (
+              ${transactionId}, ${firstName}, ${lastName}, ${ticketPhoneHash}, ${ticketPhoneEncrypted},
+              ${emailHash}, ${encryptSensitive(email)}, ${documentHash}, ${encryptSensitive(documentNumber)},
+              ${eventId}, 0, 'approved', 'admin_manual', ${serialNumber},
+              ${encryptedQrPayload}, ${now}, ${now}, ${now}
+            )
+          `;
 
-        await store.supabase.from("party_passes").insert({
-          serial_number: serialNumber,
-          code_hash: hashToken(qrToken),
-          event_id: eventId,
-          participant_id: participantId,
-          used: false,
-          expires_at: expiresAt,
-          qr_payload_encrypted: encryptedQrPayload,
-          type: "ADMIN_GUEST",
-          created_at: now,
-        });
+          await store.db`
+            INSERT INTO access_drops (
+              id, first_name, last_name, phone_hash, phone_encrypted,
+              email_hash, email_encrypted, document_hash, document_encrypted,
+              event_id, serial_number, status, registered_at
+            ) VALUES (
+              ${participantId}, ${firstName}, ${lastName}, ${ticketPhoneHash}, ${ticketPhoneEncrypted},
+              ${emailHash}, ${encryptSensitive(email)}, ${documentHash}, ${encryptSensitive(documentNumber)},
+              ${eventId}, ${serialNumber}, 'confirmed', ${now}
+            )
+          `;
+
+          await store.db`
+            INSERT INTO party_passes (
+              serial_number, code_hash, event_id, participant_id,
+              used, expires_at, qr_payload_encrypted, type, created_at
+            ) VALUES (
+              ${serialNumber}, ${hashToken(qrToken)}, ${eventId}, ${participantId},
+              false, ${expiresAt}, ${encryptedQrPayload}, 'ADMIN_GUEST', ${now}
+            )
+          `;
+        } catch (dbErr: any) {
+          throw new ApiError(500, `Error al guardar ticket #${i + 1}: ${dbErr.message}`, "DB_ERROR");
+        }
       }
 
       // Generate ticket image
@@ -213,7 +208,7 @@ export async function POST(request: Request) {
     let emailSent = false;
     let emailError = "";
 
-    if (emailProvided && (deliveryChannel === "email" || deliveryChannel === "both")) {
+    if (emailProvided && deliveryChannel === "email") {
       try {
         const gmailResult = await sendTicketPdfViaGmailWithLimit({
           to: email,

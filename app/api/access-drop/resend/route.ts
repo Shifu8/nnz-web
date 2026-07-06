@@ -49,27 +49,20 @@ export async function POST(request: Request) {
         accessDrops[idx].phoneHash = hashLookup(cleanPhone);
         writeJsonFile("access_drops", accessDrops);
       }
-    } else if (store.kind === "supabase") {
-      const { data: pass, error } = await store.supabase
-        .from("party_passes")
-        .select("participant_id")
-        .eq("serial_number", parsed.serialNumber)
-        .maybeSingle();
-      if (error || !pass) throw new ApiError(404, "Pase no encontrado.");
+    } else if (store.kind === "postgres") {
+      const [pass] = await store.db`
+        SELECT participant_id FROM party_passes
+        WHERE serial_number = ${parsed.serialNumber}
+        LIMIT 1
+      `;
+      if (!pass) throw new ApiError(404, "Pase no encontrado.");
 
-      await store.supabase.from("access_drops").update({
-        phone_encrypted: encryptSensitive(cleanPhone),
-        phone_hash: hashLookup(cleanPhone),
-      }).eq("id", pass.participant_id);
-    } else {
-      const passDoc = await store.db.collection("partyPasses").doc(parsed.serialNumber).get();
-      if (!passDoc.exists) throw new ApiError(404, "Pase no encontrado.");
-      const pass = passDoc.data() || {};
-
-      await store.db.collection("accessDrops").doc(pass.participantId).update({
-        phoneEncrypted: encryptSensitive(cleanPhone),
-        phoneHash: hashLookup(cleanPhone),
-      });
+      await store.db`
+        UPDATE access_drops
+        SET phone_encrypted = ${encryptSensitive(cleanPhone)},
+            phone_hash = ${hashLookup(cleanPhone)}
+        WHERE id = ${pass.participant_id}
+      `;
     }
 
     return NextResponse.json({

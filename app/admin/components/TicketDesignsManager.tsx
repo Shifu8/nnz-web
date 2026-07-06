@@ -1,11 +1,21 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Trash2, Plus, Loader2, Palette, Image as ImageIcon, Check } from "lucide-react";
+import { Trash2, Plus, Loader2, Image as ImageIcon, Check, Send, Mail, Hash, Clock, User } from "lucide-react";
 import type { AdminEvent } from "@/lib/admin/types";
 import { useToast } from "./Toast";
 import type { TicketDesign } from "@/lib/tickets/designs";
 import { emailDomains, cleanEmailInput } from "@/frontend/utils/emailInput";
+
+type SentLogEntry = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  quantity: number;
+  designName: string;
+  sentAt: Date;
+};
 
 type TicketDesignsManagerProps = {
   events: AdminEvent[];
@@ -30,6 +40,10 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
   const [ticketQuantity, setTicketQuantity] = useState(1);
   const [selectedDesignId, setSelectedDesignId] = useState<string>("");
   const [sendingTickets, setSendingTickets] = useState(false);
+
+  // Sent Log
+  const [sentLog, setSentLog] = useState<SentLogEntry[]>([]);
+  const [logLoading, setLogLoading] = useState(false);
 
   // Set default event
   useEffect(() => {
@@ -67,6 +81,31 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
   useEffect(() => {
     loadDesigns();
   }, [loadDesigns]);
+
+  // Load persisted sent log from server
+  const loadSentLog = useCallback(async () => {
+    setLogLoading(true);
+    try {
+      const res = await fetch("/api/admin/ticket-send-log");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.entries)) {
+        setSentLog(
+          data.entries.map((e: any) => ({
+            ...e,
+            sentAt: new Date(e.sentAt),
+          }))
+        );
+      }
+    } catch (err) {
+      console.error("[SentLog] Error cargando registro:", err);
+    } finally {
+      setLogLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSentLog();
+  }, [loadSentLog]);
 
   // Handle Add Design
   const handleAddDesign = async (e: React.FormEvent) => {
@@ -158,6 +197,25 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
       const data = await res.json();
       if (data.success) {
         toast("success", "Entradas enviadas", `Se generaron y enviaron ${ticketQuantity} entrada(s) correctamente.`);
+        // Build log entry and persist it to the server
+        const designName = designs.find((d) => d.id === selectedDesignId)?.name || "Diseño por defecto";
+        const newEntry: SentLogEntry = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          firstName: recipientForm.firstName,
+          lastName: recipientForm.lastName,
+          email: recipientForm.email,
+          quantity: ticketQuantity,
+          designName,
+          sentAt: new Date(),
+        };
+        // Persist to server (fire-and-forget, don't block the UI)
+        fetch("/api/admin/ticket-send-log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...newEntry, sentAt: newEntry.sentAt.toISOString() }),
+        }).catch((err) => console.error("[SentLog] Error guardando:", err));
+        // Update local state immediately
+        setSentLog((prev) => [newEntry, ...prev]);
         setRecipientForm({ firstName: "", lastName: "", email: "" });
         setTicketQuantity(1);
       } else {
@@ -369,127 +427,218 @@ export default function TicketDesignsManager({ events }: TicketDesignsManagerPro
             </form>
           </div>
 
-          {/* Send Tickets Form */}
-          <div className="rounded-2xl border border-white/5 bg-zinc-950/20 p-5 space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
-              <Plus className="h-4 w-4 text-[#C8FF00]" /> Enviar Entradas VIP (Gmail)
-            </h3>
+          {/* Send Tickets Form + Log — side by side */}
+          <div className="lg:col-span-1 grid gap-5 xl:grid-cols-2 xl:col-span-3">
+            {/* Send Tickets Form */}
+            <div className="rounded-2xl border border-white/5 bg-zinc-950/20 p-5 space-y-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                <Send className="h-3.5 w-3.5 text-[#C8FF00]" /> Enviar Entradas VIP (Gmail)
+              </h3>
 
-            <form onSubmit={handleSendTickets} className="space-y-4">
-              <div>
-                <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1.5">
-                  Seleccionar Diseño de Entrada
-                </label>
-                <select
-                  className="w-full rounded-xl border border-white/10 bg-zinc-900/60 px-3 py-2 text-xs font-bold text-white outline-none focus:border-red-500/50"
-                  value={selectedDesignId}
-                  onChange={(e) => setSelectedDesignId(e.target.value)}
-                >
-                  {designs.map((design) => (
-                    <option key={design.id} value={design.id} className="bg-black text-white">
-                      {design.name} ({design.badge})
-                    </option>
-                  ))}
-                  {designs.length === 0 && (
-                    <option value="" className="bg-black text-white">
-                      Diseño por defecto (1)
-                    </option>
-                  )}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+              <form onSubmit={handleSendTickets} className="space-y-4">
                 <div>
                   <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1.5">
-                    Nombre
+                    Seleccionar Diseño de Entrada
                   </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ej: JUAN"
-                    value={recipientForm.firstName}
-                    onChange={(e) => setRecipientForm({ ...recipientForm, firstName: e.target.value.toUpperCase() })}
-                    className="w-full rounded-xl border border-white/10 bg-zinc-900/60 px-3 py-2 text-xs font-bold text-white outline-none focus:border-red-500/50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1.5">
-                    Apellido
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ej: PEREZ"
-                    value={recipientForm.lastName}
-                    onChange={(e) => setRecipientForm({ ...recipientForm, lastName: e.target.value.toUpperCase() })}
-                    className="w-full rounded-xl border border-white/10 bg-zinc-900/60 px-3 py-2 text-xs font-bold text-white outline-none focus:border-red-500/50"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1.5">
-                  Correo Electrónico (Gmail)
-                </label>
-                <input
-                  type="email"
-                  required
-                  list="admin-ticket-email-domains"
-                  placeholder="ejemplo@gmail.com"
-                  value={recipientForm.email}
-                  onChange={(e) => setRecipientForm({ ...recipientForm, email: cleanEmailInput(e.target.value) })}
-                  className="w-full rounded-xl border border-white/10 bg-zinc-900/60 px-3 py-2 text-xs font-bold text-white outline-none focus:border-red-500/50"
-                />
-                <datalist id="admin-ticket-email-domains">
-                  {emailDomains.map((domain) => {
-                    const local = recipientForm.email.split("@")[0] || "ejemplo";
-                    return <option key={domain} value={`${local}@${domain}`} />;
-                  })}
-                </datalist>
-              </div>
-
-              <div className="flex items-center justify-between rounded-xl border border-white/10 bg-zinc-900/40 p-3">
-                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                  Cantidad de Entradas
-                </span>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setTicketQuantity((q) => Math.max(1, q - 1))}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-zinc-950 text-xs font-bold text-white hover:bg-zinc-800 transition select-none"
+                  <select
+                    className="w-full rounded-xl border border-white/10 bg-zinc-900/60 px-3 py-2 text-xs font-bold text-white outline-none focus:border-[#C8FF00]/40"
+                    value={selectedDesignId}
+                    onChange={(e) => setSelectedDesignId(e.target.value)}
                   >
-                    -
-                  </button>
-                  <span className="w-6 text-center text-xs font-bold text-white select-none">
-                    {ticketQuantity}
+                    {designs.map((design) => (
+                      <option key={design.id} value={design.id} className="bg-black text-white">
+                        {design.name} ({design.badge})
+                      </option>
+                    ))}
+                    {designs.length === 0 && (
+                      <option value="" className="bg-black text-white">
+                        Diseño por defecto (1)
+                      </option>
+                    )}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1.5">
+                      Nombre
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej: JUAN"
+                      value={recipientForm.firstName}
+                      onChange={(e) => setRecipientForm({ ...recipientForm, firstName: e.target.value.toUpperCase() })}
+                      className="w-full rounded-xl border border-white/10 bg-zinc-900/60 px-3 py-2 text-xs font-bold text-white outline-none focus:border-[#C8FF00]/40"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1.5">
+                      Apellido
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ej: PEREZ"
+                      value={recipientForm.lastName}
+                      onChange={(e) => setRecipientForm({ ...recipientForm, lastName: e.target.value.toUpperCase() })}
+                      className="w-full rounded-xl border border-white/10 bg-zinc-900/60 px-3 py-2 text-xs font-bold text-white outline-none focus:border-[#C8FF00]/40"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1.5">
+                    Correo Electrónico (Gmail)
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    list="admin-ticket-email-domains"
+                    placeholder="ejemplo@gmail.com"
+                    value={recipientForm.email}
+                    onChange={(e) => setRecipientForm({ ...recipientForm, email: cleanEmailInput(e.target.value) })}
+                    className="w-full rounded-xl border border-white/10 bg-zinc-900/60 px-3 py-2 text-xs font-bold text-white outline-none focus:border-[#C8FF00]/40"
+                  />
+                  <datalist key={recipientForm.email.split("@")[0] || "ejemplo"} id="admin-ticket-email-domains">
+                    {emailDomains.map((domain) => {
+                      const local = recipientForm.email.split("@")[0] || "ejemplo";
+                      return <option key={domain} value={`${local}@${domain}`} />;
+                    })}
+                  </datalist>
+                </div>
+
+                <div className="flex items-center justify-between rounded-xl border border-white/10 bg-zinc-900/40 p-3">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                    Cantidad de Entradas
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => setTicketQuantity((q) => Math.min(50, q + 1))}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-zinc-950 text-xs font-bold text-white hover:bg-zinc-800 transition select-none"
-                  >
-                    +
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setTicketQuantity((q) => Math.max(1, q - 1))}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-zinc-950 text-xs font-bold text-white hover:bg-zinc-800 transition select-none"
+                    >
+                      -
+                    </button>
+                    <span className="w-6 text-center text-sm font-black text-white select-none">
+                      {ticketQuantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setTicketQuantity((q) => Math.min(50, q + 1))}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-zinc-950 text-xs font-bold text-white hover:bg-zinc-800 transition select-none"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
+
+                <button
+                  type="submit"
+                  disabled={sendingTickets}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-black uppercase tracking-wider text-black transition disabled:opacity-50 hover:brightness-110"
+                  style={{ backgroundColor: "#C8FF00" }}
+                >
+                  {sendingTickets ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" /> Generar y Enviar
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+
+            {/* Sent Tickets Log */}
+            <div className="rounded-2xl border border-white/5 bg-zinc-950/20 p-5 flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                  <Mail className="h-3.5 w-3.5 text-[#C8FF00]" /> Registro de Envíos
+                </h3>
+                {sentLog.length > 0 && (
+                  <span
+                    className="flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[9px] font-black text-black"
+                    style={{ backgroundColor: "#C8FF00" }}
+                  >
+                    {sentLog.length}
+                  </span>
+                )}
               </div>
 
-              <button
-                type="submit"
-                disabled={sendingTickets}
-                className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-black uppercase tracking-wider text-black transition disabled:opacity-50"
-                style={{ backgroundColor: "#C8FF00" }}
-              >
-                {sendingTickets ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Enviando...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="h-4 w-4" /> Generar y Enviar
-                  </>
-                )}
-              </button>
-            </form>
+              {logLoading ? (
+                <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-zinc-950/10 py-10 text-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-[#C8FF00]" />
+                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider">Cargando registros...</p>
+                </div>
+              ) : sentLog.length === 0 ? (
+                <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-zinc-950/10 py-10 text-center gap-2">
+                  <Send className="h-6 w-6 text-zinc-600" />
+                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider">Sin envíos aún</p>
+                  <p className="text-[9px] text-zinc-700 max-w-[160px]">
+                    Los envíos se guardan y persisten entre sesiones
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 overflow-y-auto max-h-[420px] pr-0.5" style={{ scrollbarWidth: "thin", scrollbarColor: "#3f3f46 transparent" }}>
+                  {sentLog.map((entry, idx) => (
+                    <div
+                      key={entry.id}
+                      className="group relative rounded-xl border border-white/8 bg-gradient-to-br from-zinc-900/80 to-zinc-950/60 p-3 transition hover:border-[#C8FF00]/20 hover:from-zinc-900/90"
+                      style={{ animationDelay: `${idx * 50}ms` }}
+                    >
+                      {/* Top row: name + ticket count badge */}
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#C8FF00]/10 border border-[#C8FF00]/20">
+                            <User className="h-3.5 w-3.5 text-[#C8FF00]" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-black text-white uppercase truncate leading-tight">
+                              {entry.firstName} {entry.lastName}
+                            </p>
+                            <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest truncate">
+                              {entry.designName}
+                            </p>
+                          </div>
+                        </div>
+                        <div
+                          className="flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-black text-black"
+                          style={{ backgroundColor: "#C8FF00" }}
+                        >
+                          <Hash className="h-2.5 w-2.5" />
+                          {entry.quantity}
+                        </div>
+                      </div>
+
+                      {/* Email row */}
+                      <div className="flex items-center gap-1.5 rounded-lg border border-white/5 bg-zinc-950/40 px-2.5 py-1.5 mb-1.5">
+                        <Mail className="h-3 w-3 text-zinc-500 shrink-0" />
+                        <span className="text-[10px] font-bold text-zinc-300 truncate">{entry.email}</span>
+                      </div>
+
+                      {/* Footer: timestamp */}
+                      <div className="flex items-center gap-1 text-[9px] text-zinc-600">
+                        <Clock className="h-2.5 w-2.5" />
+                        <span>
+                          {entry.sentAt.toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                          {" · "}
+                          {entry.sentAt.toLocaleDateString("es-EC", { day: "2-digit", month: "short", year: "numeric" })}
+                        </span>
+                      </div>
+
+                      {/* Subtle left accent stripe */}
+                      <div
+                        className="absolute left-0 top-3 bottom-3 w-0.5 rounded-full opacity-60"
+                        style={{ backgroundColor: "#C8FF00" }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

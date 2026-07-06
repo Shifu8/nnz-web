@@ -10,5 +10,95 @@
       "emailError": ""
     },
     "createdAt": "2026-07-04T18:05:13.505Z"
+  },
+  {
+    "action": "admin_generate_ticket",
+    "metadata": {
+      "serialNumber": "NENEZ-8262-4B074FE2",
+      "firstName": "DDD",
+      "lastName": "DEDED",
+      "quantity": 1,
+      "emailSent": true,
+      "emailError": ""
+    },
+    "createdAt": "2026-07-06T12:29:00.010Z"
+  },
+  {
+    "action": "admin_generate_ticket",
+    "metadata": {
+      "serialNumber": "NENEZ-3939-07A4102A,NENEZ-6813-2C27E7DB",
+      "firstName": "BRANDON",
+      "lastName": "MEDINA",
+      "quantity": 2,
+      "emailSent": true,
+      "emailError": ""
+    },
+    "createdAt": "2026-07-06T12:30:34.388Z"
+  },
+  {
+    "action": "admin_generate_ticket",
+    "metadata": {
+      "serialNumber": "NENEZ-9976-377318C9",
+      "firstName": "BRANDON",
+      "lastName": "DDE",
+      "quantity": 1,
+      "emailSent": true,
+      "emailError": ""
+    },
+    "createdAt": "2026-07-06T12:34:39.962Z"
+  },
+  {
+    "action": "admin_generate_ticket",
+    "metadata": {
+      "serialNumber": "NENEZ-2873-6A8545BB,NENEZ-6053-C1763918",
+      "firstName": "DDEE",
+      "lastName": "",
+      "quantity": 2,
+      "emailSent": true,
+      "emailError": ""
+    },
+    "createdAt": "2026-07-06T12:41:43.530Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "7ac82444-3f22-4c30-a0fa-2d28caf40ca0",
+      "expiresAt": "2026-07-07T03:05:02.264Z"
+    },
+    "createdAt": "2026-07-06T15:05:02.266Z"
+  },
+  {
+    "action": "admin_generate_ticket",
+    "metadata": {
+      "serialNumber": "NENEZ-9263-8E84A7E5",
+      "firstName": "DEF",
+      "lastName": "FRFFR",
+      "quantity": 1,
+      "emailSent": true,
+      "emailError": ""
+    },
+    "createdAt": "2026-07-06T15:05:17.363Z"
+  },
+  {
+    "action": "admin_generate_ticket",
+    "metadata": {
+      "serialNumber": "NENEZ-9432-5CB361A0",
+      "firstName": "DED",
+      "lastName": "FEEF",
+      "quantity": 1,
+      "emailSent": true,
+      "emailError": ""
+    },
+    "createdAt": "2026-07-06T15:05:53.932Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "f7e97e56-2611-4801-8cf0-eac3dd4e8421",
+      "expiresAt": "2026-07-07T03:06:23.713Z"
+    },
+    "createdAt": "2026-07-06T15:06:23.713Z"
   }
 ]

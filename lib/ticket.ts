@@ -1,5 +1,8 @@
+import "server-only";
+
 import crypto from "crypto";
-import { requireSupabase } from "./supabase";
+import { getDbOrNull } from "@/lib/db/postgres";
+import { readJsonFile, writeJsonFile } from "@/lib/db/passStore";
 import { generateTicketQrPng } from "../utils/qr";
 import { secureLog } from "./security";
 
@@ -39,8 +42,6 @@ function generateSerial(transactionId: string): string {
   return `NENEZ-${num}-${short}`;
 }
 
-const db = () => (requireSupabase().from("tickets") as any);
-
 export async function createTicket(input: TicketInput): Promise<Ticket> {
   const id = crypto.randomUUID();
   const ticketCode = generateTicketCode();
@@ -52,25 +53,41 @@ export async function createTicket(input: TicketInput): Promise<Ticket> {
   const qrDataUri = `data:image/png;base64,${qrBase64}`;
 
   const now = new Date().toISOString();
+  const db = getDbOrNull();
 
-  const { error } = await db().insert({
-    id,
-    ticket_code: ticketCode,
-    serial_number: serialNumber,
-    first_name: input.firstName,
-    last_name: input.lastName,
-    email: input.email,
-    phone: input.phone,
-    event_id: input.eventId,
-    status: "valid",
-    qr_code: qrDataUri,
-    created_at: now,
-    updated_at: now,
-  });
-
-  if (error) {
-    secureLog("[TICKET] DB insert error", { error: error.message });
-    throw new Error("No se pudo crear el ticket en la base de datos.");
+  if (db) {
+    try {
+      await db`
+        INSERT INTO web_tickets (
+          id, ticket_code, serial_number, first_name, last_name,
+          email, phone, event_id, status, qr_code, created_at, updated_at
+        ) VALUES (
+          ${id}, ${ticketCode}, ${serialNumber}, ${input.firstName}, ${input.lastName},
+          ${input.email}, ${input.phone}, ${input.eventId}, 'valid', ${qrDataUri}, ${now}, ${now}
+        )
+      `;
+    } catch (error: any) {
+      secureLog("[TICKET] DB insert error", { error: error.message });
+      throw new Error("No se pudo crear el ticket en la base de datos.");
+    }
+  } else {
+    // local-json fallback
+    const tickets = readJsonFile<any>("web_tickets");
+    tickets.push({
+      id,
+      ticket_code: ticketCode,
+      serial_number: serialNumber,
+      first_name: input.firstName,
+      last_name: input.lastName,
+      email: input.email,
+      phone: input.phone,
+      event_id: input.eventId,
+      status: "valid",
+      qr_code: qrDataUri,
+      created_at: now,
+      updated_at: now,
+    });
+    writeJsonFile("web_tickets", tickets);
   }
 
   secureLog("[TICKET] Created", { id, ticketCode, serialNumber });
@@ -90,56 +107,110 @@ export async function createTicket(input: TicketInput): Promise<Ticket> {
 }
 
 export async function getTicketByCode(ticketCode: string): Promise<Ticket | null> {
-  const { data, error } = await db()
-    .select("*")
-    .eq("ticket_code", ticketCode)
-    .maybeSingle();
+  const db = getDbOrNull();
 
-  if (error || !data) return null;
+  if (db) {
+    const [row] = await db`
+      SELECT id, ticket_code, first_name, last_name, email, phone, event_id, status, qr_code, created_at
+      FROM web_tickets
+      WHERE ticket_code = ${ticketCode}
+      LIMIT 1
+    `;
+    if (!row) return null;
+    return {
+      id: String(row.id),
+      ticketCode: String(row.ticket_code),
+      firstName: String(row.first_name),
+      lastName: String(row.last_name),
+      email: String(row.email),
+      phone: String(row.phone),
+      eventId: String(row.event_id),
+      status: String(row.status) as Ticket["status"],
+      qrCode: String(row.qr_code),
+      createdAt: String(row.created_at),
+    };
+  }
 
+  // local-json fallback
+  const tickets = readJsonFile<any>("web_tickets");
+  const row = tickets.find((t: any) => t.ticket_code === ticketCode);
+  if (!row) return null;
   return {
-    id: String(data.id),
-    ticketCode: String(data.ticket_code),
-    firstName: String(data.first_name),
-    lastName: String(data.last_name),
-    email: String(data.email),
-    phone: String(data.phone),
-    eventId: String(data.event_id),
-    status: String(data.status) as Ticket["status"],
-    qrCode: String(data.qr_code),
-    createdAt: String(data.created_at),
+    id: String(row.id),
+    ticketCode: String(row.ticket_code),
+    firstName: String(row.first_name),
+    lastName: String(row.last_name),
+    email: String(row.email),
+    phone: String(row.phone),
+    eventId: String(row.event_id),
+    status: String(row.status) as Ticket["status"],
+    qrCode: String(row.qr_code),
+    createdAt: String(row.created_at),
   };
 }
 
 export async function getTicketById(id: string): Promise<Ticket | null> {
-  const { data, error } = await db()
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  const db = getDbOrNull();
 
-  if (error || !data) return null;
+  if (db) {
+    const [row] = await db`
+      SELECT id, ticket_code, first_name, last_name, email, phone, event_id, status, qr_code, created_at
+      FROM web_tickets
+      WHERE id = ${id}
+      LIMIT 1
+    `;
+    if (!row) return null;
+    return {
+      id: String(row.id),
+      ticketCode: String(row.ticket_code),
+      firstName: String(row.first_name),
+      lastName: String(row.last_name),
+      email: String(row.email),
+      phone: String(row.phone),
+      eventId: String(row.event_id),
+      status: String(row.status) as Ticket["status"],
+      qrCode: String(row.qr_code),
+      createdAt: String(row.created_at),
+    };
+  }
 
+  // local-json fallback
+  const tickets = readJsonFile<any>("web_tickets");
+  const row = tickets.find((t: any) => t.id === id);
+  if (!row) return null;
   return {
-    id: String(data.id),
-    ticketCode: String(data.ticket_code),
-    firstName: String(data.first_name),
-    lastName: String(data.last_name),
-    email: String(data.email),
-    phone: String(data.phone),
-    eventId: String(data.event_id),
-    status: String(data.status) as Ticket["status"],
-    qrCode: String(data.qr_code),
-    createdAt: String(data.created_at),
+    id: String(row.id),
+    ticketCode: String(row.ticket_code),
+    firstName: String(row.first_name),
+    lastName: String(row.last_name),
+    email: String(row.email),
+    phone: String(row.phone),
+    eventId: String(row.event_id),
+    status: String(row.status) as Ticket["status"],
+    qrCode: String(row.qr_code),
+    createdAt: String(row.created_at),
   };
 }
 
 export async function validateTicket(ticketCode: string): Promise<{ valid: boolean; ticket?: Ticket; error?: string }> {
-  const { data, error } = await db()
-    .select("*")
-    .eq("ticket_code", ticketCode)
-    .maybeSingle();
+  const db = getDbOrNull();
+  let data: any = null;
 
-  if (error || !data) {
+  if (db) {
+    const [row] = await db`
+      SELECT id, ticket_code, first_name, last_name, email, phone, event_id, status, qr_code, created_at
+      FROM web_tickets
+      WHERE ticket_code = ${ticketCode}
+      LIMIT 1
+    `;
+    data = row;
+  } else {
+    // local-json fallback
+    const tickets = readJsonFile<any>("web_tickets");
+    data = tickets.find((t: any) => t.ticket_code === ticketCode);
+  }
+
+  if (!data) {
     return { valid: false, error: "Ticket no encontrado." };
   }
 
@@ -170,14 +241,24 @@ export async function validateTicket(ticketCode: string): Promise<{ valid: boole
 
 export async function markTicketUsed(ticketCode: string): Promise<void> {
   const now = new Date().toISOString();
+  const db = getDbOrNull();
 
-  const { error } = await db()
-    .update({ status: "used", updated_at: now })
-    .eq("ticket_code", ticketCode)
-    .eq("status", "valid");
-
-  if (error) {
-    throw new Error("No se pudo marcar el ticket como usado.");
+  if (db) {
+    await db`
+      UPDATE web_tickets
+      SET status = 'used', updated_at = ${now}
+      WHERE ticket_code = ${ticketCode} AND status = 'valid'
+    `;
+  } else {
+    // local-json fallback
+    const tickets = readJsonFile<any>("web_tickets");
+    const idx = tickets.findIndex((t: any) => t.ticket_code === ticketCode && t.status === "valid");
+    if (idx === -1) {
+      throw new Error("No se pudo marcar el ticket como usado.");
+    }
+    tickets[idx].status = "used";
+    tickets[idx].updated_at = now;
+    writeJsonFile("web_tickets", tickets);
   }
 
   secureLog("[TICKET] Marked as used", { ticketCode });

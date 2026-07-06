@@ -416,7 +416,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: cleanEmailInput(e.target.value) })}
                       />
-                      <datalist id="ticket-email-domains">
+                      <datalist key={formData.email.split("@")[0] || "tu"} id="ticket-email-domains">
                         {emailDomains.map((domain) => {
                           const local = formData.email.split("@")[0] || "tu";
                           return <option key={domain} value={`${local}@${domain}`} />;

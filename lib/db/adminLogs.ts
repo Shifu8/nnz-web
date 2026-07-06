@@ -22,18 +22,11 @@ export async function recordAdminLog(action: string, metadata?: Record<string, u
     return;
   }
 
-  if (store.kind === "supabase") {
-    await store.supabase.from("admin_logs").insert({
-      action,
-      metadata: metadata ?? null,
-      created_at: now,
-    });
+  if (store.kind === "postgres") {
+    await store.db`
+      INSERT INTO admin_logs (action, metadata, created_at)
+      VALUES (${action}, ${store.db.json(metadata as any ?? null)}, ${now})
+    `;
     return;
   }
-
-  await store.db.collection("adminLogs").add({
-    action,
-    metadata: metadata ?? null,
-    createdAt: now,
-  });
 }

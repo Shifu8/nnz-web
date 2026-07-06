@@ -13,13 +13,6 @@ export type StoredTicketPass = {
   waLink?: string;
 };
 
-export type StoredGiveawayState = {
-  registered: boolean;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  phase?: string;
-};
 
 function safeParse<T>(raw: string | null): T | null {
   if (!raw) return null;
@@ -82,15 +75,6 @@ export function loadCheckoutDraft(): Record<string, string> | null {
   return getItem<Record<string, string>>("checkout_draft", true);
 }
 
-/** Estado del giveaway */
-export function saveGiveawayState(state: StoredGiveawayState) {
-  setItem("giveaway_state", state);
-}
-
-export function loadGiveawayState(): StoredGiveawayState | null {
-  return getItem<StoredGiveawayState>("giveaway_state");
-}
-
 /** Modal / sección activa en home */
 export function saveActiveModal(modal: "access" | null) {
   if (modal) setItem("active_modal", modal, true);
@@ -99,25 +83,6 @@ export function saveActiveModal(modal: "access" | null) {
 
 export function loadActiveModal(): "access" | null {
   return getItem<"access">("active_modal", true);
-}
-
-/** Countdown giveaway sincronizado */
-export function saveGiveawaySchedule(data: {
-  openAt: string;
-  closeAt: string;
-  phase: string;
-  serverTime: string;
-}) {
-  setItem("giveaway_schedule", data);
-}
-
-export function loadGiveawaySchedule(): {
-  openAt: string;
-  closeAt: string;
-  phase: string;
-  serverTime: string;
-} | null {
-  return getItem("giveaway_schedule");
 }
 
 /** Preview de comprobante (base64) — persiste entre cierres del modal, se borra al recargar */

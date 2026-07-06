@@ -5,23 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import TurnstileWidget, { hasTurnstileSiteKey } from "@/frontend/components/TurnstileWidget";
 
-type DeliveryChannel = "email" | "whatsapp" | "both";
-
-const CHANNEL_OPTIONS: {
-  id: DeliveryChannel;
-  label: string;
-  sub: string;
-}[] = [
-  { id: "email", label: "Gmail", sub: "Correo + QR adjunto" },
-  { id: "whatsapp", label: "Móvil", sub: "WhatsApp + imagen QR" },
-  { id: "both", label: "Ambos", sub: "Gmail y WhatsApp" },
-];
-
-function channelSuccessLabel(channel: DeliveryChannel) {
-  if (channel === "email") return "enviado por Gmail con la imagen del QR";
-  if (channel === "whatsapp") return "enviado por WhatsApp con la imagen del QR";
-  return "enviado por Gmail y WhatsApp con la imagen del QR";
-}
+type DeliveryChannel = "email";
 
 export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [password, setPassword] = useState("");
@@ -33,10 +17,9 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
 
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "" });
   const [quantity, setQuantity] = useState(1);
-  const [deliveryChannel, setDeliveryChannel] = useState<DeliveryChannel>("both");
+  const [deliveryChannel, setDeliveryChannel] = useState<DeliveryChannel>("email");
   const [success, setSuccess] = useState(false);
   const [lastSerial, setLastSerial] = useState("");
-  const [lastChannel, setLastChannel] = useState<DeliveryChannel>("both");
 
   async function handleLogin(e: FormEvent) {
     e.preventDefault();
@@ -84,7 +67,14 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
       const res = await fetch("/api/admin/generate-ticket", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, quantity, deliveryChannel }),
+        body: JSON.stringify({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          phone: "",
+          quantity,
+          deliveryChannel: "email",
+        }),
       });
 
       const data = await res.json();
@@ -94,7 +84,6 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
       }
 
       setLastSerial(data.serialNumber || "");
-      setLastChannel((data.deliveryChannel as DeliveryChannel) || deliveryChannel);
       setSuccess(true);
     } catch {
       setError("Error generando ticket");
@@ -108,7 +97,7 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
     setLastSerial("");
     setForm({ firstName: "", lastName: "", email: "", phone: "" });
     setQuantity(1);
-    setDeliveryChannel("both");
+    setDeliveryChannel("email");
   };
 
   return (
@@ -143,7 +132,7 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
                 </div>
                 <h2 className="text-2xl font-black uppercase tracking-[0.15em] text-white">Tickets Admin</h2>
                 <p className="mt-2 text-center text-xs text-zinc-400">
-                  Panel privado. Genera tickets VIP gratis y envíalos por Gmail o WhatsApp.
+                  Panel privado. Genera tickets VIP gratis y envíalos por Gmail.
                 </p>
 
                 <form onSubmit={handleLogin} className="mt-8 w-full space-y-4">
@@ -182,7 +171,7 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
                 </div>
                 <h2 className="text-2xl font-black uppercase tracking-widest text-white">ENVIADO</h2>
                 <p className="mt-2 text-[10px] leading-loose tracking-widest text-zinc-400 uppercase">
-                  Ticket VIP para {form.firstName} {form.lastName} {channelSuccessLabel(lastChannel)}.
+                  Ticket VIP para {form.firstName} {form.lastName} enviado por Gmail con la imagen del QR.
                 </p>
                 {lastSerial && (
                   <p className="mt-3 rounded-xl border border-[#C8FF00]/20 bg-[#C8FF00]/5 px-4 py-2 font-mono text-[11px] text-[#C8FF00]">
@@ -204,7 +193,7 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
                     TICKET GRATIS VIP
                   </h2>
                   <p className="mt-1 text-[9px] uppercase tracking-[0.2em] text-zinc-500">
-                    Elige canal y envía la foto del QR
+                    Ingresa los datos y envía la foto del QR por Gmail
                   </p>
                 </div>
 
@@ -229,26 +218,18 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
                   </div>
 
                   <input
-                    required={deliveryChannel !== "whatsapp"}
+                    required
                     type="email"
                     placeholder="CORREO (Gmail)"
-                    className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-600 outline-none focus:border-[#C8FF00]/50 disabled:opacity-40"
+                    className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-600 outline-none focus:border-[#C8FF00]/50"
                     value={form.email}
-                    disabled={deliveryChannel === "whatsapp"}
                     onChange={(e) => setForm({ ...form, email: e.target.value.toLowerCase() })}
                   />
 
                   <div className="grid grid-cols-3 gap-3">
-                    <input
-                      required={deliveryChannel !== "email"}
-                      type="tel"
-                      maxLength={10}
-                      placeholder="TELÉFONO (09XXXXXXXX)"
-                      className="col-span-2 w-full rounded-xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-600 outline-none focus:border-[#C8FF00]/50 disabled:opacity-40"
-                      value={form.phone}
-                      disabled={deliveryChannel === "email"}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^\d]/g, "") })}
-                    />
+                    <div className="col-span-2 text-zinc-500 text-[9px] font-bold flex items-center pl-1 uppercase tracking-wider">
+                      Se enviará por Gmail
+                    </div>
                     <select
                       className="col-span-1 w-full rounded-xl border border-white/10 bg-black/50 px-2 py-3 text-xs font-bold text-white outline-none focus:border-[#C8FF00]/50"
                       value={quantity}
@@ -260,30 +241,6 @@ export default function AdminPanelModal({ isOpen, onClose }: { isOpen: boolean; 
                         </option>
                       ))}
                     </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="text-[9px] font-black uppercase tracking-[0.25em] text-zinc-500">
-                      Enviar ticket por
-                    </p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {CHANNEL_OPTIONS.map((opt) => {
-                        const active = deliveryChannel === opt.id;
-                        return (
-                          <button
-                            key={opt.id}
-                            type="button"
-                            onClick={() => setDeliveryChannel(opt.id)}
-                            className={`glass-select-tile flex flex-col items-center gap-1 px-2 py-3 ${
-                              active ? "glass-select-tile-active-lime text-[#C8FF00]" : "text-zinc-500"
-                            }`}
-                          >
-                            <span className="text-[9px] font-black uppercase tracking-wider">{opt.label}</span>
-                            <span className="text-[7px] leading-tight text-center opacity-70">{opt.sub}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
                   </div>
 
                   {error && (

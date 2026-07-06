@@ -7,7 +7,7 @@ import {
   handleApiError,
   readJson,
 } from "@/lib/security";
-import { ensureStore } from "@/lib/db/passStore";
+import { ensureStore, readJsonFile, writeJsonFile } from "@/lib/db/passStore";
 import fs from "fs";
 import path from "path";
 
@@ -34,39 +34,41 @@ async function clearEntryPasses(eventId: string): Promise<number> {
   const store = ensureStore();
   let count = 0;
 
-  if (store.kind === "supabase") {
-    const { data, error } = await store.supabase
-      .from("party_passes")
-      .update({
-        used: false,
-        scanned_at: null,
-        scanned_by: null,
-        scan_ip_hash: null,
-        scan_user_agent_hash: null,
-      })
-      .eq("event_id", eventId)
-      .eq("used", true)
-      .select("serial_number");
-    if (error) throw new ApiError(500, "Error al limpiar pases.", "DB_ERROR");
-    count = data?.length || 0;
-  } else if (store.kind === "firestore") {
-    const snapshot = await store.db
-      .collection("partyPasses")
-      .where("eventId", "==", eventId)
-      .where("used", "==", true)
-      .get();
-    count = snapshot.size;
-    const batch = store.db.batch();
-    snapshot.docs.forEach((doc) => {
-      batch.update(doc.ref, {
-        used: false,
-        scannedAt: null,
-        scannedBy: null,
-        scanIpHash: null,
-        scanUserAgentHash: null,
-      });
+  if (store.kind === "postgres") {
+    try {
+      const updated = await store.db`
+        UPDATE party_passes
+        SET used = false,
+            scanned_at = null,
+            scanned_by = null,
+            scan_ip_hash = null,
+            scan_user_agent_hash = null
+        WHERE event_id = ${eventId} AND used = true
+        RETURNING serial_number
+      `;
+      count = updated.length;
+    } catch (error) {
+      throw new ApiError(500, "Error al reiniciar pases en base de datos.", "DB_ERROR");
+    }
+  } else if (store.kind === "local-json") {
+    const partyPasses = readJsonFile<any>("party_passes");
+    partyPasses.forEach((p: any) => {
+      if ((p.eventId === eventId || p.event_id === eventId) && p.used) {
+        p.used = false;
+        p.scannedAt = null;
+        p.scanned_at = null;
+        p.scannedBy = null;
+        p.scanned_by = null;
+        p.scanIpHash = null;
+        p.scan_ip_hash = null;
+        p.scanUserAgentHash = null;
+        p.scan_user_agent_hash = null;
+        count++;
+      }
     });
-    if (count > 0) await batch.commit();
+    if (count > 0) {
+      writeJsonFile("party_passes", partyPasses);
+    }
   }
 
   return count;

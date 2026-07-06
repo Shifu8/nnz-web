@@ -1,7 +1,7 @@
 import "server-only";
 
-import { adminDb } from "@/lib/firebase/adminApp";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { getDbOrNull } from "@/lib/db/postgres";
+import { readJsonFile } from "@/lib/db/passStore";
 import { loadAllReceipts } from "@/lib/access-drop/receiptStore";
 import type { ReceiptRecord } from "@/lib/access-drop/types";
 import {
@@ -16,7 +16,7 @@ import {
   type ActiveTicketEvent,
 } from "@/lib/tickets/activeEvent";
 
-export type RecoveryTicketSource = "supabase" | "firestore" | "receipt";
+export type RecoveryTicketSource = "postgres" | "receipt";
 
 export type RecoveryTicket = {
   id: string;
@@ -74,28 +74,51 @@ function receiptToTicket(receipt: ReceiptRecord, event: ActiveTicketEvent): Reco
   };
 }
 
-async function findSupabaseTicket(email: string, event: ActiveTicketEvent): Promise<RecoveryTicket | null> {
-  const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
+async function findPostgresTicket(email: string, event: ActiveTicketEvent): Promise<RecoveryTicket | null> {
+  const db = getDbOrNull();
+  if (!db) {
+    // local-json fallback
+    const tickets = readJsonFile<any>("tickets");
+    const data = tickets.find(
+      (t: any) =>
+        t.emailHash === hashLookup(email) &&
+        t.status === "approved" &&
+        eventMatchesActiveEvent(t.eventId || t.event_id, event) &&
+        (t.serialNumber || t.serial_number) &&
+        (t.qrPayloadEncrypted || t.qr_payload_encrypted)
+    );
+    if (!data) return null;
+    return {
+      id: data.id,
+      source: "postgres",
+      eventId: data.eventId || data.event_id,
+      email: sanitizeEmail(decryptStoredValue(data.emailEncrypted || data.email_encrypted)),
+      firstName: String(data.firstName || data.first_name || ""),
+      lastName: String(data.lastName || data.last_name || ""),
+      serialNumber: data.serialNumber || data.serial_number,
+      qrPayload: decryptStoredValue(data.qrPayloadEncrypted || data.qr_payload_encrypted),
+      quantity: 1,
+      status: "APPROVED",
+    };
+  }
 
-  const { data, error } = await supabase
-    .from("tickets")
-    .select("id,first_name,last_name,email_encrypted,event_id,serial_number,qr_payload_encrypted,status")
-    .eq("email_hash", hashLookup(email))
-    .eq("status", "approved")
-    .in("event_id", event.aliases)
-    .not("serial_number", "is", null)
-    .not("qr_payload_encrypted", "is", null)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) throw new Error(`RECOVERY_TICKET_LOOKUP_FAILED:${error.message}`);
+  const rows = await db`
+    SELECT id, first_name, last_name, email_encrypted, event_id, serial_number, qr_payload_encrypted, status
+    FROM tickets
+    WHERE email_hash = ${hashLookup(email)}
+      AND status = 'approved'
+      AND event_id IN (${event.aliases})
+      AND serial_number IS NOT NULL
+      AND qr_payload_encrypted IS NOT NULL
+    ORDER BY updated_at DESC
+    LIMIT 1
+  `;
+  const data = rows[0];
   if (!data?.serial_number || !data.qr_payload_encrypted) return null;
 
   return {
     id: String(data.id),
-    source: "supabase",
+    source: "postgres",
     eventId: String(data.event_id),
     email: sanitizeEmail(decryptStoredValue(data.email_encrypted)),
     firstName: String(data.first_name || ""),
@@ -107,18 +130,41 @@ async function findSupabaseTicket(email: string, event: ActiveTicketEvent): Prom
   };
 }
 
-async function getSupabaseTicket(id: string, event: ActiveTicketEvent): Promise<RecoveryTicket | null> {
-  const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
+async function getPostgresTicket(id: string, event: ActiveTicketEvent): Promise<RecoveryTicket | null> {
+  const db = getDbOrNull();
+  if (!db) {
+    // local-json fallback
+    const tickets = readJsonFile<any>("tickets");
+    const data = tickets.find((t: any) => t.id === id);
+    if (
+      !data ||
+      data.status !== "approved" ||
+      !(data.serialNumber || data.serial_number) ||
+      !(data.qrPayloadEncrypted || data.qr_payload_encrypted) ||
+      !eventMatchesActiveEvent(data.eventId || data.event_id, event)
+    ) {
+      return null;
+    }
+    return {
+      id: data.id,
+      source: "postgres",
+      eventId: data.eventId || data.event_id,
+      email: sanitizeEmail(decryptStoredValue(data.emailEncrypted || data.email_encrypted)),
+      firstName: String(data.firstName || data.first_name || ""),
+      lastName: String(data.lastName || data.last_name || ""),
+      serialNumber: data.serialNumber || data.serial_number,
+      qrPayload: decryptStoredValue(data.qrPayloadEncrypted || data.qr_payload_encrypted),
+      quantity: 1,
+      status: "APPROVED",
+    };
+  }
 
-  const { data, error } = await supabase
-    .from("tickets")
-    .select("id,first_name,last_name,email_encrypted,event_id,serial_number,qr_payload_encrypted,status")
-    .eq("id", id)
-    .eq("status", "approved")
-    .maybeSingle();
+  const [data] = await db`
+    SELECT id, first_name, last_name, email_encrypted, event_id, serial_number, qr_payload_encrypted, status
+    FROM tickets
+    WHERE id = ${id} AND status = 'approved'
+  `;
 
-  if (error) throw new Error(`RECOVERY_TICKET_READ_FAILED:${error.message}`);
   if (
     !data?.serial_number ||
     !data.qr_payload_encrypted ||
@@ -129,73 +175,13 @@ async function getSupabaseTicket(id: string, event: ActiveTicketEvent): Promise<
 
   return {
     id: String(data.id),
-    source: "supabase",
+    source: "postgres",
     eventId: String(data.event_id),
     email: sanitizeEmail(decryptStoredValue(data.email_encrypted)),
     firstName: String(data.first_name || ""),
     lastName: String(data.last_name || ""),
     serialNumber: String(data.serial_number),
     qrPayload: decryptStoredValue(data.qr_payload_encrypted),
-    quantity: 1,
-    status: "APPROVED",
-  };
-}
-
-async function findFirestoreTicket(email: string, event: ActiveTicketEvent): Promise<RecoveryTicket | null> {
-  if (!adminDb) return null;
-
-  const snapshot = await adminDb
-    .collection("tickets")
-    .where("emailHash", "==", hashLookup(email))
-    .where("status", "==", "approved")
-    .limit(10)
-    .get();
-
-  const match = snapshot.docs.find((doc) => eventMatchesActiveEvent(doc.data().eventId, event));
-  if (!match) return null;
-
-  const data = match.data();
-  if (!data.serialNumber || !data.qrPayloadEncrypted) return null;
-
-  return {
-    id: match.id,
-    source: "firestore",
-    eventId: String(data.eventId),
-    email: sanitizeEmail(decryptStoredValue(data.emailEncrypted)),
-    firstName: String(data.firstName || ""),
-    lastName: String(data.lastName || ""),
-    serialNumber: String(data.serialNumber),
-    qrPayload: decryptStoredValue(data.qrPayloadEncrypted),
-    quantity: 1,
-    status: "APPROVED",
-  };
-}
-
-async function getFirestoreTicket(id: string, event: ActiveTicketEvent): Promise<RecoveryTicket | null> {
-  if (!adminDb) return null;
-
-  const snapshot = await adminDb.collection("tickets").doc(id).get();
-  if (!snapshot.exists) return null;
-
-  const data = snapshot.data() || {};
-  if (
-    data.status !== "approved" ||
-    !data.serialNumber ||
-    !data.qrPayloadEncrypted ||
-    !eventMatchesActiveEvent(data.eventId, event)
-  ) {
-    return null;
-  }
-
-  return {
-    id: snapshot.id,
-    source: "firestore",
-    eventId: String(data.eventId),
-    email: sanitizeEmail(decryptStoredValue(data.emailEncrypted)),
-    firstName: String(data.firstName || ""),
-    lastName: String(data.lastName || ""),
-    serialNumber: String(data.serialNumber),
-    qrPayload: decryptStoredValue(data.qrPayloadEncrypted),
     quantity: 1,
     status: "APPROVED",
   };
@@ -234,8 +220,7 @@ export async function findRecoverableTicketByEmail(
 ): Promise<RecoveryTicket | null> {
   const email = sanitizeEmail(rawEmail);
   return (
-    (await tryTicketSource("supabase", () => findSupabaseTicket(email, event))) ||
-    (await tryTicketSource("firestore", () => findFirestoreTicket(email, event))) ||
+    (await tryTicketSource("postgres", () => findPostgresTicket(email, event))) ||
     findReceiptTicket(email, event)
   );
 }
@@ -245,8 +230,7 @@ export async function getRecoverableTicket(
   id: string,
   event: ActiveTicketEvent,
 ): Promise<RecoveryTicket | null> {
-  if (source === "supabase") return getSupabaseTicket(id, event);
-  if (source === "firestore") return getFirestoreTicket(id, event);
+  if (source === "postgres") return getPostgresTicket(id, event);
 
   const receipt = loadAllReceipts().find((item) => item.id === id);
   return receipt ? receiptToTicket(receipt, event) : null;

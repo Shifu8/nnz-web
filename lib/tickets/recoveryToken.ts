@@ -65,7 +65,7 @@ export async function verifyRecoveryToken(
 
   if (
     typeof ticketId !== "string" ||
-    !["supabase", "firestore", "receipt"].includes(String(ticketSource)) ||
+    !["postgres", "receipt"].includes(String(ticketSource)) ||
     eventId !== event.id ||
     typeof emailHash !== "string"
   ) {

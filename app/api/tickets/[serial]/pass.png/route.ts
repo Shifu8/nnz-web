@@ -28,27 +28,16 @@ export async function GET(request: Request, context: RouteContext) {
         return new NextResponse("Not found", { status: 404 });
       }
       qrPayload = decryptSensitive(pass.qrPayloadEncrypted || pass.qr_payload_encrypted);
-    } else if (store.kind === "supabase") {
-      const { data } = await store.supabase
-        .from("party_passes")
-        .select("qr_payload_encrypted")
-        .eq("serial_number", serialNumber)
-        .maybeSingle();
-      if (!data?.qr_payload_encrypted) {
+    } else if (store.kind === "postgres") {
+      const [row] = await store.db`
+        SELECT qr_payload_encrypted FROM party_passes
+        WHERE serial_number = ${serialNumber}
+        LIMIT 1
+      `;
+      if (!row?.qr_payload_encrypted) {
         return new NextResponse("Not found", { status: 404 });
       }
-      qrPayload = decryptSensitive(data.qr_payload_encrypted);
-    } else {
-      const snap = await store.db
-        .collection("partyPasses")
-        .where("serialNumber", "==", serialNumber)
-        .limit(1)
-        .get();
-      const doc = snap.docs[0]?.data();
-      if (!doc?.qrPayloadEncrypted) {
-        return new NextResponse("Not found", { status: 404 });
-      }
-      qrPayload = decryptSensitive(doc.qrPayloadEncrypted);
+      qrPayload = decryptSensitive(row.qr_payload_encrypted);
     }
 
     const png = await generateTicketQrPng(qrPayload);

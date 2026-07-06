@@ -1,6 +1,6 @@
 {
   "name": "nenez-web",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -12,11 +12,8 @@
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "@hapi/boom": "^10.0.1",
-    "@supabase/supabase-js": "^2.106.1",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
-    "firebase": "^12.13.0",
-    "firebase-admin": "^13.9.0",
     "framer-motion": "^12.38.0",
     "gsap": "^3.15.0",
     "html-to-image": "^1.11.13",
@@ -31,6 +28,7 @@
     "openai": "^6.38.0",
     "pdf-lib": "^1.17.1",
     "pdfkit": "^0.18.0",
+    "postgres": "^3.4.9",
     "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0",
     "qrcode.react": "^4.2.0",

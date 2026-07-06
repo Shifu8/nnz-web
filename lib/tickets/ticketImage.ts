@@ -47,10 +47,22 @@ export async function generateTicketImage(ticket: TicketImageInput): Promise<Buf
     }
   }
 
-  // Get selected design
+  // Get selected design — supports both UUID string IDs and legacy numeric indices
   const designs = getEventDesignsServer(eventId);
-  const designIdx = parseInt(ticket.ticketDesign || "0", 10);
-  const selectedDesign = designs[designIdx] || designs[0];
+  let selectedDesign = designs[0];
+  if (ticket.ticketDesign) {
+    // First try matching by UUID id (admin designs manager sends the design's `id`)
+    const byId = designs.find((d) => d.id === ticket.ticketDesign);
+    if (byId) {
+      selectedDesign = byId;
+    } else {
+      // Fallback: treat as numeric index (legacy behaviour)
+      const idx = parseInt(ticket.ticketDesign, 10);
+      if (Number.isFinite(idx) && designs[idx]) {
+        selectedDesign = designs[idx];
+      }
+    }
+  }
   const accentColor = selectedDesign.accentColor || "#C8FF00";
 
   // Locate the public directory robustly

@@ -1,7 +1,6 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { adminDb } from "@/lib/firebase/adminApp";
 import {
   assertSameOrigin,
   createStaffSessionJwt,
@@ -46,12 +45,12 @@ export async function POST(request: Request) {
     const sessionToken = await createStaffSessionJwt(sessionId, csrfToken, role);
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 12);
 
-    if (adminDb) {
-      await adminDb.collection("staffSessions").doc(sessionId).set({
-        createdAt: new Date().toISOString(),
-        expiresAt: expiresAt.toISOString(),
-      });
-    }
+    const recordAdminLog = require("@/lib/db/adminLogs").recordAdminLog;
+    await recordAdminLog("STAFF_LOGIN", {
+      role,
+      sessionId,
+      expiresAt: expiresAt.toISOString(),
+    }).catch(() => {});
 
     const response = NextResponse.json({
       success: true,

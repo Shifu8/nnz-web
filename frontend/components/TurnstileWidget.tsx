@@ -50,6 +50,10 @@ function siteKeyForVariant(variant: TurnstileVariant): string {
     return "";
   }
 
+  if (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname === "0.0.0.0")) {
+    return variant === "invisible" ? "1x00000000000000000000BB" : "1x00000000000000000000AA";
+  }
+
   if (variant === "invisible") {
     return (
       process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY_INVISIBLE ||
@@ -96,6 +100,9 @@ function loadTurnstileScript(): Promise<void> {
 }
 
 export function hasTurnstileSiteKey(variant: TurnstileVariant = "visible"): boolean {
+  if (process.env.NODE_ENV !== "production") {
+    return false;
+  }
   return Boolean(siteKeyForVariant(variant));
 }
 

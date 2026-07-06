@@ -286,7 +286,7 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                       className="h-12 w-full bg-transparent px-3 text-sm font-bold text-white outline-none placeholder:text-zinc-700"
                     />
                   </div>
-                  <datalist id="recovery-email-domains">
+                  <datalist key={email.split("@")[0] || "tu"} id="recovery-email-domains">
                     {emailDomains.map((domain) => {
                       const local = email.split("@")[0] || "tu";
                       return <option key={domain} value={`${local}@${domain}`} />;

@@ -99,33 +99,6 @@ create index if not exists ticket_resends_serial_created_idx
 
 alter table public.ticket_resends enable row level security;
 
--- Giveaway (registro en vivo, 7:30 PM Ecuador)
-create table if not exists public.giveaway_entries (
-  id uuid primary key default gen_random_uuid(),
-  full_name text not null,
-  first_name text not null,
-  last_name text not null,
-  email text,
-  email_hash text,
-  phone text not null,
-  phone_hash text not null,
-  ip_hash text,
-  user_agent_hash text,
-  created_at timestamptz not null default now()
-);
-
-create unique index if not exists giveaway_entries_phone_unique_idx
-  on public.giveaway_entries (phone_hash);
-
-create unique index if not exists giveaway_entries_email_unique_idx
-  on public.giveaway_entries (email_hash)
-  where email_hash is not null;
-
-create index if not exists giveaway_entries_created_idx
-  on public.giveaway_entries (created_at desc);
-
-alter table public.giveaway_entries enable row level security;
-
 -- Events (admin CRUD)
 create table if not exists public.events (
   id uuid primary key,
@@ -165,7 +138,7 @@ create table if not exists public.ticket_recovery_otps (
   email_hash text not null,
   event_id text not null,
   ticket_id text not null,
-  ticket_source text not null check (ticket_source in ('supabase', 'firestore', 'receipt')),
+  ticket_source text not null check (ticket_source in ('postgres', 'receipt')),
   code_hash text not null,
   expires_at timestamptz not null,
   attempts integer not null default 0 check (attempts >= 0 and attempts <= 5),
@@ -209,4 +182,50 @@ create index if not exists ticket_recovery_logs_created_idx
 alter table public.ticket_recovery_otps enable row level security;
 alter table public.ticket_recovery_logs enable row level security;
 
--- The app uses SUPABASE_SERVICE_ROLE_KEY on the server only. Do not expose it to the browser.
+-- logs de envíos de entradas vip / manuales
+create table if not exists public.ticket_send_logs (
+  id text primary key,
+  first_name text not null,
+  last_name text not null,
+  email text not null,
+  quantity integer not null,
+  design_name text not null,
+  sent_at timestamptz not null default now()
+);
+
+create index if not exists ticket_send_logs_sent_at_idx
+  on public.ticket_send_logs (sent_at desc);
+
+alter table public.ticket_send_logs enable row level security;
+
+-- pases reclamados por recompensa (reward system)
+create table if not exists public.passes (
+  id text primary key,
+  code text not null unique,
+  event_id text not null,
+  expires_at timestamptz not null,
+  qr_payload text not null,
+  used boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+alter table public.passes enable row level security;
+
+-- tickets generados en el frontend
+create table if not exists public.web_tickets (
+  id uuid primary key,
+  ticket_code text not null unique,
+  serial_number text not null,
+  first_name text not null,
+  last_name text not null,
+  email text not null,
+  phone text not null,
+  event_id text not null,
+  status text not null check (status in ('valid', 'used', 'revoked')),
+  qr_code text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.web_tickets enable row level security;
+

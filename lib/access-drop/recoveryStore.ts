@@ -3,7 +3,7 @@ import "server-only";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { getDbOrNull } from "@/lib/db/postgres";
 import { hashLookup, hashToken } from "@/lib/security";
 import type { RecoveryTicketSource } from "@/lib/tickets/recoveryTicket";
 
@@ -141,17 +141,16 @@ export async function countRecoveryLogs(
   action: RecoveryLogAction,
   since = startOfEcuadorDay(),
 ): Promise<number> {
-  const supabase = getSupabaseAdmin();
-  if (supabase) {
-    const { count, error } = await supabase
-      .from("ticket_recovery_logs")
-      .select("id", { count: "exact", head: true })
-      .eq("email_hash", emailHash)
-      .eq("event_id", eventId)
-      .eq("action", action)
-      .gte("created_at", since);
-    if (error) throw new Error(`RECOVERY_LOG_COUNT_FAILED:${error.message}`);
-    return count || 0;
+  const db = getDbOrNull();
+  if (db) {
+    const [row] = await db`
+      SELECT COUNT(*) as count FROM ticket_recovery_logs
+      WHERE email_hash = ${emailHash}
+        AND event_id = ${eventId}
+        AND action = ${action}
+        AND created_at >= ${since}
+    `;
+    return Number(row?.count || 0);
   }
 
   const sinceMs = new Date(since).getTime();
@@ -169,19 +168,17 @@ export async function getLastRecoveryLogAt(
   eventId: string,
   action: RecoveryLogAction,
 ): Promise<string | null> {
-  const supabase = getSupabaseAdmin();
-  if (supabase) {
-    const { data, error } = await supabase
-      .from("ticket_recovery_logs")
-      .select("created_at")
-      .eq("email_hash", emailHash)
-      .eq("event_id", eventId)
-      .eq("action", action)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (error) throw new Error(`RECOVERY_LOG_READ_FAILED:${error.message}`);
-    return data?.created_at || null;
+  const db = getDbOrNull();
+  if (db) {
+    const [row] = await db`
+      SELECT created_at FROM ticket_recovery_logs
+      WHERE email_hash = ${emailHash}
+        AND event_id = ${eventId}
+        AND action = ${action}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `;
+    return row?.created_at ? new Date(row.created_at).toISOString() : null;
   }
 
   const match = loadRecoveryFile().logs
@@ -191,17 +188,16 @@ export async function getLastRecoveryLogAt(
 }
 
 export async function recordRecoveryLog(input: RecoveryLogInput): Promise<void> {
-  const supabase = getSupabaseAdmin();
-  if (supabase) {
-    const { error } = await supabase.from("ticket_recovery_logs").insert({
-      email_hash: input.emailHash,
-      event_id: input.eventId,
-      action: input.action,
-      ip_hash: input.ipHash,
-      user_agent_hash: input.userAgentHash,
-      metadata: input.metadata || {},
-    });
-    if (error) throw new Error(`RECOVERY_LOG_WRITE_FAILED:${error.message}`);
+  const db = getDbOrNull();
+  if (db) {
+    await db`
+      INSERT INTO ticket_recovery_logs (
+        email_hash, event_id, action, ip_hash, user_agent_hash, metadata
+      ) VALUES (
+        ${input.emailHash}, ${input.eventId}, ${input.action},
+        ${input.ipHash}, ${input.userAgentHash}, ${db.json(input.metadata as any || {})}
+      )
+    `;
     return;
   }
 
@@ -226,31 +222,28 @@ export async function createRecoveryOtp(input: CreateOtpInput): Promise<{
   const emailHash = recoveryEmailHash(input.email);
   const hash = codeHash(input.email, input.eventId, code);
   const id = crypto.randomUUID();
-  const supabase = getSupabaseAdmin();
+  const db = getDbOrNull();
 
-  if (supabase) {
-    const { error: invalidateError } = await supabase
-      .from("ticket_recovery_otps")
-      .update({ used: true, updated_at: now.toISOString() })
-      .eq("email_hash", emailHash)
-      .eq("event_id", input.eventId)
-      .eq("used", false);
-    if (invalidateError) throw new Error(`RECOVERY_OTP_INVALIDATE_FAILED:${invalidateError.message}`);
+  if (db) {
+    // Invalidate old OTPs
+    await db`
+      UPDATE ticket_recovery_otps
+      SET used = true, updated_at = ${now.toISOString()}
+      WHERE email_hash = ${emailHash}
+        AND event_id = ${input.eventId}
+        AND used = false
+    `;
 
-    const { error } = await supabase.from("ticket_recovery_otps").insert({
-      id,
-      email_hash: emailHash,
-      event_id: input.eventId,
-      ticket_id: input.ticketId,
-      ticket_source: input.ticketSource,
-      code_hash: hash,
-      expires_at: expiresAt,
-      attempts: 0,
-      used: false,
-      created_at: now.toISOString(),
-      updated_at: now.toISOString(),
-    });
-    if (error) throw new Error(`RECOVERY_OTP_WRITE_FAILED:${error.message}`);
+    // Insert new OTP
+    await db`
+      INSERT INTO ticket_recovery_otps (
+        id, email_hash, event_id, ticket_id, ticket_source, code_hash,
+        expires_at, attempts, used, created_at, updated_at
+      ) VALUES (
+        ${id}, ${emailHash}, ${input.eventId}, ${input.ticketId}, ${input.ticketSource}, ${hash},
+        ${expiresAt}, 0, false, ${now.toISOString()}, ${now.toISOString()}
+      )
+    `;
     return { id, code, expiresAt };
   }
 
@@ -279,13 +272,13 @@ export async function createRecoveryOtp(input: CreateOtpInput): Promise<{
 
 export async function invalidateRecoveryOtp(id: string): Promise<void> {
   const now = new Date().toISOString();
-  const supabase = getSupabaseAdmin();
-  if (supabase) {
-    const { error } = await supabase
-      .from("ticket_recovery_otps")
-      .update({ used: true, updated_at: now })
-      .eq("id", id);
-    if (error) throw new Error(`RECOVERY_OTP_INVALIDATE_FAILED:${error.message}`);
+  const db = getDbOrNull();
+  if (db) {
+    await db`
+      UPDATE ticket_recovery_otps
+      SET used = true, updated_at = ${now}
+      WHERE id = ${id}
+    `;
     return;
   }
 
@@ -305,52 +298,59 @@ export async function verifyRecoveryOtp(
   const normalizedEmail = normalizeRecoveryEmail(email);
   const emailHash = recoveryEmailHash(normalizedEmail);
   const now = new Date();
-  const supabase = getSupabaseAdmin();
+  const db = getDbOrNull();
 
-  if (supabase) {
-    const { data, error } = await supabase
-      .from("ticket_recovery_otps")
-      .select("id,ticket_id,ticket_source,code_hash,expires_at,attempts,used")
-      .eq("email_hash", emailHash)
-      .eq("event_id", eventId)
-      .eq("used", false)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (error) throw new Error(`RECOVERY_OTP_READ_FAILED:${error.message}`);
-    if (!data) return { ok: false, reason: "not-found" };
+  if (db) {
+    const [otp] = await db`
+      SELECT id, ticket_id, ticket_source, code_hash, expires_at, attempts, used
+      FROM ticket_recovery_otps
+      WHERE email_hash = ${emailHash}
+        AND event_id = ${eventId}
+        AND used = false
+      ORDER BY created_at DESC
+      LIMIT 1
+    `;
+    if (!otp) return { ok: false, reason: "not-found" };
 
-    if (data.attempts >= RECOVERY_MAX_ATTEMPTS) {
-      await supabase.from("ticket_recovery_otps").update({ used: true, updated_at: now.toISOString() }).eq("id", data.id);
+    if (otp.attempts >= RECOVERY_MAX_ATTEMPTS) {
+      await db`
+        UPDATE ticket_recovery_otps
+        SET used = true, updated_at = ${now.toISOString()}
+        WHERE id = ${otp.id}
+      `;
       return { ok: false, reason: "locked" };
     }
 
-    if (new Date(data.expires_at).getTime() <= now.getTime()) {
-      await supabase.from("ticket_recovery_otps").update({ used: true, updated_at: now.toISOString() }).eq("id", data.id);
+    if (new Date(otp.expires_at).getTime() <= now.getTime()) {
+      await db`
+        UPDATE ticket_recovery_otps
+        SET used = true, updated_at = ${now.toISOString()}
+        WHERE id = ${otp.id}
+      `;
       return { ok: false, reason: "expired" };
     }
 
-    if (!safeEqual(data.code_hash, codeHash(normalizedEmail, eventId, code))) {
-      const attempts = data.attempts + 1;
+    if (!safeEqual(otp.code_hash, codeHash(normalizedEmail, eventId, code))) {
+      const attempts = otp.attempts + 1;
       const locked = attempts >= RECOVERY_MAX_ATTEMPTS;
-      await supabase
-        .from("ticket_recovery_otps")
-        .update({ attempts, used: locked, updated_at: now.toISOString() })
-        .eq("id", data.id);
+      await db`
+        UPDATE ticket_recovery_otps
+        SET attempts = ${attempts}, used = ${locked}, updated_at = ${now.toISOString()}
+        WHERE id = ${otp.id}
+      `;
       return { ok: false, reason: locked ? "locked" : "invalid" };
     }
 
-    const { error: updateError } = await supabase
-      .from("ticket_recovery_otps")
-      .update({ used: true, updated_at: now.toISOString() })
-      .eq("id", data.id)
-      .eq("used", false);
-    if (updateError) throw new Error(`RECOVERY_OTP_UPDATE_FAILED:${updateError.message}`);
+    await db`
+      UPDATE ticket_recovery_otps
+      SET used = true, updated_at = ${now.toISOString()}
+      WHERE id = ${otp.id}
+    `;
 
     return {
       ok: true,
-      ticketId: String(data.ticket_id),
-      ticketSource: data.ticket_source as RecoveryTicketSource,
+      ticketId: String(otp.ticket_id),
+      ticketSource: otp.ticket_source as RecoveryTicketSource,
     };
   }
 
