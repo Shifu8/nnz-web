@@ -787,11 +787,15 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                     <div className="flex items-center gap-3">
                       {/* Miniature ticket thumbnail */}
                       <div
-                        className="w-9 h-12 rounded-lg overflow-hidden border border-zinc-800 shrink-0 relative"
+                        className="w-9 h-12 rounded-lg overflow-hidden shrink-0 relative"
                         style={{
+                          border: `1px solid ${selectedDesignIndex !== null && designs[selectedDesignIndex]
+                            ? designs[selectedDesignIndex].accentColor
+                            : "#ff0055"
+                            }33`,
                           boxShadow: `0 4px 12px ${selectedDesignIndex !== null && designs[selectedDesignIndex]
                             ? designs[selectedDesignIndex].shadowColor
-                            : "rgba(255,255,255,0.05)"
+                            : "rgba(255, 0, 85, 0.25)"
                             }`,
                           filter: selectedDesignIndex === null ? "grayscale(1) opacity(0.4)" : "none",
                         }}
@@ -903,16 +907,25 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
           style={{ perspective: "1200px" }}
           onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}
         >
-          {/* Backdrop */}
+          {/* Backdrop with premium dynamic animated ambient radial glow */}
           <div
-            className="absolute inset-0 transition-all duration-350"
+            className="absolute inset-0 transition-all duration-350 overflow-hidden"
             style={{
-              background: "rgba(0,0,0,0.88)",
+              background: "rgba(0,0,0,0.92)",
               backdropFilter: `blur(${modalVisible ? "20px" : "0px"})`,
               opacity: modalVisible ? 1 : 0,
               transition: "opacity 0.35s ease, backdrop-filter 0.35s ease",
             }}
-          />
+          >
+            {/* Animated Dynamic Glow layer */}
+            <div
+              className="absolute inset-0 ambient-glow-animated pointer-events-none opacity-[0.22] mix-blend-screen"
+              style={{
+                background: `radial-gradient(circle 380px at 50% 50%, ${designs[currentViewedDesignIndex]?.accentColor || "#ff0055"}, transparent 100%)`,
+                transition: "background 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
+              }}
+            />
+          </div>
 
           {/* Modal content */}
           <div
@@ -957,11 +970,12 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                 ref={modalTicketRef}
                 onMouseMove={handleModalMouseMove}
                 onMouseLeave={handleModalMouseLeave}
-                className="relative w-full max-w-[260px] sm:max-w-[270px] aspect-[1/1.75] rounded-2xl overflow-hidden bg-zinc-950 border border-zinc-800 cursor-default flex flex-col justify-between"
+                className="relative w-full max-w-[260px] sm:max-w-[270px] aspect-[1/1.75] rounded-2xl overflow-hidden bg-zinc-950 cursor-default flex flex-col justify-between"
                 style={{
                   transformStyle: "preserve-3d",
-                  boxShadow: `0 32px 80px -12px rgba(0,0,0,0.95), 0 0 60px ${designs[currentViewedDesignIndex]?.shadowColor || "rgba(255,255,255,0.05)"}`,
-                  transition: "transform 0.15s ease",
+                  border: `1px solid ${designs[currentViewedDesignIndex]?.accentColor || "#ff0055"}33`,
+                  boxShadow: `0 32px 80px -12px rgba(0,0,0,0.95), 0 0 60px ${designs[currentViewedDesignIndex]?.shadowColor || "rgba(255, 0, 85, 0.25)"}`,
+                  transition: "transform 0.15s ease, border-color 0.35s ease, box-shadow 0.35s ease",
                 }}
               >
                 {/* Light reflection */}
@@ -1099,6 +1113,14 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
       <style>{`
         .success-ring-pulse { animation: ringPulse 2.8s ease-out 0.6s infinite; }
         @keyframes ringPulse { 0% { transform: scale(0.8); opacity: 0; } 40% { opacity: 0.15; } 100% { transform: scale(1.5); opacity: 0; } }
+        
+        @keyframes ambientGlowPulse {
+          0% { transform: scale(1) translate(0px, 0px); opacity: 0.20; }
+          33% { transform: scale(1.08) translate(15px, -15px); opacity: 0.25; }
+          66% { transform: scale(0.92) translate(-15px, 15px); opacity: 0.18; }
+          100% { transform: scale(1) translate(0px, 0px); opacity: 0.20; }
+        }
+        .ambient-glow-animated { animation: ambientGlowPulse 15s ease-in-out infinite; }
       `}</style>
     </>
   );
