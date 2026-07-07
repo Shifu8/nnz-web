@@ -350,11 +350,32 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               onMouseLeave={handleTouchEnd}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
-              className="group flex select-none items-center text-sm sm:text-xs font-black uppercase tracking-[0.45em] text-white outline-none hover:text-white"
+              className="group flex select-none items-center gap-3 outline-none hover:opacity-85 transition-opacity duration-200"
               style={{ WebkitTapHighlightColor: "transparent" }}
-              aria-label="NENEZ"
+              aria-label="neneztickets"
             >
-              NENEZ
+              <svg
+                className="h-5 w-auto select-none"
+                viewBox="0 0 100 100"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {/* Two pink dots */}
+                <circle cx="15" cy="31" r="10" fill="#e10075" />
+                <circle cx="15" cy="69" r="10" fill="#e10075" />
+                {/* White lowercase n arch */}
+                <path
+                  d="M 50.5,71 L 50.5,48 A 19,19 0 0 1 88.5,48 L 88.5,71"
+                  stroke="#ffffff"
+                  strokeWidth="16"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className="flex items-center text-[19px] font-semibold font-quicksand lowercase tracking-normal leading-none select-none">
+                <span className="text-white">nenez</span>
+                <span style={{ color: "#e10075" }}>tickets</span>
+              </span>
             </button>
           </div>
 
@@ -695,6 +716,32 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         }}
       >
         <div className="mx-auto flex w-full max-w-[1600px] flex-col items-center text-center gap-4">
+          {/* Logo brand */}
+          <div className="flex items-center gap-3 select-none mb-2">
+            <svg
+              className="h-6 w-auto select-none"
+              viewBox="0 0 100 100"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              {/* Two pink dots */}
+              <circle cx="15" cy="31" r="10" fill="#e10075" />
+              <circle cx="15" cy="69" r="10" fill="#e10075" />
+              {/* White lowercase n arch */}
+              <path
+                d="M 50.5,71 L 50.5,48 A 19,19 0 0 1 88.5,48 L 88.5,71"
+                stroke="#ffffff"
+                strokeWidth="16"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span className="flex items-center text-[22px] font-semibold font-quicksand lowercase tracking-normal leading-none select-none">
+              <span className="text-white">nenez</span>
+              <span style={{ color: "#e10075" }}>tickets</span>
+            </span>
+          </div>
+
           <p className="text-xl font-black uppercase tracking-[0.4em] text-white/90">
             {config.footer.brand}
           </p>

@@ -1,10 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <defs>
-    <clipPath id="circle">
-      <circle cx="50" cy="50" r="50"/>
-    </clipPath>
-  </defs>
-  <circle cx="50" cy="50" r="50" fill="#000"/>
-  <circle cx="50" cy="50" r="48" fill="none" stroke="#ec4899" stroke-width="3"/>
-  <image href="/images/dawgs-logo-hd.png" x="0" y="0" width="100" height="100" clip-path="url(#circle)" preserveAspectRatio="xMidYMid slice"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Colon: Two hot pink dots -->
+  <circle cx="15" cy="31" r="10" fill="#e10075" />
+  <circle cx="15" cy="69" r="10" fill="#e10075" />
+  
+  <!-- Lowercase 'n' arch: White curve -->
+  <path d="M 50.5,71 L 50.5,48 A 19,19 0 0 1 88.5,48 L 88.5,71" stroke="#ffffff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
 </svg>
+

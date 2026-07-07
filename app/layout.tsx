@@ -5,7 +5,7 @@
  */
 
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Comfortaa, Quicksand } from "next/font/google";
 
 import "./globals.css";
 
@@ -16,6 +16,16 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+const comfortaa = Comfortaa({
+  variable: "--font-comfortaa",
+  subsets: ["latin"],
+});
+
+const quicksand = Quicksand({
+  variable: "--font-quicksand",
   subsets: ["latin"],
 });
 
@@ -49,7 +59,7 @@ export default function RootLayout({
     <html
       lang="es"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${comfortaa.variable} ${quicksand.variable} h-full antialiased`}
     >
       <head>
         <link rel="manifest" href="/manifest.json" />

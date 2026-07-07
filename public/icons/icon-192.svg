@@ -1,4 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-  <rect width="192" height="192" rx="32" fill="#050505"/>
-  <text x="96" y="130" font-family="Arial Black,sans-serif" font-size="120" font-weight="900" fill="#ff0018" text-anchor="middle">D</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Colon: Two hot pink dots -->
+  <circle cx="15" cy="31" r="10" fill="#e10075" />
+  <circle cx="15" cy="69" r="10" fill="#e10075" />
+  
+  <!-- Lowercase 'n' arch: White curve -->
+  <path d="M 50.5,71 L 50.5,48 A 19,19 0 0 1 88.5,48 L 88.5,71" stroke="#ffffff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
 </svg>
+
