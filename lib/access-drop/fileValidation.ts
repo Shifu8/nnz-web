@@ -31,10 +31,10 @@ export type ValidatedReceiptFile = {
   detectedMime: AllowedImageMime;
 };
 
-const MIME_BY_EXTENSION: Record<AllowedImageExtension, AllowedImageMime> = {
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".png": "image/png",
+const MIME_BY_EXTENSION: Record<AllowedImageExtension, AllowedImageMime[]> = {
+  ".jpg": ["image/jpeg", "image/jpg"],
+  ".jpeg": ["image/jpeg", "image/jpg"],
+  ".png": ["image/png"],
 };
 
 export function getReceiptFileExtension(fileName: string): string {
@@ -79,8 +79,8 @@ export function validateReceiptFileMetadata(
     };
   }
 
-  const expectedMime = MIME_BY_EXTENSION[extension as AllowedImageExtension];
-  if (file.type !== expectedMime) {
+  const expectedMimes = MIME_BY_EXTENSION[extension as AllowedImageExtension];
+  if (!expectedMimes.includes(file.type as AllowedImageMime)) {
     return {
       field: "comprobante",
       message: "LA EXTENSION NO COINCIDE CON EL TIPO DE IMAGEN.",
@@ -126,9 +126,14 @@ export function validateReceiptFileBytes(
 
   const extension = getReceiptFileExtension(file.name) as AllowedImageExtension;
   const declaredMime = file.type as AllowedImageMime;
-  const expectedMime = MIME_BY_EXTENSION[extension];
 
-  if (detectedMime !== declaredMime || detectedMime !== expectedMime) {
+  const isJpegCompatible =
+    detectedMime === "image/jpeg" &&
+    (declaredMime === "image/jpeg" || declaredMime === "image/jpg");
+  const isPngCompatible =
+    detectedMime === "image/png" && declaredMime === "image/png";
+
+  if (!isJpegCompatible && !isPngCompatible) {
     return {
       field: "comprobante",
       message: "EL CONTENIDO REAL NO COINCIDE CON LA EXTENSION O EL TIPO MIME.",

@@ -184,6 +184,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Verify detected amount matches expected purchase total
+    const activeEventId = getActiveTicketEvent().id;
+    const pricePerTicket = activeEventId === "trap-loud" ? 10 : activeEventId === "dawg-night" ? 15 : 20;
+    const expectedTotal = quantity * pricePerTicket;
+
+    if (analysis.detectedAmount) {
+      const parsedAmount = parseFloat(analysis.detectedAmount);
+      if (!Number.isNaN(parsedAmount) && Math.abs(parsedAmount - expectedTotal) > 0.01) {
+        return NextResponse.json(
+          {
+            error: `EL VALOR DETECTADO EN EL COMPROBANTE ($${parsedAmount.toFixed(2)} USD) NO COINCIDE CON EL TOTAL A PAGAR ($${expectedTotal.toFixed(2)} USD). POR FAVOR, VERIFICA EL MONTO O LA CANTIDAD DE ENTRADAS.`,
+            code: "RECEIPT_REJECTED",
+          },
+          { status: 422 },
+        );
+      }
+    }
+
     const { filePath } = saveFile(buffer, file!.name);
     const record: ReceiptRecord = {
       id: uuidv4(),

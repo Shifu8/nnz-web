@@ -103,7 +103,7 @@ export type ReceiptRecord = {
   }[];
 };
 
-export const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png"] as const;
+export const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/jpg"] as const;
 
 export const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png"] as const;
 

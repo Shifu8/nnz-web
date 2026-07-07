@@ -225,7 +225,7 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
         <div className="relative z-10 w-full flex flex-col gap-6">
 
           {/* Recovery Process Cards Tracker */}
-          <div className="grid gap-3 sm:grid-cols-3 w-full">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full">
             {[
               ["01", "Correo", "Escribe tu email."],
               ["02", "Código", "Copia el PIN."],
@@ -236,18 +236,18 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
               return (
                 <article
                   key={number}
-                  className={`rounded-[24px] border p-5 shadow-[0_16px_46px_rgba(0,0,0,0.4)] transition duration-300 ${isActive
+                  className={`rounded-[16px] sm:rounded-[24px] border p-3 sm:p-5 shadow-[0_12px_32px_rgba(0,0,0,0.4)] transition duration-300 ${isActive
                     ? "border-white/20 bg-white/5"
                     : "border-white/[0.06] bg-white/[0.01]"
                     }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className={`text-[8px] font-black tracking-[0.24em] transition ${isActive ? "text-white" : "text-zinc-600"}`}>
+                    <span className={`text-[7px] sm:text-[8px] font-black tracking-[0.24em] transition ${isActive ? "text-white" : "text-zinc-600"}`}>
                       {number}
                     </span>
                   </div>
-                  <h3 className="mt-8 text-lg font-black uppercase text-white">{title}</h3>
-                  <p className="mt-2 text-[10px] leading-5 text-zinc-500">{copy}</p>
+                  <h3 className="mt-4 sm:mt-8 text-xs sm:text-lg font-black uppercase text-white">{title}</h3>
+                  <p className="mt-1 sm:mt-2 text-[8px] sm:text-[10px] leading-normal sm:leading-5 text-zinc-500">{copy}</p>
                 </article>
               );
             })}

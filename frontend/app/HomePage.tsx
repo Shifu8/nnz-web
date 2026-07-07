@@ -653,19 +653,19 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               </p>
             </div>
 
-            <div className="relative z-10 grid gap-3 sm:grid-cols-3 w-full">
+            <div className="relative z-10 grid grid-cols-3 gap-2 sm:gap-3 w-full">
               {config.accessSection.steps.map((data) => (
                 <article
                   key={data.step}
-                  className="rounded-[24px] border border-white/10 bg-black/45 p-5 shadow-[0_16px_46px_rgba(0,0,0,0.4)] transition hover:border-white/20 hover:bg-white/[0.02]"
+                  className="rounded-[16px] sm:rounded-[24px] border border-white/10 bg-black/45 p-3 sm:p-5 shadow-[0_12px_32px_rgba(0,0,0,0.4)] transition hover:border-white/20 hover:bg-white/[0.02]"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[8px] font-black tracking-[0.24em] text-zinc-600">
+                    <span className="text-[7px] sm:text-[8px] font-black tracking-[0.24em] text-zinc-600">
                       {data.step}
                     </span>
                   </div>
-                  <h3 className="mt-8 text-lg font-black uppercase text-white">{data.title}</h3>
-                  <p className="mt-2 text-[10px] leading-5 text-zinc-500">{data.copy}</p>
+                  <h3 className="mt-4 sm:mt-8 text-xs sm:text-lg font-black uppercase text-white">{data.title}</h3>
+                  <p className="mt-1 sm:mt-2 text-[8px] sm:text-[10px] leading-normal sm:leading-5 text-zinc-500">{data.copy}</p>
                 </article>
               ))}
             </div>

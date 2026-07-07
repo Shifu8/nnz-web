@@ -47,7 +47,7 @@ const BANK_PATTERNS: Array<{ name: string; pattern: RegExp }> = [
 ];
 
 const AMOUNT_PATTERNS = [
-  /(?:monto|valor|total|importe)[^\d$]{0,12}(?:USD|\$)?\s*(\d{1,6}(?:[.,]\d{2}))/i,
+  /(?:monto|valor|total|importe|transferido|recibido|enviado|efectivo)[^\d$]{0,25}(?:USD|\$)?\s*(\d{1,6}(?:[.,]\d{2}))/i,
   /(?:USD|\$)\s*(\d{1,6}(?:[.,]\d{2}))/i,
   /\b(\d{1,6}[.,]\d{2})\s*(?:USD)?\b/i,
 ];
@@ -55,6 +55,9 @@ const AMOUNT_PATTERNS = [
 const DATE_PATTERNS = [
   /(?:fecha)?[^\d]{0,8}(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})/i,
   /(?:fecha)?[^\d]{0,8}(\d{4}[/-]\d{1,2}[/-]\d{1,2})/i,
+  // Support Spanish month abbreviations like "2023/dic./30" or "30/ene/2024"
+  /(?:fecha)?[^\d]{0,8}(\d{4}[/-](?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\.?[/-]\d{1,2})/i,
+  /(?:fecha)?[^\d]{0,8}(\d{1,2}[/-](?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\.?[/-]\d{2,4})/i,
 ];
 
 const TIME_PATTERNS = [
@@ -62,7 +65,7 @@ const TIME_PATTERNS = [
 ];
 
 const REFERENCE_PATTERNS = [
-  /(?:n(?:ro|o|[°º])?\.?\s*(?:de\s+)?comprobante|referencia|ref\.?|transacci[oó]n|comprobante|operaci[oó]n|n[uú]mero)[\s:#-]*([A-Z0-9-]{5,30})/i,
+  /(?:n(?:ro|o|[°º])?\.?\s*(?:de\s+)?comprobante|referencia|ref\.?|transacci[oó]n|comprobante|operaci[oó]n|n[uú]mero|documento|control)[\s:#.-]*([A-Z0-9-]{5,30})/i,
 ];
 
 function firstMatch(text: string, patterns: RegExp[]): string | undefined {
@@ -71,6 +74,29 @@ function firstMatch(text: string, patterns: RegExp[]): string | undefined {
     if (match?.[1]) return match[1].trim();
   }
   return undefined;
+}
+
+function extractAmount(text: string): string | undefined {
+  let fallbackZeroAmount: string | undefined = undefined;
+
+  for (const pattern of AMOUNT_PATTERNS) {
+    const regex = new RegExp(pattern.source, pattern.flags + "g");
+    const matches = text.matchAll(regex);
+    for (const match of matches) {
+      if (match?.[1]) {
+        const val = match[1].trim().replace(",", ".");
+        const parsed = parseFloat(val);
+        if (!Number.isNaN(parsed)) {
+          if (parsed > 0.01) {
+            return val;
+          } else {
+            fallbackZeroAmount = val;
+          }
+        }
+      }
+    }
+  }
+  return fallbackZeroAmount;
 }
 
 export function analyzeFinancialText(text: string): FinancialTextAnalysis {
@@ -82,7 +108,7 @@ export function analyzeFinancialText(text: string): FinancialTextAnalysis {
 
   return {
     keywords,
-    detectedAmount: firstMatch(text, AMOUNT_PATTERNS)?.replace(",", "."),
+    detectedAmount: extractAmount(text),
     detectedDate: firstMatch(text, DATE_PATTERNS),
     detectedTime: firstMatch(text, TIME_PATTERNS),
     detectedReference: firstMatch(text, REFERENCE_PATTERNS),
@@ -94,8 +120,10 @@ export function analyzeFinancialText(text: string): FinancialTextAnalysis {
 }
 
 export async function extractReceiptText(imageBuffer: Buffer): Promise<LocalOcrResult> {
+  const rootDir = process.cwd().endsWith("frontend") ? path.dirname(process.cwd()) : process.cwd();
+  
   const workerPath = path.join(
-    process.cwd(),
+    rootDir,
     "node_modules",
     "tesseract.js",
     "src",
@@ -103,7 +131,10 @@ export async function extractReceiptText(imageBuffer: Buffer): Promise<LocalOcrR
     "node",
     "index.js",
   );
-  const worker = await createWorker("spa", undefined, { workerPath });
+  const worker = await createWorker("spa", 1, {
+    workerPath,
+    cachePath: rootDir
+  });
 
   try {
     const preparedImage = await prepareImageForOcr(imageBuffer);

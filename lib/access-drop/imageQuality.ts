@@ -130,6 +130,7 @@ export async function analyzeImageQuality(
 export async function prepareImageForOcr(imageBuffer: Buffer): Promise<Buffer> {
   return sharp(imageBuffer, { failOn: "error" })
     .rotate()
+    .trim()
     .flatten({ background: "#ffffff" })
     .resize({
       width: 1800,

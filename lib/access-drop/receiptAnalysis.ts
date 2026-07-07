@@ -165,7 +165,7 @@ function rejectionForProhibitedContent(
     other: "contenido ajeno a un comprobante",
   };
 
-  return `LA IMAGEN CONTIENE ${content.map((item) => labels[item]).join(", ")}.`;
+  return `LA IMAGEN CONTIENE ${content.map((item) => labels[item]).join(", ") || "contenido prohibido"}. POR FAVOR, SUBE UN COMPROBANTE DE PAGO REAL Y VÁLIDO. NO SE PERMITEN MEMES, FOTOS PERSONALES O CONTENIDO EXPLÍCITO.`;
 }
 
 async function analyzeWithVision(
@@ -453,7 +453,6 @@ export function buildReceiptDecision(input: {
   const strongProfileMatch = Boolean(
     bestProfile?.isStrongMatch &&
       hasAmount &&
-      hasTrace &&
       localOcr.confidence >= 28 &&
       textLength >= 45,
   );
@@ -492,7 +491,8 @@ export function buildReceiptDecision(input: {
   } else if (
     !rejectionReason &&
     !strongProfileMatch &&
-    !strongGenericMatch
+    !strongGenericMatch &&
+    !vision
   ) {
     rejectionReason =
       localOcr.confidence < 28 || textLength < 45

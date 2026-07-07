@@ -93,7 +93,7 @@ export const RECEIPT_REFERENCE_PROFILES: ReceiptReferenceProfile[] = [
       },
       {
         label: "Documento fisico",
-        pattern: /\bpapeleta\b|\bventanilla\b|\bcajero\b|\brecibo\b/,
+        pattern: /\bpapeleta\b|\bventanilla\b|\bcajero\b|\brecibo\b|\boficina\b|\bcontrol\b/,
         weight: 1.5,
       },
       { label: "Efectivo", pattern: /\befectivo\b/, weight: 1 },

@@ -9,7 +9,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get("eventId") || "trap-loud";
 
+    console.log(`[PUBLIC_DESIGNS_API] Fetching designs for eventId: "${eventId}"`);
     const designs = getEventDesignsServer(eventId);
+    console.log(`[PUBLIC_DESIGNS_API] Found ${designs.length} designs for eventId: "${eventId}":`, JSON.stringify(designs.map(d => d.name)));
+
     return NextResponse.json({ success: true, designs });
   } catch (err) {
     console.error("[PUBLIC_DESIGNS_API] Error loading designs:", err);

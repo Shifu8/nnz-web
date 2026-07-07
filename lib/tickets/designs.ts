@@ -24,6 +24,13 @@ export const TICKET_DESIGNS: Record<string, TicketDesign[]> = {
       shadowColor: "rgba(0, 229, 255, 0.25)",
       badge: "SPECIAL PASS",
     },
+    {
+      name: "TICKET ELEVA",
+      photo: "/uploads/ticket-designs/800bce3f-e65f-4289-a308-d648d1b2bb30.png",
+      accentColor: "#ff0000",
+      shadowColor: "#ff000040",
+      badge: "HOLA",
+    },
   ],
   "trap-loud-anuel": [
     {
