@@ -1030,14 +1030,14 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
               </div>
 
               {formData.firstName.trim() && (
-                <h2 className="success-name text-[21px] font-black text-white uppercase tracking-[0.22em] font-quicksand drop-shadow-[0_0_12px_rgba(255,255,255,0.12)]">
+                <h2 className="success-name text-[20px] font-black text-white uppercase tracking-[0.22em] drop-shadow-[0_0_12px_rgba(255,255,255,0.12)]">
                   GRACIAS, {formData.firstName.trim().toUpperCase()}
                 </h2>
               )}
               <h3 className="success-text mt-3.5 text-[9px] font-black text-[#e10075] uppercase tracking-[0.38em]">
                 comprobante recibido
               </h3>
-              <p className="success-msg mt-5 text-[11px] font-semibold text-zinc-400 font-quicksand leading-relaxed max-w-xs mx-auto">
+              <p className="success-msg mt-5 text-[11.5px] font-medium text-zinc-400 leading-relaxed max-w-xs mx-auto">
                 Tu comprobante fue recibido correctamente. Un miembro de ventas confirmará el pago y recibirás tu acceso por correo electrónico.
               </p>
               {onClose && (
