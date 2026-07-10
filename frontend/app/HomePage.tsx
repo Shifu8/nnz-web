@@ -206,6 +206,8 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
   useGSAP(
     () => {
+      if (isLoading) return;
+
       const mm = gsap.matchMedia();
 
       mm.add(
@@ -219,12 +221,15 @@ export default function HomePage({ initialConfig }: HomePageProps) {
           };
 
           if (reduceMotion) {
+            gsap.set(".logo-icon", { opacity: 1, scale: 1, rotation: 0 });
+            gsap.set(".logo-char", { opacity: 1, y: 0, scale: 1 });
             gsap.set(".hero-reveal", { autoAlpha: 1, y: 0 });
             return;
           }
 
           gsap
             .timeline({ defaults: { ease: "power3.out" } })
+            // Animación del logo de NowTickets
             .fromTo(".logo-icon",
               { scale: 0, rotation: -45, opacity: 0 },
               { scale: 1, rotation: 0, opacity: 1, duration: 0.8, ease: "back.out(1.7)" }
@@ -246,7 +251,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
       return () => mm.revert();
     },
-    { scope },
+    { dependencies: [isLoading], scope },
   );
 
   const handleTouchStart = () => {
