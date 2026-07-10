@@ -921,20 +921,17 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
           {/* ── VERIFYING / LOADING VIEW ── */}
           {dropState === "verifying" && (
             <div className="relative z-10 flex flex-col items-center justify-center text-center py-20 max-w-sm mx-auto select-none">
-              {/* Central glowing core with pulse */}
-              <div className="relative w-24 h-24 mb-8 flex items-center justify-center">
-                {/* Rotating dashed border lines */}
-                <div className="absolute inset-0 rounded-full border-2 border-dashed border-white/10 border-t-[#e10075] animate-spin" />
-                <div className="absolute inset-2 rounded-full border border-dashed border-white/10 border-b-[#C8FF00] animate-[spin_2s_linear_infinite_reverse]" />
+              {/* Monochromatic minimalist loading core */}
+              <div className="relative w-20 h-20 mb-8 flex items-center justify-center">
+                {/* Outer thin spin ring */}
+                <div className="absolute inset-0 rounded-full border border-white/[0.04] border-t-white/80 animate-spin" />
                 
-                {/* Waving radar line */}
-                <div className="absolute inset-4 rounded-full bg-gradient-to-t from-transparent via-[#C8FF00]/10 to-transparent animate-[pulse_1s_ease-in-out_infinite]" />
+                {/* Inner thin spin ring (reversed) */}
+                <div className="absolute inset-2.5 rounded-full border border-white/[0.04] border-b-white/50 animate-[spin_1.5s_linear_infinite_reverse]" />
                 
-                {/* Glowing neon core */}
-                <div className="h-6 w-6 rounded-full bg-white shadow-[0_0_20px_#C8FF00,0_0_35px_#e10075] animate-[ping_1.5s_cubic-bezier(0,0,0.2,1)_infinite]" />
-                <div className="absolute h-6 w-6 rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)] flex items-center justify-center text-[7px] font-black text-black">
-                  NOW
-                </div>
+                {/* Central pulsing white dot */}
+                <div className="h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_8px_#ffffff] animate-ping" />
+                <div className="absolute h-1 w-1 rounded-full bg-white" />
               </div>
               
               <p className="text-xs font-black uppercase tracking-[0.25em] text-white animate-pulse">
