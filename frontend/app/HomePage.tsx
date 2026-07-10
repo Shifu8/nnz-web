@@ -225,12 +225,21 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
           gsap
             .timeline({ defaults: { ease: "power3.out" } })
+            .fromTo(".logo-icon",
+              { scale: 0, rotation: -45, opacity: 0 },
+              { scale: 1, rotation: 0, opacity: 1, duration: 0.8, ease: "back.out(1.7)" }
+            )
+            .fromTo(".logo-char",
+              { opacity: 0, y: 15, scale: 0.7, transformOrigin: "50% 100%" },
+              { opacity: 1, y: 0, scale: 1, duration: 0.45, stagger: 0.04, ease: "back.out(1.5)" },
+              "-=0.5"
+            )
             .from(".hero-reveal", {
               autoAlpha: 0,
               y: 28,
               stagger: 0.08,
               duration: 0.85,
-            });
+            }, "-=0.3");
         },
         scope.current ?? undefined,
       );
@@ -356,7 +365,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               aria-label="nowtickets"
             >
               <svg
-                className="h-5 w-auto select-none"
+                className="logo-icon h-5 w-auto select-none opacity-0"
                 viewBox="0 0 100 100"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -373,9 +382,17 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                   strokeLinejoin="round"
                 />
               </svg>
-              <span className="flex items-center text-[19px] font-semibold font-quicksand lowercase tracking-normal leading-none select-none">
-                <span className="text-white">now</span>
-                <span style={{ color: "#e10075" }}>tickets</span>
+              <span className="logo-text flex items-center text-[19px] font-semibold font-quicksand lowercase tracking-normal leading-none select-none">
+                {"now".split("").map((char, index) => (
+                  <span key={`now-${index}`} className="logo-char text-white inline-block opacity-0">
+                    {char}
+                  </span>
+                ))}
+                {"tickets".split("").map((char, index) => (
+                  <span key={`tickets-${index}`} className="logo-char inline-block opacity-0" style={{ color: "#e10075" }}>
+                    {char}
+                  </span>
+                ))}
               </span>
             </button>
           </div>
