@@ -776,10 +776,6 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 <path d="M70 20 C78 20, 80 10, 92 10 C96 10, 98 14, 102 12" stroke="#FFDD00" strokeWidth="2.2" strokeLinecap="round" />
                 <path d="M70 23 C78 23, 80 13, 92 13 C96 13, 98 17, 102 15" stroke="#0033A0" strokeWidth="2.2" strokeLinecap="round" />
                 <path d="M70 26 C78 26, 80 16, 92 16 C96 16, 98 20, 102 18" stroke="#D52B1E" strokeWidth="2.2" strokeLinecap="round" />
-                {/* Minimalist Ecuador Coat of Arms (Escudo) */}
-                <path d="M 81.5,8 Q 86,10.5 90.5,8 Q 86,7 81.5,8 Z" fill="#E5C158" />
-                <path d="M 83.5,10.5 C 86,9.5 86,9.5 88.5,10.5 C 88.5,13.5 87.5,16.5 86,18 C 84.5,16.5 83.5,13.5 83.5,10.5 Z" fill="#E5C158" />
-                <path d="M 84.5,12 L 87.5,15" stroke="#0033A0" strokeWidth="0.8" strokeLinecap="round" />
               </svg>
               <span className="text-[6px] font-black tracking-[0.3em] text-zinc-500 uppercase mt-0.5">
                 SOFTWARE DEVELOPMENT
