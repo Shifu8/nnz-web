@@ -38,7 +38,7 @@ const BANKS = [
   },
 ];
 
-type DropState = "register" | "success";
+type DropState = "register" | "verifying" | "success";
 
 function formatFileSize(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
@@ -71,6 +71,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
   const artistDetails = getArtistDetails(currentEvent.id);
 
   const [dropState, setDropState] = useState<DropState>("register");
+  const [verifyingMessage, setVerifyingMessage] = useState("ENVIANDO COMPROBANTE...");
   const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "" });
   const [quantity, setQuantity] = useState(1);
   const [selectedBank, setSelectedBank] = useState("banco-loja");
@@ -136,12 +137,10 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
   const handleSuccessClose = () => {
     const name = formData.firstName.trim() || "NENEZ";
     onFarewell?.(name);
+    onClose?.();
     setTimeout(() => {
-      onClose?.();
-      setTimeout(() => {
-        resetForm();
-      }, 500);
-    }, 2500);
+      resetForm();
+    }, 500);
   };
 
   const [turnstileToken, setTurnstileToken] = useState("");
@@ -300,7 +299,11 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
     if (selectedDesignIndex === null) { setErrorMsg("ELIGE TU DISEÑO DE ENTRADA EN LA VISTA PREVIA PARA PODER CONTINUAR."); return; }
     if (hasTurnstileSiteKey("visible") && !turnstileToken) { setErrorMsg("COMPLETA EL CAPTCHA DE SEGURIDAD."); return; }
     setIsSubmitting(true);
-    setUploadMessage("REVISANDO COMPROBANTE...");
+    setDropState("verifying");
+    setVerifyingMessage("ENVIANDO DATOS ENCRIPTADOS...");
+    
+    const startTime = Date.now();
+    
     try {
       const body = new FormData();
       body.append("comprobante", selectedFile);
@@ -312,12 +315,28 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
       body.append("paymentMethod", selectedBank);
       body.append("cf-turnstile-response", turnstileToken);
       body.append("ticketDesign", selectedDesignIndex !== null ? selectedDesignIndex.toString() : "0");
+      
+      const t1 = setTimeout(() => setVerifyingMessage("ESCANEANDO COMPROBANTE DE COMPRA..."), 700);
+      const t2 = setTimeout(() => setVerifyingMessage("VERIFICANDO DETALLES DE TRANSACCIÓN..."), 1500);
+      const t3 = setTimeout(() => setVerifyingMessage("GENERANDO ENTRADA EN EL SISTEMA..."), 2300);
+      
       const res = await fetch("/api/access-drop/upload", { method: "POST", body });
       const data = await res.json() as { error?: string; code?: string; message?: string; receiptId?: string };
+      
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      
       if (!res.ok) {
         if (data.code === "RECEIPT_REJECTED") clearSelectedFile();
         throw new Error(data.error || "Error al subir comprobante");
       }
+      
+      const elapsed = Date.now() - startTime;
+      const delay = Math.max(3000 - elapsed, 0); // Al menos 3.0 segundos
+      
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
       setUploadMessage(data.message || "COMPROBANTE VALIDADO.");
       clearSelectedFile();
       setDropState("success");
@@ -326,6 +345,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
       const message = err instanceof Error ? err.message : "Error al subir comprobante";
       setErrorMsg(message.toUpperCase());
       setUploadMessage("");
+      setDropState("register");
       resetTurnstile();
     } finally {
       setIsSubmitting(false);
@@ -894,6 +914,27 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
 
                 </div>
               </form>
+            </div>
+          )}
+
+          {/* ── VERIFYING / LOADING VIEW ── */}
+          {dropState === "verifying" && (
+            <div className="relative z-10 flex flex-col items-center justify-center text-center py-20 max-w-sm mx-auto select-none">
+              {/* Outer spin rings */}
+              <div className="relative w-24 h-24 mb-8 flex items-center justify-center">
+                <div className="absolute inset-0 rounded-full border-2 border-white/5 border-t-[#e10075] animate-spin" />
+                <div className="absolute inset-2 rounded-full border-2 border-white/5 border-b-[#C8FF00] animate-[spin_1.5s_linear_infinite_reverse]" />
+                <div className="absolute left-4 right-4 h-[2px] bg-gradient-to-r from-transparent via-[#C8FF00] to-transparent animate-[pulse_1s_ease-in-out_infinite]" />
+                <svg className="w-8 h-8 text-zinc-600 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z" />
+                </svg>
+              </div>
+              <p className="text-xs font-black uppercase tracking-[0.25em] text-white animate-pulse">
+                {verifyingMessage}
+              </p>
+              <p className="text-[7px] font-bold tracking-widest text-zinc-600 uppercase mt-2">
+                Conexión segura SSL verificada
+              </p>
             </div>
           )}
 
