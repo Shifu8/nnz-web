@@ -191,29 +191,80 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
   useGSAP(
     () => {
       if (dropState === "success") {
-        const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-        tl.from(".success-reveal", { scale: 0.8, opacity: 0, y: 50, duration: 0.8 });
-        tl.fromTo(".success-energy-ring", { scale: 0, opacity: 0.5 }, { scale: 4, opacity: 0, duration: 1 });
+        const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
+        
+        // 1. Reveal parent container
+        tl.fromTo(".success-reveal", 
+          { opacity: 0 }, 
+          { opacity: 1, duration: 0.3 }
+        );
+        
+        // 2. Ticket card drop & bounce with 3D tilts
+        tl.fromTo(".success-ticket-card", 
+          { scale: 1.6, rotationX: -30, rotationY: 20, y: -100, opacity: 0, filter: "blur(8px)" },
+          { scale: 1, rotationX: 0, rotationY: 0, y: 0, opacity: 1, filter: "blur(0px)", duration: 0.8, ease: "back.out(1.5)" }
+        );
+        
+        // 3. Stamp slams down
+        tl.fromTo(".success-stamp",
+          { scale: 4.5, opacity: 0, rotation: 30 },
+          { scale: 1, opacity: 1, rotation: -12, duration: 0.35, ease: "bounce.out" },
+          "-=0.2"
+        );
+        
+        // 3.5. Camera Shake on stamp hit
+        tl.to(".success-ticket-card", {
+          x: "random(-4, 4)",
+          y: "random(-4, 4)",
+          duration: 0.05,
+          repeat: 5,
+          yoyo: true,
+          clearProps: "x,y"
+        }, "-=0.2");
+
+        // 4. Energy ring expand on hit
+        tl.fromTo(".success-energy-ring", 
+          { scale: 0, opacity: 0.8 }, 
+          { scale: 5, opacity: 0, duration: 0.8, ease: "power2.out" },
+          "-=0.25"
+        );
+        
+        // 5. Draw checkmark
         const checkPath = scope.current?.querySelector<SVGPathElement>(".success-check-path");
         if (checkPath) {
           const length = checkPath.getTotalLength();
           gsap.set(checkPath, { strokeDasharray: length, strokeDashoffset: length });
-          tl.to(checkPath, { strokeDashoffset: 0, duration: 0.4 }, "-=0.3");
+          tl.to(checkPath, { strokeDashoffset: 0, duration: 0.3, ease: "power1.inOut" }, "-=0.2");
         }
-        tl.from(".success-name", { y: 20, opacity: 0, duration: 0.4 }, "-=0.1");
-        tl.from(".success-text", { y: 15, opacity: 0, duration: 0.3 }, "-=0.1");
-        tl.from(".success-msg", { y: 10, opacity: 0, duration: 0.3 }, "-=0.15");
+        
+        // 6. Burst sparkles
         if (sparklesRef.current) {
           const sparkles = sparklesRef.current.querySelectorAll<HTMLDivElement>(".success-sparkle");
           sparkles.forEach((s) => {
             const angle = Math.random() * Math.PI * 2;
-            const dist = 50 + Math.random() * 80;
+            const dist = 60 + Math.random() * 110;
             const x = Math.cos(angle) * dist;
-            const y = Math.sin(angle) * dist - 20;
-            tl.to(s, { x, y, opacity: 0, scale: 0.3, duration: 1.0 + Math.random() * 0.5 }, "-=0.25");
+            const y = Math.sin(angle) * dist;
+            gsap.fromTo(s, 
+              { x: 0, y: 0, scale: 0.2, opacity: 1 },
+              { 
+                x, 
+                y, 
+                opacity: 0, 
+                scale: "random(0.3, 1.2)", 
+                rotation: "random(-360, 360)",
+                duration: 1.2 + Math.random() * 0.6, 
+                ease: "power2.out" 
+              }
+            );
           });
         }
-        tl.from(".success-btn", { y: 10, opacity: 0, duration: 0.35 }, "-=0.2");
+        
+        // 7. Text details entries
+        tl.fromTo(".success-name", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4 }, "-=0.15");
+        tl.fromTo(".success-text", { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3 }, "-=0.1");
+        tl.fromTo(".success-msg", { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3 }, "-=0.15");
+        tl.fromTo(".success-btn-container", { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35 }, "-=0.2");
       }
     },
     { scope, dependencies: [dropState] }
@@ -849,31 +900,79 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
           {/* ── SUCCESS VIEW ── */}
           {dropState === "success" && (
             <div ref={successRef} className="success-reveal relative z-10 flex flex-col items-center text-center max-w-md mx-auto py-12">
-              <div className="success-ring relative mb-8">
-                <div className="success-energy-ring absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="h-20 w-20 rounded-full border-[3px] border-white opacity-0" />
+              
+              {/* 3D-like Ticket receipt container with stamp */}
+              <div className="success-ticket-card relative mb-8 w-60 h-36 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md overflow-hidden flex flex-col justify-between p-4 shadow-[0_15px_35px_rgba(0,0,0,0.6)]">
+                {/* Energy Ring inside card for centering the blast */}
+                <div className="success-energy-ring absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border-2 border-[#C8FF00] opacity-0 pointer-events-none" />
+                
+                {/* Top ticket header */}
+                <div className="flex justify-between items-center z-10">
+                  <span className="text-[7px] font-black uppercase tracking-widest text-[#e10075]">NowTickets</span>
+                  <span className="text-[6px] font-mono text-zinc-500">#{Math.floor(100000 + Math.random() * 900000)}</span>
                 </div>
-                <div className="success-ring-pulse absolute -inset-4 rounded-full border-[2px] border-white/20 shadow-[0_0_50px_rgba(255,255,255,0.1)]" />
-                <div className="success-ring-inner relative flex items-center justify-center">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-2xl">
-                    <svg className="w-8 h-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                
+                {/* Dotted separator */}
+                <div className="absolute top-[42px] inset-x-0 border-t border-dashed border-white/10" />
+                
+                {/* Middle details */}
+                <div className="mt-4 text-left z-10">
+                  <p className="text-[6px] font-black text-zinc-500 uppercase tracking-widest">Invitado</p>
+                  <p className="text-xs font-black text-white uppercase tracking-wider truncate max-w-[150px]">
+                    {formData.firstName.trim() ? `${formData.firstName.trim()} ${formData.lastName.trim()}` : "CLIENTE DAWG"}
+                  </p>
+                </div>
+                
+                {/* Bottom details / barcode */}
+                <div className="flex justify-between items-end z-10">
+                  <div>
+                    <p className="text-[6px] font-black text-zinc-500 uppercase tracking-widest">Estado</p>
+                    <p className="text-[7px] font-black text-[#C8FF00] uppercase tracking-wider">Verificando Pago</p>
+                  </div>
+                  {/* Barcode lines */}
+                  <div className="flex gap-px h-5 items-end">
+                    <div className="w-[1.5px] h-full bg-white/40" />
+                    <div className="w-[3px] h-full bg-white/40" />
+                    <div className="w-px h-full bg-white/40" />
+                    <div className="w-[2px] h-[80%] bg-white/40" />
+                    <div className="w-[1.5px] h-full bg-white/40" />
+                    <div className="w-[3px] h-[60%] bg-white/40" />
+                    <div className="w-px h-full bg-white/40" />
+                    <div className="w-[2.5px] h-full bg-white/40" />
+                  </div>
+                </div>
+                
+                {/* The Stamp Overlay (slams down in 3D style) */}
+                <div className="success-stamp absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                  <div className="h-16 w-16 rounded-full border-[3px] border-[#C8FF00] bg-zinc-950/95 flex items-center justify-center shadow-[0_0_20px_rgba(200,255,0,0.4)]">
+                    <svg className="w-9 h-9 text-[#C8FF00]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" className="success-check-path" />
                     </svg>
                   </div>
                 </div>
-                <div ref={sparklesRef} className="absolute inset-0 pointer-events-none overflow-visible">
-                  {Array.from({ length: 12 }).map((_, i) => {
-                    const colors = ["#ffffff", "#e4e4e7", "#a1a1aa", "#71717a", "#ffffff"];
+
+                {/* Particle explosion container */}
+                <div ref={sparklesRef} className="absolute inset-0 pointer-events-none overflow-visible z-30">
+                  {Array.from({ length: 24 }).map((_, i) => {
+                    const colors = ["#e10075", "#ffffff", "#C8FF00", "#FFDD00", "#ffffff"];
+                    const shapes = ["50%", "3px", "50% 0 50% 0", "0%"];
                     return (
                       <div
                         key={i}
-                        className="success-sparkle absolute h-1.5 w-1.5 rounded-full opacity-0"
-                        style={{ left: "50%", top: "50%", background: colors[i % colors.length], boxShadow: `0 0 4px ${colors[i % colors.length]}` }}
+                        className="success-sparkle absolute h-2 w-2 opacity-0"
+                        style={{
+                          left: "50%",
+                          top: "50%",
+                          background: colors[i % colors.length],
+                          boxShadow: `0 0 8px ${colors[i % colors.length]}`,
+                          borderRadius: shapes[i % shapes.length],
+                        }}
                       />
                     );
                   })}
                 </div>
               </div>
+
               {formData.firstName.trim() && (
                 <h2 className="success-name text-3xl font-black text-white uppercase italic tracking-widest">
                   GRACIAS, {formData.firstName.trim().toUpperCase()}
@@ -884,9 +983,19 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                 TU COMPROBANTE FUE RECIBIDO CORRECTAMENTE. UN MIEMBRO DE VENTAS DAWG CONFIRMARA EL PAGO Y RECIBIRAS TU ACCESO POR CORREO ELECTRÓNICO.
               </p>
               {onClose && (
-                <button onClick={handleSuccessClose} className="success-btn mt-8 flex h-12 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950 px-8 text-[9px] font-black uppercase tracking-widest text-white hover:bg-zinc-900 transition duration-300">
-                  CERRAR
-                </button>
+                <div className="success-btn-container mt-8 relative p-[1.5px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(200,255,0,0.15)] hover:shadow-[0_0_25px_rgba(200,255,0,0.35)] transition-all duration-300 group max-w-[200px] w-full">
+                  {/* Rotating border line */}
+                  <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#C8FF00_50%,transparent_65%)] pointer-events-none" />
+                  <button
+                    onClick={handleSuccessClose}
+                    className="relative z-10 flex h-[42px] w-full items-center justify-center rounded-full bg-zinc-950 text-[9px] font-black uppercase tracking-widest text-white hover:bg-white hover:text-black transition-all duration-300"
+                    style={{
+                      transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+                    }}
+                  >
+                    CERRAR
+                  </button>
+                </div>
               )}
             </div>
           )}
