@@ -379,9 +379,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
     card.style.transform = `perspective(1200px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
     card.style.setProperty("--mx", `-1000px`);
     card.style.setProperty("--my", `-1000px`);
-  };
-
-  // Device orientation tilt for mobile
+  };  // Device orientation tilt for mobile
   useEffect(() => {
     if (typeof window === "undefined" || !showTicketModal) return;
     
@@ -411,25 +409,30 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
         return;
       }
 
+      // Drift baseline slowly (0.02) to automatically center the tilt
+      initialBeta += (beta - initialBeta) * 0.02;
+      initialGamma += (gamma - initialGamma) * 0.02;
+
       const deltaBeta = beta - initialBeta;
       const deltaGamma = gamma - initialGamma;
 
-      // Limit to 15 degrees tilt max
-      targetRotateX = Math.max(-15, Math.min(15, deltaBeta));
-      targetRotateY = Math.max(-15, Math.min(15, -deltaGamma));
+      // Limit to 12 degrees tilt max
+      targetRotateX = Math.max(-12, Math.min(12, deltaBeta));
+      targetRotateY = Math.max(-12, Math.min(12, -deltaGamma));
     };
 
     const updatePosition = () => {
-      currentRotateX += (targetRotateX - currentRotateX) * 0.18;
-      currentRotateY += (targetRotateY - currentRotateY) * 0.18;
+      // Golden ratio lerp (0.12)
+      currentRotateX += (targetRotateX - currentRotateX) * 0.12;
+      currentRotateY += (targetRotateY - currentRotateY) * 0.12;
 
       const card = modalTicketRef.current;
       if (card) {
         card.style.transform = `perspective(1200px) rotateX(${currentRotateX}deg) rotateY(${currentRotateY}deg) scale3d(1.02, 1.02, 1.02)`;
         
         const rect = card.getBoundingClientRect();
-        const mx = rect.width / 2 + currentRotateY * 5;
-        const my = rect.height / 2 + currentRotateX * 5;
+        const mx = rect.width / 2 + currentRotateY * 4.5;
+        const my = rect.height / 2 + currentRotateX * 4.5;
         card.style.setProperty("--mx", `${mx}px`);
         card.style.setProperty("--my", `${my}px`);
       }

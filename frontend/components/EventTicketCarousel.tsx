@@ -223,83 +223,83 @@ export default function EventTicketCarousel({
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    );
+    let hasGyro = false;
+    let initialBeta: number | null = null;
+    let initialGamma: number | null = null;
+    
+    let targetX = 0;
+    let targetY = 0;
+    let currentX = 0;
+    let currentY = 0;
+    let rafId: number;
 
-    if (isMobile) {
-      let initialBeta: number | null = null;
-      let initialGamma: number | null = null;
-      
-      let targetX = 0;
-      let targetY = 0;
-      let currentX = 0;
-      let currentY = 0;
-      let rafId: number;
+    const handleOrientation = (e: DeviceOrientationEvent) => {
+      const beta = e.beta;
+      const gamma = e.gamma;
 
-      const handleOrientation = (e: DeviceOrientationEvent) => {
-        const beta = e.beta;
-        const gamma = e.gamma;
+      if (beta === null || gamma === null) return;
+      hasGyro = true;
 
-        if (beta === null || gamma === null) return;
+      if (initialBeta === null) {
+        initialBeta = beta;
+        initialGamma = gamma;
+        return;
+      }
 
-        if (initialBeta === null) {
-          initialBeta = beta;
-          initialGamma = gamma;
-          return;
-        }
+      // Drift baseline slowly to auto-center
+      initialBeta += (beta - initialBeta) * 0.02;
+      initialGamma += (gamma - initialGamma) * 0.02;
 
-        const deltaBeta = beta - initialBeta;
-        const deltaGamma = gamma - initialGamma;
+      const deltaBeta = beta - initialBeta;
+      const deltaGamma = gamma - initialGamma;
 
-        // Map the angles (-15 to 15 degrees delta) to range -1 to 1
-        targetX = Math.max(-1, Math.min(1, deltaGamma / 15));
-        targetY = Math.max(-1, Math.min(1, deltaBeta / 15));
-      };
+      // Map delta angles to [-1, 1] range (clamped at 12 degrees delta)
+      targetX = Math.max(-1, Math.min(1, deltaGamma / 12));
+      targetY = Math.max(-1, Math.min(1, deltaBeta / 12));
+    };
 
-      const updatePosition = () => {
-        // Snappy, highly responsive lerp (0.18 speed factor)
-        currentX += (targetX - currentX) * 0.18;
-        currentY += (targetY - currentY) * 0.18;
+    const handleMouseMove = (e: MouseEvent) => {
+      if (hasGyro) return;
+      const { innerWidth, innerHeight } = window;
+      const x = (e.clientX - innerWidth / 2) / (innerWidth / 2); // -1 to 1
+      const y = (e.clientY - innerHeight / 2) / (innerHeight / 2); // -1 to 1
+      targetX = x;
+      targetY = y;
+    };
 
-        setMouseOffset({ x: currentX, y: currentY });
-        rafId = requestAnimationFrame(updatePosition);
-      };
+    const updatePosition = () => {
+      // Golden ratio lerp (0.12)
+      currentX += (targetX - currentX) * 0.12;
+      currentY += (targetY - currentY) * 0.12;
 
-      const requestPermission = async () => {
-        if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
-          try {
-            const state = await (DeviceOrientationEvent as any).requestPermission();
-            if (state === "granted") {
-              window.addEventListener("deviceorientation", handleOrientation, true);
-            }
-          } catch (err) {
-            console.error("iOS Gyroscope permission error:", err);
-          }
-        } else {
-          window.addEventListener("deviceorientation", handleOrientation, true);
-        }
-      };
-
-      requestPermission();
+      setMouseOffset({ x: currentX, y: currentY });
       rafId = requestAnimationFrame(updatePosition);
+    };
 
-      return () => {
-        window.removeEventListener("deviceorientation", handleOrientation, true);
-        if (rafId) cancelAnimationFrame(rafId);
-      };
-    } else {
-      // Desktop: mouse move
-      const handleMouseMove = (e: MouseEvent) => {
-        const { innerWidth, innerHeight } = window;
-        const x = (e.clientX - innerWidth / 2) / (innerWidth / 2); // -1 to 1
-        const y = (e.clientY - innerHeight / 2) / (innerHeight / 2); // -1 to 1
-        setMouseOffset({ x, y });
-      };
+    const requestPermission = async () => {
+      if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
+        try {
+          const state = await (DeviceOrientationEvent as any).requestPermission();
+          if (state === "granted") {
+            window.addEventListener("deviceorientation", handleOrientation, true);
+          }
+        } catch (err) {
+          console.error("iOS Gyroscope permission error:", err);
+        }
+      } else {
+        window.addEventListener("deviceorientation", handleOrientation, true);
+      }
+    };
 
-      window.addEventListener("mousemove", handleMouseMove);
-      return () => window.removeEventListener("mousemove", handleMouseMove);
-    }
+    requestPermission();
+    window.addEventListener("mousemove", handleMouseMove);
+    rafId = requestAnimationFrame(updatePosition);
+
+    return () => {
+      window.removeEventListener("deviceorientation", handleOrientation, true);
+      window.removeEventListener("mousemove", handleMouseMove);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
