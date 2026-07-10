@@ -299,10 +299,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
     if (selectedDesignIndex === null) { setErrorMsg("ELIGE TU DISEÑO DE ENTRADA EN LA VISTA PREVIA PARA PODER CONTINUAR."); return; }
     if (hasTurnstileSiteKey("visible") && !turnstileToken) { setErrorMsg("COMPLETA EL CAPTCHA DE SEGURIDAD."); return; }
     setIsSubmitting(true);
-    setDropState("verifying");
-    setVerifyingMessage("ENVIANDO DATOS ENCRIPTADOS...");
-    
-    const startTime = Date.now();
+    setErrorMsg("");
     
     try {
       const body = new FormData();
@@ -316,26 +313,30 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
       body.append("cf-turnstile-response", turnstileToken);
       body.append("ticketDesign", selectedDesignIndex !== null ? selectedDesignIndex.toString() : "0");
       
-      const t1 = setTimeout(() => setVerifyingMessage("ESCANEANDO COMPROBANTE DE COMPRA..."), 700);
-      const t2 = setTimeout(() => setVerifyingMessage("VERIFICANDO DETALLES DE TRANSACCIÓN..."), 1500);
-      const t3 = setTimeout(() => setVerifyingMessage("GENERANDO ENTRADA EN EL SISTEMA..."), 2300);
-      
       const res = await fetch("/api/access-drop/upload", { method: "POST", body });
       const data = await res.json() as { error?: string; code?: string; message?: string; receiptId?: string };
-      
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
       
       if (!res.ok) {
         if (data.code === "RECEIPT_REJECTED") clearSelectedFile();
         throw new Error(data.error || "Error al subir comprobante");
       }
       
-      const elapsed = Date.now() - startTime;
-      const delay = Math.max(3000 - elapsed, 0); // Al menos 3.0 segundos
+      // Transición al estado de carga / verificando tras éxito en subida
+      setDropState("verifying");
+      setVerifyingMessage("COMPROBANTE RECIBIDO");
       
-      await new Promise(resolve => setTimeout(resolve, delay));
+      const t1 = setTimeout(() => setVerifyingMessage("ANALIZANDO INTEGRIDAD DE LA IMAGEN..."), 700);
+      const t2 = setTimeout(() => setVerifyingMessage("VERIFICANDO TRANSACCIÓN BANCARIA..."), 1500);
+      const t3 = setTimeout(() => setVerifyingMessage("GENERANDO ENTRADA EN EL SISTEMA..."), 2300);
+      
+      await new Promise(resolve => {
+        setTimeout(() => {
+          clearTimeout(t1);
+          clearTimeout(t2);
+          clearTimeout(t3);
+          resolve(true);
+        }, 3000);
+      });
       
       setUploadMessage(data.message || "COMPROBANTE VALIDADO.");
       clearSelectedFile();
@@ -759,7 +760,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                       {isSubmitting ? (
                         <span className="flex items-center gap-2">
                           <span className="h-3.5 w-3.5 rounded-full border-2 border-black/30 border-t-black animate-spin" />
-                          PROCESANDO...
+                          VERIFICANDO...
                         </span>
                       ) : (
                         "CONFIRMAR COMPRA"
@@ -920,15 +921,22 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
           {/* ── VERIFYING / LOADING VIEW ── */}
           {dropState === "verifying" && (
             <div className="relative z-10 flex flex-col items-center justify-center text-center py-20 max-w-sm mx-auto select-none">
-              {/* Outer spin rings */}
+              {/* Central glowing core with pulse */}
               <div className="relative w-24 h-24 mb-8 flex items-center justify-center">
-                <div className="absolute inset-0 rounded-full border-2 border-white/5 border-t-[#e10075] animate-spin" />
-                <div className="absolute inset-2 rounded-full border-2 border-white/5 border-b-[#C8FF00] animate-[spin_1.5s_linear_infinite_reverse]" />
-                <div className="absolute left-4 right-4 h-[2px] bg-gradient-to-r from-transparent via-[#C8FF00] to-transparent animate-[pulse_1s_ease-in-out_infinite]" />
-                <svg className="w-8 h-8 text-zinc-600 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z" />
-                </svg>
+                {/* Rotating dashed border lines */}
+                <div className="absolute inset-0 rounded-full border-2 border-dashed border-white/10 border-t-[#e10075] animate-spin" />
+                <div className="absolute inset-2 rounded-full border border-dashed border-white/10 border-b-[#C8FF00] animate-[spin_2s_linear_infinite_reverse]" />
+                
+                {/* Waving radar line */}
+                <div className="absolute inset-4 rounded-full bg-gradient-to-t from-transparent via-[#C8FF00]/10 to-transparent animate-[pulse_1s_ease-in-out_infinite]" />
+                
+                {/* Glowing neon core */}
+                <div className="h-6 w-6 rounded-full bg-white shadow-[0_0_20px_#C8FF00,0_0_35px_#e10075] animate-[ping_1.5s_cubic-bezier(0,0,0.2,1)_infinite]" />
+                <div className="absolute h-6 w-6 rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)] flex items-center justify-center text-[7px] font-black text-black">
+                  NOW
+                </div>
               </div>
+              
               <p className="text-xs font-black uppercase tracking-[0.25em] text-white animate-pulse">
                 {verifyingMessage}
               </p>
