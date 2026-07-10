@@ -30,7 +30,7 @@ const quicksand = Quicksand({
 });
 
 export const metadata: Metadata = {
-  title: "NenezTickets",
+  title: "NowTickets",
   description:
     "Eventos underground, streetwear premium y Party Pass sin login para la comunidad NENEZ.",
   manifest: "/manifest.json",

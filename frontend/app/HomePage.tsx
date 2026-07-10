@@ -352,7 +352,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               onTouchEnd={handleTouchEnd}
               className="group flex select-none items-center gap-3 outline-none hover:opacity-85 transition-opacity duration-200"
               style={{ WebkitTapHighlightColor: "transparent" }}
-              aria-label="neneztickets"
+              aria-label="nowtickets"
             >
               <svg
                 className="h-5 w-auto select-none"
@@ -373,7 +373,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 />
               </svg>
               <span className="flex items-center text-[19px] font-semibold font-quicksand lowercase tracking-normal leading-none select-none">
-                <span className="text-white">nenez</span>
+                <span className="text-white">now</span>
                 <span style={{ color: "#e10075" }}>tickets</span>
               </span>
             </button>
@@ -581,17 +581,24 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                     }}
                   />
                 )}
-                <button
-                  type="button"
-                  onClick={() => onBuy(activeEvent)}
-                  className={`relative z-10 flex h-12 px-6 items-center justify-center rounded-full bg-white text-[9px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 ${isTicketPulse ? "scale-[1.04]" : ""
-                    }`}
-                  style={{
-                    transition: "transform 300ms cubic-bezier(0.4, 0, 0.2, 1)",
-                  }}
-                >
-                  Comprar Entrada
-                </button>
+                
+                {/* Contenedor con borde animado de trazo giratorio neon */}
+                <div className="relative p-[2px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.15)] hover:shadow-[0_0_25px_rgba(225,0,117,0.35)] transition-all duration-300 group">
+                  {/* Línea giratoria */}
+                  <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#e10075_50%,transparent_65%)] pointer-events-none" />
+                  
+                  <button
+                    type="button"
+                    onClick={() => onBuy(activeEvent)}
+                    className={`relative z-10 flex h-[44px] px-6 items-center justify-center rounded-full bg-zinc-950 text-[9px] font-black uppercase tracking-[0.2em] text-white hover:bg-white hover:text-black transition-all duration-300 ${isTicketPulse ? "scale-[1.04]" : ""
+                      }`}
+                    style={{
+                      transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+                    }}
+                  >
+                    Comprar Entrada
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -737,7 +744,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               />
             </svg>
             <span className="flex items-center text-[22px] font-semibold font-quicksand lowercase tracking-normal leading-none select-none">
-              <span className="text-white">nenez</span>
+              <span className="text-white">now</span>
               <span style={{ color: "#e10075" }}>tickets</span>
             </span>
           </div>
@@ -756,6 +763,25 @@ export default function HomePage({ initialConfig }: HomePageProps) {
           <p className="mt-2 text-[8px] font-bold tracking-wider text-zinc-600">
             {config.footer.copyright}
           </p>
+
+          {/* DevEc Signature */}
+          <div className="mt-8 flex flex-col items-center gap-1 opacity-35 hover:opacity-85 transition-opacity duration-300 select-none">
+            <span className="text-[6px] font-black tracking-[0.25em] text-zinc-600 uppercase">Desarrollado por</span>
+            <div className="flex flex-col items-center">
+              <svg className="h-[18px] w-auto" viewBox="0 0 110 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <text x="0" y="25" fill="#ffffff" fontSize="22" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" letterSpacing="-0.02em">Dev</text>
+                <text x="41" y="25" fill="#ffffff" fontSize="22" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" letterSpacing="-0.02em">E</text>
+                <text x="56" y="25" fill="#ffffff" fontSize="22" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" letterSpacing="-0.02em">c</text>
+                {/* Waving flag tail */}
+                <path d="M70 20 C78 20, 80 10, 92 10 C96 10, 98 14, 102 12" stroke="#FFDD00" strokeWidth="2.2" strokeLinecap="round" />
+                <path d="M70 23 C78 23, 80 13, 92 13 C96 13, 98 17, 102 15" stroke="#0033A0" strokeWidth="2.2" strokeLinecap="round" />
+                <path d="M70 26 C78 26, 80 16, 92 16 C96 16, 98 20, 102 18" stroke="#D52B1E" strokeWidth="2.2" strokeLinecap="round" />
+              </svg>
+              <span className="text-[6px] font-black tracking-[0.3em] text-zinc-500 uppercase mt-0.5">
+                SOFTWARE DEVELOPMENT
+              </span>
+            </div>
+          </div>
         </div>
       </footer>
 

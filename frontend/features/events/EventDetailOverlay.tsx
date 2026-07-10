@@ -523,13 +523,30 @@ export default function EventDetailOverlay({
             >
               Cerrar
             </button>
-            <button
-              onClick={() => onBuy(event)}
-              disabled={event.status === "sold-out"}
-              className="flex h-11 px-6 items-center justify-center rounded-full bg-white text-[8px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {event.status === "sold-out" ? "Agotado" : "Comprar Entrada"}
-            </button>
+            
+            {event.status === "sold-out" ? (
+              <button
+                disabled
+                className="flex h-11 px-6 items-center justify-center rounded-full bg-white/10 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Agotado
+              </button>
+            ) : (
+              <div className="relative p-[2px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.15)] hover:shadow-[0_0_25px_rgba(225,0,117,0.35)] transition-all duration-300 group">
+                {/* Línea giratoria */}
+                <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#e10075_50%,transparent_65%)] pointer-events-none" />
+                
+                <button
+                  onClick={() => onBuy(event)}
+                  className="relative z-10 flex h-[40px] px-6 items-center justify-center rounded-full bg-zinc-950 text-[8px] font-black uppercase tracking-[0.2em] text-white hover:bg-white hover:text-black transition-all duration-300"
+                  style={{
+                    transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+                  }}
+                >
+                  Comprar Entrada
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </motion.div>
