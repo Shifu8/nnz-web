@@ -381,6 +381,86 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
     card.style.setProperty("--my", `-1000px`);
   };
 
+  // Device orientation tilt for mobile
+  useEffect(() => {
+    if (typeof window === "undefined" || !showTicketModal) return;
+    
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+    if (!isMobile) return;
+
+    let initialBeta: number | null = null;
+    let initialGamma: number | null = null;
+    
+    // Smooth interpolation variables
+    let currentRotateX = 0;
+    let currentRotateY = 0;
+
+    const handleOrientation = (e: DeviceOrientationEvent) => {
+      const beta = e.beta;   // tilt front/back (-180 to 180)
+      const gamma = e.gamma; // tilt left/right (-90 to 90)
+
+      if (beta === null || gamma === null) return;
+
+      // Establish initial baseline on first reading so the card starts at (0,0) tilt
+      if (initialBeta === null) {
+        initialBeta = beta;
+        initialGamma = gamma;
+        return;
+      }
+
+      // Calculate delta from baseline
+      const deltaBeta = beta - initialBeta;
+      const deltaGamma = gamma - initialGamma;
+
+      // Clamp deltas to prevent extreme rotation (max 18 degrees)
+      const targetRotateX = Math.max(-18, Math.min(18, deltaBeta));
+      const targetRotateY = Math.max(-18, Math.min(18, -deltaGamma)); // invert gamma for intuitive movement
+
+      // Linear interpolation (lerp) for buttery smooth transition (speed factor 0.08)
+      currentRotateX += (targetRotateX - currentRotateX) * 0.08;
+      currentRotateY += (targetRotateY - currentRotateY) * 0.08;
+
+      const card = modalTicketRef.current;
+      if (card) {
+        card.style.transform = `perspective(1200px) rotateX(${currentRotateX}deg) rotateY(${currentRotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+        
+        // Also move the light reflection inline style accordingly!
+        const rect = card.getBoundingClientRect();
+        const mx = rect.width / 2 + currentRotateY * 5;
+        const my = rect.height / 2 + currentRotateX * 5;
+        card.style.setProperty("--mx", `${mx}px`);
+        card.style.setProperty("--my", `${my}px`);
+      }
+    };
+
+    // Request permission for iOS devices if available
+    const requestDeviceOrientation = async () => {
+      if (
+        typeof (DeviceOrientationEvent as any).requestPermission === "function"
+      ) {
+        try {
+          const permissionState = await (DeviceOrientationEvent as any).requestPermission();
+          if (permissionState === "granted") {
+            window.addEventListener("deviceorientation", handleOrientation, true);
+          }
+        } catch (error) {
+          console.error("Error requesting device orientation permission:", error);
+        }
+      } else {
+        window.addEventListener("deviceorientation", handleOrientation, true);
+      }
+    };
+
+    // Trigger registration
+    requestDeviceOrientation();
+
+    return () => {
+      window.removeEventListener("deviceorientation", handleOrientation, true);
+    };
+  }, [showTicketModal]);
+
   const totalPrice = quantity * pricePerTicket;
   const selectedBankData = BANKS.find((b) => b.id === selectedBank)!;
   const [copiedAccount, setCopiedAccount] = useState<string | null>(null);
