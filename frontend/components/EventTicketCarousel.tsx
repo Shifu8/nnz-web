@@ -221,15 +221,85 @@ export default function EventTicketCarousel({
   }, []);
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const { innerWidth, innerHeight } = window;
-      const x = (e.clientX - innerWidth / 2) / (innerWidth / 2); // -1 to 1
-      const y = (e.clientY - innerHeight / 2) / (innerHeight / 2); // -1 to 1
-      setMouseOffset({ x, y });
-    };
+    if (typeof window === "undefined") return;
 
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+
+    if (isMobile) {
+      let initialBeta: number | null = null;
+      let initialGamma: number | null = null;
+      
+      let targetX = 0;
+      let targetY = 0;
+      let currentX = 0;
+      let currentY = 0;
+      let rafId: number;
+
+      const handleOrientation = (e: DeviceOrientationEvent) => {
+        const beta = e.beta;
+        const gamma = e.gamma;
+
+        if (beta === null || gamma === null) return;
+
+        if (initialBeta === null) {
+          initialBeta = beta;
+          initialGamma = gamma;
+          return;
+        }
+
+        const deltaBeta = beta - initialBeta;
+        const deltaGamma = gamma - initialGamma;
+
+        // Map the angles (-15 to 15 degrees delta) to range -1 to 1
+        targetX = Math.max(-1, Math.min(1, deltaGamma / 15));
+        targetY = Math.max(-1, Math.min(1, deltaBeta / 15));
+      };
+
+      const updatePosition = () => {
+        // Smooth lerp (0.08 speed factor)
+        currentX += (targetX - currentX) * 0.08;
+        currentY += (targetY - currentY) * 0.08;
+
+        setMouseOffset({ x: currentX, y: currentY });
+        rafId = requestAnimationFrame(updatePosition);
+      };
+
+      const requestPermission = async () => {
+        if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
+          try {
+            const state = await (DeviceOrientationEvent as any).requestPermission();
+            if (state === "granted") {
+              window.addEventListener("deviceorientation", handleOrientation, true);
+            }
+          } catch (err) {
+            console.error("iOS Gyroscope permission error:", err);
+          }
+        } else {
+          window.addEventListener("deviceorientation", handleOrientation, true);
+        }
+      };
+
+      requestPermission();
+      rafId = requestAnimationFrame(updatePosition);
+
+      return () => {
+        window.removeEventListener("deviceorientation", handleOrientation, true);
+        if (rafId) cancelAnimationFrame(rafId);
+      };
+    } else {
+      // Desktop: mouse move
+      const handleMouseMove = (e: MouseEvent) => {
+        const { innerWidth, innerHeight } = window;
+        const x = (e.clientX - innerWidth / 2) / (innerWidth / 2); // -1 to 1
+        const y = (e.clientY - innerHeight / 2) / (innerHeight / 2); // -1 to 1
+        setMouseOffset({ x, y });
+      };
+
+      window.addEventListener("mousemove", handleMouseMove);
+      return () => window.removeEventListener("mousemove", handleMouseMove);
+    }
   }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {

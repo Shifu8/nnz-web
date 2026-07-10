@@ -393,32 +393,33 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
     let initialBeta: number | null = null;
     let initialGamma: number | null = null;
     
-    // Smooth interpolation variables
+    let targetRotateX = 0;
+    let targetRotateY = 0;
     let currentRotateX = 0;
     let currentRotateY = 0;
+    let rafId: number;
 
     const handleOrientation = (e: DeviceOrientationEvent) => {
-      const beta = e.beta;   // tilt front/back (-180 to 180)
-      const gamma = e.gamma; // tilt left/right (-90 to 90)
+      const beta = e.beta;
+      const gamma = e.gamma;
 
       if (beta === null || gamma === null) return;
 
-      // Establish initial baseline on first reading so the card starts at (0,0) tilt
       if (initialBeta === null) {
         initialBeta = beta;
         initialGamma = gamma;
         return;
       }
 
-      // Calculate delta from baseline
       const deltaBeta = beta - initialBeta;
       const deltaGamma = gamma - initialGamma;
 
-      // Clamp deltas to prevent extreme rotation (max 18 degrees)
-      const targetRotateX = Math.max(-18, Math.min(18, deltaBeta));
-      const targetRotateY = Math.max(-18, Math.min(18, -deltaGamma)); // invert gamma for intuitive movement
+      // Limit to 15 degrees tilt max
+      targetRotateX = Math.max(-15, Math.min(15, deltaBeta));
+      targetRotateY = Math.max(-15, Math.min(15, -deltaGamma));
+    };
 
-      // Linear interpolation (lerp) for buttery smooth transition (speed factor 0.08)
+    const updatePosition = () => {
       currentRotateX += (targetRotateX - currentRotateX) * 0.08;
       currentRotateY += (targetRotateY - currentRotateY) * 0.08;
 
@@ -426,16 +427,15 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
       if (card) {
         card.style.transform = `perspective(1200px) rotateX(${currentRotateX}deg) rotateY(${currentRotateY}deg) scale3d(1.02, 1.02, 1.02)`;
         
-        // Also move the light reflection inline style accordingly!
         const rect = card.getBoundingClientRect();
         const mx = rect.width / 2 + currentRotateY * 5;
         const my = rect.height / 2 + currentRotateX * 5;
         card.style.setProperty("--mx", `${mx}px`);
         card.style.setProperty("--my", `${my}px`);
       }
+      rafId = requestAnimationFrame(updatePosition);
     };
 
-    // Request permission for iOS devices if available
     const requestDeviceOrientation = async () => {
       if (
         typeof (DeviceOrientationEvent as any).requestPermission === "function"
@@ -453,11 +453,12 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
       }
     };
 
-    // Trigger registration
     requestDeviceOrientation();
+    rafId = requestAnimationFrame(updatePosition);
 
     return () => {
       window.removeEventListener("deviceorientation", handleOrientation, true);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, [showTicketModal]);
 
