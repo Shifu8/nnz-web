@@ -420,8 +420,8 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
     };
 
     const updatePosition = () => {
-      currentRotateX += (targetRotateX - currentRotateX) * 0.08;
-      currentRotateY += (targetRotateY - currentRotateY) * 0.08;
+      currentRotateX += (targetRotateX - currentRotateX) * 0.18;
+      currentRotateY += (targetRotateY - currentRotateY) * 0.18;
 
       const card = modalTicketRef.current;
       if (card) {

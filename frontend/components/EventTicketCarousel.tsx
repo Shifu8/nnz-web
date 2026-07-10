@@ -258,9 +258,9 @@ export default function EventTicketCarousel({
       };
 
       const updatePosition = () => {
-        // Smooth lerp (0.08 speed factor)
-        currentX += (targetX - currentX) * 0.08;
-        currentY += (targetY - currentY) * 0.08;
+        // Snappy, highly responsive lerp (0.18 speed factor)
+        currentX += (targetX - currentX) * 0.18;
+        currentY += (targetY - currentY) * 0.18;
 
         setMouseOffset({ x: currentX, y: currentY });
         rafId = requestAnimationFrame(updatePosition);
@@ -382,23 +382,12 @@ export default function EventTicketCarousel({
     setActiveIndex(next);
   };
 
-  const transitionStyle = isDragging
-    ? "none"
-    : "transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease";
-
-  return (
+    return (
     <div className="relative w-full h-[520px] md:h-[560px] lg:h-[620px] flex items-center justify-center select-none overflow-visible">
       {/* 3D Scene Wrapper */}
       <div 
         className="relative w-full h-full flex items-center justify-center overflow-visible"
         style={{ perspective: 1200, transformStyle: "preserve-3d" }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
         {CAROUSEL_EVENTS.map((event, idx) => {
           let diff = idx - activeIndex;
@@ -431,15 +420,9 @@ export default function EventTicketCarousel({
             <div
               key={event.id}
               onClick={() => {
-                if (clickMovedRef.current) {
-                  clickMovedRef.current = false;
-                  return;
+                if (diff === 0) {
+                  onBuy(event);
                 }
-                if (diff !== 0) {
-                  setActiveIndex(idx);
-                  return;
-                }
-                onBuy(event);
               }}
               className={`absolute w-[290px] h-[410px] md:w-[330px] md:h-[460px] lg:w-[370px] lg:h-[520px] rounded-[32px] overflow-hidden cursor-pointer origin-center transition-all animate-float ${
                 diff === 0 && isTicketPulse ? "ticket-pulse-active" : ""
@@ -449,7 +432,7 @@ export default function EventTicketCarousel({
                 zIndex,
                 opacity,
                 filter: `blur(${blur}px)`,
-                transition: transitionStyle,
+                transition: "transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease",
                 transformStyle: "preserve-3d",
                 boxShadow: diff === 0 
                   ? "0 40px 100px rgba(0,0,0,0.85), 0 0 50px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.15)"
@@ -538,15 +521,12 @@ export default function EventTicketCarousel({
 
         <div className="flex gap-1.5">
           {CAROUSEL_EVENTS.map((_, idx) => (
-            <button
+            <div
               key={idx}
-              type="button"
-              onClick={() => setActiveIndex(idx)}
-              aria-label={`Ir al evento ${idx + 1}`}
               className={`h-1 rounded-full transition-all duration-500 ${
                 idx === activeIndex
                   ? "w-5 bg-white"
-                  : "w-1 bg-white/20 hover:bg-white/40"
+                  : "w-1 bg-white/20"
               }`}
             />
           ))}
