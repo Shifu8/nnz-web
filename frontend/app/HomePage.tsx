@@ -335,7 +335,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               transition={{ duration: 0.5, ease: "easeOut" }}
               className="text-center"
             >
-              <h1 className="text-sm font-black uppercase tracking-[0.6em] text-white">NENEZ</h1>
+              <h1 className="text-sm font-black uppercase tracking-[0.6em] text-white">NOW</h1>
               <p className="mt-2 text-[8px] font-black uppercase tracking-[0.4em] text-zinc-500">Elevate Your Frequency</p>
               <div className="mt-6 h-0.5 w-16 bg-white/20 mx-auto overflow-hidden rounded">
                 <motion.div
