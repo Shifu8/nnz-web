@@ -61,7 +61,7 @@ const getArtistDetails = (eventId: string) => {
 
 export type AccessDropHandle = { isSuccess: boolean; firstName: string; reset: () => void };
 
-const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewell?: (name: string) => void; event?: Event }>(({ onClose, onFarewell, event }, ref) => {
+const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewell?: (name: string) => void; onStateChange?: (state: string) => void; event?: Event }>(({ onClose, onFarewell, onStateChange, event }, ref) => {
   const scope = useRef<HTMLElement>(null);
   const ticketRef = useRef<HTMLDivElement>(null);
   const modalTicketRef = useRef<HTMLDivElement>(null);
@@ -120,6 +120,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
       previewUrlRef.current = null;
     }
     setDropState("register");
+    onStateChange?.("register");
     setUploadMessage("");
     setIsSubmitting(false);
     setDragOver(false);
@@ -323,6 +324,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
       
       // Transición al estado de carga / verificando tras éxito en subida
       setDropState("verifying");
+      onStateChange?.("verifying");
       setVerifyingMessage("COMPROBANTE RECIBIDO");
       
       const t1 = setTimeout(() => setVerifyingMessage("ANALIZANDO INTEGRIDAD DE LA IMAGEN..."), 700);
@@ -341,12 +343,14 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
       setUploadMessage(data.message || "COMPROBANTE VALIDADO.");
       clearSelectedFile();
       setDropState("success");
+      onStateChange?.("success");
       resetTurnstile();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error al subir comprobante";
       setErrorMsg(message.toUpperCase());
       setUploadMessage("");
       setDropState("register");
+      onStateChange?.("register");
       resetTurnstile();
     } finally {
       setIsSubmitting(false);
@@ -1026,13 +1030,15 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
               </div>
 
               {formData.firstName.trim() && (
-                <h2 className="success-name text-3xl font-black text-white uppercase italic tracking-widest">
+                <h2 className="success-name text-[21px] font-black text-white uppercase tracking-[0.22em] font-quicksand drop-shadow-[0_0_12px_rgba(255,255,255,0.12)]">
                   GRACIAS, {formData.firstName.trim().toUpperCase()}
                 </h2>
               )}
-              <h3 className="success-text mt-2 text-sm font-bold text-zinc-400 uppercase tracking-widest">comprobante recibido</h3>
-              <p className="success-msg mt-4 text-[10px] font-bold text-zinc-500 uppercase tracking-wider leading-relaxed max-w-sm">
-                TU COMPROBANTE FUE RECIBIDO CORRECTAMENTE. UN MIEMBRO DE VENTAS DAWG CONFIRMARA EL PAGO Y RECIBIRAS TU ACCESO POR CORREO ELECTRÓNICO.
+              <h3 className="success-text mt-3.5 text-[9px] font-black text-[#e10075] uppercase tracking-[0.38em]">
+                comprobante recibido
+              </h3>
+              <p className="success-msg mt-5 text-[9px] font-bold text-zinc-500 uppercase tracking-[0.16em] leading-[1.8] max-w-xs mx-auto">
+                Tu comprobante fue recibido correctamente. Un miembro de ventas confirmará el pago y recibirás tu acceso por correo electrónico.
               </p>
               {onClose && (
                 <div className="success-btn-container mt-8 relative p-[1.5px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.15)] hover:shadow-[0_0_25px_rgba(225,0,117,0.35)] transition-all duration-300 group max-w-[200px] w-full">

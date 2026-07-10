@@ -77,6 +77,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const activeEvent = CAROUSEL_EVENTS[activeIndex];
   const [isLoading, setIsLoading] = useState(true);
+  const [checkoutState, setCheckoutState] = useState<string>("register");
 
 
 
@@ -808,9 +809,14 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 setShowDetailOverlay(false);
               }
               setIsTicketModalOpen(false);
+              setCheckoutState("register");
             }
           }}
-          className="relative w-full h-[96dvh] md:h-[86vh] md:max-w-[780px] md:mx-4 overflow-hidden flex flex-col rounded-t-[32px] md:rounded-[36px] border border-white/[0.07] bg-[#060606] shadow-[0_-20px_80px_rgba(0,0,0,0.8)] md:shadow-[0_40px_120px_rgba(0,0,0,0.9)]"
+          className={`relative w-full h-[96dvh] transition-all duration-500 overflow-hidden flex flex-col rounded-t-[32px] md:rounded-[36px] border border-white/[0.07] bg-[#060606] shadow-[0_-20px_80px_rgba(0,0,0,0.8)] md:shadow-[0_40px_120px_rgba(0,0,0,0.9)] md:mx-4 ${
+            checkoutState === "success" || checkoutState === "verifying"
+              ? "md:max-w-[460px] md:h-[580px]"
+              : "md:max-w-[780px] md:h-[86vh]"
+          }`}
         >
           {/* Drag handle — mobile only */}
           <div
@@ -829,6 +835,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 setShowDetailOverlay(false);
               }
               setIsTicketModalOpen(false);
+              setCheckoutState("register");
             }}
             aria-label="Cerrar compra"
             className="absolute right-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/70 text-white/60 transition hover:text-white hover:border-white/25"
@@ -847,7 +854,9 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               }}
               onClose={() => {
                 setIsTicketModalOpen(false);
+                setCheckoutState("register");
               }}
+              onStateChange={(state) => setCheckoutState(state)}
               event={selectedCarouselEvent}
             />
           </div>
