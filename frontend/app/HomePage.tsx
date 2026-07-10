@@ -810,7 +810,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               setIsTicketModalOpen(false);
             }
           }}
-          className="relative w-full h-[96dvh] md:h-[92vh] md:max-w-[1020px] md:mx-4 overflow-hidden flex flex-col rounded-t-[32px] md:rounded-[36px] border border-white/[0.07] bg-[#060606] shadow-[0_-20px_80px_rgba(0,0,0,0.8)] md:shadow-[0_40px_120px_rgba(0,0,0,0.9)]"
+          className="relative w-full h-[96dvh] md:h-[86vh] md:max-w-[780px] md:mx-4 overflow-hidden flex flex-col rounded-t-[32px] md:rounded-[36px] border border-white/[0.07] bg-[#060606] shadow-[0_-20px_80px_rgba(0,0,0,0.8)] md:shadow-[0_40px_120px_rgba(0,0,0,0.9)]"
         >
           {/* Drag handle — mobile only */}
           <div

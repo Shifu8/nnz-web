@@ -948,23 +948,29 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
             <div ref={successRef} className="success-reveal relative z-10 flex flex-col items-center text-center max-w-md mx-auto py-12">
               
               {/* 3D-like Ticket receipt container with stamp */}
-              <div className="success-ticket-card relative mb-8 w-60 h-36 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md overflow-hidden flex flex-col justify-between p-4 shadow-[0_15px_35px_rgba(0,0,0,0.6)]">
+              <div className="success-ticket-card relative mb-8 w-64 h-36 rounded-2xl border border-white/12 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 overflow-hidden flex flex-col justify-between p-4 shadow-[0_20px_45px_rgba(0,0,0,0.8),0_0_30px_rgba(225,0,117,0.06)]">
+                {/* Background grid texture */}
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:14px_14px] pointer-events-none" />
+                
                 {/* Energy Ring inside card for centering the blast */}
-                <div className="success-energy-ring absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border-2 border-[#C8FF00] opacity-0 pointer-events-none" />
+                <div className="success-energy-ring absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border-2 border-[#e10075] opacity-0 pointer-events-none" />
                 
                 {/* Top ticket header */}
                 <div className="flex justify-between items-center z-10">
-                  <span className="text-[7px] font-black uppercase tracking-widest text-[#e10075]">NowTickets</span>
-                  <span className="text-[6px] font-mono text-zinc-500">#{Math.floor(100000 + Math.random() * 900000)}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-1 w-1 rounded-full bg-[#e10075] animate-pulse" />
+                    <span className="text-[7px] font-black uppercase tracking-[0.25em] text-white">NowTickets</span>
+                  </div>
+                  <span className="text-[6px] font-mono text-zinc-600">#{Math.floor(100000 + Math.random() * 900000)}</span>
                 </div>
                 
                 {/* Dotted separator */}
-                <div className="absolute top-[42px] inset-x-0 border-t border-dashed border-white/10" />
+                <div className="absolute top-[42px] inset-x-0 border-t border-dashed border-white/10 z-10" />
                 
                 {/* Middle details */}
                 <div className="mt-4 text-left z-10">
-                  <p className="text-[6px] font-black text-zinc-500 uppercase tracking-widest">Invitado</p>
-                  <p className="text-xs font-black text-white uppercase tracking-wider truncate max-w-[150px]">
+                  <p className="text-[6px] font-black text-zinc-600 uppercase tracking-[0.3em]">Invitado</p>
+                  <p className="text-xs font-black text-white uppercase tracking-widest truncate max-w-[170px]">
                     {formData.firstName.trim() ? `${formData.firstName.trim()} ${formData.lastName.trim()}` : "CLIENTE DAWG"}
                   </p>
                 </div>
@@ -972,26 +978,26 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                 {/* Bottom details / barcode */}
                 <div className="flex justify-between items-end z-10">
                   <div>
-                    <p className="text-[6px] font-black text-zinc-500 uppercase tracking-widest">Estado</p>
-                    <p className="text-[7px] font-black text-[#C8FF00] uppercase tracking-wider">Verificando Pago</p>
+                    <p className="text-[6px] font-black text-zinc-600 uppercase tracking-[0.3em]">Estado</p>
+                    <p className="text-[7px] font-black text-[#e10075] uppercase tracking-widest animate-pulse">Verificando Pago</p>
                   </div>
                   {/* Barcode lines */}
-                  <div className="flex gap-px h-5 items-end">
-                    <div className="w-[1.5px] h-full bg-white/40" />
-                    <div className="w-[3px] h-full bg-white/40" />
-                    <div className="w-px h-full bg-white/40" />
-                    <div className="w-[2px] h-[80%] bg-white/40" />
-                    <div className="w-[1.5px] h-full bg-white/40" />
-                    <div className="w-[3px] h-[60%] bg-white/40" />
-                    <div className="w-px h-full bg-white/40" />
-                    <div className="w-[2.5px] h-full bg-white/40" />
+                  <div className="flex gap-px h-5 items-end opacity-60">
+                    <div className="w-[1.5px] h-full bg-white" />
+                    <div className="w-[3px] h-full bg-white" />
+                    <div className="w-px h-full bg-white" />
+                    <div className="w-[2px] h-[80%] bg-white" />
+                    <div className="w-[1.5px] h-full bg-white" />
+                    <div className="w-[3px] h-[60%] bg-white" />
+                    <div className="w-px h-full bg-white" />
+                    <div className="w-[2.5px] h-full bg-white" />
                   </div>
                 </div>
                 
                 {/* The Stamp Overlay (slams down in 3D style) */}
                 <div className="success-stamp absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                  <div className="h-16 w-16 rounded-full border-[3px] border-[#C8FF00] bg-zinc-950/95 flex items-center justify-center shadow-[0_0_20px_rgba(200,255,0,0.4)]">
-                    <svg className="w-9 h-9 text-[#C8FF00]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4.5}>
+                  <div className="h-16 w-16 rounded-full border-[3px] border-[#e10075] bg-black/95 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.4)]">
+                    <svg className="w-9 h-9 text-[#e10075]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" className="success-check-path" />
                     </svg>
                   </div>
@@ -1000,7 +1006,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                 {/* Particle explosion container */}
                 <div ref={sparklesRef} className="absolute inset-0 pointer-events-none overflow-visible z-30">
                   {Array.from({ length: 24 }).map((_, i) => {
-                    const colors = ["#e10075", "#ffffff", "#C8FF00", "#FFDD00", "#ffffff"];
+                    const colors = ["#e10075", "#ffffff", "#e10075", "#a1a1aa", "#ffffff"];
                     const shapes = ["50%", "3px", "50% 0 50% 0", "0%"];
                     return (
                       <div
@@ -1029,9 +1035,9 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                 TU COMPROBANTE FUE RECIBIDO CORRECTAMENTE. UN MIEMBRO DE VENTAS DAWG CONFIRMARA EL PAGO Y RECIBIRAS TU ACCESO POR CORREO ELECTRÓNICO.
               </p>
               {onClose && (
-                <div className="success-btn-container mt-8 relative p-[1.5px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(200,255,0,0.15)] hover:shadow-[0_0_25px_rgba(200,255,0,0.35)] transition-all duration-300 group max-w-[200px] w-full">
+                <div className="success-btn-container mt-8 relative p-[1.5px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.15)] hover:shadow-[0_0_25px_rgba(225,0,117,0.35)] transition-all duration-300 group max-w-[200px] w-full">
                   {/* Rotating border line */}
-                  <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#C8FF00_50%,transparent_65%)] pointer-events-none" />
+                  <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#e10075_50%,transparent_65%)] pointer-events-none" />
                   <button
                     onClick={handleSuccessClose}
                     className="relative z-10 flex h-[42px] w-full items-center justify-center rounded-full bg-zinc-950 text-[9px] font-black uppercase tracking-widest text-white hover:bg-white hover:text-black transition-all duration-300"
