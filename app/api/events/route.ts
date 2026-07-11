@@ -30,7 +30,29 @@ function toFrontendEvent(adminEvent: any): EventWithPosition {
     lineup: adminEvent.lineup || [],
     description: adminEvent.description || "",
     position: adminEvent.position ?? 999,
-  };
+
+    // Extended editorial fields
+    organizer: adminEvent.organizer || "NENEZ",
+    venue: adminEvent.venue || `${adminEvent.location || "Venue TBA"}`,
+    time: adminEvent.time || "",
+    category: adminEvent.category || "Trap / Urban",
+    ageRestriction: adminEvent.ageRestriction || "18+",
+    status: adminEvent.status === "active" ? "available" : "coming-soon",
+    about: adminEvent.about || [],
+    detailedLineup: adminEvent.detailedLineup || [],
+    schedule: adminEvent.schedule || [],
+    importantInfo: adminEvent.importantInfo || [],
+    socialLinks: adminEvent.socialLinks || {},
+    merch: adminEvent.merch || [],
+
+    // Carousel specific fields
+    badge: adminEvent.badge || "LIVE ACCESS",
+    accentColor: adminEvent.accentColor || "#ffffff",
+    miniImage: adminEvent.miniImage || adminEvent.imageUrl || adminEvent.poster || "",
+    featuredImage: adminEvent.imageUrl || adminEvent.poster || "",
+    price: adminEvent.price || 10,
+    currency: adminEvent.currency || "USD",
+  } as any;
 }
 
 function toFrontendEventFromFallback(fe: Event, index: number): EventWithPosition {
@@ -47,15 +69,9 @@ export async function GET() {
     if (adminEvents.length === 0) {
       merged = fallbackEvents.map((fe, i) => toFrontendEventFromFallback(fe, i));
     } else {
-      // Admin events with their position
-      const fromAdmin = adminEvents
+      merged = adminEvents
         .filter((e) => e.status === "active")
         .map(toFrontendEvent);
-      // Fallback events whose slug isn't in admin yet
-      const fromFallback = fallbackEvents
-        .filter((fe) => !existingSlugs.has(fe.id))
-        .map((fe, i) => toFrontendEventFromFallback(fe, i));
-      merged = [...fromAdmin, ...fromFallback];
     }
 
     merged.sort((a, b) => a.position - b.position);

@@ -75,7 +75,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
   // Custom states for 3D Carousel & Premium visual effects
   const [activeIndex, setActiveIndex] = useState(0);
-  const activeEvent = CAROUSEL_EVENTS[activeIndex];
+  const activeEvent = events[activeIndex] || selectedCarouselEvent;
   const [isLoading, setIsLoading] = useState(true);
   const [checkoutState, setCheckoutState] = useState<string>("register");
 
@@ -149,6 +149,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
       .then((data) => {
         if (data.success && Array.isArray(data.events) && data.events.length > 0) {
           setEvents(data.events);
+          setSelectedCarouselEvent(data.events[0]);
         }
       })
       .catch(() => { });
@@ -213,11 +214,13 @@ export default function HomePage({ initialConfig }: HomePageProps) {
       mm.add(
         {
           isDesktop: "(min-width: 1024px)",
+          isMobile: "(max-width: 1023px)",
           reduceMotion: "(prefers-reduced-motion: reduce)",
         },
         (context) => {
-          const { reduceMotion } = context.conditions as {
+          const { reduceMotion, isDesktop } = context.conditions as {
             reduceMotion: boolean;
+            isDesktop: boolean;
           };
 
           if (reduceMotion) {
@@ -227,24 +230,28 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             return;
           }
 
-          gsap
-            .timeline({ defaults: { ease: "power3.out" } })
-            // Animación del logo de NowTickets
-            .fromTo(".logo-icon",
-              { scale: 0, rotation: -45, opacity: 0 },
-              { scale: 1, rotation: 0, opacity: 1, duration: 0.8, ease: "back.out(1.7)" }
-            )
-            .fromTo(".logo-char",
-              { opacity: 0, y: 15, scale: 0.7, transformOrigin: "50% 100%" },
-              { opacity: 1, y: 0, scale: 1, duration: 0.45, stagger: 0.04, ease: "back.out(1.5)" },
-              "-=0.5"
-            )
-            .from(".hero-reveal", {
+          const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+          // Animación del logo de NowTickets (corre en móvil y desktop)
+          tl.fromTo(".logo-icon",
+            { scale: 0, rotation: -45, opacity: 0 },
+            { scale: 1, rotation: 0, opacity: 1, duration: 0.8, ease: "back.out(1.7)" }
+          )
+          .fromTo(".logo-char",
+            { opacity: 0, y: 15, scale: 0.7, transformOrigin: "50% 100%" },
+            { opacity: 1, y: 0, scale: 1, duration: 0.45, stagger: 0.04, ease: "back.out(1.5)" },
+            "-=0.5"
+          );
+
+          // Animación adicional del hero (solo en desktop)
+          if (isDesktop) {
+            tl.from(".hero-reveal", {
               autoAlpha: 0,
               y: 28,
               stagger: 0.08,
               duration: 0.85,
             }, "-=0.3");
+          }
         },
         scope.current ?? undefined,
       );
@@ -310,7 +317,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   const onSelectRelatedEvent = (event: Event) => {
     setSelectedCarouselEvent(event);
     // Also update the carousel index if event exists in carousel
-    const idx = CAROUSEL_EVENTS.findIndex(e => e.id === event.id);
+    const idx = events.findIndex(e => e.id === event.id);
     if (idx !== -1) setActiveIndex(idx);
   };
 
@@ -534,17 +541,13 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                   className="mt-2 text-7xl md:text-8xl font-black uppercase leading-none tracking-tighter text-white"
                 >
-                  {activeEvent.id === "trap-loud" ? "YAN BLOCK" : activeEvent.id === "dawg-night" ? "OMAR COURTZ" : "RAUW"}
+                  {activeEvent.lineup && activeEvent.lineup.length > 0 ? activeEvent.lineup.join(" / ") : activeEvent.title}
                 </motion.h1>
               </AnimatePresence>
 
               {/* Luxury descriptive subtitle */}
               <p className="text-zinc-400 text-xs mt-2 max-w-sm leading-relaxed">
-                {activeEvent.id === "trap-loud"
-                  ? "Eventos exclusivos. Experiencias que se viven en la clandestinidad."
-                  : activeEvent.id === "dawg-night"
-                    ? "La calle se viste de gala. Autenticidad y flows de otro nivel."
-                    : "El futuro del ritmo latino. Vanguardia y movimiento en directo."}
+                Eventos temáticos con la vibra de tus artistas. DJ sets, visuales y cultura urbana.
               </p>
             </div>
 
@@ -658,6 +661,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             {/* The 3D Carousel component */}
             <div id="tickets-stage" className="relative z-10 w-full h-full flex items-center justify-center overflow-visible">
               <EventTicketCarousel
+                events={events as any}
                 activeIndex={activeIndex}
                 setActiveIndex={setActiveIndex}
                 onBuy={onBuy}
@@ -708,7 +712,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               {config.accessSection.steps.map((data) => (
                 <article
                   key={data.step}
-                  className="rounded-[16px] sm:rounded-[24px] border border-white/10 bg-black/45 p-3 sm:p-5 shadow-[0_12px_32px_rgba(0,0,0,0.4)] transition hover:border-white/20 hover:bg-white/[0.02]"
+                  className="rounded-[16px] sm:rounded-[24px] border border-white/[0.07] bg-zinc-950/40 p-3 sm:p-5 shadow-[0_12px_32px_rgba(0,0,0,0.4)] transition duration-300 hover:border-white/20 hover:bg-white/[0.03] hover:shadow-[0_0_30px_rgba(255,255,255,0.02)]"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[7px] sm:text-[8px] font-black tracking-[0.24em] text-zinc-600">
@@ -810,9 +814,17 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
       {/* Purchasing Access Modal Dialog */}
       <div
-        className={`fixed inset-0 z-[350] flex items-end md:items-center justify-center bg-black/90 backdrop-blur-xl transition-all duration-300 ${
+        className={`fixed inset-0 z-[350] flex items-end md:items-center justify-center transition-all duration-300 ${
           isTicketModalOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
+        style={{
+          backdropFilter: showDetailOverlay ? "none" : "blur(24px)",
+          background: showDetailOverlay
+            ? "transparent"
+            : isTicketModalOpen
+            ? "rgba(0, 0, 0, 0.88)"
+            : "transparent",
+        }}
       >
         <motion.div
           animate={isTicketModalOpen ? { y: 0, opacity: 1 } : { y: 60, opacity: 0 }}
@@ -834,10 +846,10 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               setCheckoutState("register");
             }
           }}
-          className={`relative w-full h-[96dvh] transition-all duration-500 overflow-hidden flex flex-col rounded-t-[32px] md:rounded-[36px] border border-white/[0.07] bg-[#060606] shadow-[0_-20px_80px_rgba(0,0,0,0.8)] md:shadow-[0_40px_120px_rgba(0,0,0,0.9)] md:mx-4 ${
+          className={`relative w-full h-[96dvh] transition-all duration-500 overflow-hidden flex flex-col rounded-t-[32px] md:rounded-[36px] border border-white/[0.07] bg-gradient-to-b from-zinc-900 via-zinc-950 to-black shadow-[0_-20px_80px_rgba(0,0,0,0.8)] md:shadow-[0_40px_120px_rgba(0,0,0,0.9)] md:mx-4 ${
             checkoutState === "success" || checkoutState === "verifying"
               ? "md:max-w-[460px] md:h-[580px]"
-              : "md:max-w-[780px] md:h-[86vh]"
+              : "md:max-w-[860px] md:h-[96vh]"
           }`}
         >
           {/* Drag handle — mobile only */}
@@ -890,7 +902,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         {showDetailOverlay && (
           <EventDetailOverlay
             event={selectedCarouselEvent}
-            allEvents={CAROUSEL_EVENTS}
+            allEvents={events}
             onClose={() => setShowDetailOverlay(false)}
             onBuy={(event) => {
               onBuy(event);

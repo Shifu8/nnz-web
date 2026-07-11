@@ -16,6 +16,35 @@ export type AdminEvent = {
   slug?: string;
   createdAt: string;
   updatedAt: string;
+
+  // Extended detail fields
+  badge?: string;
+  accentColor?: string;
+  miniImage?: string;
+  organizer?: string;
+  venue?: string;
+  category?: string;
+  ageRestriction?: string;
+  about?: string[];
+  detailedLineup?: { name: string; role: string; image?: string }[];
+  schedule?: { time: string; label: string }[];
+  importantInfo?: { icon: string; title: string; description: string }[];
+  socialLinks?: {
+    instagram?: string;
+    tiktok?: string;
+    whatsapp?: string;
+    spotify?: string;
+    appleMusic?: string;
+    youtube?: string;
+    website?: string;
+  };
+  merch?: {
+    id: string;
+    name: string;
+    category: string;
+    price: string;
+    image?: string;
+  }[];
 };
 
 export type AdminStats = {

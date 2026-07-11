@@ -87,24 +87,25 @@ export async function GET(request: Request) {
       careerMap[eventId] = perCareer;
     }
 
-    // Admin events first, then frontend events whose slug isn't already in admin
-    const result: any[] = [
-      ...adminEvents.map((event) => {
+    // Only return admin database events if there are any.
+    // This matches the homepage logic and prevents virtual fallback clutter in the admin dashboard.
+    let result: any[];
+    if (adminEvents.length > 0) {
+      result = adminEvents.map((event) => {
         const key = event.slug || event.id;
         return {
           ...event,
           totalScans: scanMap[key] || 0,
           scansPerCareer: careerMap[key] || {},
         };
-      }),
-      ...frontendEvents
-        .filter((fe) => !existingSlugs.has(fe.id))
-        .map((fe) => ({
-          ...fromFrontendEvent(fe),
-          totalScans: scanMap[fe.id] || 0,
-          scansPerCareer: careerMap[fe.id] || {},
-        })),
-    ];
+      });
+    } else {
+      result = frontendEvents.map((fe) => ({
+        ...fromFrontendEvent(fe),
+        totalScans: scanMap[fe.id] || 0,
+        scansPerCareer: careerMap[fe.id] || {},
+      }));
+    }
 
     return NextResponse.json({ success: true, events: result });
   } catch (error) {

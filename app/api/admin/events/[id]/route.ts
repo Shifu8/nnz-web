@@ -85,6 +85,19 @@ export async function PUT(
           status: "active" as const,
           isFeatured: false,
           position: body.position !== undefined ? Number(body.position) : 0,
+          badge: (fe as any).badge || "",
+          accentColor: (fe as any).accentColor || "#ffffff",
+          miniImage: (fe as any).miniImage || fe.poster || "",
+          organizer: (fe as any).organizer || "NENEZ",
+          venue: (fe as any).venue || fe.city || "",
+          category: (fe as any).category || "Trap / Urban",
+          ageRestriction: (fe as any).ageRestriction || "18+",
+          about: (fe as any).about || [],
+          detailedLineup: (fe as any).detailedLineup || [],
+          schedule: (fe as any).schedule || [],
+          importantInfo: (fe as any).importantInfo || [],
+          socialLinks: (fe as any).socialLinks || {},
+          merch: (fe as any).merch || [],
         };
         const created = createEvent(fullEvent);
         if (body.position !== undefined) {
@@ -113,6 +126,19 @@ export async function PUT(
         status: body.status ?? existing.status,
         isFeatured: body.isFeatured ?? existing.isFeatured,
         slug: body.slug ?? existing.slug,
+        badge: body.badge ?? existing.badge,
+        accentColor: body.accentColor ?? existing.accentColor,
+        miniImage: body.miniImage ?? existing.miniImage,
+        organizer: body.organizer ?? existing.organizer,
+        venue: body.venue ?? existing.venue,
+        category: body.category ?? existing.category,
+        ageRestriction: body.ageRestriction ?? existing.ageRestriction,
+        about: body.about ?? existing.about,
+        detailedLineup: body.detailedLineup ?? existing.detailedLineup,
+        schedule: body.schedule ?? existing.schedule,
+        importantInfo: body.importantInfo ?? existing.importantInfo,
+        socialLinks: body.socialLinks ?? existing.socialLinks,
+        merch: body.merch ?? existing.merch,
       };
       if (!positionChanged && body.position !== undefined) {
         updateFields.position = Number(body.position);
@@ -142,6 +168,19 @@ export async function PUT(
       status: body.status || "active",
       isFeatured: body.isFeatured ?? false,
       slug: body.slug || "",
+      badge: body.badge || "",
+      accentColor: body.accentColor || "#ffffff",
+      miniImage: body.miniImage || "",
+      organizer: body.organizer || "NENEZ",
+      venue: body.venue || body.location || "",
+      category: body.category || "Trap / Urban",
+      ageRestriction: body.ageRestriction || "18+",
+      about: body.about || [],
+      detailedLineup: body.detailedLineup || [],
+      schedule: body.schedule || [],
+      importantInfo: body.importantInfo || [],
+      socialLinks: body.socialLinks || {},
+      merch: body.merch || [],
     });
 
     return NextResponse.json({ success: true, event: created });

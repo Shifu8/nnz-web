@@ -1,115 +1,374 @@
 [
   {
-    "title": "TRAP LOUD",
-    "subtitle": "YAN BLOCK EXPERIENCE",
-    "location": "San Juan",
-    "date": "2026-06-18",
-    "time": "21:00",
-    "countdownDate": "",
-    "price": 10,
-    "imageUrl": "/images/trap_loud_trio_artists.png",
-    "description": "La escena subterranea cobra vida. Trap latino oscuro, bajo retumbante y energia inagotable. Luces rojas, beats pesados y acceso estricto.",
-    "lineup": [
-      "YAN BLOCK",
-      "ROA",
-      "OMAR COURTZ",
-      "y mas"
-    ],
-    "status": "active",
-    "isFeatured": false,
-    "slug": "trap-loud",
-    "id": "d0ef37cf-6781-4515-aff5-7c0db6f1036e",
-    "createdAt": "2026-05-30T23:41:19.326Z",
-    "updatedAt": "2026-06-03T23:58:28.823Z",
-    "position": 0
-  },
-  {
-    "title": "TRAP LOUD",
-    "subtitle": "ANUEL EFFECT",
-    "location": "Miami",
+    "id": "dawg-night",
+    "slug": "dawg-night",
+    "title": "DAWG NIGHT",
+    "subtitle": "OMAR COURTZ EXPERIENCE",
+    "location": "Loja",
     "date": "2026-08-15",
     "time": "22:00",
-    "countdownDate": "",
-    "price": 10,
-    "imageUrl": "/images/trap_loud_anuel_1778966415162.png",
-    "description": "El lado mas agresivo del trap. Una experiencia imponente, oscura y cinematica con el pionero del genero dictando el .",
+    "countdownDate": "2026-08-15",
+    "price": 15,
+    "imageUrl": "/images/omar_courtz_card_bg.jpg",
+    "description": "Voz única y flows de la calle. Autenticidad reggaetonera premium en una atmósfera brutal de luz cenital diseñada para vivirse al límite.",
     "lineup": [
-      "ANUEL AA",
-      "y mas"
+      "OMAR COURTZ"
     ],
+    "position": 0,
     "status": "active",
-    "isFeatured": false,
-    "slug": "trap-loud-anuel",
-    "id": "67d5ee1e-ad15-4fab-b00c-240fdb6444f4",
-    "createdAt": "2026-05-31T00:11:20.083Z",
-    "updatedAt": "2026-06-03T23:58:28.823Z",
-    "position": 1
-  },
-  {
-    "title": "LA CASITA",
-    "subtitle": "LATIN LOUD",
-    "location": "Loja",
-    "date": "2026-07-04",
-    "time": "21:00",
-    "countdownDate": "2026-07-04",
-    "price": 6,
-    "imageUrl": "",
-    "description": "FUll party",
-    "lineup": [
-      "yanblock"
+    "isFeatured": true,
+    "badge": "TRENDING PRESET",
+    "accentColor": "#ffffff",
+    "miniImage": "/images/omar_courtz_card_bg.jpg",
+    "organizer": "NENEZ",
+    "venue": "Venue TBA · Loja",
+    "category": "Reggaetón / Urban",
+    "ageRestriction": "18+",
+    "about": [
+      "DAWG NIGHT es la experiencia definitiva de Omar Courtz en vivo. Una noche donde la autenticidad reggaetonera se fusiona con producción de nivel mundial en un ambiente íntimo y exclusivo.",
+      "Voz única, flows de la calle y una energía que solo se encuentra en los mejores shows de Loja. Acceso limitado. La lista se cierra pronto."
     ],
-    "position": 2,
-    "slug": "latin-loud1",
-    "status": "active",
-    "isFeatured": false,
-    "id": "6d04d71f-7c76-4c5b-8b3e-afabb68b79eb",
+    "detailedLineup": [
+      {
+        "name": "Omar Courtz",
+        "role": "Headliner",
+        "image": "/images/omar_courtz_card_bg.jpg"
+      },
+      {
+        "name": "Anuel AA",
+        "role": "Supporting",
+        "image": "/images/trap_loud_anuel_1778966415162.png"
+      }
+    ],
+    "schedule": [
+      {
+        "time": "9:00 PM",
+        "label": "Puertas Abren"
+      },
+      {
+        "time": "10:00 PM",
+        "label": "Opening Act"
+      },
+      {
+        "time": "11:30 PM",
+        "label": "Omar Courtz"
+      }
+    ],
+    "importantInfo": [
+      {
+        "icon": "🎫",
+        "title": "Entrada",
+        "description": "Acceso digital verificado. Confirmación por email."
+      },
+      {
+        "icon": "🔞",
+        "title": "Edad Mínima",
+        "description": "18+ requerido. Presentar identificación válida."
+      }
+    ],
+    "socialLinks": {
+      "instagram": "https://instagram.com/omarcourtz",
+      "spotify": "https://open.spotify.com/artist/omarcourtz"
+    },
+    "merch": [
+      {
+        "id": "dn-hoodie",
+        "name": "DAWG NIGHT Hoodie",
+        "category": "Hoodie",
+        "price": "$75",
+        "image": "/images/nenez-studio-fit-front.png"
+      }
+    ],
     "createdAt": "2026-06-03T23:57:02.581Z",
     "updatedAt": "2026-06-03T23:58:28.823Z"
   },
   {
-    "title": "RNB LOUD",
-    "subtitle": "NIGHT VISIONS",
-    "location": "Los Angeles",
-    "date": "2026-10-24",
-    "time": "22:00",
-    "countdownDate": "",
-    "price": 10,
-    "imageUrl": "/images/rnb_loud_brent_1778966427864.png",
-    "description": "Vibras lujosas y nocturnas. R&B sensual y futurista en una atmosfera envolvente donde el estilo y el sonido marcan la pauta.",
+    "id": "trap-eclipse",
+    "slug": "trap-eclipse",
+    "title": "NOCTURNE LOUD",
+    "subtitle": "DRAKE / PND / CARTI",
+    "location": "Loja",
+    "date": "2026-10-31",
+    "time": "23:00",
+    "countdownDate": "2026-10-31",
+    "price": 25,
+    "imageUrl": "/images/roa_artist_1779161704881.png",
+    "description": "El eclipse del trap y R&B nocturno. Una noche monumental de vibras oscuras, bajos masivos y melancolía hipnótica en el escenario principal.",
     "lineup": [
-      "BRENT FAIYAZ",
       "DRAKE",
-      "y mas"
+      "CARTI"
     ],
-    "position": 3,
-    "status": "inactive",
+    "position": 1,
+    "status": "active",
     "isFeatured": false,
-    "slug": "rnb-loud",
-    "id": "dff89ef9-bae4-4c5b-a969-c7eb19b36276",
-    "createdAt": "2026-06-01T03:33:09.936Z",
-    "updatedAt": "2026-06-03T23:58:28.823Z"
+    "badge": "SPECIAL PASS",
+    "accentColor": "#ffffff",
+    "miniImage": "/images/roa_artist_1779161704881.png",
+    "organizer": "NENEZ",
+    "venue": "Arena Loja",
+    "category": "R&B / Trap",
+    "ageRestriction": "18+",
+    "about": [
+      "La conjunción perfecta de la melancolía de Toronto con el sonido crudo del trap de Atlanta. NOCTURNE LOUD reúne por primera vez a los íconos de la cultura urbana en un show multisensorial único.",
+      "Bajos que sacuden el piso, visuales inmersivos y una vibra de lujo que solo NENEZ puede traer. Reserva tu entrada."
+    ],
+    "detailedLineup": [
+      {
+        "name": "Drake",
+        "role": "Headliner",
+        "image": "/images/roa_artist_1779161704881.png"
+      },
+      {
+        "name": "PartyNextDoor",
+        "role": "Headliner",
+        "image": "/images/roa_artist_1779161704881.png"
+      },
+      {
+        "name": "Playboi Carti",
+        "role": "Headliner",
+        "image": "/images/roa_artist_1779161704881.png"
+      }
+    ],
+    "schedule": [
+      {
+        "time": "8:00 PM",
+        "label": "Puertas"
+      },
+      {
+        "time": "9:30 PM",
+        "label": "PartyNextDoor"
+      },
+      {
+        "time": "11:00 PM",
+        "label": "Drake"
+      },
+      {
+        "time": "12:30 AM",
+        "label": "Playboi Carti"
+      }
+    ],
+    "importantInfo": [
+      {
+        "icon": "🎫",
+        "title": "Acceso",
+        "description": "Código QR dinámico. Capturas no válidas."
+      },
+      {
+        "icon": "🔒",
+        "title": "Seguridad",
+        "description": "Filtros de control estrictos en puertas."
+      }
+    ],
+    "socialLinks": {
+      "instagram": "https://instagram.com/champagnepapi",
+      "tiktok": "",
+      "spotify": "",
+      "youtube": "",
+      "website": ""
+    },
+    "merch": [
+      {
+        "id": "ne-tee",
+        "name": "NOCTURNE LOUD Tee",
+        "category": "T-Shirt",
+        "price": "$45",
+        "image": "/images/nenez-studio-fit-front.png"
+      }
+    ],
+    "createdAt": "2026-06-03T23:57:02.581Z",
+    "updatedAt": "2026-07-11T18:52:55.503Z"
   },
   {
-    "title": "LATIN LOUD",
-    "subtitle": "GLOBAL WAVE",
-    "location": "Medellin",
-    "date": "2026-12-10",
-    "time": "20:00",
-    "countdownDate": "",
+    "id": "trap-loud",
+    "slug": "trap-loud",
+    "title": "TRAP LOUD",
+    "subtitle": "YAN BLOCK EXPERIENCE",
+    "location": "Loja",
+    "date": "2026-06-18",
+    "time": "21:00",
+    "countdownDate": "2026-06-18",
     "price": 10,
-    "imageUrl": "/images/latin_loud_bad_bunny_1778966469259.png",
-    "description": "Energia sin limites y orgullo latino. Una experiencia masiva, brillante y premium que redefine la fiesta underground a gran escala.",
+    "imageUrl": "/images/yan_block_card_bg.png",
+    "description": "La escena subterránea cobra vida. Trap latino oscuro, bajo retumbante y energía inagotable. Luces de escenario crudas, beats pesados y acceso restringido.",
     "lineup": [
-      "BAD BUNNY",
-      "RAUW ALEJANDRO",
-      "y mas"
+      "YAN BLOCK"
     ],
-    "position": 4,
-    "status": "inactive",
+    "position": 2,
+    "status": "active",
     "isFeatured": false,
-    "slug": "latin-loud",
-    "id": "a8d9d481-4ef4-4421-a538-0f9ecd9af8fc",
-    "createdAt": "2026-06-01T03:34:06.333Z",
+    "badge": "LIVE ACCESS",
+    "accentColor": "#ffffff",
+    "miniImage": "/images/yan_block_artist_1779161408288.png",
+    "organizer": "NENEZ",
+    "venue": "Venue Privado · Loja",
+    "category": "Trap / Urban",
+    "ageRestriction": "18+",
+    "about": [
+      "La escena subterránea cobra vida en una noche diseñada para los que entienden el movimiento. TRAP LOUD es más que un concierto — es una experiencia que combina trap latino oscuro, bajo retumbante y energía inagotable en un venue exclusivo.",
+      "Acceso strictly limitado. Beats pesados, luces de escenario crudas y una atmósfera que no encontrarás en ningún otro lugar. Esta es la experiencia NENEZ."
+    ],
+    "detailedLineup": [
+      {
+        "name": "YAN BLOCK",
+        "role": "Headliner",
+        "image": "/images/yan_block_artist_1779161408288.png"
+      },
+      {
+        "name": "ROA",
+        "role": "Supporting",
+        "image": "/images/roa_artist_1779161704881.png"
+      },
+      {
+        "name": "DJ OFICIAL NENEZ",
+        "role": "DJ",
+        "image": "/images/roa_artist_1779161704881.png"
+      }
+    ],
+    "schedule": [
+      {
+        "time": "8:00 PM",
+        "label": "Puertas Abren"
+      },
+      {
+        "time": "9:00 PM",
+        "label": "Apertura"
+      },
+      {
+        "time": "10:30 PM",
+        "label": "Show Principal"
+      },
+      {
+        "time": "1:00 AM",
+        "label": "After Party"
+      }
+    ],
+    "importantInfo": [
+      {
+        "icon": "🎫",
+        "title": "Entrada",
+        "description": "Presenta tu acceso digital al ingresar. No se aceptan entradas físicas."
+      },
+      {
+        "icon": "🔞",
+        "title": "Edad Mínima",
+        "description": "Evento exclusivo para mayores de 18 años. ID requerida."
+      },
+      {
+        "icon": "🔒",
+        "title": "Seguridad",
+        "description": "Revisión de seguridad en la entrada."
+      }
+    ],
+    "socialLinks": {
+      "instagram": "https://instagram.com/yanblock",
+      "tiktok": "",
+      "spotify": "https://open.spotify.com/artist/yanblock",
+      "youtube": "",
+      "website": ""
+    },
+    "merch": [
+      {
+        "id": "tl-hoodie",
+        "name": "TRAP LOUD Hoodie",
+        "category": "Hoodie",
+        "price": "$65",
+        "image": "/images/nenez-studio-fit-front.png"
+      }
+    ],
+    "createdAt": "2026-05-30T23:41:19.326Z",
+    "updatedAt": "2026-07-11T18:52:26.955Z"
+  },
+  {
+    "id": "rock-loud",
+    "slug": "rock-loud",
+    "title": "ALT RAGE",
+    "subtitle": "DEFTONES / NOVULENT / AEROSMITH",
+    "location": "Loja",
+    "date": "2026-11-20",
+    "time": "20:00",
+    "countdownDate": "2026-11-20",
+    "price": 12,
+    "imageUrl": "/images/trap_loud_anuel_1778966415162.png",
+    "description": "El sonido alternativo y clásico chocan. La distorsión melódica de Deftones, la oscuridad moderna de Novulent y el legado inmortal de Aerosmith.",
+    "lineup": [
+      "DEFTONES",
+      "NOVULENT",
+      "AEROSMITH"
+    ],
+    "position": 3,
+    "status": "active",
+    "isFeatured": false,
+    "badge": "ALT ACCESS",
+    "accentColor": "#ffffff",
+    "miniImage": "/images/trap_loud_anuel_1778966415162.png",
+    "organizer": "NENEZ",
+    "venue": "Stadium Loja",
+    "category": "Rock / Alt",
+    "ageRestriction": "18+",
+    "about": [
+      "Prepárate para una noche de guitarras distorsionadas, melodías densas y el sonido que definió generaciones. ALT RAGE cruza las leyendas del rock mundial con el new wave del rock alternativo en un festival de proporciones épicas.",
+      "Una curaduría espectacular de luces y sonido estruendoso para los verdaderos amantes del rock en Loja."
+    ],
+    "detailedLineup": [
+      {
+        "name": "Deftones",
+        "role": "Headliner",
+        "image": "/images/trap_loud_anuel_1778966415162.png"
+      },
+      {
+        "name": "Novulent",
+        "role": "Supporting",
+        "image": "/images/trap_loud_anuel_1778966415162.png"
+      },
+      {
+        "name": "Aerosmith",
+        "role": "Supporting",
+        "image": "/images/trap_loud_anuel_1778966415162.png"
+      }
+    ],
+    "schedule": [
+      {
+        "time": "6:00 PM",
+        "label": "Puertas"
+      },
+      {
+        "time": "7:30 PM",
+        "label": "Novulent"
+      },
+      {
+        "time": "9:00 PM",
+        "label": "Deftones"
+      },
+      {
+        "time": "11:00 PM",
+        "label": "Aerosmith"
+      }
+    ],
+    "importantInfo": [
+      {
+        "icon": "🎫",
+        "title": "Entrada",
+        "description": "Código QR oficial NENEZ."
+      },
+      {
+        "icon": "🤘",
+        "title": "Moshpit",
+        "description": "Área designada segura frente al escenario."
+      }
+    ],
+    "socialLinks": {
+      "website": "https://deftones.com"
+    },
+    "merch": [
+      {
+        "id": "ar-shirt",
+        "name": "ALT RAGE Festival Tee",
+        "category": "T-Shirt",
+        "price": "$35",
+        "image": "/images/nenez-studio-fit-front.png"
+      }
+    ],
+    "createdAt": "2026-06-03T23:57:02.581Z",
     "updatedAt": "2026-06-03T23:58:28.823Z"
   }
 ]

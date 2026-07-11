@@ -16,6 +16,7 @@ export interface CarouselEvent extends Event {
 }
 
 interface EventTicketCarouselProps {
+  events?: CarouselEvent[];
   activeIndex: number;
   setActiveIndex: (idx: number) => void;
   onBuy: (event: Event) => void;
@@ -193,12 +194,14 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
 ];
 
 export default function EventTicketCarousel({
+  events: propEvents,
   activeIndex,
   setActiveIndex,
   onBuy,
   onViewDetails,
   isTicketPulse = false
 }: EventTicketCarouselProps) {
+  const events = (propEvents && propEvents.length > 0) ? propEvents : CAROUSEL_EVENTS;
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef(0);
@@ -240,7 +243,7 @@ export default function EventTicketCarousel({
       if (beta === null || gamma === null) return;
       hasGyro = true;
 
-      if (initialBeta === null) {
+      if (initialBeta === null || initialGamma === null) {
         initialBeta = beta;
         initialGamma = gamma;
         return;
@@ -330,14 +333,13 @@ export default function EventTicketCarousel({
     setIsDragging(false);
     clickStartRef.current = null;
 
-    // Snapping threshold
     const finalOffset = dragOffsetRef.current;
     if (Math.abs(finalOffset) > 6) {
       if (finalOffset > 0) {
-        const prev = (activeIndex - 1 + CAROUSEL_EVENTS.length) % CAROUSEL_EVENTS.length;
+        const prev = (activeIndex - 1 + events.length) % events.length;
         setActiveIndex(prev);
       } else {
-        const next = (activeIndex + 1) % CAROUSEL_EVENTS.length;
+        const next = (activeIndex + 1) % events.length;
         setActiveIndex(next);
       }
     }
@@ -373,27 +375,27 @@ export default function EventTicketCarousel({
   };
 
   const handlePrev = () => {
-    const prev = (activeIndex - 1 + CAROUSEL_EVENTS.length) % CAROUSEL_EVENTS.length;
+    const prev = (activeIndex - 1 + events.length) % events.length;
     setActiveIndex(prev);
   };
 
   const handleNext = () => {
-    const next = (activeIndex + 1) % CAROUSEL_EVENTS.length;
+    const next = (activeIndex + 1) % events.length;
     setActiveIndex(next);
   };
 
-    return (
+  return (
     <div className="relative w-full h-[520px] md:h-[560px] lg:h-[620px] flex items-center justify-center select-none overflow-visible">
       {/* 3D Scene Wrapper */}
       <div 
         className="relative w-full h-full flex items-center justify-center overflow-visible"
         style={{ perspective: 1200, transformStyle: "preserve-3d" }}
       >
-        {CAROUSEL_EVENTS.map((event, idx) => {
+        {events.map((event, idx) => {
           let diff = idx - activeIndex;
           
-          if (diff < -1) diff += CAROUSEL_EVENTS.length;
-          if (diff > 1) diff -= CAROUSEL_EVENTS.length;
+          if (diff < -1) diff += events.length;
+          if (diff > 1) diff -= events.length;
 
           const angleStep = 45;
           const baseAngle = diff * angleStep;

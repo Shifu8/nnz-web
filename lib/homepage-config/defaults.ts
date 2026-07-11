@@ -57,7 +57,7 @@ export const DEFAULT_HOMEPAGE_CONFIG: HomepageConfig = {
     headingLine2: "protegido.",
     qrSubtitle: "Un QR. Una entrada.",
     description:
-      "Tu pase se valida una sola vez en puerta. No compartas capturas ni reenvíes el código antes del show.",
+      "Tu entrada se valida una sola vez en puerta. No compartas capturas ni reenvíes el código antes del show.",
     steps: [
       {
         step: "01",
@@ -67,7 +67,7 @@ export const DEFAULT_HOMEPAGE_CONFIG: HomepageConfig = {
       {
         step: "02",
         title: "Recibe",
-        copy: "Tu entrada llega por Gmail y WhatsApp confirma la compra.",
+        copy: "Tu entrada y código QR llegan directamente a tu Email.",
       },
       {
         step: "03",

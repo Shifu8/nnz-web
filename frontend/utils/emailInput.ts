@@ -34,7 +34,7 @@ export function getEmailSuggestion(value: string): string | null {
 
 export function getEmailHint(value: string): { tone: "idle" | "ok" | "warn"; text: string } {
   if (!value) {
-    return { tone: "idle", text: "Usa el correo que usaste para el registro." };
+    return { tone: "idle", text: "Ingresa tu correo para recibir tu entrada digital." };
   }
 
   const suggestion = getEmailSuggestion(value);

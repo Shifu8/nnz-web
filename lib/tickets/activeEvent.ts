@@ -53,10 +53,12 @@ function selectConfiguredEvent(events: AdminEvent[], eventId: string): AdminEven
 
 export function getActiveTicketEvent(): ActiveTicketEvent {
   const events = loadAllEvents();
-  const configuredId = process.env.CURRENT_EVENT_ID?.trim() || "trap-loud";
-  const configured = selectConfiguredEvent(events, configuredId);
-
-  if (configured) return toActiveEvent(configured);
+  const configuredId = process.env.CURRENT_EVENT_ID?.trim();
+  
+  if (configuredId) {
+    const configured = selectConfiguredEvent(events, configuredId);
+    if (configured) return toActiveEvent(configured);
+  }
 
   const fallback = events
     .filter((event) => event.status === "active")
@@ -64,10 +66,11 @@ export function getActiveTicketEvent(): ActiveTicketEvent {
 
   if (fallback) return toActiveEvent(fallback);
 
+  const defaultId = configuredId || "trap-loud";
   return {
-    id: configuredId,
-    sourceId: configuredId,
-    slug: configuredId,
+    id: defaultId,
+    sourceId: defaultId,
+    slug: defaultId,
     title: process.env.CURRENT_EVENT_TITLE?.trim() || "TRAP LOUD",
     eventName: process.env.CURRENT_EVENT_NAME?.trim() || "YAN BLOCK EXPERIENCE",
     artist: process.env.CURRENT_EVENT_ARTIST?.trim() || "YAN BLOCK / ROA / OMAR COURTZ",
@@ -76,7 +79,7 @@ export function getActiveTicketEvent(): ActiveTicketEvent {
     venue: process.env.CURRENT_EVENT_VENUE?.trim() || "San Juan",
     time: process.env.CURRENT_EVENT_TIME?.trim() || "21:00",
     imageUrl: "",
-    aliases: [configuredId],
+    aliases: [defaultId],
   };
 }
 

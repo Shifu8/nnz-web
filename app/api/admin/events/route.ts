@@ -39,6 +39,19 @@ export async function POST(request: NextRequest) {
       slug: body.slug || "",
       status: "active",
       isFeatured: false,
+      badge: body.badge || "",
+      accentColor: body.accentColor || "#ffffff",
+      miniImage: body.miniImage || "",
+      organizer: body.organizer || "NENEZ",
+      venue: body.venue || location || "",
+      category: body.category || "Trap / Urban",
+      ageRestriction: body.ageRestriction || "18+",
+      about: body.about || [],
+      detailedLineup: body.detailedLineup || [],
+      schedule: body.schedule || [],
+      importantInfo: body.importantInfo || [],
+      socialLinks: body.socialLinks || {},
+      merch: body.merch || [],
     });
 
     return NextResponse.json({ success: true, event }, { status: 201 });

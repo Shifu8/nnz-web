@@ -35,6 +35,25 @@ const EMPTY_EVENT: Omit<AdminEvent, "id" | "createdAt" | "updatedAt"> & { slug: 
   status: "active",
   isFeatured: false,
   slug: "",
+  badge: "",
+  accentColor: "#ffffff",
+  miniImage: "",
+  organizer: "NENEZ",
+  venue: "",
+  category: "Trap / Urban",
+  ageRestriction: "18+",
+  about: [],
+  detailedLineup: [],
+  schedule: [],
+  importantInfo: [],
+  socialLinks: {
+    instagram: "",
+    tiktok: "",
+    spotify: "",
+    youtube: "",
+    website: "",
+  },
+  merch: [],
 };
 
 const AUTH_HEADERS = { Authorization: `Bearer ${Buffer.from("admin:nenez2026").toString("base64")}` };
@@ -52,6 +71,7 @@ export default function EventsSection(_props: EventsSectionProps) {
   const [movingPosition, setMovingPosition] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [modalTab, setModalTab] = useState<"general" | "design" | "details" | "extra">("general");
 
   const [events, setEvents] = useState<EnrichedEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,6 +91,7 @@ export default function EventsSection(_props: EventsSectionProps) {
   const openCreate = () => {
     setEditingEvent(null);
     setForm(EMPTY_EVENT);
+    setModalTab("general");
     setShowModal(true);
   };
 
@@ -91,7 +112,27 @@ export default function EventsSection(_props: EventsSectionProps) {
       status: event.status,
       isFeatured: event.isFeatured,
       slug: (event as any).slug || "",
+      badge: event.badge || "",
+      accentColor: event.accentColor || "#ffffff",
+      miniImage: event.miniImage || "",
+      organizer: event.organizer || "NENEZ",
+      venue: event.venue || event.location || "",
+      category: event.category || "Trap / Urban",
+      ageRestriction: event.ageRestriction || "18+",
+      about: event.about || [],
+      detailedLineup: event.detailedLineup || [],
+      schedule: event.schedule || [],
+      importantInfo: event.importantInfo || [],
+      socialLinks: {
+        instagram: event.socialLinks?.instagram || "",
+        tiktok: event.socialLinks?.tiktok || "",
+        spotify: event.socialLinks?.spotify || "",
+        youtube: event.socialLinks?.youtube || "",
+        website: event.socialLinks?.website || "",
+      },
+      merch: event.merch || [],
     });
+    setModalTab("general");
     setShowModal(true);
   };
 
@@ -177,13 +218,15 @@ export default function EventsSection(_props: EventsSectionProps) {
     setMovingPosition(event.id);
     try {
       const idx = sorted.indexOf(event);
-      const newPos = direction === "up" ? (idx === 0 ? 0 : (sorted[idx - 1].position ?? 0)) : (idx >= sorted.length - 1 ? sorted.length - 1 : (sorted[idx + 1].position ?? 0));
-      await fetch(`/api/admin/events/${event.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", ...AUTH_HEADERS },
-        body: JSON.stringify({ position: newPos }),
-      });
-      loadEvents();
+      const newPos = direction === "up" ? idx - 1 : idx + 1;
+      if (newPos >= 0 && newPos < sorted.length) {
+        await fetch(`/api/admin/events/${event.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", ...AUTH_HEADERS },
+          body: JSON.stringify({ position: newPos }),
+        });
+        loadEvents();
+      }
     } catch {}
     finally { setMovingPosition(null); }
   };
@@ -274,7 +317,7 @@ export default function EventsSection(_props: EventsSectionProps) {
                 {/* Image */}
                 <div className="relative h-44 overflow-hidden">
                   {event.imageUrl ? (
-                    <img src={event.imageUrl} alt={event.title} className="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
+                    <img src={event.imageUrl} alt={event.title} className="h-full w-full object-cover grayscale contrast-[1.1] brightness-[0.9] transition duration-700 group-hover:scale-110" />
                   ) : (
                     <div className="flex h-full items-center justify-center bg-zinc-900">
                       <ImageIcon className="h-8 w-8 text-zinc-700" />
@@ -429,121 +472,368 @@ export default function EventsSection(_props: EventsSectionProps) {
                 </div>
               </div>
 
-              <div className="grid gap-5 md:grid-cols-2">
-                <div className="space-y-1.5 md:col-span-2">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Título *</p>
-                  <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value.toUpperCase() })} placeholder="TRAP LOUD" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none transition focus:border-red-500/50" />
-                </div>
-                <div className="space-y-1.5 md:col-span-2">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Subtítulo</p>
-                  <input value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value.toUpperCase() })} placeholder="YAN BLOCK EXPERIENCE" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none transition focus:border-red-500/50" />
-                </div>
-                <div className="space-y-1.5 md:col-span-2">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Slug (ID para escaneos)</p>
-                  <input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="trap-loud" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none transition focus:border-red-500/50" />
-                </div>
-                <div className="space-y-1.5">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Ubicación</p>
-                  <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Quito" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none transition focus:border-red-500/50" />
-                </div>
-                <div className="space-y-1.5">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Precio $ *</p>
-                  <input type="number" min={0} value={form.price || ""} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} placeholder="10" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none transition focus:border-red-500/50" />
-                </div>
-                <div className="space-y-1.5">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Fecha *</p>
-                  <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none transition focus:border-red-500/50 [color-scheme:dark]" />
-                </div>
-                <div className="space-y-1.5">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Hora *</p>
-                  <input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none transition focus:border-red-500/50 [color-scheme:dark]" />
-                </div>
-                <div className="space-y-1.5 md:col-span-2">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Fecha del contador (countdown)</p>
-                  <input type="date" value={form.countdownDate} onChange={(e) => setForm({ ...form, countdownDate: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none transition focus:border-red-500/50 [color-scheme:dark]" />
-                </div>
-                <div className="space-y-1.5 md:col-span-2">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Descripción</p>
-                  <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} placeholder="Descripción del evento..." className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none transition focus:border-red-500/50 resize-none" />
-                </div>
-                <div className="space-y-1.5">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Posición en eventos</p>
-                  <p className="text-[7px] text-zinc-600">Define el orden de los eventos en la página principal (1° = primero en mostrarse)</p>
-                  <select value={form.position ?? 0} onChange={(e) => setForm({ ...form, position: Number(e.target.value) })} className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none transition focus:border-red-500/50">
-                    {sorted.map((_, i) => (
-                      <option key={i} value={i} className="bg-zinc-900 text-white">{i + 1}° — {i === 0 ? "PRÓXIMO EVENTO" : `${i + 1}° evento`}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1.5" />
-                <div className="space-y-1.5 md:col-span-2">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Lineup (artistas, separados por coma)</p>
-                  <input value={form.lineup.join(", ")} onChange={(e) => setForm({ ...form, lineup: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} placeholder="YAN BLOCK, ROA, OMAR COURTZ" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none transition focus:border-red-500/50" />
-                </div>
-                <div className="space-y-1.5 md:col-span-2">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Estado</p>
-                  <div className="flex gap-3">
-                    {(["active", "inactive"] as const).map((s) => (
-                      <button key={s} onClick={() => setForm({ ...form, status: s })}
-                        className={`flex flex-1 items-center justify-center gap-2 rounded-2xl border py-3 text-[10px] font-black uppercase tracking-wider transition ${
-                          form.status === s
-                            ? s === "active" ? "border-green-500/30 bg-green-950/20 text-green-400" : "border-zinc-500/30 bg-zinc-950/20 text-zinc-400"
-                            : "border-white/10 bg-black/40 text-zinc-600"
-                        }`}
-                      >
-                        {s === "active" ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                        {s === "active" ? "Activo" : "Inactivo"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="md:col-span-2">
-                  <button onClick={() => setForm({ ...form, isFeatured: !form.isFeatured })}
-                    className={`flex items-center gap-2 rounded-2xl border px-5 py-3 text-[10px] font-black uppercase tracking-wider transition ${
-                      form.isFeatured ? "border-amber-500/30 bg-amber-950/20 text-amber-400" : "border-white/10 bg-black/40 text-zinc-600 hover:text-zinc-400"
+              {/* Tab navigation inside modal */}
+              <div className="flex flex-wrap gap-2 mb-6 border-b border-white/10 pb-4">
+                {(["general", "design", "details", "extra"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setModalTab(t)}
+                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition ${
+                      modalTab === t
+                        ? "bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.3)]"
+                        : "border border-white/10 bg-black/40 text-zinc-400 hover:text-white"
                     }`}
                   >
-                    <Star className={`h-4 w-4 ${form.isFeatured ? "fill-amber-400" : ""}`} />
-                    {form.isFeatured ? "Destacado" : "Marcar como destacado"}
+                    {t === "general" ? "General" : t === "design" ? "Diseño" : t === "details" ? "Detalles" : "Adicionales"}
                   </button>
-                </div>
+                ))}
               </div>
 
-              {/* Image upload for existing event */}
-              {editingEvent && (
-                <div className="mt-6 p-4 rounded-2xl border border-white/[0.06] bg-black/40">
-                  <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-2">Imagen del evento</p>
-                  {form.imageUrl && (
-                    <img src={form.imageUrl} alt="" className="h-32 rounded-xl object-cover mb-3" />
-                  )}
-                  <div className="flex items-center gap-3">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          await handleImageUpload(editingEvent.id, file);
-                          if (fileInputRef.current) fileInputRef.current.value = "";
-                        }
-                      }}
-                    />
-                    <button onClick={() => fileInputRef.current?.click()} disabled={uploading} className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-[9px] font-bold text-zinc-400 transition hover:text-white disabled:opacity-50">
-                      {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
-                      {uploading ? "Subiendo..." : "Subir imagen"}
+              {/* Tab 1: General Info */}
+              {modalTab === "general" && (
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div className="space-y-1.5 md:col-span-2">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Título *</p>
+                    <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value.toUpperCase() })} placeholder="TRAP LOUD" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none transition focus:border-red-500/50" />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Subtítulo</p>
+                    <input value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value.toUpperCase() })} placeholder="YAN BLOCK EXPERIENCE" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none transition focus:border-red-500/50" />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Slug (ID para escaneos)</p>
+                    <input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="trap-loud" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none transition focus:border-red-500/50" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Ubicación (Ciudad)</p>
+                    <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Quito" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none transition focus:border-red-500/50" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Precio $ *</p>
+                    <input type="number" min={0} value={form.price || ""} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} placeholder="10" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none transition focus:border-red-500/50" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Fecha *</p>
+                    <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none transition focus:border-red-500/50 [color-scheme:dark]" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Hora *</p>
+                    <input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none transition focus:border-red-500/50 [color-scheme:dark]" />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Fecha del contador (countdown)</p>
+                    <input type="date" value={form.countdownDate} onChange={(e) => setForm({ ...form, countdownDate: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none transition focus:border-red-500/50 [color-scheme:dark]" />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Descripción Corta</p>
+                    <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} placeholder="Descripción del evento..." className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none transition focus:border-red-500/50 resize-none" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Posición en eventos</p>
+                    <p className="text-[7px] text-zinc-600">Define el orden en el carrusel (1° = primero en mostrarse)</p>
+                    <select value={form.position ?? 0} onChange={(e) => setForm({ ...form, position: Number(e.target.value) })} className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none transition focus:border-red-500/50">
+                      {sorted.map((_, i) => (
+                        <option key={i} value={i} className="bg-zinc-900 text-white">{i + 1}° — {i === 0 ? "PRÓXIMO EVENTO" : `${i + 1}° evento`}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5" />
+                  <div className="space-y-1.5 md:col-span-2">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Lineup Simplificado (separados por coma)</p>
+                    <input value={form.lineup.join(", ")} onChange={(e) => setForm({ ...form, lineup: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} placeholder="YAN BLOCK, ROA, OMAR COURTZ" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white placeholder-zinc-800 outline-none transition focus:border-red-500/50" />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Estado</p>
+                    <div className="flex gap-3">
+                      {(["active", "inactive"] as const).map((s) => (
+                        <button key={s} type="button" onClick={() => setForm({ ...form, status: s })}
+                          className={`flex flex-1 items-center justify-center gap-2 rounded-2xl border py-3 text-[10px] font-black uppercase tracking-wider transition ${
+                            form.status === s
+                              ? s === "active" ? "border-green-500/30 bg-green-950/20 text-green-400" : "border-zinc-500/30 bg-zinc-950/20 text-zinc-400"
+                              : "border-white/10 bg-black/40 text-zinc-600"
+                          }`}
+                        >
+                          {s === "active" ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                          {s === "active" ? "Activo" : "Inactivo"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="md:col-span-2">
+                    <button type="button" onClick={() => setForm({ ...form, isFeatured: !form.isFeatured })}
+                      className={`flex items-center gap-2 rounded-2xl border px-5 py-3 text-[10px] font-black uppercase tracking-wider transition ${
+                        form.isFeatured ? "border-amber-500/30 bg-amber-950/20 text-amber-400" : "border-white/10 bg-black/40 text-zinc-600 hover:text-zinc-400"
+                      }`}
+                    >
+                      <Star className={`h-4 w-4 ${form.isFeatured ? "fill-amber-400" : ""}`} />
+                      {form.isFeatured ? "Destacado" : "Marcar como destacado"}
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 2: Design and Colors */}
+              {modalTab === "design" && (
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Badge (Etiqueta, ej: LIVE ACCESS)</p>
+                    <input value={form.badge} onChange={(e) => setForm({ ...form, badge: e.target.value })} placeholder="LIVE ACCESS" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none transition focus:border-red-500/50" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Color de acento (Ej: #C8FF00)</p>
+                    <div className="flex gap-3">
+                      <input type="color" value={form.accentColor} onChange={(e) => setForm({ ...form, accentColor: e.target.value })} className="w-14 h-14 rounded-2xl border border-white/10 bg-[#060606] p-1 cursor-pointer outline-none" />
+                      <input value={form.accentColor} onChange={(e) => setForm({ ...form, accentColor: e.target.value })} placeholder="#ffffff" className="flex-1 rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Ruta de Imagen Principal (Poster)</p>
+                    <input value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} placeholder="/images/yan_block_card_bg.png" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Ruta de Mini Imagen (Artista)</p>
+                    <input value={form.miniImage} onChange={(e) => setForm({ ...form, miniImage: e.target.value })} placeholder="/images/yan_block_artist_1779161408288.png" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none" />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Organizador</p>
+                      <input value={form.organizer} onChange={(e) => setForm({ ...form, organizer: e.target.value })} placeholder="NENEZ" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Categoría</p>
+                      <input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Trap / Urban" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Restricción de Edad</p>
+                      <input value={form.ageRestriction} onChange={(e) => setForm({ ...form, ageRestriction: e.target.value })} placeholder="18+" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Nombre del Lugar (Venue)</p>
+                      <input value={form.venue} onChange={(e) => setForm({ ...form, venue: e.target.value })} placeholder="Venue Privado · Loja" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 3: Detailed Event Sections */}
+              {modalTab === "details" && (
+                <div className="space-y-6">
+                  {/* About Paragraphs */}
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Acerca del evento (Párrafos de texto)</p>
+                      <button type="button" onClick={() => setForm(f => ({ ...f, about: [...(f.about || []), ""] }))} className="px-2.5 py-1.5 text-[8px] font-black bg-white/10 text-white rounded-xl hover:bg-white/20 uppercase tracking-wider transition">Añadir párrafo</button>
+                    </div>
+                    <div className="space-y-3">
+                      {form.about?.map((p, idx) => (
+                        <div key={idx} className="flex gap-2">
+                          <textarea value={p} onChange={(e) => {
+                            const next = [...(form.about || [])];
+                            next[idx] = e.target.value;
+                            setForm({ ...form, about: next });
+                          }} className="flex-1 rounded-2xl border border-white/10 bg-black/50 px-4 py-3 text-xs font-bold text-white placeholder-zinc-800 outline-none transition focus:border-red-500/50 resize-none" rows={2} placeholder="Escribe un párrafo de descripción detallada..." />
+                          <button type="button" onClick={() => {
+                            setForm({ ...form, about: (form.about || []).filter((_, i) => i !== idx) });
+                          }} className="px-4 rounded-2xl border border-red-500/20 bg-red-950/20 text-red-400 hover:bg-red-950/40 transition">✕</button>
+                        </div>
+                      ))}
+                      {(form.about?.length ?? 0) === 0 && (
+                        <p className="text-[8px] font-bold text-zinc-600 uppercase text-center py-4 border border-dashed border-white/10 rounded-2xl">No hay párrafos de descripción.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Lineup detallado */}
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Lineup Detallado (Artistas con Rol e Imagen)</p>
+                      <button type="button" onClick={() => setForm(f => ({ ...f, detailedLineup: [...(f.detailedLineup || []), { name: "", role: "Headliner", image: "" }] }))} className="px-2.5 py-1.5 text-[8px] font-black bg-white/10 text-white rounded-xl hover:bg-white/20 uppercase tracking-wider transition">Añadir Artista</button>
+                    </div>
+                    <div className="space-y-3">
+                      {form.detailedLineup?.map((a, idx) => (
+                        <div key={idx} className="flex flex-col sm:flex-row gap-2 border border-white/[0.06] bg-black/20 p-3 rounded-2xl">
+                          <input value={a.name} onChange={(e) => {
+                            const next = [...(form.detailedLineup || [])];
+                            next[idx] = { ...next[idx], name: e.target.value };
+                            setForm({ ...form, detailedLineup: next });
+                          }} placeholder="Artista" className="flex-1 rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold text-white outline-none" />
+                          <select value={a.role} onChange={(e) => {
+                            const next = [...(form.detailedLineup || [])];
+                            next[idx] = { ...next[idx], role: e.target.value as any };
+                            setForm({ ...form, detailedLineup: next });
+                          }} className="rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold text-white outline-none">
+                            {["Headliner", "Supporting", "Guest", "DJ", "Live Act", "Surprise"].map(r => (
+                              <option key={r} value={r} className="bg-zinc-900">{r}</option>
+                            ))}
+                          </select>
+                          <input value={a.image} onChange={(e) => {
+                            const next = [...(form.detailedLineup || [])];
+                            next[idx] = { ...next[idx], image: e.target.value };
+                            setForm({ ...form, detailedLineup: next });
+                          }} placeholder="Imagen (/images/...)" className="flex-1 rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold text-white outline-none" />
+                          <button type="button" onClick={() => {
+                            setForm({ ...form, detailedLineup: (form.detailedLineup || []).filter((_, i) => i !== idx) });
+                          }} className="px-3 rounded-xl border border-red-500/20 bg-red-950/20 text-red-400 hover:bg-red-950/40 transition">✕</button>
+                        </div>
+                      ))}
+                      {(form.detailedLineup?.length ?? 0) === 0 && (
+                        <p className="text-[8px] font-bold text-zinc-600 uppercase text-center py-4 border border-dashed border-white/10 rounded-2xl">No hay lineup detallado.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Schedule */}
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Cronograma / Schedule</p>
+                      <button type="button" onClick={() => setForm(f => ({ ...f, schedule: [...(f.schedule || []), { time: "", label: "" }] }))} className="px-2.5 py-1.5 text-[8px] font-black bg-white/10 text-white rounded-xl hover:bg-white/20 uppercase tracking-wider transition">Añadir horario</button>
+                    </div>
+                    <div className="space-y-3">
+                      {form.schedule?.map((s, idx) => (
+                        <div key={idx} className="flex gap-2">
+                          <input value={s.time} onChange={(e) => {
+                            const next = [...(form.schedule || [])];
+                            next[idx] = { ...next[idx], time: e.target.value };
+                            setForm({ ...form, schedule: next });
+                          }} placeholder="Ej: 9:00 PM" className="w-28 rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold text-white outline-none" />
+                          <input value={s.label} onChange={(e) => {
+                            const next = [...(form.schedule || [])];
+                            next[idx] = { ...next[idx], label: e.target.value };
+                            setForm({ ...form, schedule: next });
+                          }} placeholder="Ej: Puertas abren" className="flex-1 rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold text-white outline-none" />
+                          <button type="button" onClick={() => {
+                            setForm({ ...form, schedule: (form.schedule || []).filter((_, i) => i !== idx) });
+                          }} className="px-3 rounded-xl border border-red-500/20 bg-red-950/20 text-red-400 hover:bg-red-950/40 transition">✕</button>
+                        </div>
+                      ))}
+                      {(form.schedule?.length ?? 0) === 0 && (
+                        <p className="text-[8px] font-bold text-zinc-600 uppercase text-center py-4 border border-dashed border-white/10 rounded-2xl">No hay cronograma configurado.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 4: Extras, Socials & Merch */}
+              {modalTab === "extra" && (
+                <div className="space-y-6">
+                  {/* Redes Sociales */}
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-3">Redes Sociales</p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-bold uppercase text-zinc-600">Instagram</p>
+                        <input value={form.socialLinks?.instagram || ""} onChange={(e) => setForm({ ...form, socialLinks: { ...form.socialLinks, instagram: e.target.value } })} placeholder="https://instagram.com/..." className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-2.5 text-xs text-white outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-bold uppercase text-zinc-600">TikTok</p>
+                        <input value={form.socialLinks?.tiktok || ""} onChange={(e) => setForm({ ...form, socialLinks: { ...form.socialLinks, tiktok: e.target.value } })} placeholder="https://tiktok.com/@..." className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-2.5 text-xs text-white outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-bold uppercase text-zinc-600">Spotify</p>
+                        <input value={form.socialLinks?.spotify || ""} onChange={(e) => setForm({ ...form, socialLinks: { ...form.socialLinks, spotify: e.target.value } })} placeholder="https://open.spotify.com/..." className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-2.5 text-xs text-white outline-none" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-bold uppercase text-zinc-600">YouTube</p>
+                        <input value={form.socialLinks?.youtube || ""} onChange={(e) => setForm({ ...form, socialLinks: { ...form.socialLinks, youtube: e.target.value } })} placeholder="https://youtube.com/..." className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-2.5 text-xs text-white outline-none" />
+                      </div>
+                      <div className="space-y-1 sm:col-span-2">
+                        <p className="text-[8px] font-bold uppercase text-zinc-600">Sitio Web</p>
+                        <input value={form.socialLinks?.website || ""} onChange={(e) => setForm({ ...form, socialLinks: { ...form.socialLinks, website: e.target.value } })} placeholder="https://..." className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-2.5 text-xs text-white outline-none" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Info importante */}
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Información Importante (Reglas, Acceso...)</p>
+                      <button type="button" onClick={() => setForm(f => ({ ...f, importantInfo: [...(f.importantInfo || []), { icon: "🎫", title: "", description: "" }] }))} className="px-2.5 py-1.5 text-[8px] font-black bg-white/10 text-white rounded-xl hover:bg-white/20 uppercase tracking-wider transition">Añadir info</button>
+                    </div>
+                    <div className="space-y-3">
+                      {form.importantInfo?.map((info, idx) => (
+                        <div key={idx} className="flex flex-col gap-2 border border-white/[0.06] bg-black/20 p-3 rounded-2xl">
+                          <div className="flex gap-2">
+                            <input value={info.icon} onChange={(e) => {
+                              const next = [...(form.importantInfo || [])];
+                              next[idx] = { ...next[idx], icon: e.target.value };
+                              setForm({ ...form, importantInfo: next });
+                            }} placeholder="🎫" className="w-16 rounded-xl border border-white/10 bg-black/50 px-2 py-2 text-xs text-white text-center outline-none" />
+                            <input value={info.title} onChange={(e) => {
+                              const next = [...(form.importantInfo || [])];
+                              next[idx] = { ...next[idx], title: e.target.value };
+                              setForm({ ...form, importantInfo: next });
+                            }} placeholder="Título (ej: Edad Mínima)" className="flex-1 rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold text-white outline-none" />
+                            <button type="button" onClick={() => {
+                              setForm({ ...form, importantInfo: (form.importantInfo || []).filter((_, i) => i !== idx) });
+                            }} className="px-3 rounded-xl border border-red-500/20 bg-red-950/20 text-red-400 hover:bg-red-950/40 transition">✕</button>
+                          </div>
+                          <textarea value={info.description} onChange={(e) => {
+                            const next = [...(form.importantInfo || [])];
+                            next[idx] = { ...next[idx], description: e.target.value };
+                            setForm({ ...form, importantInfo: next });
+                          }} placeholder="Detalle e información de la regla..." className="w-full rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs text-white outline-none resize-none" rows={2} />
+                        </div>
+                      ))}
+                      {(form.importantInfo?.length ?? 0) === 0 && (
+                        <p className="text-[8px] font-bold text-zinc-600 uppercase text-center py-4 border border-dashed border-white/10 rounded-2xl">No hay información importante.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Merchandising */}
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Merchandising del Evento</p>
+                      <button type="button" onClick={() => setForm(f => ({ ...f, merch: [...(f.merch || []), { id: `m-${Date.now()}`, name: "", category: "Hoodie", price: "$65", image: "" }] }))} className="px-2.5 py-1.5 text-[8px] font-black bg-white/10 text-white rounded-xl hover:bg-white/20 uppercase tracking-wider transition">Añadir producto</button>
+                    </div>
+                    <div className="space-y-3">
+                      {form.merch?.map((m, idx) => (
+                        <div key={idx} className="flex flex-col gap-2 border border-white/[0.06] bg-black/20 p-3 rounded-2xl">
+                          <div className="grid gap-2 grid-cols-2">
+                            <input value={m.name} onChange={(e) => {
+                              const next = [...(form.merch || [])];
+                              next[idx] = { ...next[idx], name: e.target.value };
+                              setForm({ ...form, merch: next });
+                            }} placeholder="Nombre" className="rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs font-bold text-white outline-none" />
+                            <input value={m.category} onChange={(e) => {
+                              const next = [...(form.merch || [])];
+                              next[idx] = { ...next[idx], category: e.target.value };
+                              setForm({ ...form, merch: next });
+                            }} placeholder="Categoría (Hoodie...)" className="rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs text-white outline-none" />
+                            <input value={m.price} onChange={(e) => {
+                              const next = [...(form.merch || [])];
+                              next[idx] = { ...next[idx], price: e.target.value };
+                              setForm({ ...form, merch: next });
+                            }} placeholder="Precio (ej: $75)" className="rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs text-white outline-none" />
+                            <input value={m.image} onChange={(e) => {
+                              const next = [...(form.merch || [])];
+                              next[idx] = { ...next[idx], image: e.target.value };
+                              setForm({ ...form, merch: next });
+                            }} placeholder="Imagen (/images/...)" className="rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs text-white outline-none" />
+                          </div>
+                          <div className="flex justify-end">
+                            <button type="button" onClick={() => {
+                              setForm({ ...form, merch: (form.merch || []).filter((_, i) => i !== idx) });
+                            }} className="px-3 py-1.5 rounded-xl border border-red-500/20 bg-red-950/20 text-red-400 hover:bg-red-950/40 transition text-[10px] font-black uppercase tracking-wider">✕ Eliminar</button>
+                          </div>
+                        </div>
+                      ))}
+                      {(form.merch?.length ?? 0) === 0 && (
+                        <p className="text-[8px] font-bold text-zinc-600 uppercase text-center py-4 border border-dashed border-white/10 rounded-2xl">No hay merch configurado.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Actions */}
               <div className="flex gap-3 mt-8">
-                <button onClick={() => setShowModal(false)} className="flex flex-1 items-center justify-center rounded-2xl border border-white/10 bg-black/40 py-4 text-[10px] font-black uppercase tracking-wider text-zinc-500 transition hover:text-white">
+                <button type="button" onClick={() => setShowModal(false)} className="flex flex-1 items-center justify-center rounded-2xl border border-white/10 bg-black/40 py-4 text-[10px] font-black uppercase tracking-wider text-zinc-500 transition hover:text-white">
                   Cancelar
                 </button>
-                <button onClick={handleSave} disabled={saving} className="flex flex-[2] items-center justify-center gap-2 rounded-2xl bg-red-600 py-4 text-[10px] font-black uppercase tracking-wider text-white shadow-[0_0_30px_rgba(255,0,24,0.2)] transition hover:bg-red-500 disabled:opacity-50">
+                <button type="button" onClick={handleSave} disabled={saving} className="flex flex-[2] items-center justify-center gap-2 rounded-2xl bg-red-600 py-4 text-[10px] font-black uppercase tracking-wider text-white shadow-[0_0_30px_rgba(255,0,24,0.2)] transition hover:bg-red-500 disabled:opacity-50">
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                   {saving ? "Guardando..." : editingEvent ? "Actualizar Evento" : "Crear Evento"}
                 </button>

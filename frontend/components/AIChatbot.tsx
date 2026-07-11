@@ -14,7 +14,7 @@ const initialMessages: Message[] = [
   {
     id: "1",
     sender: "bot",
-    text: "Hola, que tal. Bienvenido a NENEZ. Soy tu concierge del evento: entradas y soporte. Que necesitas?",
+    text: "Hola, ¿qué tal? Bienvenido a NOW Tickets. Soy tu asistente de entradas y soporte. ¿Qué necesitas?",
   },
 ];
 
@@ -144,15 +144,15 @@ export default function AIChatbot() {
       {/* Botón flotante */}
       <button
         onClick={openChat}
-        className={`fixed bottom-6 right-6 z-50 flex items-center justify-center rounded-full border border-pink-300/30 bg-pink-500/20 text-pink-300 backdrop-blur-xl transition-all duration-500 hover:bg-pink-500/30 ${isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"}`}
+        className={`fixed bottom-6 right-6 z-50 flex items-center justify-center rounded-full border border-white/20 bg-black/80 text-white backdrop-blur-2xl transition-all duration-500 hover:bg-white/10 hover:border-white/30 hover:scale-110 active:scale-95 ${isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"}`}
         style={{
           width: "56px",
           height: "56px",
           position: "fixed",
-          boxShadow: "0 0 34px rgba(var(--theme-primary-rgb),0.3)",
+          boxShadow: "0 0 30px rgba(255, 255, 255, 0.15)",
         } as CSSProperties}
       >
-        <Bot className="h-7 w-7" />
+        <Bot className="h-6 w-6" />
       </button>
 
       {/* Interfaz de Chat */}
@@ -167,17 +167,17 @@ export default function AIChatbot() {
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/10 bg-white/5 p-5">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-500/20 border border-pink-300/30 text-pink-300">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10 text-white">
                   <Bot className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">NENEZ AI</h3>
-                  <p className="text-[10px] uppercase tracking-widest text-zinc-400">Concierge</p>
+                  <h3 className="text-sm font-black uppercase tracking-[0.25em] text-white">NOW</h3>
+                  <p className="text-[10px] uppercase tracking-widest text-zinc-400">Soporte</p>
                 </div>
               </div>
               <button
                 onClick={closeChat}
-                className="flex h-[34px] w-[34px] items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-zinc-400 backdrop-blur-xl transition hover:border-pink-300/30 hover:bg-pink-500/20 hover:text-pink-300"
+                className="flex h-[34px] w-[34px] items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-zinc-400 backdrop-blur-xl transition hover:border-white/30 hover:bg-white/10 hover:text-white"
               >
                 <span>✕</span>
               </button>
@@ -187,7 +187,11 @@ export default function AIChatbot() {
             <div className="flex-1 overflow-y-auto p-5 no-scrollbar space-y-4">
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[80%] rounded-2xl p-4 text-sm leading-relaxed ${msg.sender === "user" ? "bg-white text-black rounded-tr-sm" : "bg-white/10 text-zinc-200 border border-white/5 rounded-tl-sm"}`}>
+                  <div className={`max-w-[80%] rounded-[20px] p-4 text-sm leading-relaxed ${
+                    msg.sender === "user" 
+                      ? "bg-white text-black rounded-tr-[4px] shadow-[0_4px_16px_rgba(255,255,255,0.06)] font-medium" 
+                      : "bg-zinc-900/90 text-zinc-200 border border-white/10 rounded-tl-[4px] backdrop-blur-md"
+                  }`}>
                     {msg.text}
                   </div>
                 </div>
@@ -225,18 +229,18 @@ export default function AIChatbot() {
                 <button
                   type="submit"
                   disabled={!inputText.trim()}
-                  className="glass-icon-button glass-action-lime"
+                  className="glass-icon-button"
                   style={{ "--glass-icon-size": "40px" } as CSSProperties}
                 >
-                  <span>➤</span>
+                  <span className="text-zinc-200">➤</span>
                 </button>
               </form>
 
               {/* Sleek branded watermark logo */}
               <div className="mt-4 flex items-center justify-center gap-1.5 text-[8px] font-black uppercase tracking-[0.3em] text-zinc-600">
-                <span>NENEZ</span>
-                <div className="h-1 w-1 animate-pulse rounded-full bg-[var(--theme-primary)]" />
-                <span>AI CONCIERGE v2.0</span>
+                <span>NOW TICKETS</span>
+                <div className="h-1.5 w-1.5 rounded-full bg-white/40" />
+                <span>AI ASSISTANT v3.0</span>
               </div>
             </div>
           </div>

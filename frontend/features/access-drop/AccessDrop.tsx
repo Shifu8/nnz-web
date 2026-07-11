@@ -15,7 +15,7 @@ import {
   getEmailSuggestion,
 } from "@/frontend/utils/emailInput";
 import { validateReceiptFileMetadata } from "@/lib/access-drop/fileValidation";
-import { ChevronLeft, ChevronRight, ClipboardCopy, ClipboardCheck } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardCopy, ClipboardCheck, UploadCloud } from "lucide-react";
 import { getEventDesigns, type TicketDesign } from "@/lib/tickets/designs";
 
 
@@ -403,7 +403,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
 
       if (beta === null || gamma === null) return;
 
-      if (initialBeta === null) {
+      if (initialBeta === null || initialGamma === null) {
         initialBeta = beta;
         initialGamma = gamma;
         return;
@@ -520,39 +520,39 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                 {/* ════════════════════════════════════════
                     LEFT COLUMN — Formulario principal
                 ════════════════════════════════════════ */}
-                <div className="w-full lg:w-[60%] space-y-4 order-2 lg:order-1">
+                <div className="w-full lg:w-[60%] space-y-3.5 order-2 lg:order-1">
 
                   {/* ── PASO 1: Datos del Comprador ── */}
-                  <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-4 space-y-3">
-                    <div className="flex items-center gap-2.5">
-                      <span className="flex h-4 w-4 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-[8px] font-mono font-bold text-zinc-500">1</span>
-                      <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-500">Tus Datos</span>
+                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3.5 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-[7.5px] font-mono font-bold text-zinc-400">1</span>
+                      <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400">Tus Datos</span>
                     </div>
 
                     {/* Nombre + Apellido en la misma fila */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="group relative rounded-xl border border-zinc-900 bg-black/40 px-3 py-2.5 transition-all duration-200 hover:border-zinc-800 focus-within:border-zinc-700">
-                        <label className="block text-[7px] font-black uppercase tracking-widest text-zinc-600">Nombre</label>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className="group relative rounded-lg border border-zinc-800/80 bg-zinc-950/70 px-3 py-1.5 transition-all duration-200 hover:border-zinc-700 focus-within:border-zinc-700">
+                        <label className="block text-[6.5px] font-black uppercase tracking-widest text-zinc-500">Nombre</label>
                         <input
                           required
                           type="text"
                           maxLength={24}
                           autoComplete="given-name"
                           placeholder="EJ. AXEL"
-                          className="w-full bg-transparent text-sm font-bold text-white placeholder-zinc-800 outline-none mt-0.5"
+                          className="w-full bg-transparent text-xs font-bold text-white placeholder-zinc-800 outline-none mt-0"
                           value={formData.firstName}
                           onChange={(e) => setFormData({ ...formData, firstName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "").slice(0, 24) })}
                         />
                       </div>
-                      <div className="group relative rounded-xl border border-zinc-900 bg-black/40 px-3 py-2.5 transition-all duration-200 hover:border-zinc-800 focus-within:border-zinc-700">
-                        <label className="block text-[7px] font-black uppercase tracking-widest text-zinc-600">Apellido</label>
+                      <div className="group relative rounded-lg border border-zinc-800/80 bg-zinc-950/70 px-3 py-1.5 transition-all duration-200 hover:border-zinc-700 focus-within:border-zinc-700">
+                        <label className="block text-[6.5px] font-black uppercase tracking-widest text-zinc-500">Apellido</label>
                         <input
                           required
                           type="text"
                           maxLength={24}
                           autoComplete="family-name"
                           placeholder="EJ. PEREZ"
-                          className="w-full bg-transparent text-sm font-bold text-white placeholder-zinc-800 outline-none mt-0.5"
+                          className="w-full bg-transparent text-xs font-bold text-white placeholder-zinc-800 outline-none mt-0"
                           value={formData.lastName}
                           onChange={(e) => setFormData({ ...formData, lastName: e.target.value.toUpperCase().replace(/[^A-ZÁÉÍÓÚÑ\s]/g, "").slice(0, 24) })}
                         />
@@ -560,8 +560,8 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                     </div>
 
                     {/* Correo */}
-                    <div className="group relative rounded-xl border border-zinc-900 bg-black/40 px-3 py-2.5 transition-all duration-200 hover:border-zinc-800 focus-within:border-zinc-700">
-                      <label className="block text-[7px] font-black uppercase tracking-widest text-zinc-600">Correo Electrónico</label>
+                    <div className="group relative rounded-lg border border-zinc-800/80 bg-zinc-950/70 px-3 py-1.5 transition-all duration-200 hover:border-zinc-700 focus-within:border-zinc-700">
+                      <label className="block text-[6.5px] font-black uppercase tracking-widest text-zinc-500">Correo Electrónico</label>
                       <input
                         required
                         type="email"
@@ -572,7 +572,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                         spellCheck={false}
                         list="ticket-email-domains"
                         placeholder="tu@gmail.com"
-                        className="w-full bg-transparent text-sm font-bold text-white placeholder-zinc-800 outline-none mt-0.5"
+                        className="w-full bg-transparent text-xs font-bold text-white placeholder-zinc-800 outline-none mt-0"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: cleanEmailInput(e.target.value) })}
                       />
@@ -583,7 +583,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                         })}
                       </datalist>
                       {/* Hint única vez */}
-                      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
                         {emailHint.text && (
                           <span className={`text-[7px] font-bold uppercase tracking-wider ${emailHint.tone === "ok" ? "text-zinc-500" : "text-zinc-600"}`}>
                             {emailHint.text}
@@ -603,14 +603,14 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                   </div>
 
                   {/* ── PASO 2: Método de Pago ── */}
-                  <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-4 space-y-3">
-                    <div className="flex items-center gap-2.5">
-                      <span className="flex h-4 w-4 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-[8px] font-mono font-bold text-zinc-500">2</span>
-                      <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-500">Método de Pago</span>
+                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3.5 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-[7.5px] font-mono font-bold text-zinc-400">2</span>
+                      <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400">Método de Pago</span>
                     </div>
 
                     {/* Bank selection — premium cards */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2.5">
                       {BANKS.map((bank) => {
                         const isActive = selectedBank === bank.id;
                         return (
@@ -618,30 +618,30 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                             key={bank.id}
                             type="button"
                             onClick={() => setSelectedBank(bank.id)}
-                            className={`relative overflow-hidden rounded-xl border p-3.5 text-left transition-all duration-300 focus:outline-none ${isActive
-                              ? "border-white/30 bg-zinc-900 scale-[1.02] shadow-[0_0_24px_rgba(255,255,255,0.07)]"
-                              : "border-zinc-900 bg-zinc-950/60 hover:border-zinc-800 hover:bg-zinc-900/60"
+                            className={`relative overflow-hidden rounded-lg border px-3 py-2 text-left transition-all duration-300 focus:outline-none ${isActive
+                              ? "border-white/30 bg-zinc-900 scale-[1.01] shadow-[0_0_15px_rgba(255,255,255,0.04)]"
+                              : "border-zinc-800/80 bg-zinc-950/60 hover:border-zinc-700 hover:bg-zinc-900/60"
                               }`}
-                            style={isActive ? { boxShadow: `0 0 0 1px ${bank.color}30, 0 8px 32px ${bank.color}15` } : {}}
+                            style={isActive ? { boxShadow: `0 0 0 1px ${bank.color}20, 0 4px 16px ${bank.color}10` } : {}}
                           >
                             {/* Active indicator */}
                             {isActive && (
                               <div
-                                className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full animate-pulse"
-                                style={{ background: bank.color, boxShadow: `0 0 8px ${bank.color}` }}
+                                className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full animate-pulse"
+                                style={{ background: bank.color, boxShadow: `0 0 6px ${bank.color}` }}
                               />
                             )}
                             {/* Bank gradient strip */}
                             <div
-                              className="absolute inset-x-0 top-0 h-0.5 rounded-t-xl transition-opacity duration-300"
+                              className="absolute inset-x-0 top-0 h-0.5 rounded-t-lg transition-opacity duration-300"
                               style={{ background: `linear-gradient(90deg, transparent, ${bank.color}60, transparent)`, opacity: isActive ? 1 : 0 }}
                             />
-                            <span className="block text-[7px] font-black uppercase tracking-widest text-zinc-600 mb-0.5">Banco</span>
-                            <span className={`block text-sm font-black uppercase transition-colors duration-200 ${isActive ? "text-white" : "text-zinc-400"}`}>
+                            <span className="block text-[6.5px] font-black uppercase tracking-widest text-zinc-500 mb-0">Banco</span>
+                            <span className={`block text-xs font-black uppercase transition-colors duration-200 ${isActive ? "text-white" : "text-zinc-400"}`}>
                               {bank.name}
                             </span>
                             <span
-                              className="inline-block mt-1.5 rounded px-1.5 py-0.5 text-[7px] font-black uppercase tracking-wider"
+                              className="inline-block mt-1 rounded px-1.5 py-0.5 text-[6.5px] font-black uppercase tracking-wider"
                               style={isActive
                                 ? { background: `${bank.color}15`, border: `1px solid ${bank.color}40`, color: bank.color }
                                 : { background: "transparent", border: "1px solid #27272a", color: "#52525b" }}
@@ -654,22 +654,22 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                     </div>
 
                     {/* Bank details + QR — compact row */}
-                    <div className="rounded-xl border border-zinc-900 bg-black/40 p-3.5">
+                    <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-2.5">
                       <div className="flex items-start gap-4">
                         {/* Info */}
-                        <div className="flex-1 space-y-2.5">
+                        <div className="flex-1 space-y-2">
                           <div>
-                            <span className="block text-[7px] font-black uppercase tracking-widest text-zinc-600">A nombre de</span>
+                            <span className="block text-[6.5px] font-black uppercase tracking-widest text-zinc-500">A nombre de</span>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <span className="text-xs font-black text-white uppercase tracking-wide">MEDINA BRANDON</span>
                               <span className="rounded-full border border-zinc-800 bg-zinc-900 px-1.5 py-0.5 text-[6px] font-black uppercase tracking-wider text-zinc-500">NENEZ MEMBER</span>
                             </div>
                           </div>
                           <div>
-                            <span className="block text-[7px] font-black uppercase tracking-widest text-zinc-600">Cuenta</span>
+                            <span className="block text-[6.5px] font-black uppercase tracking-widest text-zinc-500">Cuenta</span>
                             <div className="relative mt-0.5">
                               <div
-                                className="flex items-center gap-1 rounded-xl border border-white/10 bg-zinc-950/90 px-2.5 py-2"
+                                className="flex items-center gap-1 rounded-lg border border-white/10 bg-zinc-950/90 px-2 py-1"
                                 onClick={handleCopyAccount}
                                 role="button"
                                 tabIndex={0}
@@ -687,13 +687,13 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                                     e.stopPropagation();
                                     handleCopyAccount();
                                   }}
-                                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition hover:bg-white/15"
+                                  className="inline-flex h-6.5 w-6.5 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition hover:bg-white/15"
                                   aria-label="Copiar cuenta"
                                 >
                                   {copiedAccount === selectedBankData.id ? (
-                                    <ClipboardCheck className="h-4 w-4" />
+                                    <ClipboardCheck className="h-3 w-3" />
                                   ) : (
-                                    <ClipboardCopy className="h-4 w-4" />
+                                    <ClipboardCopy className="h-3 w-3" />
                                   )}
                                 </button>
                               </div>
@@ -706,41 +706,41 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                             </div>
                           </div>
                           <div>
-                            <span className="block text-[7px] font-black uppercase tracking-widest text-zinc-600">Se aceptan</span>
+                            <span className="block text-[6.5px] font-black uppercase tracking-widest text-zinc-500">Se aceptan</span>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               {["Transferencias", "Depósitos"].map((t) => (
-                                <span key={t} className="rounded-full border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[7px] font-black uppercase tracking-wide text-zinc-500">{t}</span>
+                                <span key={t} className="rounded-full border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[6px] font-black uppercase tracking-wide text-zinc-500">{t}</span>
                               ))}
                             </div>
                           </div>
                         </div>
 
                         {/* QR compact */}
-                        <div className="shrink-0 flex flex-col items-center gap-1.5">
-                          <div className="bg-white p-2 rounded-lg overflow-hidden border border-zinc-200 flex items-center justify-center">
+                        <div className="shrink-0 flex flex-col items-center gap-1">
+                          <div className="bg-white p-1 rounded-md overflow-hidden border border-zinc-200 flex items-center justify-center">
                             <img
                               src={selectedBankData.qrImage}
                               alt="QR de Pago"
-                              className="h-20 w-20 object-contain"
-                              style={{ imageRendering: "pixelated", clipPath: "inset(4px)" }}
+                              className="h-14 w-14 object-contain"
+                              style={{ imageRendering: "pixelated", clipPath: "inset(2px)" }}
                               onError={(e) => {
                                 (e.target as HTMLImageElement).style.display = "none";
                                 const parent = (e.target as HTMLImageElement).parentElement;
-                                if (parent) parent.innerHTML = '<div class="text-[7px] text-zinc-800 font-black uppercase tracking-widest py-6 px-3 text-center">QR no disponible</div>';
+                                if (parent) parent.innerHTML = '<div class="text-[6px] text-zinc-800 font-black uppercase tracking-widest py-3 px-1.5 text-center">QR no disponible</div>';
                               }}
                             />
                           </div>
-                          <span className="text-[7px] font-black text-zinc-600 uppercase tracking-widest">Escanear</span>
+                          <span className="text-[6.5px] font-black text-zinc-500 uppercase tracking-widest">Escanear</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* ── PASO 3: Subir Comprobante ── */}
-                  <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-4 space-y-3">
-                    <div className="flex items-center gap-2.5">
-                      <span className="flex h-4 w-4 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-[8px] font-mono font-bold text-zinc-500">3</span>
-                      <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-500">Subir Comprobante</span>
+                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3.5 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-[7.5px] font-mono font-bold text-zinc-400">3</span>
+                      <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400">Subir Comprobante</span>
                     </div>
 
                     <input
@@ -755,17 +755,17 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
 
                     {selectedFile && preview ? (
                       /* File selected — elegant card */
-                      <div className="rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex items-center gap-3 p-3">
+                      <div className="rounded-lg border border-zinc-800 bg-zinc-950 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center gap-3 p-2.5">
                           {/* Thumbnail */}
-                          <div className="shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-zinc-800 bg-black/60 flex items-center justify-center">
+                          <div className="shrink-0 w-10 h-10 rounded-md overflow-hidden border border-zinc-800 bg-black/60 flex items-center justify-center">
                             <img src={preview} alt="Comprobante" className="w-full h-full object-cover" />
                           </div>
                           {/* Info */}
                           <div className="flex-1 min-w-0">
                             <p className="truncate text-xs font-bold text-white">{selectedFile.name}</p>
                             <p className="text-[7px] font-black uppercase tracking-widest text-zinc-500 mt-0.5">{formatFileSize(selectedFile.size)}</p>
-                            <span className="inline-block mt-1 rounded-full border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[7px] font-black uppercase tracking-wider text-zinc-400">CARGADO</span>
+                            <span className="inline-block mt-0.5 rounded-full border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[7px] font-black uppercase tracking-wider text-zinc-400">CARGADO</span>
                           </div>
                           {/* Actions */}
                           <div className="shrink-0 flex gap-1.5">
@@ -781,7 +781,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                               type="button"
                               disabled={isSubmitting}
                               onClick={clearSelectedFile}
-                              className="h-7 px-2.5 rounded-lg border border-zinc-900 bg-red-950/20 text-[7px] font-black uppercase tracking-wider text-red-400 hover:bg-red-950/40 transition"
+                              className="h-7 px-2.5 rounded-lg border border-zinc-800 bg-red-950/20 text-[7px] font-black uppercase tracking-wider text-red-400 hover:bg-red-950/40 transition"
                             >
                               Eliminar
                             </button>
@@ -797,17 +797,13 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                         onDragLeave={() => setDragOver(false)}
                         onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFileSelect(e.dataTransfer.files?.[0] || null); }}
                         onClick={() => fileInputRef.current?.click()}
-                        className={`group flex min-h-[96px] w-full flex-col items-center justify-center rounded-xl border border-dashed p-4 text-center transition-all duration-300 focus:outline-none ${dragOver ? "border-white bg-zinc-900" : "border-zinc-800 bg-black/40 hover:border-zinc-700 hover:bg-zinc-950"
+                        className={`group flex min-h-[76px] w-full flex-col items-center justify-center rounded-lg border border-dashed p-3 transition-all duration-300 focus:outline-none ${dragOver ? "border-white bg-zinc-900" : "border-zinc-800/80 bg-zinc-950/60 hover:border-zinc-700 hover:bg-zinc-950"
                           }`}
                       >
-                        <div className="relative w-8 h-8 border border-zinc-700 rounded-lg flex items-center justify-center bg-zinc-950 mb-2 group-hover:border-zinc-500 transition duration-300">
-                          <div className="w-0.5 h-3.5 bg-zinc-400 absolute transition-transform group-hover:-translate-y-0.5 duration-300" />
-                          <div className="w-2.5 h-2.5 border-t-2 border-l-2 border-zinc-400 rotate-45 -translate-y-0.5 transition-transform group-hover:-translate-y-1 duration-300" />
-                          <div className="w-4 h-0.5 border-b-2 border-zinc-400 absolute bottom-1.5" />
-                        </div>
+                        <UploadCloud className="w-5 h-5 text-zinc-400 group-hover:text-zinc-300 transition duration-300 mb-1.5" />
                         <p className="text-[9px] font-black uppercase tracking-wider text-white">Arrastra tu comprobante</p>
-                        <p className="mt-0.5 text-[7px] font-bold text-zinc-600 uppercase tracking-widest">o haz clic para seleccionarlo</p>
-                        <span className="mt-2 rounded border border-zinc-900 bg-zinc-950 px-2 py-0.5 text-[6.5px] font-black text-zinc-600 uppercase tracking-widest">
+                        <p className="mt-0.5 text-[6.5px] font-bold text-zinc-500 uppercase tracking-widest">o haz clic para seleccionarlo</p>
+                        <span className="mt-1.5 rounded border border-zinc-800 bg-zinc-950 px-1.5 py-0.5 text-[6px] font-black text-zinc-500 uppercase tracking-widest">
                           JPG · PNG · Máx 5 MB
                         </span>
                       </button>
@@ -837,11 +833,11 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                   </div>
 
                   {/* ── BOTÓN CONFIRMAR COMPRA ── */}
-                  <div className="space-y-2 pt-1">
+                  <div className="space-y-1.5 pt-0.5">
                     <button
                       type="submit"
                       disabled={isSubmitting || !selectedFile || (hasTurnstileSiteKey("visible") && !turnstileToken)}
-                      className="relative overflow-hidden w-full flex h-14 items-center justify-center rounded-xl bg-white text-[10px] font-black uppercase tracking-[0.35em] text-black transition-all duration-300 hover:bg-zinc-100 active:scale-[0.99] disabled:opacity-25 disabled:hover:bg-white disabled:cursor-not-allowed cursor-pointer shadow-[0_4px_32px_rgba(255,255,255,0.12)]"
+                      className="relative overflow-hidden w-full flex h-11 items-center justify-center rounded-lg bg-white text-[10px] font-black uppercase tracking-[0.35em] text-black transition-all duration-300 hover:bg-zinc-100 active:scale-[0.99] disabled:opacity-25 disabled:hover:bg-white disabled:cursor-not-allowed cursor-pointer shadow-[0_4px_24px_rgba(255,255,255,0.08)]"
                     >
                       {/* Shine animation */}
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-700 pointer-events-none" />
@@ -854,7 +850,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                         "CONFIRMAR COMPRA"
                       )}
                     </button>
-                    <p className="text-center text-[8px] font-medium tracking-wide text-zinc-600">
+                    <p className="text-center text-[7.5px] font-medium tracking-wide text-zinc-600">
                       Tu entrada será validada por nuestro equipo tras confirmar el pago.
                     </p>
                   </div>
@@ -864,19 +860,19 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                 {/* ════════════════════════════════════════
                     RIGHT COLUMN — Resumen sticky
                 ════════════════════════════════════════ */}
-                <div className="w-full lg:w-[40%] order-1 lg:order-2 lg:sticky lg:top-24 space-y-3">
+                <div className="w-full lg:w-[40%] order-1 lg:order-2 lg:sticky lg:top-24 space-y-2.5">
 
                   {/* Precio + Cantidad */}
-                  <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-4 space-y-4">
+                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3.5 space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-500">Resumen</span>
                       <span className="text-[7px] font-black uppercase tracking-widest text-zinc-700">VIP ACCESS</span>
                     </div>
 
                     {/* Event name compact */}
-                    <div className="flex items-center gap-2.5 py-2 border-y border-zinc-900/60">
+                    <div className="flex items-center gap-2.5 py-1.5 border-y border-zinc-800/60">
                       <div
-                        className="w-1 h-8 rounded-full shrink-0"
+                        className="w-1 h-7 rounded-full shrink-0"
                         style={{
                           background: `linear-gradient(to bottom, ${selectedDesignIndex !== null && designs[selectedDesignIndex]
                             ? designs[selectedDesignIndex].accentColor
@@ -888,7 +884,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                         }}
                       />
                       <div>
-                        <p className="text-xs font-black text-white uppercase tracking-tight leading-tight">{currentEvent.title}</p>
+                        <p className="text-[11px] font-black text-white uppercase tracking-tight leading-tight">{currentEvent.title}</p>
                         <p className="text-[7px] font-bold text-zinc-500 uppercase tracking-widest mt-0.5">
                           {selectedDesignIndex !== null && designs[selectedDesignIndex]
                             ? designs[selectedDesignIndex].name
@@ -900,25 +896,25 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                     {/* Price per ticket */}
                     <div className="flex items-baseline justify-between">
                       <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500">Precio por entrada</span>
-                      <span className="text-sm font-black text-white">${pricePerTicket} USD</span>
+                      <span className="text-xs font-black text-white">${pricePerTicket} USD</span>
                     </div>
 
                     {/* Quantity selector — integrado */}
-                    <div className="flex items-center justify-between bg-black/40 rounded-xl border border-zinc-900 px-3 py-2">
+                    <div className="flex items-center justify-between bg-zinc-950/60 rounded-lg border border-zinc-800 px-3 py-1.5">
                       <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500">Cantidad</span>
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
                           onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950 text-sm font-black text-white hover:border-zinc-700 active:scale-95 transition-all select-none"
+                          className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-800 bg-zinc-950 text-xs font-black text-white hover:border-zinc-700 active:scale-95 transition-all select-none"
                         >
                           −
                         </button>
-                        <span className="text-lg font-black text-white w-5 text-center tabular-nums">{quantity}</span>
+                        <span className="text-base font-black text-white w-5 text-center tabular-nums">{quantity}</span>
                         <button
                           type="button"
                           onClick={() => setQuantity(Math.min(10, quantity + 1))}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950 text-sm font-black text-white hover:border-zinc-700 active:scale-95 transition-all select-none"
+                          className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-800 bg-zinc-950 text-xs font-black text-white hover:border-zinc-700 active:scale-95 transition-all select-none"
                         >
                           +
                         </button>
@@ -926,11 +922,11 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                     </div>
 
                     {/* ÚNICO TOTAL */}
-                    <div className="flex items-baseline justify-between rounded-xl bg-white/[0.03] border border-zinc-900/60 px-4 py-3">
+                    <div className="flex items-baseline justify-between rounded-lg bg-white/[0.02] border border-zinc-800/60 px-3 py-2">
                       <span className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Total a pagar</span>
                       <div className="text-right">
-                        <span className="text-2xl font-black text-white tracking-tight leading-none">${totalPrice.toFixed(2)}</span>
-                        <span className="block text-[7px] font-black text-zinc-500 uppercase tracking-widest mt-0.5">USD</span>
+                        <span className="text-xl font-black text-white tracking-tight leading-none">${totalPrice.toFixed(2)}</span>
+                        <span className="block text-[6.5px] font-black text-zinc-500 uppercase tracking-widest mt-0.5">USD</span>
                       </div>
                     </div>
                   </div>
@@ -939,17 +935,17 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                   <button
                     type="button"
                     onClick={openModal}
-                    className={`group w-full rounded-2xl border p-4 flex items-center justify-between gap-3 transition-all duration-300 focus:outline-none ${selectedDesignIndex === null
-                      ? "border-red-500/30 bg-red-950/5 hover:border-red-500/50 hover:bg-red-950/10 shadow-[0_0_15px_rgba(239,68,68,0.05)]"
-                      : "border-zinc-900 bg-zinc-950 hover:border-zinc-800 hover:bg-zinc-900/60"
+                    className={`group w-full rounded-xl border p-2.5 flex items-center justify-between gap-3 transition-all duration-300 focus:outline-none ${selectedDesignIndex === null
+                      ? "border-red-500/30 bg-red-950/5 hover:border-red-500/50 hover:bg-red-950/10 shadow-[0_0_12px_rgba(239,68,68,0.04)]"
+                      : "border-zinc-800 bg-zinc-900/50 hover:border-zinc-700 hover:bg-zinc-900/60"
                       }`}
                   >
                     <div className="flex items-center gap-3">
                       {/* Miniature ticket thumbnail */}
                       <div
-                        className="w-9 h-12 rounded-lg overflow-hidden border border-zinc-800 shrink-0 relative"
+                        className="w-7 h-10 rounded-md overflow-hidden border border-zinc-800 shrink-0 relative"
                         style={{
-                          boxShadow: `0 4px 12px ${selectedDesignIndex !== null && designs[selectedDesignIndex]
+                          boxShadow: `0 2px 8px ${selectedDesignIndex !== null && designs[selectedDesignIndex]
                             ? designs[selectedDesignIndex].shadowColor
                             : "rgba(255,255,255,0.05)"
                             }`,
