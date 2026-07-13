@@ -422,7 +422,7 @@ export default function EventTicketCarousel({
             <div
               key={event.id}
               onClick={() => {
-                if (diff === 0) {
+                if (diff === 0 && event.status === "available") {
                   onBuy(event);
                 }
               }}

@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
       slug: body.slug || "",
       status: "active",
       isFeatured: false,
+      isAvailable: body.isAvailable ?? true,
       badge: body.badge || "",
       accentColor: body.accentColor || "#ffffff",
       miniImage: body.miniImage || "",

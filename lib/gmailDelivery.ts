@@ -173,6 +173,12 @@ function ticketHtml(input: TicketPdfEmailInput): string {
                     </table>
   `).join("");
 
+  const isPlural = quantity > 1;
+  const headingText = isPlural ? "¡Tus entradas están listas!" : "¡Tu entrada está lista!";
+  const bodyText = isPlural
+    ? "Tus pases de acceso oficiales han sido generados con éxito y se encuentran <strong>adjuntos en este correo electrónico en formato de imagen</strong>. Por favor, descarga las imágenes y presenta los códigos QR en la entrada del evento; recuerda que cada código es de un único uso."
+    : "Tu pase de acceso oficial ha sido generado con éxito y se encuentra <strong>adjunto en este correo electrónico en formato de imagen</strong>. Por favor, descarga la imagen y presenta el código QR en la entrada del evento; recuerda que cada código es de un único uso.";
+
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -188,7 +194,7 @@ function ticketHtml(input: TicketPdfEmailInput): string {
           <tr>
             <td style="padding:40px 32px 20px;text-align:center;">
               <p style="margin:0;font-size:11px;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:#71717a;">NENEZ</p>
-              <h1 style="margin:12px 0 0;font-size:26px;line-height:1.2;font-weight:800;letter-spacing:-0.5px;color:#18181b;">¡Tu entrada está lista!</h1>
+              <h1 style="margin:12px 0 0;font-size:26px;line-height:1.2;font-weight:800;letter-spacing:-0.5px;color:#18181b;">${headingText}</h1>
               <p style="margin:8px 0 0;font-size:13px;font-weight:600;color:#71717a;">${eventTitle} - ${eventName}</p>
             </td>
           </tr>
@@ -198,7 +204,7 @@ function ticketHtml(input: TicketPdfEmailInput): string {
                 <tr>
                   <td style="font-size:14px;line-height:1.6;color:#3f3f46;">
                     <p style="margin:0;font-size:15px;color:#18181b;">Hola <strong>${fullName}</strong>,</p>
-                    <p style="margin:12px 0 0;">Tu pase de acceso oficial ha sido generado con éxito y se encuentra <strong>adjunto en este correo electrónico en formato de imagen</strong>. Por favor, descarga la imagen y presenta el código QR en la entrada del evento; recuerda que cada código es de un único uso.</p>
+                    <p style="margin:12px 0 0;">${bodyText}</p>
                     
                     ${serialsHtml}
 
@@ -248,11 +254,17 @@ function ticketText(input: TicketPdfEmailInput): string {
 
   const serialsTextStr = serials.map((s, idx) => `- Pase ${idx + 1} (Serial): ${s}`).join("\n");
 
-  return `¡Tu entrada está lista!
+  const isPlural = quantity > 1;
+  const headingText = isPlural ? "¡Tus entradas están listas!" : "¡Tu entrada está lista!";
+  const bodyText = isPlural
+    ? "Tus pases de acceso oficiales han sido generados con éxito y se encuentran adjuntos en este correo electrónico en formato de imagen PNG. Por favor, descarga las imágenes y presenta los códigos QR en la entrada del evento. Recuerda que cada código es de un único uso y válido para un solo ingreso."
+    : "Tu pase de acceso oficial ha sido generado con éxito y se encuentra adjunto en este correo electrónico en formato de imagen PNG. Por favor, descarga la imagen y presenta el código QR en la entrada del evento. Recuerda que cada código es de un único uso y válido para un solo ingreso.";
+
+  return `${headingText}
 
 Hola ${fullName},
 
-Tu pase de acceso oficial ha sido generado con éxito y se encuentra adjunto en este correo electrónico en formato de imagen PNG. Por favor, descarga la imagen y presenta el código QR en la entrada del evento. Recuerda que cada código es de un único uso y válido para un solo ingreso.
+${bodyText}
 
 Detalles de los pases:
 ${serialsTextStr}
@@ -450,15 +462,35 @@ async function sendGmailMessageWithLimit(input: GmailMessageInput): Promise<Gmai
   }
 
   try {
-    const messageId =
-      provider === "gmail-api"
-        ? await sendViaGmailApi({ ...input, to })
-        : await sendViaSmtp({ ...input, to });
+    let messageId: string | undefined;
+    let actualProvider = provider;
+
+    if (provider === "gmail-api") {
+      try {
+        messageId = await sendViaGmailApi({ ...input, to });
+      } catch (apiError) {
+        const apiReason = apiError instanceof Error ? apiError.message : "unknown";
+        secureLog("[EMAIL] Gmail API failed, checking SMTP fallback", {
+          email: to,
+          reason: apiReason,
+        });
+
+        if (isSmtpConfigured()) {
+          secureLog("[EMAIL] Falling back to SMTP", { email: to });
+          messageId = await sendViaSmtp({ ...input, to });
+          actualProvider = "smtp";
+        } else {
+          throw apiError;
+        }
+      }
+    } else {
+      messageId = await sendViaSmtp({ ...input, to });
+    }
 
     const nextCount = incrementSentToday(account, dateKey);
     secureLog("[EMAIL] Message sent", {
       email: to,
-      provider,
+      provider: actualProvider,
       label: input.logLabel || "message",
       sentToday: nextCount,
       dailyLimit: limit,
@@ -497,9 +529,12 @@ export async function sendTicketPdfViaGmailWithLimit(input: TicketPdfEmailInput)
     };
   });
 
+  const isPlural = serials.length > 1 || (Number(input.quantity) || 1) > 1;
+  const subjectPrefix = isPlural ? "Tus entradas están listas" : "Tu entrada está lista";
+
   return sendGmailMessageWithLimit({
     to: input.to,
-    subject: `Tu entrada NENEZ - ${cleanHeader(input.eventTitle || "TRAP LOUD")}`,
+    subject: `${subjectPrefix} NENEZ - ${cleanHeader(input.eventTitle || "TRAP LOUD")}`,
     html: ticketHtml(input),
     text: ticketText(input),
     logLabel: "ticket-image",

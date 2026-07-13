@@ -19,12 +19,14 @@ import {
 import { getActiveTicketEvent } from "@/lib/tickets/activeEvent";
 import { getRecoverableTicket } from "@/lib/tickets/recoveryTicket";
 import { createRecoveryToken } from "@/lib/tickets/recoveryToken";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 export const runtime = "nodejs";
 
 const verifySchema = z.object({
   email: z.string().trim().toLowerCase().email().max(120),
   code: z.string().regex(/^\d{6}$/),
+  turnstileToken: z.string().max(4096).optional(),
 });
 
 function messageFor(reason: "expired" | "not-found" | "locked" | "invalid"): string {
@@ -48,6 +50,12 @@ export async function POST(request: Request) {
     const event = getActiveTicketEvent();
     const ipHash = hashLookup(getClientIp(request));
     const userAgentHash = hashLookup(request.headers.get("user-agent") || "unknown");
+
+    await verifyTurnstileToken(request, body.turnstileToken, {
+      variant: "invisible",
+      action: "ticket_recovery_verify",
+    });
+
     const emailLimit = checkRateLimit(emailHash, {
       namespace: "ticket-recovery-verify-email",
       limit: 12,
@@ -63,6 +71,7 @@ export async function POST(request: Request) {
 
     const result = await verifyRecoveryOtp(email, event.id, body.code);
     if (!result.ok) {
+      await new Promise((resolve) => setTimeout(resolve, 800)); // Delay to slow down brute force
       await recordRecoveryLog({
         emailHash,
         eventId: event.id,

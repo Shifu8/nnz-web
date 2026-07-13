@@ -99,11 +99,12 @@ async function findPostgresTicket(email: string, event: ActiveTicketEvent): Prom
       qrPayload: decryptStoredValue(data.qrPayloadEncrypted || data.qr_payload_encrypted),
       quantity: 1,
       status: "APPROVED",
+      ticketDesign: String(data.ticketDesign || data.ticket_design || "0"),
     };
   }
 
   const rows = await db`
-    SELECT id, first_name, last_name, email_encrypted, event_id, serial_number, qr_payload_encrypted, status
+    SELECT id, first_name, last_name, email_encrypted, event_id, serial_number, qr_payload_encrypted, status, ticket_design
     FROM tickets
     WHERE email_hash = ${hashLookup(email)}
       AND status = 'approved'
@@ -127,6 +128,7 @@ async function findPostgresTicket(email: string, event: ActiveTicketEvent): Prom
     qrPayload: decryptStoredValue(data.qr_payload_encrypted),
     quantity: 1,
     status: "APPROVED",
+    ticketDesign: String(data.ticket_design || "0"),
   };
 }
 
@@ -156,11 +158,12 @@ async function getPostgresTicket(id: string, event: ActiveTicketEvent): Promise<
       qrPayload: decryptStoredValue(data.qrPayloadEncrypted || data.qr_payload_encrypted),
       quantity: 1,
       status: "APPROVED",
+      ticketDesign: String(data.ticketDesign || data.ticket_design || "0"),
     };
   }
 
   const [data] = await db`
-    SELECT id, first_name, last_name, email_encrypted, event_id, serial_number, qr_payload_encrypted, status
+    SELECT id, first_name, last_name, email_encrypted, event_id, serial_number, qr_payload_encrypted, status, ticket_design
     FROM tickets
     WHERE id = ${id} AND status = 'approved'
   `;
@@ -184,6 +187,7 @@ async function getPostgresTicket(id: string, event: ActiveTicketEvent): Promise<
     qrPayload: decryptStoredValue(data.qr_payload_encrypted),
     quantity: 1,
     status: "APPROVED",
+    ticketDesign: String(data.ticket_design || "0"),
   };
 }
 
@@ -224,7 +228,7 @@ export async function findRecoverableTicketByEmail(
   let pgTickets: any[] = [];
   if (db) {
     pgTickets = await db`
-      SELECT id, first_name, last_name, email_encrypted, event_id, serial_number, qr_payload_encrypted, status
+      SELECT id, first_name, last_name, email_encrypted, event_id, serial_number, qr_payload_encrypted, status, ticket_design
       FROM tickets
       WHERE email_hash = ${hashLookup(email)}
         AND status = 'approved'
@@ -249,28 +253,31 @@ export async function findRecoverableTicketByEmail(
     }
   }
 
-  const pgRecoveryTickets: RecoveryTicket[] = pgTickets.map((t: any) => {
-    const sNum = t.serial_number || t.serialNumber;
-    const qrEnc = t.qr_payload_encrypted || t.qrPayloadEncrypted;
-    const emailEnc = t.email_encrypted || t.emailEncrypted;
-    return {
-      id: String(t.id),
-      source: "postgres" as const,
-      eventId: String(t.event_id || t.eventId),
-      email,
-      firstName: String(t.first_name || t.firstName || ""),
-      lastName: String(t.last_name || t.lastName || ""),
-      serialNumber: sNum,
-      qrPayload: decryptStoredValue(qrEnc),
-      quantity: 1,
-      status: "APPROVED" as const,
-    };
-  });
+  const pgRecoveryTickets: RecoveryTicket[] = pgTickets
+    .map((t: any) => {
+      const sNum = t.serial_number || t.serialNumber;
+      const qrEnc = t.qr_payload_encrypted || t.qrPayloadEncrypted;
+      return {
+        id: String(t.id),
+        source: "postgres" as const,
+        eventId: String(t.event_id || t.eventId),
+        email,
+        firstName: String(t.first_name || t.firstName || ""),
+        lastName: String(t.last_name || t.lastName || ""),
+        serialNumber: sNum,
+        qrPayload: decryptStoredValue(qrEnc),
+        quantity: 1,
+        status: "APPROVED" as const,
+        ticketDesign: String(t.ticket_design || t.ticketDesign || "0"),
+      };
+    })
+    .filter((t) => t.eventId === event.id || event.aliases.includes(t.eventId));
 
   const receiptRecoveryTickets: RecoveryTicket[] = loadAllReceipts()
     .filter((receipt) => sanitizeEmail(receipt.email) === email)
     .map((receipt) => receiptToTicket(receipt, event))
-    .filter((ticket): ticket is RecoveryTicket => Boolean(ticket));
+    .filter((ticket): ticket is RecoveryTicket => Boolean(ticket))
+    .filter((t) => t.eventId === event.id || event.aliases.includes(t.eventId));
 
   const allTickets = [...pgRecoveryTickets, ...receiptRecoveryTickets];
   if (allTickets.length === 0) return null;
@@ -302,6 +309,7 @@ export async function findRecoverableTicketByEmail(
     qrPayload: allPayloads.join(","),
     quantity: allSerials.length,
     status: "APPROVED",
+    ticketDesign: first.ticketDesign,
   };
 }
 

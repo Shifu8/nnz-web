@@ -72,6 +72,8 @@ export type Event = {
   importantInfo?: InfoCard[];
   socialLinks?: SocialLinks;
   merch?: MerchProduct[];
+  price?: number;
+  currency?: string;
 };
 
 export type MerchItem = {

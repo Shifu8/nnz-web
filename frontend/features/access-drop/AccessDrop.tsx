@@ -67,7 +67,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
   const modalTicketRef = useRef<HTMLDivElement>(null);
 
   const currentEvent = event || events[0];
-  const pricePerTicket = currentEvent.id === "trap-loud" ? 10 : currentEvent.id === "dawg-night" ? 15 : 20;
+  const pricePerTicket = currentEvent.price || 10;
   const artistDetails = getArtistDetails(currentEvent.id);
 
   const [dropState, setDropState] = useState<DropState>("register");
@@ -91,7 +91,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
     let active = true;
     // Set default static designs first
     setDesigns(getEventDesigns(currentEvent.id));
-    
+
     // Fetch custom designs from the API (using cache-breaking parameter)
     fetch(`/api/access-drop/ticket-designs?eventId=${currentEvent.id}&t=${Date.now()}`, { cache: "no-store" })
       .then((res) => res.json())
@@ -192,26 +192,26 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
     () => {
       if (dropState === "success") {
         const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
-        
+
         // 1. Reveal parent container
-        tl.fromTo(".success-reveal", 
-          { opacity: 0 }, 
+        tl.fromTo(".success-reveal",
+          { opacity: 0 },
           { opacity: 1, duration: 0.3 }
         );
-        
+
         // 2. Ticket card drop & bounce with 3D tilts
-        tl.fromTo(".success-ticket-card", 
+        tl.fromTo(".success-ticket-card",
           { scale: 1.6, rotationX: -30, rotationY: 20, y: -100, opacity: 0, filter: "blur(8px)" },
           { scale: 1, rotationX: 0, rotationY: 0, y: 0, opacity: 1, filter: "blur(0px)", duration: 0.8, ease: "back.out(1.5)" }
         );
-        
+
         // 3. Stamp slams down
         tl.fromTo(".success-stamp",
           { scale: 4.5, opacity: 0, rotation: 30 },
           { scale: 1, opacity: 1, rotation: -12, duration: 0.35, ease: "bounce.out" },
           "-=0.2"
         );
-        
+
         // 3.5. Camera Shake on stamp hit
         tl.to(".success-ticket-card", {
           x: "random(-4, 4)",
@@ -223,12 +223,12 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
         }, "-=0.2");
 
         // 4. Energy ring expand on hit
-        tl.fromTo(".success-energy-ring", 
-          { scale: 0, opacity: 0.8 }, 
+        tl.fromTo(".success-energy-ring",
+          { scale: 0, opacity: 0.8 },
           { scale: 5, opacity: 0, duration: 0.8, ease: "power2.out" },
           "-=0.25"
         );
-        
+
         // 5. Draw checkmark
         const checkPath = scope.current?.querySelector<SVGPathElement>(".success-check-path");
         if (checkPath) {
@@ -236,7 +236,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
           gsap.set(checkPath, { strokeDasharray: length, strokeDashoffset: length });
           tl.to(checkPath, { strokeDashoffset: 0, duration: 0.3, ease: "power1.inOut" }, "-=0.2");
         }
-        
+
         // 6. Burst sparkles
         if (sparklesRef.current) {
           const sparkles = sparklesRef.current.querySelectorAll<HTMLDivElement>(".success-sparkle");
@@ -245,21 +245,21 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
             const dist = 60 + Math.random() * 110;
             const x = Math.cos(angle) * dist;
             const y = Math.sin(angle) * dist;
-            gsap.fromTo(s, 
+            gsap.fromTo(s,
               { x: 0, y: 0, scale: 0.2, opacity: 1 },
-              { 
-                x, 
-                y, 
-                opacity: 0, 
-                scale: "random(0.3, 1.2)", 
+              {
+                x,
+                y,
+                opacity: 0,
+                scale: "random(0.3, 1.2)",
                 rotation: "random(-360, 360)",
-                duration: 1.2 + Math.random() * 0.6, 
-                ease: "power2.out" 
+                duration: 1.2 + Math.random() * 0.6,
+                ease: "power2.out"
               }
             );
           });
         }
-        
+
         // 7. Text details entries
         tl.fromTo(".success-name", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4 }, "-=0.15");
         tl.fromTo(".success-text", { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3 }, "-=0.1");
@@ -301,7 +301,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
     if (hasTurnstileSiteKey("visible") && !turnstileToken) { setErrorMsg("COMPLETA EL CAPTCHA DE SEGURIDAD."); return; }
     setIsSubmitting(true);
     setErrorMsg("");
-    
+
     try {
       const body = new FormData();
       body.append("comprobante", selectedFile);
@@ -313,24 +313,24 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
       body.append("paymentMethod", selectedBank);
       body.append("cf-turnstile-response", turnstileToken);
       body.append("ticketDesign", selectedDesignIndex !== null ? selectedDesignIndex.toString() : "0");
-      
+
       const res = await fetch("/api/access-drop/upload", { method: "POST", body });
       const data = await res.json() as { error?: string; code?: string; message?: string; receiptId?: string };
-      
+
       if (!res.ok) {
         if (data.code === "RECEIPT_REJECTED") clearSelectedFile();
         throw new Error(data.error || "Error al subir comprobante");
       }
-      
+
       // Transición al estado de carga / verificando tras éxito en subida
       setDropState("verifying");
       onStateChange?.("verifying");
       setVerifyingMessage("COMPROBANTE RECIBIDO");
-      
+
       const t1 = setTimeout(() => setVerifyingMessage("ANALIZANDO INTEGRIDAD DE LA IMAGEN..."), 700);
       const t2 = setTimeout(() => setVerifyingMessage("VERIFICANDO TRANSACCIÓN BANCARIA..."), 1500);
       const t3 = setTimeout(() => setVerifyingMessage("GENERANDO ENTRADA EN EL SISTEMA..."), 2300);
-      
+
       await new Promise(resolve => {
         setTimeout(() => {
           clearTimeout(t1);
@@ -339,7 +339,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
           resolve(true);
         }, 3000);
       });
-      
+
       setUploadMessage(data.message || "COMPROBANTE VALIDADO.");
       clearSelectedFile();
       setDropState("success");
@@ -382,7 +382,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
   };  // Device orientation tilt for mobile
   useEffect(() => {
     if (typeof window === "undefined" || !showTicketModal) return;
-    
+
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent
     );
@@ -390,7 +390,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
 
     let initialBeta: number | null = null;
     let initialGamma: number | null = null;
-    
+
     let targetRotateX = 0;
     let targetRotateY = 0;
     let currentRotateX = 0;
@@ -429,7 +429,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
       const card = modalTicketRef.current;
       if (card) {
         card.style.transform = `perspective(1200px) rotateX(${currentRotateX}deg) rotateY(${currentRotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-        
+
         const rect = card.getBoundingClientRect();
         const mx = rect.width / 2 + currentRotateY * 4.5;
         const my = rect.height / 2 + currentRotateX * 4.5;
@@ -1009,15 +1009,15 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
               <div className="relative w-20 h-20 mb-8 flex items-center justify-center">
                 {/* Outer thin spin ring */}
                 <div className="absolute inset-0 rounded-full border border-white/[0.04] border-t-white/80 animate-spin" />
-                
+
                 {/* Inner thin spin ring (reversed) */}
                 <div className="absolute inset-2.5 rounded-full border border-white/[0.04] border-b-white/50 animate-[spin_1.5s_linear_infinite_reverse]" />
-                
+
                 {/* Central pulsing white dot */}
                 <div className="h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_8px_#ffffff] animate-ping" />
                 <div className="absolute h-1 w-1 rounded-full bg-white" />
               </div>
-              
+
               <p className="text-xs font-black uppercase tracking-[0.25em] text-white animate-pulse">
                 {verifyingMessage}
               </p>
@@ -1030,15 +1030,15 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
           {/* ── SUCCESS VIEW ── */}
           {dropState === "success" && (
             <div ref={successRef} className="success-reveal relative z-10 flex flex-col items-center text-center max-w-md mx-auto py-12">
-              
+
               {/* 3D-like Ticket receipt container with stamp */}
               <div className="success-ticket-card relative mb-8 w-64 h-36 rounded-2xl border border-white/12 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 overflow-hidden flex flex-col justify-between p-4 shadow-[0_20px_45px_rgba(0,0,0,0.8),0_0_30px_rgba(225,0,117,0.06)]">
                 {/* Background grid texture */}
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:14px_14px] pointer-events-none" />
-                
+
                 {/* Energy Ring inside card for centering the blast */}
                 <div className="success-energy-ring absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border-2 border-[#e10075] opacity-0 pointer-events-none" />
-                
+
                 {/* Top ticket header */}
                 <div className="flex justify-between items-center z-10">
                   <div className="flex items-center gap-1.5">
@@ -1047,10 +1047,10 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                   </div>
                   <span className="text-[6px] font-mono text-zinc-600">#{Math.floor(100000 + Math.random() * 900000)}</span>
                 </div>
-                
+
                 {/* Dotted separator */}
                 <div className="absolute top-[42px] inset-x-0 border-t border-dashed border-white/10 z-10" />
-                
+
                 {/* Middle details */}
                 <div className="mt-4 text-left z-10">
                   <p className="text-[6px] font-black text-zinc-600 uppercase tracking-[0.3em]">Invitado</p>
@@ -1058,7 +1058,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                     {formData.firstName.trim() ? `${formData.firstName.trim()} ${formData.lastName.trim()}` : "CLIENTE DAWG"}
                   </p>
                 </div>
-                
+
                 {/* Bottom details / barcode */}
                 <div className="flex justify-between items-end z-10">
                   <div>
@@ -1077,7 +1077,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                     <div className="w-[2.5px] h-full bg-white" />
                   </div>
                 </div>
-                
+
                 {/* The Stamp Overlay (slams down in 3D style) */}
                 <div className="success-stamp absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                   <div className="h-16 w-16 rounded-full border-[3px] border-[#e10075] bg-black/95 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.4)]">

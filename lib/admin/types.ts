@@ -13,6 +13,7 @@ export type AdminEvent = {
   position: number;
   status: "active" | "inactive";
   isFeatured: boolean;
+  isAvailable?: boolean;
   slug?: string;
   createdAt: string;
   updatedAt: string;

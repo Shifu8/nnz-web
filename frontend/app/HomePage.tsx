@@ -76,6 +76,8 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   // Custom states for 3D Carousel & Premium visual effects
   const [activeIndex, setActiveIndex] = useState(0);
   const activeEvent = events[activeIndex] || selectedCarouselEvent;
+  const nextIndex = events.length > 0 ? (activeIndex + 1) % events.length : 0;
+  const nextEvent = events[nextIndex] || activeEvent;
   const [isLoading, setIsLoading] = useState(true);
   const [checkoutState, setCheckoutState] = useState<string>("register");
 
@@ -558,26 +560,26 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               </p>
               <div>
                 <h2 className="text-2xl font-black uppercase tracking-tight text-white">
-                  {activeEvent.title}
+                  {nextEvent.title}
                 </h2>
                 <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">
-                  {activeEvent.subtitle}
+                  {nextEvent.subtitle}
                 </p>
               </div>
 
               {/* Event Location & Date info */}
               <div className="flex flex-wrap gap-2 text-zinc-300">
                 <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest">
-                  {activeEvent.dateLabel}
+                  {nextEvent.dateLabel}
                 </span>
                 <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest">
-                  {activeEvent.city}
+                  {nextEvent.city}
                 </span>
               </div>
 
               {/* Lineup tags */}
               <div className="flex flex-wrap gap-1.5 pt-1">
-                {activeEvent.lineup.map((artist) => (
+                {nextEvent.lineup.map((artist) => (
                   <span
                     key={artist}
                     className="rounded-full border border-white/15 bg-white/[0.03] px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.2em] text-zinc-300"
@@ -592,14 +594,19 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             <div className="flex gap-4 pt-4">
               <button
                 type="button"
+                disabled={activeEvent.status !== "available"}
                 onClick={() => onViewDetails(activeEvent)}
-                className="flex h-12 px-6 items-center justify-center rounded-full border border-white/10 bg-black/20 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-300 transition hover:border-white/30 hover:bg-white/5 hover:text-white"
+                className={`flex h-12 px-6 items-center justify-center rounded-full border text-[9px] font-black uppercase tracking-[0.2em] transition ${
+                  activeEvent.status === "available"
+                    ? "border-white/10 bg-black/20 text-zinc-300 hover:border-white/30 hover:bg-white/5 hover:text-white"
+                    : "border-zinc-800 bg-zinc-900/20 text-zinc-600 cursor-not-allowed opacity-50"
+                }`}
               >
                 Ver Detalle
               </button>
 
               <div className="relative">
-                {isTicketPulse && (
+                {isTicketPulse && activeEvent.status === "available" && (
                   <div
                     className="absolute inset-0 rounded-full bg-white blur-md animate-glow-backdrop z-0 pointer-events-none"
                     style={{
@@ -608,23 +615,33 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                   />
                 )}
                 
-                {/* Contenedor con borde animado de trazo giratorio neon */}
-                <div className="relative p-[2px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.15)] hover:shadow-[0_0_25px_rgba(225,0,117,0.35)] transition-all duration-300 group">
-                  {/* Línea giratoria */}
-                  <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#e10075_50%,transparent_65%)] pointer-events-none" />
-                  
+                {activeEvent.status === "available" ? (
+                  /* Contenedor con borde animado de trazo giratorio neon */
+                  <div className="relative p-[2px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.15)] hover:shadow-[0_0_25px_rgba(225,0,117,0.35)] transition-all duration-300 group">
+                    {/* Línea giratoria */}
+                    <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#e10075_50%,transparent_65%)] pointer-events-none" />
+                    
+                    <button
+                      type="button"
+                      onClick={() => onBuy(activeEvent)}
+                      className={`relative z-10 flex h-[44px] px-6 items-center justify-center rounded-full bg-zinc-950 text-[9px] font-black uppercase tracking-[0.2em] text-white hover:bg-white hover:text-black transition-all duration-300 ${isTicketPulse ? "scale-[1.04]" : ""
+                        }`}
+                      style={{
+                        transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+                      }}
+                    >
+                      Comprar Entrada
+                    </button>
+                  </div>
+                ) : (
                   <button
                     type="button"
-                    onClick={() => onBuy(activeEvent)}
-                    className={`relative z-10 flex h-[44px] px-6 items-center justify-center rounded-full bg-zinc-950 text-[9px] font-black uppercase tracking-[0.2em] text-white hover:bg-white hover:text-black transition-all duration-300 ${isTicketPulse ? "scale-[1.04]" : ""
-                      }`}
-                    style={{
-                      transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
-                    }}
+                    disabled
+                    className="flex h-[44px] px-6 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900/20 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 cursor-not-allowed opacity-50"
                   >
                     Comprar Entrada
                   </button>
-                </div>
+                )}
               </div>
             </div>
 

@@ -47,6 +47,7 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [verifyTurnstileTokenVal, setVerifyTurnstileTokenVal] = useState("");
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
   const [downloadedSerials, setDownloadedSerials] = useState<string[]>([]);
@@ -101,12 +102,18 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
       return;
     }
 
+    if (hasTurnstileSiteKey("invisible") && !verifyTurnstileTokenVal) {
+      setError("Espera un momento y vuelve a intentar la verificación.");
+      setTurnstileResetKey((key) => key + 1);
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await fetch("/api/tickets/recovery/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code }),
+        body: JSON.stringify({ email, code, turnstileToken: verifyTurnstileTokenVal }),
       });
       const data = (await response.json()) as {
         error?: string;
@@ -124,6 +131,8 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
       setMessage("");
     } catch (verifyError) {
       setError(verifyError instanceof Error ? verifyError.message : "El código es incorrecto o expiró.");
+      setVerifyTurnstileTokenVal("");
+      setTurnstileResetKey((key) => key + 1);
     } finally {
       setLoading(false);
     }
@@ -392,6 +401,15 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                   </div>
                 </div>
 
+                <TurnstileWidget
+                  action="ticket_recovery_verify"
+                  variant="invisible"
+                  resetKey={turnstileResetKey}
+                  onVerify={setVerifyTurnstileTokenVal}
+                  onExpire={() => setVerifyTurnstileTokenVal("")}
+                  onError={() => setVerifyTurnstileTokenVal("")}
+                />
+
                 <button
                   type="submit"
                   disabled={loading || code.length !== 6}
@@ -526,14 +544,29 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                   Cada entrada es válida para un solo uso. No compartas capturas ni los códigos QR.
                 </p>
 
-                <div className="w-full">
+                <div className="flex gap-2 w-full">
                   <button
                     type="button"
                     disabled={resending}
                     onClick={resendTicket}
-                    className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-white text-[8px] font-black uppercase tracking-[0.17em] text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex-[3] inline-flex h-10 items-center justify-center rounded-xl bg-white text-[8px] font-black uppercase tracking-[0.17em] text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50 truncate"
                   >
-                    {resending ? "Reenviando..." : "Reenviar todo"}
+                    {resending ? "Reenviando..." : `Reenviar a ${email}`}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhase("email");
+                      setEmail("");
+                      setCode("");
+                      setToken("");
+                      setTicket(null);
+                      setMessage("");
+                      setError("");
+                    }}
+                    className="flex-[1] inline-flex h-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-[8px] font-black uppercase tracking-[0.17em] text-zinc-400 transition hover:border-white/20 hover:text-white"
+                  >
+                    Cerrar
                   </button>
                 </div>
               </div>

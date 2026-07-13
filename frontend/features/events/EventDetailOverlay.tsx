@@ -464,8 +464,13 @@ export default function EventDetailOverlay({
                     {relatedEvents.map((rel) => (
                       <button
                         key={rel.id}
+                        disabled={rel.status !== "available"}
                         onClick={() => onSelectEvent(rel)}
-                        className="group shrink-0 w-[200px] rounded-[20px] border border-white/[0.07] overflow-hidden bg-white/[0.02] transition-all duration-300 hover:border-white/[0.15] hover:bg-white/[0.05] text-left"
+                        className={`group shrink-0 w-[200px] rounded-[20px] border overflow-hidden transition-all duration-300 text-left ${
+                          rel.status === "available"
+                            ? "border-white/[0.07] bg-white/[0.02] hover:border-white/[0.15] hover:bg-white/[0.05] cursor-pointer"
+                            : "border-zinc-800/40 bg-zinc-950/10 opacity-70 cursor-not-allowed"
+                        }`}
                       >
                         <div className="relative h-[120px] overflow-hidden">
                           <Image
@@ -473,7 +478,7 @@ export default function EventDetailOverlay({
                             alt={rel.title}
                             fill
                             sizes="200px"
-                            className="object-cover grayscale brightness-50 group-hover:brightness-[0.65] group-hover:scale-105 transition-all duration-500"
+                            className="object-cover grayscale brightness-50 transition-all duration-500"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                           <div className="absolute bottom-0 left-0 right-0 p-3">
@@ -490,7 +495,9 @@ export default function EventDetailOverlay({
                             {rel.city}
                           </p>
                           <div className="flex items-center justify-between mt-2">
-                            <span className="text-[7px] font-black text-white/40 uppercase tracking-wider">Ver detalles</span>
+                            <span className="text-[7px] font-black text-white/40 uppercase tracking-wider">
+                              {rel.status === "available" ? "Ver detalles" : "Próximamente"}
+                            </span>
                           </div>
                         </div>
                       </button>
@@ -530,6 +537,13 @@ export default function EventDetailOverlay({
                 className="flex h-11 px-6 items-center justify-center rounded-full bg-white/10 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Agotado
+              </button>
+            ) : event.status === "coming-soon" ? (
+              <button
+                disabled
+                className="flex h-11 px-6 items-center justify-center rounded-full bg-white/10 text-[8px] font-black uppercase tracking-[0.2em] text-zinc-500 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Próximamente
               </button>
             ) : (
               <div className="relative p-[2px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.15)] hover:shadow-[0_0_25px_rgba(225,0,117,0.35)] transition-all duration-300 group">

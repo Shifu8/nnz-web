@@ -34,6 +34,7 @@ const EMPTY_EVENT: Omit<AdminEvent, "id" | "createdAt" | "updatedAt"> & { slug: 
   position: 0,
   status: "active",
   isFeatured: false,
+  isAvailable: true,
   slug: "",
   badge: "",
   accentColor: "#ffffff",
@@ -111,6 +112,7 @@ export default function EventsSection(_props: EventsSectionProps) {
       position: event.position ?? 0,
       status: event.status,
       isFeatured: event.isFeatured,
+      isAvailable: event.isAvailable ?? true,
       slug: (event as any).slug || "",
       badge: event.badge || "",
       accentColor: event.accentColor || "#ffffff",
@@ -339,6 +341,15 @@ export default function EventsSection(_props: EventsSectionProps) {
                     }`}>
                       {event.status === "active" ? "Activo" : "Inactivo"}
                     </span>
+                    {event.status === "active" && (
+                      <span className={`rounded-full border px-2.5 py-1 text-[7px] font-black uppercase tracking-wider ${
+                        event.isAvailable !== false
+                          ? "border-[#ffd36a]/30 bg-[#ffd36a]/10 text-[#ffd36a]"
+                          : "border-red-500/30 bg-red-950/20 text-red-400"
+                      }`}>
+                        {event.isAvailable !== false ? "Venta Abierta" : "Venta Cerrada"}
+                      </span>
+                    )}
                   </div>
 
                   {/* Scan count */}
@@ -556,6 +567,23 @@ export default function EventsSection(_props: EventsSectionProps) {
                         >
                           {s === "active" ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                           {s === "active" ? "Activo" : "Inactivo"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Disponibilidad de Compra</p>
+                    <div className="flex gap-3">
+                      {([true, false] as const).map((val) => (
+                        <button key={String(val)} type="button" onClick={() => setForm({ ...form, isAvailable: val })}
+                          className={`flex flex-1 items-center justify-center gap-2 rounded-2xl border py-3 text-[10px] font-black uppercase tracking-wider transition ${
+                            form.isAvailable === val
+                              ? val ? "border-green-500/30 bg-green-950/20 text-green-400" : "border-red-500/30 bg-red-950/20 text-red-400"
+                              : "border-white/10 bg-black/40 text-zinc-600"
+                          }`}
+                        >
+                          {val ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                          {val ? "Disponible para Venta" : "No Disponible (Próximamente)"}
                         </button>
                       ))}
                     </div>

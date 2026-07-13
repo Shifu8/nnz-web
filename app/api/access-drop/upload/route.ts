@@ -13,6 +13,7 @@ import {
   validateReceiptFileMetadata,
 } from "@/lib/access-drop/fileValidation";
 import { addReceipt, getBankList } from "@/lib/access-drop/receiptStore";
+import { loadAllEvents } from "@/lib/admin/events-store";
 import { deleteFile, saveFile } from "@/lib/access-drop/storage";
 import { analyzeReceiptImage } from "@/lib/access-drop/receiptAnalysis";
 import {
@@ -185,8 +186,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify detected amount matches expected purchase total
-    const activeEventId = getActiveTicketEvent().id;
-    const pricePerTicket = activeEventId === "trap-loud" ? 10 : activeEventId === "dawg-night" ? 15 : 20;
+    const activeEvent = getActiveTicketEvent();
+    const allEvents = loadAllEvents();
+    const dbEvent = allEvents.find((e) => e.id === activeEvent.sourceId || e.slug === activeEvent.id);
+    const pricePerTicket = dbEvent?.price ?? 10;
     const expectedTotal = quantity * pricePerTicket;
 
     if (analysis.detectedAmount) {

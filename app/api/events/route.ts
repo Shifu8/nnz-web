@@ -37,7 +37,9 @@ function toFrontendEvent(adminEvent: any): EventWithPosition {
     time: adminEvent.time || "",
     category: adminEvent.category || "Trap / Urban",
     ageRestriction: adminEvent.ageRestriction || "18+",
-    status: adminEvent.status === "active" ? "available" : "coming-soon",
+    status: adminEvent.status === "active"
+      ? (adminEvent.isAvailable !== false ? "available" : "coming-soon")
+      : "coming-soon",
     about: adminEvent.about || [],
     detailedLineup: adminEvent.detailedLineup || [],
     schedule: adminEvent.schedule || [],
