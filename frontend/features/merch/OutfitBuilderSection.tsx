@@ -16,14 +16,40 @@ export default function OutfitBuilderSection() {
         style={{ boxShadow: "0 24px 90px rgba(255, 255, 255, 0.01)" }}
       >
         {/* Ambient background Couch image - Full Color for rich visual contrast */}
+        {/* Base stable image */}
         <Image
           src={STUDIO_HERO_IMAGE}
           alt="Modelos NENEZ usando hoodie y jogger burgundy en sofa de estudio"
           fill
           sizes="(max-width: 1600px) 100vw, 1600px"
-          className="object-cover object-[center_top] opacity-65 transition-opacity duration-1000"
+          className="object-cover object-[center_top] opacity-65 pointer-events-none"
           priority={false}
         />
+
+        {/* Glitch Slices - Occasional Horizontal Displacement */}
+        <div className="absolute inset-0 pointer-events-none opacity-65 animate-glitch-slice-1">
+          <Image
+            src={STUDIO_HERO_IMAGE}
+            alt=""
+            fill
+            sizes="(max-width: 1600px) 100vw, 1600px"
+            className="object-cover object-[center_top]"
+          />
+        </div>
+        <div className="absolute inset-0 pointer-events-none opacity-65 animate-glitch-slice-2">
+          <Image
+            src={STUDIO_HERO_IMAGE}
+            alt=""
+            fill
+            sizes="(max-width: 1600px) 100vw, 1600px"
+            className="object-cover object-[center_top]"
+          />
+        </div>
+
+        {/* Vintage Rolling TV hum bar */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute inset-x-0 h-[200px] bg-gradient-to-b from-transparent via-white/[0.03] to-transparent opacity-40 animate-rolling-bar" />
+        </div>
 
         {/* Soft vignette overlays to integrate colors naturally into the dark theme */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/20 to-black/70" />

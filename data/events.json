@@ -8,7 +8,7 @@
     "date": "2026-08-15",
     "time": "22:00",
     "countdownDate": "2026-08-15",
-    "price": 15,
+    "price": 10,
     "imageUrl": "/images/omar_courtz_card_bg.jpg",
     "description": "Voz única y flows de la calle. Autenticidad reggaetonera premium en una atmósfera brutal de luz cenital diseñada para vivirse al límite.",
     "lineup": [
@@ -17,6 +17,7 @@
     "position": 0,
     "status": "active",
     "isFeatured": true,
+    "isAvailable": true,
     "badge": "TRENDING PRESET",
     "accentColor": "#ffffff",
     "miniImage": "/images/omar_courtz_card_bg.jpg",
@@ -68,7 +69,10 @@
     ],
     "socialLinks": {
       "instagram": "https://instagram.com/omarcourtz",
-      "spotify": "https://open.spotify.com/artist/omarcourtz"
+      "tiktok": "",
+      "spotify": "https://open.spotify.com/artist/omarcourtz",
+      "youtube": "",
+      "website": ""
     },
     "merch": [
       {
@@ -80,7 +84,7 @@
       }
     ],
     "createdAt": "2026-06-03T23:57:02.581Z",
-    "updatedAt": "2026-06-03T23:58:28.823Z"
+    "updatedAt": "2026-07-12T20:21:08.167Z"
   },
   {
     "id": "trap-eclipse",
@@ -91,7 +95,7 @@
     "date": "2026-10-31",
     "time": "23:00",
     "countdownDate": "2026-10-31",
-    "price": 25,
+    "price": 10,
     "imageUrl": "/images/roa_artist_1779161704881.png",
     "description": "El eclipse del trap y R&B nocturno. Una noche monumental de vibras oscuras, bajos masivos y melancolía hipnótica en el escenario principal.",
     "lineup": [
@@ -101,6 +105,7 @@
     "position": 1,
     "status": "active",
     "isFeatured": false,
+    "isAvailable": false,
     "badge": "SPECIAL PASS",
     "accentColor": "#ffffff",
     "miniImage": "/images/roa_artist_1779161704881.png",
@@ -196,6 +201,7 @@
     "position": 2,
     "status": "active",
     "isFeatured": false,
+    "isAvailable": false,
     "badge": "LIVE ACCESS",
     "accentColor": "#ffffff",
     "miniImage": "/images/yan_block_artist_1779161408288.png",
@@ -287,7 +293,7 @@
     "date": "2026-11-20",
     "time": "20:00",
     "countdownDate": "2026-11-20",
-    "price": 12,
+    "price": 10,
     "imageUrl": "/images/trap_loud_anuel_1778966415162.png",
     "description": "El sonido alternativo y clásico chocan. La distorsión melódica de Deftones, la oscuridad moderna de Novulent y el legado inmortal de Aerosmith.",
     "lineup": [
@@ -298,6 +304,7 @@
     "position": 3,
     "status": "active",
     "isFeatured": false,
+    "isAvailable": false,
     "badge": "ALT ACCESS",
     "accentColor": "#ffffff",
     "miniImage": "/images/trap_loud_anuel_1778966415162.png",

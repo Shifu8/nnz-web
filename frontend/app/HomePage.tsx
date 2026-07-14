@@ -81,6 +81,47 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [checkoutState, setCheckoutState] = useState<string>("register");
 
+  // Inactive event Toast notification state
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'coming-soon' | 'sold-out' | 'info';
+    id: number;
+  } | null>(null);
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const triggerInactiveToast = (event: Event) => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    
+    let message = "Este evento estará disponible próximamente.";
+    let type: 'coming-soon' | 'sold-out' | 'info' = 'coming-soon';
+
+    if (event.status === "sold-out") {
+      message = "Este evento ya se encuentra agotado.";
+      type = "sold-out";
+    } else if (event.status === "coming-soon") {
+      message = "Este evento es el próximo y sus entradas aún no están disponibles.";
+      type = "coming-soon";
+    }
+
+    setToast({
+      message,
+      type,
+      id: Date.now()
+    });
+
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast(null);
+    }, 3000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
+  }, []);
+
 
 
   const { config } = useHomepageConfig(initialConfig);
@@ -522,133 +563,36 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         </div>
 
         {/* Columns Grid Layout */}
-        <div className="relative z-10 w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center flex-1">
+        <div className="relative z-10 w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-6 lg:gap-y-12 items-center flex-1">
 
-          {/* Left Column: Premium Editorial text */}
-          <div className="lg:col-span-5 flex flex-col justify-center text-left space-y-8 select-none">
+          {/* Block 1: Header info (NENEZ presenta & Description) */}
+          <div className="order-1 lg:col-span-5 flex flex-col justify-center text-left select-none">
+            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-500">
+              NENEZ presenta
+            </p>
 
-            {/* NENEZ PRESENTA tag */}
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-500">
-                NENEZ presenta
-              </p>
-
-              {/* Dynamic Big Artist Name with elegant AnimatePresence transition */}
-              <AnimatePresence mode="wait">
-                <motion.h1
-                  key={activeEvent.id}
-                  initial={{ opacity: 0, y: 35, rotateX: 12 }}
-                  animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                  exit={{ opacity: 0, y: -35, rotateX: -12 }}
-                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                  className="mt-2 text-7xl md:text-8xl font-black uppercase leading-none tracking-tighter text-white"
-                >
-                  {activeEvent.lineup && activeEvent.lineup.length > 0 ? activeEvent.lineup.join(" / ") : activeEvent.title}
-                </motion.h1>
-              </AnimatePresence>
-
-              {/* Luxury descriptive subtitle */}
-              <p className="text-zinc-400 text-xs mt-2 max-w-sm leading-relaxed">
-                Eventos temáticos con la vibra de tus artistas. DJ sets, visuales y cultura urbana.
-              </p>
-            </div>
-
-            {/* NEXT EVENT section */}
-            <div className="space-y-4 pt-6">
-              <p className="text-[8px] font-black tracking-[0.3em] text-zinc-500 uppercase">
-                Próximo Evento
-              </p>
-              <div>
-                <h2 className="text-2xl font-black uppercase tracking-tight text-white">
-                  {nextEvent.title}
-                </h2>
-                <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">
-                  {nextEvent.subtitle}
-                </p>
-              </div>
-
-              {/* Event Location & Date info */}
-              <div className="flex flex-wrap gap-2 text-zinc-300">
-                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest">
-                  {nextEvent.dateLabel}
-                </span>
-                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest">
-                  {nextEvent.city}
-                </span>
-              </div>
-
-              {/* Lineup tags */}
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {nextEvent.lineup.map((artist) => (
-                  <span
-                    key={artist}
-                    className="rounded-full border border-white/15 bg-white/[0.03] px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.2em] text-zinc-300"
-                  >
-                    {artist}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex gap-4 pt-4">
-              <button
-                type="button"
-                disabled={activeEvent.status !== "available"}
-                onClick={() => onViewDetails(activeEvent)}
-                className={`flex h-12 px-6 items-center justify-center rounded-full border text-[9px] font-black uppercase tracking-[0.2em] transition ${
-                  activeEvent.status === "available"
-                    ? "border-white/10 bg-black/20 text-zinc-300 hover:border-white/30 hover:bg-white/5 hover:text-white"
-                    : "border-zinc-800 bg-zinc-900/20 text-zinc-600 cursor-not-allowed opacity-50"
-                }`}
+            {/* Dynamic Big Artist Name with elegant AnimatePresence transition */}
+            <AnimatePresence mode="wait">
+              <motion.h1
+                key={activeEvent.id}
+                initial={{ opacity: 0, y: 35, rotateX: 12 }}
+                animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                exit={{ opacity: 0, y: -35, rotateX: -12 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                className="mt-2 text-7xl md:text-8xl font-black uppercase leading-none tracking-tighter text-white"
               >
-                Ver Detalle
-              </button>
+                {activeEvent.lineup && activeEvent.lineup.length > 0 ? activeEvent.lineup.join(" / ") : activeEvent.title}
+              </motion.h1>
+            </AnimatePresence>
 
-              <div className="relative">
-                {isTicketPulse && activeEvent.status === "available" && (
-                  <div
-                    className="absolute inset-0 rounded-full bg-white blur-md animate-glow-backdrop z-0 pointer-events-none"
-                    style={{
-                      boxShadow: "0 0 35px 15px rgba(255, 255, 255, 0.9)",
-                    }}
-                  />
-                )}
-                
-                {activeEvent.status === "available" ? (
-                  /* Contenedor con borde animado de trazo giratorio neon */
-                  <div className="relative p-[2px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.15)] hover:shadow-[0_0_25px_rgba(225,0,117,0.35)] transition-all duration-300 group">
-                    {/* Línea giratoria */}
-                    <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#e10075_50%,transparent_65%)] pointer-events-none" />
-                    
-                    <button
-                      type="button"
-                      onClick={() => onBuy(activeEvent)}
-                      className={`relative z-10 flex h-[44px] px-6 items-center justify-center rounded-full bg-zinc-950 text-[9px] font-black uppercase tracking-[0.2em] text-white hover:bg-white hover:text-black transition-all duration-300 ${isTicketPulse ? "scale-[1.04]" : ""
-                        }`}
-                      style={{
-                        transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
-                      }}
-                    >
-                      Comprar Entrada
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    disabled
-                    className="flex h-[44px] px-6 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900/20 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 cursor-not-allowed opacity-50"
-                  >
-                    Comprar Entrada
-                  </button>
-                )}
-              </div>
-            </div>
-
+            {/* Luxury descriptive subtitle */}
+            <p className="text-zinc-400 text-xs mt-2 max-w-sm leading-relaxed">
+              Eventos temáticos con la vibra de tus artistas. DJ sets, visuales y cultura urbana.
+            </p>
           </div>
 
-          {/* Right Column: Circular Stage Platform & 3D Carousel */}
-          <div className="lg:col-span-7 relative h-[600px] w-full flex items-center justify-center overflow-visible">
+          {/* Block 2: 3D Stage & Carousel */}
+          <div className="order-2 lg:col-span-7 lg:row-span-2 relative h-[500px] md:h-[600px] w-full flex items-center justify-center overflow-visible">
 
             {/* Circular Concrete Stage Platform */}
             <div
@@ -684,9 +628,119 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                 onBuy={onBuy}
                 onViewDetails={onViewDetails}
                 isTicketPulse={isTicketPulse}
+                onInactiveClick={triggerInactiveToast}
               />
             </div>
 
+          </div>
+
+          {/* Block 3: Upcoming Event Details */}
+          <div className="order-3 lg:col-span-5 flex flex-col justify-center text-left select-none space-y-4 lg:pt-0 pt-6">
+            <div className="space-y-4">
+              <p className="text-[8px] font-black tracking-[0.3em] text-zinc-500 uppercase">
+                Próximo Evento
+              </p>
+              <div>
+                <h2 className="text-2xl font-black uppercase tracking-tight text-white">
+                  {nextEvent.title}
+                </h2>
+                <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mt-0.5">
+                  {nextEvent.subtitle}
+                </p>
+              </div>
+
+              {/* Event Location & Date info */}
+              <div className="flex flex-wrap gap-2 text-zinc-300">
+                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest">
+                  {nextEvent.dateLabel}
+                </span>
+                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[8px] font-black uppercase tracking-widest">
+                  {nextEvent.city}
+                </span>
+              </div>
+
+              {/* Lineup tags */}
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {nextEvent.lineup.map((artist) => (
+                  <span
+                    key={artist}
+                    className="rounded-full border border-white/15 bg-white/[0.03] px-2.5 py-1 text-[7px] font-black uppercase tracking-[0.2em] text-zinc-300"
+                  >
+                    {artist}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Action buttons (only displayed on desktop screens) */}
+            <div className="hidden lg:flex gap-4 pt-4">
+              <button
+                type="button"
+                disabled={activeEvent.status !== "available"}
+                onClick={() => onViewDetails(activeEvent)}
+                className={`flex h-12 px-6 items-center justify-center rounded-full border text-[9px] font-black uppercase tracking-[0.2em] transition ${
+                  activeEvent.status === "available"
+                    ? "border-white/10 bg-black/20 text-zinc-300 hover:border-white/30 hover:bg-white/5 hover:text-white"
+                    : "border-zinc-800 bg-zinc-900/20 text-zinc-600 cursor-not-allowed opacity-50"
+                }`}
+              >
+                Ver Detalle
+              </button>
+
+              <div className="relative">
+                {isTicketPulse && activeEvent.status === "available" && (
+                  <div
+                    className="absolute inset-0 rounded-full bg-white blur-md animate-glow-backdrop z-0 pointer-events-none"
+                    style={{
+                      boxShadow: "0 0 35px 15px rgba(255, 255, 255, 0.9)",
+                    }}
+                  />
+                )}
+                
+                {activeEvent.status === "available" ? (
+                  /* Contenedor con borde animado de trazo giratorio neon */
+                  <div className="relative p-[2px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.15)] hover:shadow-[0_0_25px_rgba(225,0,117,0.35)] transition-all duration-300 group">
+                    {/* Línea giratoria */}
+                    <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#e10075_50%,transparent_65%)] pointer-events-none" />
+                    
+                    <button
+                      type="button"
+                      onClick={() => onBuy(activeEvent)}
+                      className="relative z-10 flex h-[44px] px-6 items-center justify-center rounded-full bg-zinc-950 text-[9px] font-black uppercase tracking-[0.2em] text-white hover:bg-white hover:text-black transition-all duration-300"
+                      style={{
+                        transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+                      }}
+                    >
+                      Comprar Entrada
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative group z-30">
+                    <button
+                      type="button"
+                      onClick={() => triggerInactiveToast(activeEvent)}
+                      className="flex h-[44px] px-6 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900/20 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 hover:text-zinc-500 hover:border-zinc-700 transition duration-300 cursor-not-allowed opacity-50"
+                    >
+                      Comprar Entrada
+                    </button>
+                    {/* Tooltip on hover if inactive */}
+                    <div 
+                      className="absolute bottom-full left-1/2 w-max scale-90 opacity-0 pointer-events-none group-hover:scale-100 group-hover:opacity-100 transition-all duration-300 z-50 bg-zinc-950/95 border border-white/10 text-white rounded-xl px-4 py-2 text-[9px] font-bold tracking-widest backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.9)] flex flex-col items-center mb-2"
+                      style={{ transform: "translate3d(-50%, 0, 45px)" }}
+                    >
+                      <span className="text-zinc-400 font-medium text-[8px] tracking-widest uppercase">
+                        {activeEvent.status === "sold-out" ? "Entradas Agotadas" : "Venta Próximamente"}
+                      </span>
+                      <span className="text-white font-black mt-0.5 uppercase tracking-widest text-[9px]">
+                        {activeEvent.status === "sold-out" ? "Evento Agotado" : "Evento Próximo"}
+                      </span>
+                      {/* Arrow pointing down */}
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-950" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -757,6 +811,30 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
       <AIChatbot />
       <StaffModal isOpen={isStaffModalOpen} onClose={() => setIsStaffModalOpen(false)} />
+
+      {/* Premium Toast/Alert for Inactive/Upcoming Events */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            key={toast.id}
+            initial={{ opacity: 0, y: 50, scale: 0.95, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
+            exit={{ opacity: 0, y: 20, scale: 0.95, x: "-50%" }}
+            transition={{ type: "spring", stiffness: 350, damping: 25 }}
+            className="fixed bottom-24 left-1/2 z-[9999] flex items-center gap-3 px-5 py-3 rounded-full bg-zinc-950/90 border border-white/10 backdrop-blur-md max-w-md w-[calc(100%-2rem)] sm:w-auto"
+            style={{
+              boxShadow: "0 20px 50px rgba(0,0,0,0.9), 0 0 20px rgba(255,255,255,0.02)",
+            }}
+          >
+            <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-white border border-white/15">
+              <LockKeyhole className="h-2.5 w-2.5" />
+            </div>
+            <span className="text-[10px] font-bold tracking-wide text-zinc-200 text-left leading-tight">
+              {toast.message}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Monochromatic minimalist footer */}
       <footer

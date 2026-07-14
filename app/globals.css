@@ -895,3 +895,96 @@ body {
 .animate-smooth-scale {
   animation: smoothScaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Rolling TV Hum Bar (Vintage analog effect) */
+@keyframes rolling-bar {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+.animate-rolling-bar {
+  animation: rolling-bar 10s linear infinite;
+}
+
+/* Sliced Glitch 1 */
+@keyframes glitch-slice-1 {
+  0%, 100% {
+    clip-path: inset(30% 0 65% 0);
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  8% {
+    clip-path: inset(30% 0 65% 0);
+    transform: translate3d(-3px, 0, 0);
+    opacity: 0.65;
+  }
+  10% {
+    clip-path: inset(28% 0 67% 0);
+    transform: translate3d(2px, 0, 0);
+    opacity: 0.8;
+  }
+  12% {
+    clip-path: inset(32% 0 63% 0);
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  50% {
+    clip-path: inset(70% 0 25% 0);
+    transform: translate3d(2px, 0, 0);
+    opacity: 0.5;
+  }
+  52% {
+    clip-path: inset(68% 0 27% 0);
+    transform: translate3d(-2px, 0, 0);
+    opacity: 0.7;
+  }
+  54% {
+    clip-path: inset(72% 0 23% 0);
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+}
+.animate-glitch-slice-1 {
+  animation: glitch-slice-1 4.5s ease-in-out infinite;
+}
+
+/* Sliced Glitch 2 */
+@keyframes glitch-slice-2 {
+  0%, 100% {
+    clip-path: inset(50% 0 45% 0);
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  24% {
+    clip-path: inset(50% 0 45% 0);
+    transform: translate3d(4px, 0, 0);
+    opacity: 0.6;
+  }
+  26% {
+    clip-path: inset(48% 0 47% 0);
+    transform: translate3d(-2px, 0, 0);
+    opacity: 0.75;
+  }
+  28% {
+    clip-path: inset(52% 0 43% 0);
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  78% {
+    clip-path: inset(15% 0 80% 0);
+    transform: translate3d(-3px, 0, 0);
+    opacity: 0.5;
+  }
+  80% {
+    clip-path: inset(17% 0 78% 0);
+    transform: translate3d(3px, 0, 0);
+    opacity: 0.7;
+  }
+  82% {
+    clip-path: inset(13% 0 82% 0);
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+}
+.animate-glitch-slice-2 {
+  animation: glitch-slice-2 5.5s ease-in-out infinite;
+}

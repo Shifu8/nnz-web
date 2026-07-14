@@ -156,5 +156,207 @@
       "expiresAt": "2026-07-07T12:45:16.177Z"
     },
     "createdAt": "2026-07-07T00:45:16.187Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "c1206ed8-12a4-4f9d-96d4-658d120934c0",
+      "expiresAt": "2026-07-12T06:27:22.197Z"
+    },
+    "createdAt": "2026-07-11T18:27:22.202Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "7b9522cf-70bc-41cd-bcf1-360a368b2f9a",
+      "expiresAt": "2026-07-12T06:39:57.877Z"
+    },
+    "createdAt": "2026-07-11T18:39:57.881Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "12d06d98-fb5b-4984-ad7e-80b72090d888",
+      "expiresAt": "2026-07-12T06:41:34.828Z"
+    },
+    "createdAt": "2026-07-11T18:41:34.828Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "ca3780e6-75d9-400b-8f6f-853a21c2afc7",
+      "expiresAt": "2026-07-12T06:46:30.291Z"
+    },
+    "createdAt": "2026-07-11T18:46:30.294Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "4e2b4fd5-47aa-480f-b644-6d873f8b2658",
+      "expiresAt": "2026-07-12T06:52:11.369Z"
+    },
+    "createdAt": "2026-07-11T18:52:11.373Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "ab14f5d2-a5e6-4e69-9d8a-11faf110567e",
+      "expiresAt": "2026-07-12T06:55:20.449Z"
+    },
+    "createdAt": "2026-07-11T18:55:20.454Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "c8cd5a6d-38ff-42b2-ab73-66f0cf85b97f",
+      "expiresAt": "2026-07-12T07:09:12.005Z"
+    },
+    "createdAt": "2026-07-11T19:09:12.009Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "5de973bb-3292-4fea-8b72-0251b174dc12",
+      "expiresAt": "2026-07-13T08:20:30.541Z"
+    },
+    "createdAt": "2026-07-12T20:20:30.550Z"
+  },
+  {
+    "action": "admin_clear_client_tickets",
+    "metadata": {
+      "email": "mrshifu879@gmail.com"
+    },
+    "createdAt": "2026-07-12T20:33:43.347Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "e2099fb9-6bed-4f9a-a990-c1e8bfd6b18a",
+      "expiresAt": "2026-07-13T08:33:51.069Z"
+    },
+    "createdAt": "2026-07-12T20:33:51.069Z"
+  },
+  {
+    "action": "admin_clear_client_tickets",
+    "metadata": {
+      "email": "brandon.medina@unl.edu.ec"
+    },
+    "createdAt": "2026-07-12T20:34:02.854Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "9b039301-3a25-4e90-978f-35e7de1e0585",
+      "expiresAt": "2026-07-13T08:34:12.791Z"
+    },
+    "createdAt": "2026-07-12T20:34:12.791Z"
+  },
+  {
+    "action": "admin_clear_client_tickets",
+    "metadata": {
+      "email": "dd@gmail.com"
+    },
+    "createdAt": "2026-07-12T20:34:28.954Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "71e258ad-8f11-4257-a7db-4dfcb08531be",
+      "expiresAt": "2026-07-13T08:34:35.265Z"
+    },
+    "createdAt": "2026-07-12T20:34:35.265Z"
+  },
+  {
+    "action": "admin_clear_client_tickets",
+    "metadata": {
+      "email": "bradon.medina@unl.edu.ec"
+    },
+    "createdAt": "2026-07-12T20:34:49.176Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "46cb65e9-1ce6-4640-9cef-95be5b157ae2",
+      "expiresAt": "2026-07-13T08:34:54.611Z"
+    },
+    "createdAt": "2026-07-12T20:34:54.611Z"
+  },
+  {
+    "action": "admin_clear_client_tickets",
+    "metadata": {
+      "email": "mrshifu878@gmail.com"
+    },
+    "createdAt": "2026-07-12T20:35:00.879Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "6528aa0b-fa7e-4354-9d20-e8059cd7f4ec",
+      "expiresAt": "2026-07-13T08:35:07.098Z"
+    },
+    "createdAt": "2026-07-12T20:35:07.098Z"
+  },
+  {
+    "action": "admin_clear_client_tickets",
+    "metadata": {
+      "email": "sss@gnail.com"
+    },
+    "createdAt": "2026-07-12T20:35:14.168Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "a7aed458-251b-4511-82c8-e1c4842f6b3a",
+      "expiresAt": "2026-07-13T08:40:09.177Z"
+    },
+    "createdAt": "2026-07-12T20:40:09.177Z"
+  },
+  {
+    "action": "admin_delete_client",
+    "metadata": {
+      "email": "tu@gmail.com"
+    },
+    "createdAt": "2026-07-12T20:40:44.653Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "a4b0c446-eb43-4ca4-9158-5c3b661ca23a",
+      "expiresAt": "2026-07-13T08:41:31.382Z"
+    },
+    "createdAt": "2026-07-12T20:41:31.382Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "0aa7990c-20ed-45a4-a9b1-43e3a84601d2",
+      "expiresAt": "2026-07-14T02:41:34.600Z"
+    },
+    "createdAt": "2026-07-13T14:41:34.614Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "3c4e94a3-3af8-4427-9a41-9fac19f68845",
+      "expiresAt": "2026-07-14T14:11:51.977Z"
+    },
+    "createdAt": "2026-07-14T02:11:51.989Z"
   }
 ]

@@ -22,6 +22,7 @@ interface EventTicketCarouselProps {
   onBuy: (event: Event) => void;
   onViewDetails: (event: Event) => void;
   isTicketPulse?: boolean;
+  onInactiveClick?: (event: Event) => void;
 }
 
 export const CAROUSEL_EVENTS: CarouselEvent[] = [
@@ -199,7 +200,8 @@ export default function EventTicketCarousel({
   setActiveIndex,
   onBuy,
   onViewDetails,
-  isTicketPulse = false
+  isTicketPulse = false,
+  onInactiveClick
 }: EventTicketCarouselProps) {
   const events = (propEvents && propEvents.length > 0) ? propEvents : CAROUSEL_EVENTS;
   const [dragOffset, setDragOffset] = useState(0);
@@ -209,6 +211,10 @@ export default function EventTicketCarousel({
   const clickStartRef = useRef<{ x: number; y: number } | null>(null);
   const clickMovedRef = useRef(false);
   const clickThreshold = 8;
+
+  // Touch Swipe tracking refs
+  const touchStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const isHorizontalSwipe = useRef<boolean | null>(null);
 
   // Mouse tilt parallax offsets
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
@@ -223,12 +229,9 @@ export default function EventTicketCarousel({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Simple mouse move parallax (Desktop only)
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    let hasGyro = false;
-    let initialBeta: number | null = null;
-    let initialGamma: number | null = null;
     
     let targetX = 0;
     let targetY = 0;
@@ -236,33 +239,8 @@ export default function EventTicketCarousel({
     let currentY = 0;
     let rafId: number;
 
-    const handleOrientation = (e: DeviceOrientationEvent) => {
-      const beta = e.beta;
-      const gamma = e.gamma;
-
-      if (beta === null || gamma === null) return;
-      hasGyro = true;
-
-      if (initialBeta === null || initialGamma === null) {
-        initialBeta = beta;
-        initialGamma = gamma;
-        return;
-      }
-
-      // Drift baseline slowly to auto-center
-      initialBeta += (beta - initialBeta) * 0.02;
-      initialGamma += (gamma - initialGamma) * 0.02;
-
-      const deltaBeta = beta - initialBeta;
-      const deltaGamma = gamma - initialGamma;
-
-      // Map delta angles to [-1, 1] range (clamped at 12 degrees delta)
-      targetX = Math.max(-1, Math.min(1, deltaGamma / 12));
-      targetY = Math.max(-1, Math.min(1, deltaBeta / 12));
-    };
-
     const handleMouseMove = (e: MouseEvent) => {
-      if (hasGyro) return;
+      if (window.innerWidth < 1024) return; // Skip parallax on tablet and mobile
       const { innerWidth, innerHeight } = window;
       const x = (e.clientX - innerWidth / 2) / (innerWidth / 2); // -1 to 1
       const y = (e.clientY - innerHeight / 2) / (innerHeight / 2); // -1 to 1
@@ -271,7 +249,6 @@ export default function EventTicketCarousel({
     };
 
     const updatePosition = () => {
-      // Golden ratio lerp (0.12)
       currentX += (targetX - currentX) * 0.12;
       currentY += (targetY - currentY) * 0.12;
 
@@ -279,27 +256,10 @@ export default function EventTicketCarousel({
       rafId = requestAnimationFrame(updatePosition);
     };
 
-    const requestPermission = async () => {
-      if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
-        try {
-          const state = await (DeviceOrientationEvent as any).requestPermission();
-          if (state === "granted") {
-            window.addEventListener("deviceorientation", handleOrientation, true);
-          }
-        } catch (err) {
-          console.error("iOS Gyroscope permission error:", err);
-        }
-      } else {
-        window.addEventListener("deviceorientation", handleOrientation, true);
-      }
-    };
-
-    requestPermission();
     window.addEventListener("mousemove", handleMouseMove);
     rafId = requestAnimationFrame(updatePosition);
 
     return () => {
-      window.removeEventListener("deviceorientation", handleOrientation, true);
       window.removeEventListener("mousemove", handleMouseMove);
       if (rafId) cancelAnimationFrame(rafId);
     };
@@ -344,29 +304,39 @@ export default function EventTicketCarousel({
       }
     }
     setDragOffset(0);
+    dragOffsetRef.current = 0;
   };
 
   // Touch Support for mobile
   const handleTouchStart = (e: React.TouchEvent) => {
     setIsDragging(true);
-    dragStartRef.current = e.touches[0].clientX;
+    const touch = e.touches[0];
+    dragStartRef.current = touch.clientX;
     dragOffsetRef.current = 0;
-    clickStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    clickStartRef.current = { x: touch.clientX, y: touch.clientY };
     clickMovedRef.current = false;
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    isHorizontalSwipe.current = null;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
-    const deltaX = e.touches[0].clientX - dragStartRef.current;
-    const deg = deltaX * 0.22;
-    dragOffsetRef.current = deg;
-    setDragOffset(deg);
-    if (clickStartRef.current) {
-      const moveX = Math.abs(e.touches[0].clientX - clickStartRef.current.x);
-      const moveY = Math.abs(e.touches[0].clientY - clickStartRef.current.y);
-      if (moveX > clickThreshold || moveY > clickThreshold) {
-        clickMovedRef.current = true;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+
+    if (isHorizontalSwipe.current === null) {
+      if (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8) {
+        isHorizontalSwipe.current = Math.abs(deltaX) > Math.abs(deltaY);
       }
+    }
+
+    if (isHorizontalSwipe.current === true) {
+      if (e.cancelable) e.preventDefault();
+      const deg = (touch.clientX - dragStartRef.current) * 0.22;
+      dragOffsetRef.current = deg;
+      setDragOffset(deg);
+      clickMovedRef.current = true;
     }
   };
 
@@ -384,8 +354,34 @@ export default function EventTicketCarousel({
     setActiveIndex(next);
   };
 
+  // Global mouseup/touchend event listener during active drag
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleGlobalRelease = () => {
+      handleMouseUp();
+    };
+
+    window.addEventListener("mouseup", handleGlobalRelease);
+    window.addEventListener("touchend", handleGlobalRelease);
+
+    return () => {
+      window.removeEventListener("mouseup", handleGlobalRelease);
+      window.removeEventListener("touchend", handleGlobalRelease);
+    };
+  }, [isDragging, activeIndex, events.length]);
+
   return (
-    <div className="relative w-full h-[520px] md:h-[560px] lg:h-[620px] flex items-center justify-center select-none overflow-visible">
+    <div
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className="relative w-full h-[520px] md:h-[560px] lg:h-[620px] flex items-center justify-center select-none overflow-visible"
+    >
       {/* 3D Scene Wrapper */}
       <div 
         className="relative w-full h-full flex items-center justify-center overflow-visible"
@@ -421,12 +417,21 @@ export default function EventTicketCarousel({
           return (
             <div
               key={event.id}
-              onClick={() => {
-                if (diff === 0 && event.status === "available") {
-                  onBuy(event);
+              onClick={(e) => {
+                if (clickMovedRef.current) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return;
+                }
+                if (diff === 0) {
+                  if (event.status === "available") {
+                    onBuy(event);
+                  } else {
+                    onInactiveClick?.(event);
+                  }
                 }
               }}
-              className={`absolute w-[290px] h-[410px] md:w-[330px] md:h-[460px] lg:w-[370px] lg:h-[520px] rounded-[32px] overflow-hidden cursor-pointer origin-center transition-all animate-float ${
+              className={`absolute w-[290px] h-[410px] md:w-[330px] md:h-[460px] lg:w-[370px] lg:h-[520px] rounded-[32px] cursor-pointer origin-center transition-all animate-float group ${
                 diff === 0 && isTicketPulse ? "ticket-pulse-active" : ""
               }`}
               style={{
@@ -441,13 +446,39 @@ export default function EventTicketCarousel({
                   : "0 20px 40px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05)",
                 background: "rgba(10, 10, 10, 0.72)",
                 backdropFilter: "blur(24px)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                border: diff === 0 ? "none" : "1px solid rgba(255,255,255,0.08)",
               }}
             >
-              <div className="relative w-full h-full p-5 flex flex-col justify-between" style={{ transform: "translateZ(20px)" }}>
+              {/* Spinning border glow for active card */}
+              {diff === 0 && (
+                <div className="absolute inset-[-1px] rounded-[32px] overflow-hidden pointer-events-none z-0">
+                  <div className="absolute inset-[-200%] animate-[spin_5s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_30%,#e10075_50%,transparent_70%)] opacity-85" />
+                  <div className="absolute inset-[1px] rounded-[31px] bg-zinc-950/95 backdrop-blur-2xl" />
+                </div>
+              )}
+
+              {/* Tooltip on hover if inactive */}
+              {event.status !== "available" && (
+                <div 
+                  className="absolute -top-14 left-1/2 w-max scale-90 opacity-0 pointer-events-none group-hover:scale-100 group-hover:opacity-100 transition-all duration-300 z-50 bg-zinc-950/95 border border-white/10 text-white rounded-xl px-4 py-2 text-[9px] font-bold tracking-widest backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.9)] flex flex-col items-center"
+                  style={{ transform: "translate3d(-50%, 0, 45px)" }}
+                >
+                  <span className="text-zinc-400 font-medium text-[8px] tracking-widest uppercase">
+                    {event.status === "sold-out" ? "Entradas Agotadas" : "Venta Próximamente"}
+                  </span>
+                  <span className="text-white font-black mt-0.5 uppercase tracking-widest text-[9px]">
+                    {event.status === "sold-out" ? "Evento Agotado" : "Evento Próximo"}
+                  </span>
+                  {/* Arrow pointing down */}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-950" />
+                </div>
+              )}
+              <div className="relative w-full h-full p-5 flex flex-col justify-between z-10" style={{ transform: "translateZ(20px)" }}>
                 
                 {/* Grayscale Artist Cover */}
-                <div className="relative w-full h-[62%] rounded-[20px] overflow-hidden bg-zinc-900 border border-white/5">
+                <div className={`relative w-full rounded-[20px] overflow-hidden bg-zinc-900 border border-white/5 transition-all duration-500 ${
+                  diff === 0 ? "h-[50%] md:h-[55%] lg:h-[62%]" : "h-[62%]"
+                }`}>
                   <Image
                     src={event.poster}
                     alt={event.title}
@@ -494,14 +525,66 @@ export default function EventTicketCarousel({
                   </div>
 
                   {/* Horizontal dividers & metadata details */}
-                  <div className="flex items-center gap-4 mt-3 pt-3 text-zinc-400">
+                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/5 text-zinc-400">
                     <div className="flex items-center text-[8px] font-black uppercase tracking-wider">
-                      <span>{event.dateLabel.split(" ")[0]} {event.dateLabel.split(" ")[1]}</span>
+                      <span>{event.dateLabel}</span>
                     </div>
                     <div className="flex items-center text-[8px] font-black uppercase tracking-wider">
                       <span>{event.city}</span>
                     </div>
                   </div>
+
+                  {/* Active Card Action Buttons */}
+                  {diff === 0 && (
+                    <div className="flex lg:hidden gap-2 mt-3 pt-3 border-t border-white/5 w-full z-50">
+                      <button
+                        type="button"
+                        disabled={event.status === "coming-soon"}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (clickMovedRef.current) return;
+                          onViewDetails(event);
+                        }}
+                        className={`flex-1 h-9 rounded-full border text-[8px] font-black uppercase tracking-[0.15em] transition duration-300 ${
+                          event.status === "coming-soon"
+                            ? "border-zinc-800 bg-zinc-900/20 text-zinc-600 cursor-not-allowed opacity-50"
+                            : "border-white/10 bg-black/45 text-zinc-300 hover:border-white/30 hover:bg-white/5 hover:text-white active:scale-95 cursor-pointer"
+                        }`}
+                      >
+                        Detalles
+                      </button>
+
+                      {event.status === "available" ? (
+                        <div className="flex-1 relative p-[1px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_12px_rgba(225,0,117,0.15)] group/btn">
+                          {/* Pink spinning line */}
+                          <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#e10075_50%,transparent_65%)] pointer-events-none" />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (clickMovedRef.current) return;
+                              onBuy(event);
+                            }}
+                            className="relative z-10 w-full h-[34px] rounded-full bg-zinc-950 text-[8px] font-black uppercase tracking-[0.15em] text-white hover:bg-white hover:text-black transition-all duration-300 active:scale-95 cursor-pointer"
+                          >
+                            Comprar
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (clickMovedRef.current) return;
+                            onInactiveClick?.(event);
+                          }}
+                          className="flex-1 h-9 rounded-full border border-zinc-800 bg-zinc-900/20 text-[8px] font-black uppercase tracking-[0.15em] text-zinc-600 hover:text-zinc-500 hover:border-zinc-700 transition duration-300 active:scale-95 cursor-pointer"
+                        >
+                          {event.status === "sold-out" ? "Agotado" : "Próximamente"}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
               </div>

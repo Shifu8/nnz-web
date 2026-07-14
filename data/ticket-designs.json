@@ -75,9 +75,9 @@
     "id": "dawg-night-default-0",
     "eventId": "dawg-night",
     "name": "OMAR COURTZ",
-    "photo": "/images/omar_courtz_artist_1779161689015.png",
+    "photo": "/uploads/ticket-designs/dawg-night-default-0.jpg",
     "accentColor": "#C8FF00",
-    "shadowColor": "rgba(200, 255, 0, 0.25)",
+    "shadowColor": "#C8FF0040",
     "badge": "VIP ACCESS"
   },
   {
