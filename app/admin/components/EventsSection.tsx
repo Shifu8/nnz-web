@@ -849,41 +849,87 @@ export default function EventsSection(_props: EventsSectionProps) {
               {/* Tab: Bar & Bebidas */}
               {modalTab === ("drinks" as any) && (
                 <div className="space-y-6">
-                  <div className="flex justify-between items-center mb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2 pb-3 border-b border-white/10">
                     <div>
                       <p className="text-[11px] font-black uppercase text-white tracking-wider">Carta de Bebidas & Botellas</p>
-                      <p className="text-[8px] font-bold uppercase tracking-widest text-zinc-500 mt-0.5">Administra los tragos de autor, precios y botellas</p>
+                      <p className="text-[8px] font-bold uppercase tracking-widest text-zinc-500 mt-0.5">Agrega vasos especiales ($2) y botellas para la barra</p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setForm((f) => ({
-                          ...f,
-                          drinks: [
-                            ...(f.drinks || []),
-                            {
-                              id: `d-${Date.now()}`,
-                              name: "",
-                              category: "Cocteles Especiales",
-                              price: "$10",
-                              description: "",
-                              badge: "",
-                            },
-                          ],
-                        }))
-                      }
-                      className="px-3 py-2 text-[8px] font-black bg-red-600 text-white rounded-xl hover:bg-red-500 uppercase tracking-wider transition shadow-[0_0_15px_rgba(220,38,38,0.3)] cursor-pointer"
-                    >
-                      + Añadir Bebida / Botella
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm((f) => ({
+                            ...f,
+                            drinks: [
+                              ...(f.drinks || []),
+                              {
+                                id: `d-${Date.now()}`,
+                                name: "",
+                                category: "Cocteles Especiales",
+                                price: "$2",
+                                description: "Vaso de trago especial",
+                                badge: "ESPECIAL DE LA NOCHE",
+                              },
+                            ],
+                          }))
+                        }
+                        className="px-3 py-2 text-[8px] font-black bg-pink-600 hover:bg-pink-500 text-white rounded-xl uppercase tracking-wider transition shadow-[0_0_15px_rgba(225,0,117,0.3)] cursor-pointer"
+                      >
+                        + Añadir Especial ($2)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm((f) => ({
+                            ...f,
+                            drinks: [
+                              ...(f.drinks || []),
+                              {
+                                id: `d-${Date.now()}`,
+                                name: "",
+                                category: "Botellas",
+                                price: "$35",
+                                description: "Botella 750ml",
+                                badge: "",
+                              },
+                            ],
+                          }))
+                        }
+                        className="px-3 py-2 text-[8px] font-black bg-red-600 hover:bg-red-500 text-white rounded-xl uppercase tracking-wider transition shadow-[0_0_15px_rgba(220,38,38,0.3)] cursor-pointer"
+                      >
+                        + Añadir Botella
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-3 max-h-[45vh] overflow-y-auto no-scrollbar pr-1">
                     {form.drinks?.map((drink, idx) => (
                       <div
                         key={drink.id || idx}
-                        className="flex flex-col gap-3 border border-white/10 bg-black/40 p-4 rounded-2xl"
+                        className="flex flex-col gap-3 border border-white/10 bg-black/50 p-4 rounded-2xl relative"
                       >
+                        <div className="flex items-center justify-between">
+                          <span className={`text-[7px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full border ${
+                            drink.category === "Cocteles Especiales"
+                              ? "border-pink-500/40 bg-pink-950/40 text-pink-300"
+                              : "border-white/20 bg-white/10 text-white"
+                          }`}>
+                            {drink.category}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setForm({
+                                ...form,
+                                drinks: (form.drinks || []).filter((_, i) => i !== idx),
+                              });
+                            }}
+                            className="px-2.5 py-1 rounded-lg border border-red-500/20 bg-red-950/30 text-red-400 hover:bg-red-950/60 transition font-bold text-[9px] uppercase tracking-wider cursor-pointer"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+
                         <div className="flex flex-col sm:flex-row gap-2">
                           <input
                             value={drink.name}
@@ -893,7 +939,7 @@ export default function EventsSection(_props: EventsSectionProps) {
                               setForm({ ...form, drinks: next });
                             }}
                             placeholder="Nombre (ej: Mojito Eleva)"
-                            className="flex-1 rounded-xl border border-white/10 bg-black/60 px-3 py-2 text-xs font-bold text-white outline-none focus:border-red-500/50"
+                            className="flex-1 rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-xs font-bold text-white outline-none focus:border-red-500/50"
                           />
                           <select
                             value={drink.category}
@@ -905,7 +951,7 @@ export default function EventsSection(_props: EventsSectionProps) {
                               };
                               setForm({ ...form, drinks: next });
                             }}
-                            className="rounded-xl border border-white/10 bg-black/60 px-3 py-2 text-xs font-bold text-white outline-none"
+                            className="rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-xs font-bold text-white outline-none"
                           >
                             <option value="Cocteles Especiales" className="bg-zinc-900">Cocteles Especiales</option>
                             <option value="Botellas" className="bg-zinc-900">Botellas</option>
@@ -917,8 +963,8 @@ export default function EventsSection(_props: EventsSectionProps) {
                               next[idx] = { ...next[idx], price: e.target.value };
                               setForm({ ...form, drinks: next });
                             }}
-                            placeholder="Precio (ej: $8)"
-                            className="w-28 rounded-xl border border-white/10 bg-black/60 px-3 py-2 text-xs font-bold text-white outline-none focus:border-red-500/50"
+                            placeholder="Precio (ej: $2)"
+                            className="w-28 rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-xs font-bold text-white outline-none focus:border-red-500/50"
                           />
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2">
@@ -930,7 +976,7 @@ export default function EventsSection(_props: EventsSectionProps) {
                               setForm({ ...form, drinks: next });
                             }}
                             placeholder="Descripción (ej: Ron blanco, menta fresca, soda de lima...)"
-                            className="flex-1 rounded-xl border border-white/10 bg-black/60 px-3 py-2 text-xs text-white outline-none focus:border-red-500/50"
+                            className="flex-1 rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-xs text-white outline-none focus:border-red-500/50"
                           />
                           <input
                             value={drink.badge || ""}
@@ -940,26 +986,14 @@ export default function EventsSection(_props: EventsSectionProps) {
                               setForm({ ...form, drinks: next });
                             }}
                             placeholder="Badge (ej: ESPECIAL DE LA NOCHE)"
-                            className="w-44 rounded-xl border border-white/10 bg-black/60 px-3 py-2 text-xs text-white outline-none focus:border-red-500/50"
+                            className="w-48 rounded-xl border border-white/10 bg-black/70 px-3 py-2 text-xs text-white outline-none focus:border-red-500/50"
                           />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setForm({
-                                ...form,
-                                drinks: (form.drinks || []).filter((_, i) => i !== idx),
-                              });
-                            }}
-                            className="px-3 py-2 rounded-xl border border-red-500/20 bg-red-950/20 text-red-400 hover:bg-red-950/40 transition font-bold text-xs cursor-pointer"
-                          >
-                            ✕
-                          </button>
                         </div>
                       </div>
                     ))}
                     {(form.drinks?.length ?? 0) === 0 && (
                       <p className="text-[9px] font-bold text-zinc-600 uppercase text-center py-6 border border-dashed border-white/10 rounded-2xl">
-                        No hay bebidas configuradas para este evento.
+                        No hay bebidas configuradas para este evento. Presiona un botón arriba para añadir.
                       </p>
                     )}
                   </div>

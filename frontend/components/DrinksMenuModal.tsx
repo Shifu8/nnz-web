@@ -12,7 +12,7 @@ export const DRINKS_LIST: DrinkItem[] = [
     id: "mojito-eleva",
     name: "Mojito Eleva",
     category: "Cocteles Especiales",
-    price: "$8",
+    price: "$2",
     description: "Ron blanco, menta fresca, soda de lima e infusión secreta NENEZ.",
     badge: "ESPECIAL DE LA NOCHE",
   },
