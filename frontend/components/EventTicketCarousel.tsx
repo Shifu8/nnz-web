@@ -564,8 +564,8 @@ export default function EventTicketCarousel({
                     if (salesStatus.isClosed && event.status === "available") {
                       return (
                         <div className="flex flex-col gap-2 mt-3 xl:mt-4 pt-3 border-t border-white/5 w-full z-50">
-                          <div className="w-full p-2 rounded-xl bg-pink-950/40 border border-pink-500/30 text-[8px] xl:text-[9px] font-black uppercase tracking-wider text-pink-300 text-center">
-                            🚨 Entradas Online Cerradas ({salesStatus.cutoffTime} hs)
+                          <div className="w-full p-2 rounded-xl bg-zinc-950/80 border border-white/15 text-[8px] xl:text-[9px] font-black uppercase tracking-wider text-zinc-300 text-center">
+                            Ventas Online Finalizadas ({salesStatus.cutoffTime} hs) · Entradas en Puerta
                           </div>
                           <div className="flex gap-2 w-full">
                             <button
@@ -589,7 +589,7 @@ export default function EventTicketCarousel({
                                   customMessage: `Las entradas online por esta web han finalizado a las ${salesStatus.cutoffTime} hs. Puedes adquirir tu entrada directamente en la puerta del evento.`
                                 } as any);
                               }}
-                              className="flex-1 h-9 xl:h-10 rounded-full border border-pink-500/40 bg-pink-950/60 text-[8px] xl:text-[9px] font-black uppercase tracking-[0.12em] text-pink-200 hover:bg-pink-900 transition active:scale-95 cursor-pointer shadow-[0_0_20px_rgba(225,0,117,0.4)]"
+                              className="flex-1 h-9 xl:h-10 rounded-full border border-white/20 bg-zinc-900 text-[8px] xl:text-[9px] font-black uppercase tracking-[0.12em] text-white hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
                             >
                               Entradas en Puerta
                             </button>
@@ -601,12 +601,9 @@ export default function EventTicketCarousel({
                     return (
                       <div className="flex flex-col gap-2 mt-3 xl:mt-4 pt-3 border-t border-white/5 w-full z-50">
                         {salesStatus.isWarning && event.status === "available" && (
-                          <div className="w-full p-2 rounded-xl bg-pink-950/80 border border-pink-500/50 shadow-[0_0_20px_rgba(225,0,117,0.3)] flex items-center justify-between text-[8px] xl:text-[9px] font-black uppercase tracking-wider text-pink-100 animate-pulse">
-                            <span className="flex items-center gap-1.5 text-pink-300">
-                              <span className="h-1.5 w-1.5 rounded-full bg-pink-400" />
-                              ¡Cierre Online en {salesStatus.remainingLabel}!
-                            </span>
-                            <span className="text-[7.5px] text-pink-200">Ventas en puerta tras las {salesStatus.cutoffTime}</span>
+                          <div className="w-full p-2 rounded-xl bg-zinc-950/90 border border-white/20 flex items-center justify-between text-[8px] xl:text-[9px] font-black uppercase tracking-wider text-white">
+                            <span>Cierre Online en {salesStatus.remainingLabel}</span>
+                            <span className="text-[7.5px] text-zinc-400">Ventas en puerta tras las {salesStatus.cutoffTime} hs</span>
                           </div>
                         )}
                         <div className="flex gap-2 w-full">

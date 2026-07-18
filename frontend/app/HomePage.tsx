@@ -54,6 +54,42 @@ interface HomePageProps {
   initialConfig: HomepageConfig;
 }
 
+function TypewriterText({ text, speed = 35 }: { text: string; speed?: number }) {
+  const [displayedText, setDisplayedText] = useState("");
+  const prevBaseTextRef = useRef("");
+
+  useEffect(() => {
+    const baseTemplate = text.replace(/\d{2}:\d{2}:\d{2}/g, "00:00:00");
+    if (baseTemplate !== prevBaseTextRef.current) {
+      prevBaseTextRef.current = baseTemplate;
+      setDisplayedText("");
+      let i = 0;
+      const interval = setInterval(() => {
+        i++;
+        setDisplayedText(text.slice(0, i));
+        if (i >= text.length) {
+          clearInterval(interval);
+        }
+      }, speed);
+      return () => clearInterval(interval);
+    } else {
+      setDisplayedText((current) => {
+        if (current.length >= text.length - 2) {
+          return text;
+        }
+        return current;
+      });
+    }
+  }, [text, speed]);
+
+  return (
+    <span className="font-mono tracking-wider">
+      {displayedText}
+      <span className="inline-block w-1.5 h-3 ml-1 bg-white/80 animate-pulse align-middle" />
+    </span>
+  );
+}
+
 export default function HomePage({ initialConfig }: HomePageProps) {
   const router = useRouter();
   const scope = useRef<HTMLElement>(null);
@@ -518,27 +554,21 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
       {/* Real-time Online Sales Cutoff Banner (Warning < 3h or Closed) */}
       {activeEvent && activeSalesStatus.isWarning && activeEvent.status === "available" && (
-        <div className="fixed inset-x-0 top-[57px] z-40 bg-gradient-to-r from-pink-950 via-zinc-950 to-pink-950 border-b border-pink-500/40 py-2 px-4 text-center backdrop-blur-xl shadow-[0_0_35px_rgba(225,0,117,0.35)]">
-          <div className="mx-auto flex max-w-[1600px] items-center justify-center gap-2 text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-white">
-            <span className="h-2 w-2 rounded-full bg-pink-500 animate-ping" />
-            <span>
-              🔥 ¡ÚLTIMAS ENTRADAS ONLINE! Cierre de ventas web en{" "}
-              <span className="font-mono text-pink-300 font-extrabold px-2 py-0.5 rounded bg-pink-950/90 border border-pink-500/50">
-                {activeSalesStatus.remainingLabel}
-              </span>{" "}
-              ({activeSalesStatus.cutoffTime} hs). Entradas disponibles únicamente en puerta tras el cierre.
-            </span>
+        <div className="fixed inset-x-0 top-[57px] z-40 bg-zinc-950/95 border-b border-white/10 py-2.5 px-4 text-center backdrop-blur-xl shadow-lg select-none">
+          <div className="mx-auto flex max-w-[1600px] items-center justify-center text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-white">
+            <TypewriterText
+              text={`CIERRE DE VENTAS ONLINE EN ${activeSalesStatus.remainingLabel} (${activeSalesStatus.cutoffTime} HS) · VENTAS EN PUERTA TRAS EL CIERRE`}
+            />
           </div>
         </div>
       )}
 
       {activeEvent && activeSalesStatus.isClosed && activeEvent.status === "available" && (
-        <div className="fixed inset-x-0 top-[57px] z-40 bg-zinc-950/95 border-b border-pink-500/30 py-2 px-4 text-center backdrop-blur-xl">
-          <div className="mx-auto flex max-w-[1600px] items-center justify-center gap-2 text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-zinc-300">
-            <span className="h-2 w-2 rounded-full bg-pink-500" />
-            <span>
-              Las entradas online por esta web han finalizado ({activeSalesStatus.cutoffTime} hs). Podrás adquirir tu entrada directamente en la puerta del evento.
-            </span>
+        <div className="fixed inset-x-0 top-[57px] z-40 bg-zinc-950/95 border-b border-white/10 py-2.5 px-4 text-center backdrop-blur-xl shadow-lg select-none">
+          <div className="mx-auto flex max-w-[1600px] items-center justify-center text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-zinc-300">
+            <TypewriterText
+              text={`VENTAS ONLINE FINALIZADAS (${activeSalesStatus.cutoffTime} HS) · ENTRADAS DISPONIBLES EN PUERTA`}
+            />
           </div>
         </div>
       )}
