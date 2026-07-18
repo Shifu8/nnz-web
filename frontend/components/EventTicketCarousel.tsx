@@ -225,6 +225,7 @@ export default function EventTicketCarousel({
   const touchStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const isHorizontalSwipe = useRef<boolean | null>(null);
 
+  const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
   const [, setTick] = useState(0);
   useEffect(() => {
     const timer = setInterval(() => setTick((t) => t + 1), 1000);
@@ -426,10 +427,12 @@ export default function EventTicketCarousel({
           
           const rotateY = angle * 0.9;
 
-          const px = mouseOffset.x * (diff === 0 ? 24 : 10);
-          const py = mouseOffset.y * (diff === 0 ? 16 : 8);
-          const prX = -mouseOffset.y * (diff === 0 ? 12 : 5);
-          const prY = mouseOffset.x * (diff === 0 ? 14 : 6);
+          const mx = mouseOffset?.x ?? 0;
+          const my = mouseOffset?.y ?? 0;
+          const px = mx * (diff === 0 ? 24 : 10);
+          const py = my * (diff === 0 ? 16 : 8);
+          const prX = -my * (diff === 0 ? 12 : 5);
+          const prY = mx * (diff === 0 ? 14 : 6);
 
           const scale = diff === 0 ? 1 : 0.82;
           const opacity = diff === 0 ? 1 : 0.42;
