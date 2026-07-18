@@ -571,7 +571,13 @@ export default function EventTicketCarousel({
                       </button>
 
                       {event.status === "available" ? (
-                        <div className="flex-1 relative p-[1.5px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_15px_rgba(225,0,117,0.2)] group/btn">
+                        <div
+                          className={`flex-1 relative p-[1.5px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center transition-all duration-500 group/btn ${
+                            diff === 0 && isTicketPulse
+                              ? "ring-2 ring-pink-500 shadow-[0_0_35px_rgba(225,0,117,0.85),0_0_65px_rgba(225,0,117,0.45)] scale-[1.03] animate-pulse"
+                              : "shadow-[0_0_15px_rgba(225,0,117,0.2)]"
+                          }`}
+                        >
                           {/* Pink spinning line */}
                           <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#e10075_50%,transparent_65%)] pointer-events-none" />
                           <button

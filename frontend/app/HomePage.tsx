@@ -338,7 +338,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
     setIsTicketPulse(true);
     window.setTimeout(() => {
       setIsTicketPulse(false);
-    }, 2400);
+    }, 2500);
   };
 
   const scrollToRecovery = () => {
@@ -654,6 +654,22 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               />
             </div>
 
+          </div>
+
+          {/* Mobile Bar & Drinks Menu button (displayed under event cards on mobile screens) */}
+          <div className="order-2 lg:hidden flex justify-center w-full pt-2 pb-2 relative z-30">
+            <div className="relative p-[2px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.2)] active:scale-95 transition-all duration-300 group">
+              {/* Línea giratoria */}
+              <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#e10075_50%,transparent_65%)] pointer-events-none" />
+              
+              <button
+                type="button"
+                onClick={() => setShowDrinksModal(true)}
+                className="relative z-10 flex h-[44px] px-7 items-center justify-center rounded-full bg-zinc-950 text-[9px] font-black uppercase tracking-[0.2em] text-white hover:bg-white hover:text-black transition-all duration-300 cursor-pointer active:scale-95"
+              >
+                Bar & Carta de Bebidas
+              </button>
+            </div>
           </div>
 
           {/* Block 3: Upcoming Event Details */}
@@ -1113,30 +1129,16 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         }
         @keyframes ticket-glow-pulse {
           0%, 100% {
-            box-shadow: 0 40px 100px rgba(0,0,0,0.85), 0 0 50px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.15) !important;
-            border-color: rgba(255,255,255,0.08) !important;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.85), 0 0 30px rgba(225,0,117,0.2), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+            border-color: rgba(255,255,255,0.18) !important;
           }
           50% {
-            box-shadow: 0 0 70px rgba(255,255,255,0.38), 0 40px 100px rgba(0,0,0,0.85), 0 0 50px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.25) !important;
-            border-color: rgba(255,255,255,0.3) !important;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.85), 0 0 65px rgba(225,0,117,0.7), 0 0 100px rgba(225,0,117,0.35), inset 0 1px 0 rgba(225,0,117,0.4) !important;
+            border-color: rgba(225,0,117,0.6) !important;
           }
         }
         .ticket-pulse-active {
-          animation: ticket-glow-pulse 0.8s ease-in-out infinite !important;
-        }
-        @keyframes button-glow-smooth {
-          0%, 100% {
-            box-shadow: 0 0 0 0px rgba(255, 255, 255, 0.4), 0 0 0 0px rgba(255, 255, 255, 0.2) !important;
-            transform: scale(1) !important;
-          }
-          50% {
-            box-shadow: 0 0 0 12px rgba(255, 255, 255, 0), 0 0 45px 20px rgba(255, 255, 255, 0.75) !important;
-            transform: scale(1.04) !important;
-          }
-        }
-        .button-pulse-smooth {
-          animation: button-glow-smooth 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
-          transition: none !important;
+          animation: ticket-glow-pulse 1.2s ease-in-out infinite !important;
         }
       `}} />
     </main>

@@ -73,11 +73,17 @@ export default function DrinksMenuModal({
 
   useEffect(() => {
     if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
   return (
@@ -88,19 +94,18 @@ export default function DrinksMenuModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.35, ease: "easeInOut" }}
-          className="fixed inset-0 z-[300] flex items-center justify-center p-4"
-          style={{ backdropFilter: "blur(28px)", background: "rgba(0,0,0,0.88)" }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-xl"
           onClick={(e) => {
             if (e.target === e.currentTarget) onClose();
           }}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.93, y: 24 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 16 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-[600px] max-h-[85vh] overflow-hidden flex flex-col rounded-[32px] bg-[#060606] border border-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.95)]"
+            initial={{ opacity: 0, y: 35, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 25, scale: 0.97 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="relative w-full max-w-[600px] max-h-[88vh] sm:max-h-[85vh] overflow-hidden flex flex-col rounded-t-[28px] sm:rounded-[32px] bg-[#060606] border border-white/10 shadow-[0_25px_80px_rgba(0,0,0,0.9)] transform-gpu"
           >
             {/* Header */}
             <div className="relative p-6 sm:p-8 border-b border-white/[0.06] flex items-start justify-between bg-gradient-to-b from-zinc-900/40 to-transparent">
