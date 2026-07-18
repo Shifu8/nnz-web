@@ -14,7 +14,7 @@ import {
   getEmailSuggestion,
 } from "@/frontend/utils/emailInput";
 import { validateReceiptFileMetadata } from "@/lib/access-drop/fileValidation";
-import { ChevronLeft, ChevronRight, ClipboardCopy, ClipboardCheck, UploadCloud } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardCopy, ClipboardCheck, UploadCloud, Shield } from "lucide-react";
 import { getEventDesigns, type TicketDesign } from "@/lib/tickets/designs";
 import { getOnlineSalesStatus } from "@/frontend/utils/cutoff";
 
