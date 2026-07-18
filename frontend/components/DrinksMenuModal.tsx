@@ -132,33 +132,40 @@ export default function DrinksMenuModal({
                     Especiales de la Noche
                   </p>
 
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-1">
                     {drinksList
                       .filter((d) => d.category === "Cocteles Especiales")
                       .map((drink) => (
                         <div
                           key={drink.id || drink.name}
-                          className="group relative overflow-hidden rounded-2xl border border-white/[0.1] bg-zinc-950/80 p-4 shadow-lg transition-all duration-300 hover:border-white/30 hover:bg-white/[0.03]"
+                          className="group relative overflow-hidden rounded-2xl border border-pink-500/40 bg-gradient-to-br from-pink-950/40 via-zinc-950 to-black p-5 shadow-[0_0_35px_rgba(225,0,117,0.22)] transition-all duration-500 hover:border-pink-500/70 hover:shadow-[0_0_55px_rgba(225,0,117,0.45)]"
                         >
-                          {drink.badge && (
-                            <div className="inline-flex items-center rounded-full border border-white/20 bg-white/[0.06] px-2.5 py-0.5 text-[7px] font-black uppercase tracking-wider text-zinc-200 mb-2">
-                              {drink.badge}
+                          {/* Subtle ambient light sweep behind */}
+                          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(225,0,117,0.28),transparent_65%)] pointer-events-none" />
+                          
+                          <div className="relative z-10 flex flex-col gap-2">
+                            {drink.badge && (
+                              <div className="self-start inline-flex items-center gap-1.5 rounded-full border border-pink-400/50 bg-pink-950/80 px-3 py-1 text-[7.5px] font-black uppercase tracking-[0.2em] text-pink-200 shadow-[0_0_18px_rgba(225,0,117,0.4)]">
+                                <span className="h-1.5 w-1.5 rounded-full bg-pink-400 animate-pulse" />
+                                {drink.badge}
+                              </div>
+                            )}
+
+                            <div className="flex items-start justify-between gap-3 mt-1">
+                              <div>
+                                <h4 className="text-base font-black uppercase text-white tracking-wide group-hover:text-pink-100 transition-colors">
+                                  {drink.name}
+                                </h4>
+                                {drink.description && (
+                                  <p className="text-[10px] font-bold text-zinc-300 mt-1 leading-relaxed">
+                                    {drink.description}
+                                  </p>
+                                )}
+                              </div>
+                              <span className="shrink-0 rounded-full border border-pink-300/60 bg-gradient-to-r from-pink-600 via-pink-500 to-rose-500 px-4 py-1.5 text-xs font-black text-white shadow-[0_0_22px_rgba(225,0,117,0.55)] tracking-wide">
+                                {drink.price}
+                              </span>
                             </div>
-                          )}
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <h4 className="text-sm font-black uppercase text-white tracking-wide">
-                                {drink.name}
-                              </h4>
-                              {drink.description && (
-                                <p className="text-[9px] font-medium text-zinc-400 mt-1 leading-relaxed">
-                                  {drink.description}
-                                </p>
-                              )}
-                            </div>
-                            <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-black text-white backdrop-blur-md">
-                              {drink.price}
-                            </span>
                           </div>
                         </div>
                       ))}
