@@ -16,6 +16,7 @@ import {
 import { validateReceiptFileMetadata } from "@/lib/access-drop/fileValidation";
 import { ChevronLeft, ChevronRight, ClipboardCopy, ClipboardCheck, UploadCloud } from "lucide-react";
 import { getEventDesigns, type TicketDesign } from "@/lib/tickets/designs";
+import { getOnlineSalesStatus } from "@/frontend/utils/cutoff";
 
 
 const BANKS = [
@@ -68,6 +69,13 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
   const currentEvent = event || events[0];
   const pricePerTicket = currentEvent.price || 10;
   const artistDetails = getArtistDetails(currentEvent.id);
+
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const salesStatus = getOnlineSalesStatus(currentEvent);
 
   const [dropState, setDropState] = useState<DropState>("register");
   const [verifyingMessage, setVerifyingMessage] = useState("ENVIANDO COMPROBANTE...");
@@ -509,6 +517,18 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                     </>
                   )}
                 </div>
+
+                {salesStatus.isWarning && (
+                  <div className="mt-3 p-2.5 rounded-xl bg-zinc-950 border border-white/15 flex items-center justify-between text-[8.5px] font-black uppercase tracking-wider text-white select-none">
+                    <span className="flex items-center gap-2">
+                      <span className="font-mono text-pink-400 font-extrabold text-[9px] px-1.5 py-0.5 rounded bg-zinc-900 border border-white/10">
+                        {salesStatus.remainingLabel}
+                      </span>
+                      <span>Cierre de ventas online por la web</span>
+                    </span>
+                    <span className="text-[7.5px] text-zinc-400">Ventas en puerta tras las {salesStatus.cutoffTime} hs</span>
+                  </div>
+                )}
               </div>
 
               {/* ── MAIN CHECKOUT GRID ── */}
