@@ -544,27 +544,6 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         </div>
       </header>
 
-      {/* Real-time Online Sales Cutoff Banner (Warning < 3h or Closed) */}
-      {activeEvent && activeSalesStatus.isWarning && activeEvent.status === "available" && (
-        <div className="fixed inset-x-0 top-[57px] z-40 bg-zinc-950/95 border-b border-white/10 py-2.5 px-4 text-center backdrop-blur-xl shadow-lg select-none">
-          <div className="mx-auto flex max-w-[1600px] items-center justify-center text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-white">
-            <TypewriterText
-              text={`CIERRE DE VENTAS ONLINE EN ${activeSalesStatus.remainingLabel} (${activeSalesStatus.cutoffTime} HS) · VENTAS EN PUERTA TRAS EL CIERRE`}
-            />
-          </div>
-        </div>
-      )}
-
-      {activeEvent && activeSalesStatus.isClosed && activeEvent.status === "available" && (
-        <div className="fixed inset-x-0 top-[57px] z-40 bg-zinc-950/95 border-b border-white/10 py-2.5 px-4 text-center backdrop-blur-xl shadow-lg select-none">
-          <div className="mx-auto flex max-w-[1600px] items-center justify-center text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-zinc-300">
-            <TypewriterText
-              text={`VENTAS ONLINE FINALIZADAS (${activeSalesStatus.cutoffTime} HS) · ENTRADAS DISPONIBLES EN PUERTA`}
-            />
-          </div>
-        </div>
-      )}
-
       {/* Monochromatic 3D Concrete Room backdrop */}
       <section
         id="show"
