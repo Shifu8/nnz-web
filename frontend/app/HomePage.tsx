@@ -54,37 +54,29 @@ interface HomePageProps {
   initialConfig: HomepageConfig;
 }
 
-function TypewriterText({ text, speed = 35 }: { text: string; speed?: number }) {
-  const [displayedText, setDisplayedText] = useState("");
-  const prevBaseTextRef = useRef("");
+function TypewriterText({ text }: { text: string }) {
+  const [displayedCount, setDisplayedCount] = useState(0);
+  const textLength = text.length;
 
   useEffect(() => {
-    const baseTemplate = text.replace(/\d{2}:\d{2}:\d{2}/g, "00:00:00");
-    if (baseTemplate !== prevBaseTextRef.current) {
-      prevBaseTextRef.current = baseTemplate;
-      setDisplayedText("");
-      let i = 0;
-      const interval = setInterval(() => {
-        i++;
-        setDisplayedText(text.slice(0, i));
-        if (i >= text.length) {
-          clearInterval(interval);
+    setDisplayedCount(0);
+    const timer = setInterval(() => {
+      setDisplayedCount((prev) => {
+        if (prev >= textLength) {
+          clearInterval(timer);
+          return textLength;
         }
-      }, speed);
-      return () => clearInterval(interval);
-    } else {
-      setDisplayedText((current) => {
-        if (current.length >= text.length - 2) {
-          return text;
-        }
-        return current;
+        return prev + 1;
       });
-    }
-  }, [text, speed]);
+    }, 28);
+    return () => clearInterval(timer);
+  }, []);
+
+  const isFinished = displayedCount >= textLength;
 
   return (
-    <span className="font-mono tracking-wider">
-      {displayedText}
+    <span className="font-mono tracking-wider inline-flex items-center justify-center">
+      <span>{isFinished ? text : text.slice(0, displayedCount)}</span>
       <span className="inline-block w-1.5 h-3 ml-1 bg-white/80 animate-pulse align-middle" />
     </span>
   );

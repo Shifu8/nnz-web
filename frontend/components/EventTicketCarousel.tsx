@@ -641,9 +641,14 @@ export default function EventTicketCarousel({
                                   if (clickMovedRef.current) return;
                                   onBuy(event);
                                 }}
-                                className="relative z-10 w-full h-[34px] xl:h-[38px] rounded-full bg-zinc-950 text-[8px] xl:text-[9px] font-black uppercase tracking-[0.15em] text-white hover:bg-zinc-900 transition-all duration-300 active:scale-95 cursor-pointer"
+                                className="relative z-10 w-full h-[36px] xl:h-[40px] rounded-full bg-zinc-950 text-white hover:bg-zinc-900 transition-all duration-300 active:scale-95 cursor-pointer flex flex-col items-center justify-center leading-tight px-1 py-1"
                               >
-                                Comprar Entrada
+                                <span className="text-[8px] xl:text-[9px] font-black uppercase tracking-[0.15em]">Comprar Entrada</span>
+                                {salesStatus.isWarning && (
+                                  <span className="text-[7px] xl:text-[7.5px] font-mono font-bold text-pink-400 leading-none mt-0.5">
+                                    Cierra en {salesStatus.remainingLabel}
+                                  </span>
+                                )}
                               </button>
                             </div>
                           ) : (
