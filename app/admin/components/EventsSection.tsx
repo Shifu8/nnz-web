@@ -866,7 +866,7 @@ export default function EventsSection(_props: EventsSectionProps) {
                                 id: `d-${Date.now()}`,
                                 name: "",
                                 category: "Cocteles Especiales",
-                                price: "$2",
+                                price: "Vaso $2",
                                 description: "Vaso de trago especial",
                                 badge: "ESPECIAL DE LA NOCHE",
                               },
