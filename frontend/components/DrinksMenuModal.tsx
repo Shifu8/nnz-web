@@ -111,9 +111,6 @@ export default function DrinksMenuModal({
                 <h3 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white mt-3">
                   Bar & Bebidas
                 </h3>
-                <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mt-1">
-                  {eventName} · {venueName}
-                </p>
               </div>
 
               <button
@@ -214,7 +211,7 @@ export default function DrinksMenuModal({
             {/* Footer CTA */}
             <div className="p-4 sm:p-6 border-t border-white/[0.06] bg-[#040404] flex items-center justify-between">
               <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500">
-                Venta exclusiva dentro de {venueName}
+                Venta exclusiva dentro del Local
               </span>
               <button
                 type="button"
