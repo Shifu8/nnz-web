@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
       date,
       time,
       countdownDate: countdownDate || date,
+      onlineSalesCutoffTime: body.onlineSalesCutoffTime || "14:00",
       price: Number(price),
       imageUrl: imageUrl || "",
       description: description || "",
