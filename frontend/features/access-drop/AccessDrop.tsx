@@ -531,8 +531,7 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                 )}
 
                 {/* Recordatorio de Cédula */}
-                <div className="mt-2.5 p-2.5 rounded-xl bg-zinc-950 border border-white/10 flex items-center gap-2.5 text-zinc-300 select-none">
-                  <Shield className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                <div className="mt-2.5 p-2.5 rounded-xl bg-zinc-950 border border-white/10 flex items-center justify-center text-center text-zinc-300 select-none">
                   <span className="text-[8px] font-black uppercase tracking-wider text-zinc-300">
                     Importante: No olvides llevar tu cédula o documento de identidad el día del evento.
                   </span>

@@ -318,16 +318,11 @@ export default function EventDetailOverlay({
               </div>
 
               {/* Recordatorio de Cédula */}
-              <div className="mt-3.5 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-md">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white">
-                  <Shield className="h-4.5 w-4.5" />
-                </div>
-                <div>
-                  <h4 className="text-[10px] font-black uppercase tracking-wider text-white">Documento Físico Obligatorio</h4>
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 mt-0.5">
-                    No olvides llevar tu cédula o documento de identidad físico el día del evento para tu ingreso.
-                  </p>
-                </div>
+              <div className="mt-3.5 rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-md">
+                <h4 className="text-[10px] font-black uppercase tracking-wider text-white">Documento Físico Obligatorio</h4>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 mt-0.5">
+                  No olvides llevar tu cédula o documento de identidad físico el día del evento para tu ingreso.
+                </p>
               </div>
             </motion.div>
 
