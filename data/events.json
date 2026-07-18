@@ -18,6 +18,7 @@
     "status": "active",
     "isFeatured": true,
     "isAvailable": true,
+    "onlineSalesCutoffTime": "14:00",
     "badge": "TRENDING PRESET",
     "accentColor": "#ffffff",
     "miniImage": "/images/omar_courtz_card_bg.jpg",

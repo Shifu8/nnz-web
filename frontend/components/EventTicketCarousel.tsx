@@ -4,6 +4,7 @@ import React, { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import { MapPin, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Event } from "@/frontend/types/domain";
+import { getOnlineSalesStatus } from "@/frontend/utils/cutoff";
 
 export interface CarouselEvent extends Event {
   price: number;
@@ -224,8 +225,11 @@ export default function EventTicketCarousel({
   const touchStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const isHorizontalSwipe = useRef<boolean | null>(null);
 
-  // Mouse tilt parallax offsets
-  const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
   const [radius, setRadius] = useState(320);
 
   useEffect(() => {
@@ -551,62 +555,114 @@ export default function EventTicketCarousel({
                   </div>
 
                   {/* Active Card Action Buttons (Mobile & Desktop) */}
-                  {diff === 0 && (
-                    <div className="flex gap-2 mt-3 xl:mt-4 pt-3 border-t border-white/5 w-full z-50">
-                      <button
-                        type="button"
-                        disabled={event.status === "coming-soon"}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (clickMovedRef.current) return;
-                          onViewDetails(event);
-                        }}
-                        className={`flex-1 h-9 xl:h-10 rounded-full border text-[8px] xl:text-[9px] font-black uppercase tracking-[0.15em] transition duration-300 ${
-                          event.status === "coming-soon"
-                            ? "border-zinc-800 bg-zinc-900/20 text-zinc-600 cursor-not-allowed opacity-50"
-                            : "border-white/25 bg-white/10 text-white hover:border-white/50 hover:bg-white/25 active:scale-95 cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.5)] backdrop-blur-md"
-                        }`}
-                      >
-                        Ver Detalle
-                      </button>
+                  {diff === 0 && (() => {
+                    const salesStatus = getOnlineSalesStatus(event);
 
-                      {event.status === "available" ? (
-                        <div
-                          className={`flex-1 relative p-[1.5px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center transition-all duration-500 group/btn ${
-                            diff === 0 && isTicketPulse
-                              ? "ring-2 ring-pink-500 shadow-[0_0_35px_rgba(225,0,117,0.85),0_0_65px_rgba(225,0,117,0.45)] scale-[1.03] animate-pulse"
-                              : "shadow-[0_0_15px_rgba(225,0,117,0.2)]"
-                          }`}
-                        >
-                          {/* Pink spinning line */}
-                          <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#e10075_50%,transparent_65%)] pointer-events-none" />
+                    if (salesStatus.isClosed && event.status === "available") {
+                      return (
+                        <div className="flex flex-col gap-2 mt-3 xl:mt-4 pt-3 border-t border-white/5 w-full z-50">
+                          <div className="w-full p-2 rounded-xl bg-pink-950/40 border border-pink-500/30 text-[8px] xl:text-[9px] font-black uppercase tracking-wider text-pink-300 text-center">
+                            🚨 Entradas Online Cerradas ({salesStatus.cutoffTime} hs)
+                          </div>
+                          <div className="flex gap-2 w-full">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (clickMovedRef.current) return;
+                                onViewDetails(event);
+                              }}
+                              className="flex-1 h-9 xl:h-10 rounded-full border border-white/25 bg-white/10 text-white text-[8px] xl:text-[9px] font-black uppercase tracking-[0.15em] hover:bg-white/25 active:scale-95 transition cursor-pointer"
+                            >
+                              Ver Detalle
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (clickMovedRef.current) return;
+                                onInactiveClick?.({
+                                  ...event,
+                                  customMessage: `Las entradas online por esta web han finalizado a las ${salesStatus.cutoffTime} hs. Puedes adquirir tu entrada directamente en la puerta del evento.`
+                                } as any);
+                              }}
+                              className="flex-1 h-9 xl:h-10 rounded-full border border-pink-500/40 bg-pink-950/60 text-[8px] xl:text-[9px] font-black uppercase tracking-[0.12em] text-pink-200 hover:bg-pink-900 transition active:scale-95 cursor-pointer shadow-[0_0_20px_rgba(225,0,117,0.4)]"
+                            >
+                              Entradas en Puerta
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="flex flex-col gap-2 mt-3 xl:mt-4 pt-3 border-t border-white/5 w-full z-50">
+                        {salesStatus.isWarning && event.status === "available" && (
+                          <div className="w-full p-2 rounded-xl bg-pink-950/80 border border-pink-500/50 shadow-[0_0_20px_rgba(225,0,117,0.3)] flex items-center justify-between text-[8px] xl:text-[9px] font-black uppercase tracking-wider text-pink-100 animate-pulse">
+                            <span className="flex items-center gap-1.5 text-pink-300">
+                              <span className="h-1.5 w-1.5 rounded-full bg-pink-400" />
+                              ¡Cierre Online en {salesStatus.remainingLabel}!
+                            </span>
+                            <span className="text-[7.5px] text-pink-200">Ventas en puerta tras las {salesStatus.cutoffTime}</span>
+                          </div>
+                        )}
+                        <div className="flex gap-2 w-full">
                           <button
                             type="button"
+                            disabled={event.status === "coming-soon"}
                             onClick={(e) => {
                               e.stopPropagation();
                               if (clickMovedRef.current) return;
-                              onBuy(event);
+                              onViewDetails(event);
                             }}
-                            className="relative z-10 w-full h-[34px] xl:h-[38px] rounded-full bg-zinc-950 text-[8px] xl:text-[9px] font-black uppercase tracking-[0.15em] text-white hover:bg-zinc-900 transition-all duration-300 active:scale-95 cursor-pointer"
+                            className={`flex-1 h-9 xl:h-10 rounded-full border text-[8px] xl:text-[9px] font-black uppercase tracking-[0.15em] transition duration-300 ${
+                              event.status === "coming-soon"
+                                ? "border-zinc-800 bg-zinc-900/20 text-zinc-600 cursor-not-allowed opacity-50"
+                                : "border-white/25 bg-white/10 text-white hover:border-white/50 hover:bg-white/25 active:scale-95 cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.5)] backdrop-blur-md"
+                            }`}
                           >
-                            Comprar Entrada
+                            Ver Detalle
                           </button>
+
+                          {event.status === "available" ? (
+                            <div
+                              className={`flex-1 relative p-[1.5px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center transition-all duration-500 group/btn ${
+                                diff === 0 && isTicketPulse
+                                  ? "ring-2 ring-pink-500 shadow-[0_0_35px_rgba(225,0,117,0.85),0_0_65px_rgba(225,0,117,0.45)] scale-[1.03] animate-pulse"
+                                  : "shadow-[0_0_15px_rgba(225,0,117,0.2)]"
+                              }`}
+                            >
+                              {/* Pink spinning line */}
+                              <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#e10075_50%,transparent_65%)] pointer-events-none" />
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (clickMovedRef.current) return;
+                                  onBuy(event);
+                                }}
+                                className="relative z-10 w-full h-[34px] xl:h-[38px] rounded-full bg-zinc-950 text-[8px] xl:text-[9px] font-black uppercase tracking-[0.15em] text-white hover:bg-zinc-900 transition-all duration-300 active:scale-95 cursor-pointer"
+                              >
+                                Comprar Entrada
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (clickMovedRef.current) return;
+                                onInactiveClick?.(event);
+                              }}
+                              className="flex-1 h-9 rounded-full border border-zinc-800 bg-zinc-900/20 text-[8px] font-black uppercase tracking-[0.15em] text-zinc-600 hover:text-zinc-500 hover:border-zinc-700 transition duration-300 active:scale-95 cursor-pointer"
+                            >
+                              {event.status === "sold-out" ? "Agotado" : "Próximamente"}
+                            </button>
+                          )}
                         </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (clickMovedRef.current) return;
-                            onInactiveClick?.(event);
-                          }}
-                          className="flex-1 h-9 rounded-full border border-zinc-800 bg-zinc-900/20 text-[8px] font-black uppercase tracking-[0.15em] text-zinc-600 hover:text-zinc-500 hover:border-zinc-700 transition duration-300 active:scale-95 cursor-pointer"
-                        >
-                          {event.status === "sold-out" ? "Agotado" : "Próximamente"}
-                        </button>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
               </div>

@@ -55,6 +55,7 @@ function toFrontendEvent(adminEvent: any): EventWithPosition {
     featuredImage: adminEvent.imageUrl || adminEvent.poster || "",
     price: adminEvent.price || 10,
     currency: adminEvent.currency || "USD",
+    onlineSalesCutoffTime: adminEvent.onlineSalesCutoffTime || "14:00",
   } as any;
 }
 

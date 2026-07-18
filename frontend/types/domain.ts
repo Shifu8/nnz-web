@@ -84,6 +84,7 @@ export type Event = {
   drinks?: DrinkItem[];
   price?: number;
   currency?: string;
+  onlineSalesCutoffTime?: string;
 };
 
 export type MerchItem = {

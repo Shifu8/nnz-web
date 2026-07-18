@@ -39,6 +39,7 @@ import { useHomepageConfig } from "@/frontend/hooks/useHomepageConfig";
 import type { ThemeColors } from "@/lib/homepage-config/themes";
 import type { HomepageConfig } from "@/lib/homepage-config/types";
 import type { Event } from "@/frontend/types/domain";
+import { getOnlineSalesStatus } from "@/frontend/utils/cutoff";
 
 const HOME_NAV_ITEMS = [
   { id: "show", label: "Show" },
@@ -83,6 +84,14 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [checkoutState, setCheckoutState] = useState<string>("register");
 
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const activeSalesStatus = getOnlineSalesStatus(activeEvent);
+
   // Inactive event Toast notification state
   const [toast, setToast] = useState<{
     message: string;
@@ -99,12 +108,21 @@ export default function HomePage({ initialConfig }: HomePageProps) {
     let message = "Este evento estará disponible próximamente.";
     let type: 'coming-soon' | 'sold-out' | 'info' = 'coming-soon';
 
-    if (event.status === "sold-out") {
+    if ((event as any).customMessage) {
+      message = (event as any).customMessage;
+      type = "info";
+    } else if (event.status === "sold-out") {
       message = "Este evento ya se encuentra agotado.";
       type = "sold-out";
     } else if (event.status === "coming-soon") {
       message = "Este evento es el próximo y sus entradas aún no están disponibles.";
       type = "coming-soon";
+    } else {
+      const status = getOnlineSalesStatus(event);
+      if (status.isClosed) {
+        message = `Las entradas online por esta web han finalizado a las ${status.cutoffTime} hs. Puedes adquirir tu entrada directamente en la puerta del evento.`;
+        type = "info";
+      }
     }
 
     setToast({
@@ -115,7 +133,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
     toastTimeoutRef.current = setTimeout(() => {
       setToast(null);
-    }, 3000);
+    }, 4500);
   };
 
   useEffect(() => {
@@ -497,6 +515,33 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
         </div>
       </header>
+
+      {/* Real-time Online Sales Cutoff Banner (Warning < 3h or Closed) */}
+      {activeEvent && activeSalesStatus.isWarning && activeEvent.status === "available" && (
+        <div className="fixed inset-x-0 top-[57px] z-40 bg-gradient-to-r from-pink-950 via-zinc-950 to-pink-950 border-b border-pink-500/40 py-2 px-4 text-center backdrop-blur-xl shadow-[0_0_35px_rgba(225,0,117,0.35)]">
+          <div className="mx-auto flex max-w-[1600px] items-center justify-center gap-2 text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-white">
+            <span className="h-2 w-2 rounded-full bg-pink-500 animate-ping" />
+            <span>
+              🔥 ¡ÚLTIMAS ENTRADAS ONLINE! Cierre de ventas web en{" "}
+              <span className="font-mono text-pink-300 font-extrabold px-2 py-0.5 rounded bg-pink-950/90 border border-pink-500/50">
+                {activeSalesStatus.remainingLabel}
+              </span>{" "}
+              ({activeSalesStatus.cutoffTime} hs). Entradas disponibles únicamente en puerta tras el cierre.
+            </span>
+          </div>
+        </div>
+      )}
+
+      {activeEvent && activeSalesStatus.isClosed && activeEvent.status === "available" && (
+        <div className="fixed inset-x-0 top-[57px] z-40 bg-zinc-950/95 border-b border-pink-500/30 py-2 px-4 text-center backdrop-blur-xl">
+          <div className="mx-auto flex max-w-[1600px] items-center justify-center gap-2 text-[9px] sm:text-[11px] font-black uppercase tracking-widest text-zinc-300">
+            <span className="h-2 w-2 rounded-full bg-pink-500" />
+            <span>
+              Las entradas online por esta web han finalizado ({activeSalesStatus.cutoffTime} hs). Podrás adquirir tu entrada directamente en la puerta del evento.
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Monochromatic 3D Concrete Room backdrop */}
       <section

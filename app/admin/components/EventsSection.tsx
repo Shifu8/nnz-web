@@ -35,6 +35,7 @@ const EMPTY_EVENT: Omit<AdminEvent, "id" | "createdAt" | "updatedAt"> & { slug: 
   status: "active",
   isFeatured: false,
   isAvailable: true,
+  onlineSalesCutoffTime: "14:00",
   slug: "",
   badge: "",
   accentColor: "#ffffff",
@@ -114,6 +115,7 @@ export default function EventsSection(_props: EventsSectionProps) {
       status: event.status,
       isFeatured: event.isFeatured,
       isAvailable: event.isAvailable ?? true,
+      onlineSalesCutoffTime: event.onlineSalesCutoffTime || "14:00",
       slug: (event as any).slug || "",
       badge: event.badge || "",
       accentColor: event.accentColor || "#ffffff",
@@ -600,6 +602,14 @@ export default function EventsSection(_props: EventsSectionProps) {
                   <div className="space-y-1.5 md:col-span-2">
                     <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Fecha del contador (countdown)</p>
                     <input type="date" value={form.countdownDate} onChange={(e) => setForm({ ...form, countdownDate: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none transition focus:border-red-500/50 [color-scheme:dark]" />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-pink-400">Hora de Cierre de Ventas Online</p>
+                      <span className="text-[8px] font-bold text-zinc-500 uppercase">Ej: 14:00 (se venderá en puerta tras el cierre)</span>
+                    </div>
+                    <input type="time" value={form.onlineSalesCutoffTime || "14:00"} onChange={(e) => setForm({ ...form, onlineSalesCutoffTime: e.target.value })} className="w-full rounded-2xl border border-pink-500/30 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none transition focus:border-pink-500 [color-scheme:dark]" />
+                    <p className="text-[8px] font-medium text-zinc-400">A las {form.onlineSalesCutoffTime || "14:00"} hs del día del evento se cerrará automáticamente la venta web y las entradas pasarán a venderse únicamente en puerta. Faltando 3 horas se mostrará el contador de cierre en tiempo real.</p>
                   </div>
                   <div className="space-y-1.5 md:col-span-2">
                     <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Descripción Corta</p>

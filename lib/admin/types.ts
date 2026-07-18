@@ -14,6 +14,7 @@ export type AdminEvent = {
   status: "active" | "inactive";
   isFeatured: boolean;
   isAvailable?: boolean;
+  onlineSalesCutoffTime?: string;
   slug?: string;
   createdAt: string;
   updatedAt: string;
