@@ -9,7 +9,7 @@
     "time": "22:00",
     "countdownDate": "2026-08-15",
     "price": 10,
-    "imageUrl": "/images/omar_courtz_card_bg.jpg",
+    "imageUrl": "/uploads/events/event-3dd063e3-5858-4215-9416-bda3ea04ba35.png",
     "description": "Voz única y flows de la calle. Autenticidad reggaetonera premium en una atmósfera brutal de luz cenital diseñada para vivirse al límite.",
     "lineup": [
       "OMAR COURTZ"
@@ -22,7 +22,7 @@
     "accentColor": "#ffffff",
     "miniImage": "/images/omar_courtz_card_bg.jpg",
     "organizer": "NENEZ",
-    "venue": "Venue TBA · Loja",
+    "venue": "Mónaco Nightclub · Av. Pío Jaramillo Alvarado, Loja",
     "category": "Reggaetón / Urban",
     "ageRestriction": "18+",
     "about": [
@@ -65,6 +65,16 @@
         "icon": "🔞",
         "title": "Edad Mínima",
         "description": "18+ requerido. Presentar identificación válida."
+      },
+      {
+        "icon": "📍",
+        "title": "Ubicación",
+        "description": "Mónaco Nightclub - Av. Pío Jaramillo Alvarado, Loja."
+      },
+      {
+        "icon": "🍸",
+        "title": "Bar & Barra",
+        "description": "Servicio de botellas premium y tragos de autor adentro."
       }
     ],
     "socialLinks": {
@@ -74,6 +84,52 @@
       "youtube": "",
       "website": ""
     },
+    "drinks": [
+      {
+        "id": "mojito-eleva",
+        "name": "Mojito Eleva",
+        "category": "Cocteles Especiales",
+        "price": "$8",
+        "description": "Ron blanco, menta fresca, soda de lima e infusión secreta NENEZ.",
+        "badge": "ESPECIAL DE LA NOCHE"
+      },
+      {
+        "id": "gran-malo",
+        "name": "Gran Malo Tequila (750ml)",
+        "category": "Botellas",
+        "price": "$35",
+        "description": "Tequila especiado con infusión sabor horchata.",
+        "badge": "POPULAR"
+      },
+      {
+        "id": "jagger",
+        "name": "Jägermeister (750ml)",
+        "category": "Botellas",
+        "price": "$45",
+        "description": "Servido helado a -18°C con 4 energizantes."
+      },
+      {
+        "id": "black-label",
+        "name": "Black Label Whisky (750ml)",
+        "category": "Botellas",
+        "price": "$75",
+        "description": "Johnnie Walker Black Label 12 Años."
+      },
+      {
+        "id": "absolut",
+        "name": "Absolut Vodka (750ml)",
+        "category": "Botellas",
+        "price": "$40",
+        "description": "Vodka sueco ultra refinado con mixers."
+      },
+      {
+        "id": "don-julio",
+        "name": "Don Julio Reposado (750ml)",
+        "category": "Botellas",
+        "price": "$95",
+        "description": "Tequila 100% agave azul de la casa."
+      }
+    ],
     "merch": [
       {
         "id": "dn-hoodie",
@@ -84,7 +140,7 @@
       }
     ],
     "createdAt": "2026-06-03T23:57:02.581Z",
-    "updatedAt": "2026-07-12T20:21:08.167Z"
+    "updatedAt": "2026-07-18T00:05:00.000Z"
   },
   {
     "id": "trap-eclipse",
@@ -96,7 +152,7 @@
     "time": "23:00",
     "countdownDate": "2026-10-31",
     "price": 10,
-    "imageUrl": "/images/roa_artist_1779161704881.png",
+    "imageUrl": "",
     "description": "El eclipse del trap y R&B nocturno. Una noche monumental de vibras oscuras, bajos masivos y melancolía hipnótica en el escenario principal.",
     "lineup": [
       "DRAKE",
@@ -193,7 +249,7 @@
     "time": "21:00",
     "countdownDate": "2026-06-18",
     "price": 10,
-    "imageUrl": "/images/yan_block_card_bg.png",
+    "imageUrl": "",
     "description": "La escena subterránea cobra vida. Trap latino oscuro, bajo retumbante y energía inagotable. Luces de escenario crudas, beats pesados y acceso restringido.",
     "lineup": [
       "YAN BLOCK"
@@ -294,7 +350,7 @@
     "time": "20:00",
     "countdownDate": "2026-11-20",
     "price": 10,
-    "imageUrl": "/images/trap_loud_anuel_1778966415162.png",
+    "imageUrl": "",
     "description": "El sonido alternativo y clásico chocan. La distorsión melódica de Deftones, la oscuridad moderna de Novulent y el legado inmortal de Aerosmith.",
     "lineup": [
       "DEFTONES",

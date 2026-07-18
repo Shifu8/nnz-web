@@ -62,15 +62,15 @@ export default function OutfitBuilderSection() {
             NENEZ Wear
           </p>
           <h2 className="mt-4 text-4xl font-black uppercase leading-[0.9] tracking-[-0.05em] text-white sm:text-5xl">
-            No es outfit.
+            Timeless
             <br />
-            Es presencia.
+            Streetwear.
           </h2>
           <p className="mt-5 inline-flex items-center gap-2 text-xl font-black uppercase tracking-[-0.03em] text-white">
-            Studio Rack
+            Nenez Studio
           </p>
           <p className="mt-5 max-w-lg text-sm leading-7 text-zinc-400">
-            Edición limitada creada por nuestros diseñadores en el estudio, utilizando materiales premium y un fit estructurado listo para usarse.
+            Creamos prendas oversize con una silueta moderna, materiales de alta calidad y un diseño pensado para acompañarte todos los días.
           </p>
         </div>
 
@@ -104,7 +104,7 @@ export default function OutfitBuilderSection() {
               Obsession 01
             </p>
             <p className="mt-2 text-lg font-black uppercase leading-[1.0] tracking-tight text-white">
-              Studio rack
+              Nenez Studio
               <span className="block text-zinc-500 font-black text-[8px] uppercase tracking-[0.22em] mt-1.5">ready to wear</span>
             </p>
           </div>

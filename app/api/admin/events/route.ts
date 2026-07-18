@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
       importantInfo: body.importantInfo || [],
       socialLinks: body.socialLinks || {},
       merch: body.merch || [],
+      drinks: body.drinks || [],
     });
 
     return NextResponse.json({ success: true, event }, { status: 201 });

@@ -23,6 +23,8 @@ import {
   Ticket,
   Shield,
   ExternalLink,
+  Wine,
+  Sparkles,
 } from "lucide-react";
 import type { Event } from "@/frontend/types/domain";
 import { CAROUSEL_EVENTS } from "@/frontend/components/EventTicketCarousel";
@@ -33,6 +35,7 @@ interface EventDetailOverlayProps {
   onClose: () => void;
   onBuy: (event: Event) => void;
   onSelectEvent: (event: Event) => void;
+  onOpenDrinks?: () => void;
   isCheckoutOpen?: boolean;
 }
 
@@ -106,6 +109,7 @@ export default function EventDetailOverlay({
   onClose,
   onBuy,
   onSelectEvent,
+  onOpenDrinks,
   isCheckoutOpen = false,
 }: EventDetailOverlayProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -153,6 +157,7 @@ export default function EventDetailOverlay({
     event.socialLinks &&
     Object.values(event.socialLinks).some((v) => v);
   const hasImportantInfo = event.importantInfo && event.importantInfo.length > 0;
+  const hasDrinks = event.drinks && event.drinks.length > 0;
 
   const overlayTransition = {
     hidden: { opacity: 0, y: 40, scale: 0.99 as number },
@@ -233,14 +238,20 @@ export default function EventDetailOverlay({
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="relative h-[52vw] min-h-[280px] max-h-[400px] w-full overflow-hidden"
           >
-            <Image
-              src={event.poster}
-              alt={event.title}
-              fill
-              sizes="860px"
-              className="object-cover grayscale brightness-50 scale-105"
-              priority
-            />
+            {event.poster ? (
+              <Image
+                src={event.poster}
+                alt={event.title}
+                fill
+                sizes="860px"
+                className="object-cover brightness-[0.65] scale-105"
+                priority
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 to-zinc-950 flex flex-col items-center justify-center">
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-700">Próximamente</span>
+              </div>
+            )}
             {/* Cinematic gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#060606] via-[#060606]/60 to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#060606]/40 via-transparent to-transparent" />
@@ -285,10 +296,9 @@ export default function EventDetailOverlay({
                 {[
                   { icon: <Tag className="h-3.5 w-3.5" />, label: "Evento", value: event.title },
                   { icon: <Users className="h-3.5 w-3.5" />, label: "Artista Principal", value: event.detailedLineup?.find(a => a.role === "Headliner")?.name || event.lineup[0] },
-                  { icon: <Calendar className="h-3.5 w-3.5" />, label: "Fecha", value: event.dateLabel },
                   { icon: <Clock className="h-3.5 w-3.5" />, label: "Hora", value: event.time || "Por confirmar" },
                   { icon: <MapPin className="h-3.5 w-3.5" />, label: "Ciudad", value: event.city },
-                  { icon: <MapPin className="h-3.5 w-3.5" />, label: "Venue", value: event.venue || "Por confirmar" },
+                  { icon: <MapPin className="h-3.5 w-3.5" />, label: "Lugar / Venue", value: event.venue ? event.venue.split("·")[0].trim() : "Por confirmar" },
                   { icon: <Music className="h-3.5 w-3.5" />, label: "Categoría", value: event.category || "Urban" },
                   { icon: <Shield className="h-3.5 w-3.5" />, label: "Edad", value: event.ageRestriction || "18+" },
                   { icon: <Ticket className="h-3.5 w-3.5" />, label: "Estado", value: event.status === "available" ? "Disponible" : event.status === "sold-out" ? "Agotado" : "Próximamente" },
@@ -308,7 +318,38 @@ export default function EventDetailOverlay({
               </div>
             </motion.div>
 
-
+            {/* ─── UBICACIÓN & GOOGLE MAPS ─── */}
+            {event.venue && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.14, ease: "easeOut" }}>
+                <SectionLabel>Ubicación & Dirección</SectionLabel>
+                <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5 backdrop-blur-md transition-all duration-300 hover:border-white/20 hover:bg-white/[0.04]">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-white shrink-0" />
+                      <h4 className="text-sm font-black uppercase text-white tracking-wide">
+                        {event.venue.split("·")[0]?.trim() || event.venue}
+                      </h4>
+                    </div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 pl-6">
+                      {event.venue.includes("·")
+                        ? event.venue.split("·").slice(1).join("·").trim()
+                        : `${event.venue}, ${event.city}`}
+                    </p>
+                  </div>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                      `${event.venue}, ${event.city}`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 h-10 px-6 rounded-full border border-white/20 bg-white/10 text-[9px] font-black uppercase tracking-[0.2em] text-white hover:bg-white hover:text-black transition duration-300 shrink-0"
+                  >
+                    <span>Ver en Google Maps</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              </motion.div>
+            )}
 
             {/* ─── LINEUP ─── */}
             {sortedRoles.length > 0 && (
@@ -372,6 +413,32 @@ export default function EventDetailOverlay({
                       </div>
                     ))}
                   </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ─── BAR & DRINKS BUTTON ─── */}
+            {hasDrinks && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.35, ease: "easeOut" }}>
+                <SectionLabel>Servicio de Bar</SectionLabel>
+                <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5 backdrop-blur-md transition-all duration-300 hover:border-white/20 hover:bg-white/[0.04]">
+                  <div>
+                    <h4 className="text-xs font-black uppercase text-white tracking-wider">
+                      Bar & Carta de Bebidas
+                    </h4>
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500 mt-1">
+                      Consulta los tragos especiales y servicio de botellas
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenDrinks?.();
+                    }}
+                    className="h-10 px-6 rounded-full border border-white/20 bg-white/10 text-[9px] font-black uppercase tracking-[0.2em] text-white hover:bg-white hover:text-black transition duration-300 cursor-pointer active:scale-95 shrink-0"
+                  >
+                    Ir al Bar
+                  </button>
                 </div>
               </motion.div>
             )}
@@ -473,13 +540,19 @@ export default function EventDetailOverlay({
                         }`}
                       >
                         <div className="relative h-[120px] overflow-hidden">
-                          <Image
-                            src={rel.poster}
-                            alt={rel.title}
-                            fill
-                            sizes="200px"
-                            className="object-cover grayscale brightness-50 transition-all duration-500"
-                          />
+                          {rel.poster ? (
+                            <Image
+                              src={rel.poster}
+                              alt={rel.title}
+                              fill
+                              sizes="200px"
+                              className="object-cover grayscale brightness-50 transition-all duration-500"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 to-zinc-950 flex flex-col items-center justify-center">
+                              <span className="text-[8px] font-black uppercase tracking-[0.25em] text-zinc-700">Próximamente</span>
+                            </div>
+                          )}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                           <div className="absolute bottom-0 left-0 right-0 p-3">
                             <p className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-0.5">

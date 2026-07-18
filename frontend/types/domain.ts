@@ -48,6 +48,15 @@ export type MerchProduct = {
   image?: string;
 };
 
+export type DrinkItem = {
+  id: string;
+  name: string;
+  category: "Botellas" | "Cocteles Especiales" | "Bebidas & Mixers";
+  price: string;
+  description?: string;
+  badge?: string;
+};
+
 export type Event = {
   id: string;
   title: string;
@@ -72,6 +81,7 @@ export type Event = {
   importantInfo?: InfoCard[];
   socialLinks?: SocialLinks;
   merch?: MerchProduct[];
+  drinks?: DrinkItem[];
   price?: number;
   currency?: string;
 };

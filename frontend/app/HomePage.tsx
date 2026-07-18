@@ -33,6 +33,7 @@ import StaffModal from "@/frontend/features/staff/StaffModal";
 import EventTicketCarousel, { CAROUSEL_EVENTS } from "@/frontend/components/EventTicketCarousel";
 import EventDetailOverlay from "@/frontend/features/events/EventDetailOverlay";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
+import DrinksMenuModal from "@/frontend/components/DrinksMenuModal";
 import { events as fallbackEvents } from "@/frontend/services/nenezData";
 import { useHomepageConfig } from "@/frontend/hooks/useHomepageConfig";
 import type { ThemeColors } from "@/lib/homepage-config/themes";
@@ -71,6 +72,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   const [isRecoveryPulse, setIsRecoveryPulse] = useState(false);
   const [showEventModal, setShowEventModal] = useState(false);
   const [showDetailOverlay, setShowDetailOverlay] = useState(false);
+  const [showDrinksModal, setShowDrinksModal] = useState(false);
   const [selectedCarouselEvent, setSelectedCarouselEvent] = useState<Event>(CAROUSEL_EVENTS[0]);
 
   // Custom states for 3D Carousel & Premium visual effects
@@ -550,14 +552,18 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               transition={{ duration: 1.2, ease: "easeInOut" }}
               className="absolute inset-0 grayscale filter blur-[50px] pointer-events-none"
             >
-              <Image
-                src={activeEvent.poster}
-                alt=""
-                fill
-                className="object-cover"
-                sizes="100vw"
-                priority
-              />
+              {activeEvent.poster ? (
+                <Image
+                  src={activeEvent.poster}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="100vw"
+                  priority
+                />
+              ) : (
+                <div className="absolute inset-0 bg-[#0a0a0a]" />
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -566,7 +572,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         <div className="relative z-10 w-full max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-6 lg:gap-y-12 items-center flex-1">
 
           {/* Block 1: Header info (NENEZ presenta & Description) */}
-          <div className="order-1 lg:col-span-5 flex flex-col justify-center text-left select-none">
+          <div className="order-1 lg:col-span-5 flex flex-col justify-center text-left select-none relative z-20">
             <p className="text-[10px] font-black uppercase tracking-[0.5em] text-zinc-500">
               NENEZ presenta
             </p>
@@ -587,16 +593,32 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
             {/* Luxury descriptive subtitle */}
             <p className="text-zinc-400 text-xs mt-2 max-w-sm leading-relaxed">
-              Eventos temáticos con la vibra de tus artistas. DJ sets, visuales y cultura urbana.
+              Eventos temáticos que combinan DJ sets, visuales inmersivos y una producción inspirada en la esencia de tu artista favorito.
             </p>
+
+            {/* Bar & Drinks Menu button (displayed on desktop screens) */}
+            <div className="hidden lg:flex gap-4 pt-6">
+              <div className="relative p-[2px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.2)] hover:shadow-[0_0_30px_rgba(225,0,117,0.4)] transition-all duration-300 group">
+                {/* Línea giratoria */}
+                <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#e10075_50%,transparent_65%)] pointer-events-none" />
+                
+                <button
+                  type="button"
+                  onClick={() => setShowDrinksModal(true)}
+                  className="relative z-10 flex h-[44px] px-7 items-center justify-center rounded-full bg-zinc-950 text-[9px] font-black uppercase tracking-[0.2em] text-white hover:bg-white hover:text-black transition-all duration-300 cursor-pointer active:scale-95"
+                >
+                  Bar & Carta de Bebidas
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Block 2: 3D Stage & Carousel */}
-          <div className="order-2 lg:col-span-7 lg:row-span-2 relative h-[500px] md:h-[600px] w-full flex items-center justify-center overflow-visible">
+          <div className="order-2 lg:col-span-7 lg:row-span-2 relative h-[520px] md:h-[600px] lg:h-[680px] xl:h-[760px] 2xl:h-[800px] w-full flex items-center justify-center overflow-visible">
 
             {/* Circular Concrete Stage Platform */}
             <div
-              className="absolute bottom-[8%] left-1/2 -translate-x-1/2 w-[550px] h-[160px] pointer-events-none z-0"
+              className="absolute bottom-[5%] lg:bottom-[4%] left-1/2 -translate-x-1/2 w-[550px] lg:w-[680px] xl:w-[780px] 2xl:w-[850px] h-[160px] lg:h-[200px] xl:h-[230px] pointer-events-none z-0"
               style={{ perspective: 1000 }}
             >
               {/* Dark rim thickness shadow */}
@@ -635,7 +657,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
           </div>
 
           {/* Block 3: Upcoming Event Details */}
-          <div className="order-3 lg:col-span-5 flex flex-col justify-center text-left select-none space-y-4 lg:pt-0 pt-6">
+          <div className="order-3 lg:col-span-5 flex flex-col justify-center text-left select-none space-y-4 lg:pt-0 pt-6 relative z-20">
             <div className="space-y-4">
               <p className="text-[8px] font-black tracking-[0.3em] text-zinc-500 uppercase">
                 Próximo Evento
@@ -669,76 +691,6 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                     {artist}
                   </span>
                 ))}
-              </div>
-            </div>
-
-            {/* Action buttons (only displayed on desktop screens) */}
-            <div className="hidden lg:flex gap-4 pt-4">
-              <button
-                type="button"
-                disabled={activeEvent.status !== "available"}
-                onClick={() => onViewDetails(activeEvent)}
-                className={`flex h-12 px-6 items-center justify-center rounded-full border text-[9px] font-black uppercase tracking-[0.2em] transition ${
-                  activeEvent.status === "available"
-                    ? "border-white/10 bg-black/20 text-zinc-300 hover:border-white/30 hover:bg-white/5 hover:text-white"
-                    : "border-zinc-800 bg-zinc-900/20 text-zinc-600 cursor-not-allowed opacity-50"
-                }`}
-              >
-                Ver Detalle
-              </button>
-
-              <div className="relative">
-                {isTicketPulse && activeEvent.status === "available" && (
-                  <div
-                    className="absolute inset-0 rounded-full bg-white blur-md animate-glow-backdrop z-0 pointer-events-none"
-                    style={{
-                      boxShadow: "0 0 35px 15px rgba(255, 255, 255, 0.9)",
-                    }}
-                  />
-                )}
-                
-                {activeEvent.status === "available" ? (
-                  /* Contenedor con borde animado de trazo giratorio neon */
-                  <div className="relative p-[2px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.15)] hover:shadow-[0_0_25px_rgba(225,0,117,0.35)] transition-all duration-300 group">
-                    {/* Línea giratoria */}
-                    <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#e10075_50%,transparent_65%)] pointer-events-none" />
-                    
-                    <button
-                      type="button"
-                      onClick={() => onBuy(activeEvent)}
-                      className="relative z-10 flex h-[44px] px-6 items-center justify-center rounded-full bg-zinc-950 text-[9px] font-black uppercase tracking-[0.2em] text-white hover:bg-white hover:text-black transition-all duration-300"
-                      style={{
-                        transition: "all 300ms cubic-bezier(0.4, 0, 0.2, 1)",
-                      }}
-                    >
-                      Comprar Entrada
-                    </button>
-                  </div>
-                ) : (
-                  <div className="relative group z-30">
-                    <button
-                      type="button"
-                      onClick={() => triggerInactiveToast(activeEvent)}
-                      className="flex h-[44px] px-6 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900/20 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 hover:text-zinc-500 hover:border-zinc-700 transition duration-300 cursor-not-allowed opacity-50"
-                    >
-                      Comprar Entrada
-                    </button>
-                    {/* Tooltip on hover if inactive */}
-                    <div 
-                      className="absolute bottom-full left-1/2 w-max scale-90 opacity-0 pointer-events-none group-hover:scale-100 group-hover:opacity-100 transition-all duration-300 z-50 bg-zinc-950/95 border border-white/10 text-white rounded-xl px-4 py-2 text-[9px] font-bold tracking-widest backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.9)] flex flex-col items-center mb-2"
-                      style={{ transform: "translate3d(-50%, 0, 45px)" }}
-                    >
-                      <span className="text-zinc-400 font-medium text-[8px] tracking-widest uppercase">
-                        {activeEvent.status === "sold-out" ? "Entradas Agotadas" : "Venta Próximamente"}
-                      </span>
-                      <span className="text-white font-black mt-0.5 uppercase tracking-widest text-[9px]">
-                        {activeEvent.status === "sold-out" ? "Evento Agotado" : "Evento Próximo"}
-                      </span>
-                      {/* Arrow pointing down */}
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-950" />
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -1006,10 +958,20 @@ export default function HomePage({ initialConfig }: HomePageProps) {
               onSelectRelatedEvent(event);
               setSelectedCarouselEvent(event);
             }}
+            onOpenDrinks={() => setShowDrinksModal(true)}
             isCheckoutOpen={isTicketModalOpen}
           />
         )}
       </AnimatePresence>
+
+      {/* Drinks & Bar Menu Modal */}
+      <DrinksMenuModal
+        isOpen={showDrinksModal}
+        onClose={() => setShowDrinksModal(false)}
+        eventName={selectedCarouselEvent?.title || activeEvent.title}
+        venueName={selectedCarouselEvent?.venue || activeEvent.venue}
+        drinks={selectedCarouselEvent?.drinks || activeEvent?.drinks}
+      />
 
       {/* Hidden agent modules menu */}
       <AnimatePresence>

@@ -71,6 +71,7 @@ export default function EventsSection(_props: EventsSectionProps) {
   const [togglingFeatured, setTogglingFeatured] = useState<string | null>(null);
   const [movingPosition, setMovingPosition] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const activeUploadEventIdRef = useRef<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [modalTab, setModalTab] = useState<"general" | "design" | "details" | "extra">("general");
 
@@ -133,6 +134,7 @@ export default function EventsSection(_props: EventsSectionProps) {
         website: event.socialLinks?.website || "",
       },
       merch: event.merch || [],
+      drinks: event.drinks || [],
     });
     setModalTab("general");
     setShowModal(true);
@@ -195,7 +197,7 @@ export default function EventsSection(_props: EventsSectionProps) {
     }
   };
 
-  const handleImageUpload = async (eventId: string, file: File) => {
+  const handleImageUpload = async (eventId: string, file: File): Promise<string | undefined> => {
     setUploading(true);
     try {
       const formData = new FormData();
@@ -209,10 +211,42 @@ export default function EventsSection(_props: EventsSectionProps) {
       if (!data.success) throw new Error(data.error);
       toast("success", "Imagen actualizada");
       loadEvents();
+      return data.imageUrl;
     } catch (err) {
       toast("error", "Error", err instanceof Error ? err.message : "No se pudo subir la imagen.");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleRemoveImage = async (eventId: string) => {
+    try {
+      const res = await fetch(`/api/admin/events/${eventId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...AUTH_HEADERS },
+        body: JSON.stringify({ imageUrl: "" }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      toast("success", "Imagen eliminada");
+      loadEvents();
+    } catch (err) {
+      toast("error", "Error", err instanceof Error ? err.message : "No se pudo quitar la imagen.");
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && activeUploadEventIdRef.current) {
+      if (activeUploadEventIdRef.current === "modal" && editingEvent) {
+        const newUrl = await handleImageUpload(editingEvent.id, file);
+        if (newUrl) {
+          setForm((f) => ({ ...f, imageUrl: newUrl }));
+        }
+      } else if (activeUploadEventIdRef.current !== "modal") {
+        await handleImageUpload(activeUploadEventIdRef.current, file);
+      }
+      e.target.value = "";
     }
   };
 
@@ -317,15 +351,46 @@ export default function EventsSection(_props: EventsSectionProps) {
                 className="group relative overflow-hidden rounded-[24px] border border-white/10 bg-[#18131d]/[0.62] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_20px_52px_rgba(0,0,0,0.18)] backdrop-blur-2xl transition-all duration-500 hover:border-white/20"
               >
                 {/* Image */}
-                <div className="relative h-44 overflow-hidden">
+                <div className="relative h-44 overflow-hidden group/img">
                   {event.imageUrl ? (
-                    <img src={event.imageUrl} alt={event.title} className="h-full w-full object-cover grayscale contrast-[1.1] brightness-[0.9] transition duration-700 group-hover:scale-110" />
+                    <img src={event.imageUrl} alt={event.title} className="h-full w-full object-cover grayscale contrast-[1.1] brightness-[0.9] transition duration-700 group-hover/img:scale-110" />
                   ) : (
                     <div className="flex h-full items-center justify-center bg-zinc-900">
                       <ImageIcon className="h-8 w-8 text-zinc-700" />
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+
+                  {/* Hover Image Controls */}
+                  <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover/img:opacity-100 transition-opacity duration-300 bg-black/60 z-20">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        activeUploadEventIdRef.current = event.id;
+                        fileInputRef.current?.click();
+                      }}
+                      disabled={uploading}
+                      className="flex items-center gap-1 rounded-xl bg-white px-3 py-1.5 text-[9px] font-black uppercase text-black hover:bg-zinc-200 transition disabled:opacity-50 cursor-pointer"
+                    >
+                      {uploading && activeUploadEventIdRef.current === event.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <ImageIcon className="h-3 w-3" />
+                      )}
+                      Cargar Foto
+                    </button>
+                    {event.imageUrl && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveImage(event.id);
+                        }}
+                        className="flex items-center gap-1 rounded-xl bg-red-600 px-3 py-1.5 text-[9px] font-black uppercase text-white hover:bg-red-500 transition cursor-pointer"
+                      >
+                        <Trash2 className="h-3 w-3" /> Quitar
+                      </button>
+                    )}
+                  </div>
 
                   {/* Badges */}
                   <div className="absolute top-3 left-3 flex gap-1.5">
@@ -485,18 +550,18 @@ export default function EventsSection(_props: EventsSectionProps) {
 
               {/* Tab navigation inside modal */}
               <div className="flex flex-wrap gap-2 mb-6 border-b border-white/10 pb-4">
-                {(["general", "design", "details", "extra"] as const).map((t) => (
+                {(["general", "design", "details", "drinks", "extra"] as const).map((t) => (
                   <button
                     key={t}
                     type="button"
-                    onClick={() => setModalTab(t)}
+                    onClick={() => setModalTab(t as any)}
                     className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition ${
                       modalTab === t
                         ? "bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.3)]"
                         : "border border-white/10 bg-black/40 text-zinc-400 hover:text-white"
                     }`}
                   >
-                    {t === "general" ? "General" : t === "design" ? "Diseño" : t === "details" ? "Detalles" : "Adicionales"}
+                    {t === "general" ? "General" : t === "design" ? "Diseño" : t === "details" ? "Detalles" : t === "drinks" ? "Bar & Bebidas" : "Adicionales"}
                   </button>
                 ))}
               </div>
@@ -616,8 +681,46 @@ export default function EventsSection(_props: EventsSectionProps) {
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Ruta de Imagen Principal (Poster)</p>
-                    <input value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} placeholder="/images/yan_block_card_bg.png" className="w-full rounded-2xl border border-white/10 bg-black/50 px-5 py-4 text-sm font-bold text-white outline-none" />
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Imagen Principal (Poster del Evento)</p>
+                    <div className="flex flex-col sm:flex-row gap-4 items-center border border-white/10 bg-black/30 p-4 rounded-2xl">
+                      {form.imageUrl ? (
+                        <img src={form.imageUrl} alt="Vista previa" className="h-20 w-32 object-cover rounded-xl border border-white/10" />
+                      ) : (
+                        <div className="flex h-20 w-32 items-center justify-center rounded-xl bg-zinc-900 border border-white/5">
+                          <ImageIcon className="h-6 w-6 text-zinc-700" />
+                        </div>
+                      )}
+                      <div className="flex-1 flex flex-col gap-2 w-full">
+                        <input value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} placeholder="Ej: /images/yan_block_card_bg.png" className="w-full rounded-xl border border-white/10 bg-black/50 px-4 py-2.5 text-xs text-white outline-none" />
+                        <div className="flex gap-2">
+                          {editingEvent ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                activeUploadEventIdRef.current = "modal";
+                                fileInputRef.current?.click();
+                              }}
+                              disabled={uploading}
+                              className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white px-3 py-2 text-[10px] font-black uppercase tracking-wider text-black hover:bg-zinc-200 transition disabled:opacity-50 cursor-pointer select-none"
+                            >
+                              {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
+                              Cargar Foto
+                            </button>
+                          ) : (
+                            <p className="text-[8px] text-zinc-500 uppercase font-bold self-center">Guarda el evento primero para cargar foto</p>
+                          )}
+                          {form.imageUrl && (
+                            <button
+                              type="button"
+                              onClick={() => setForm({ ...form, imageUrl: "" })}
+                              className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-red-500/20 bg-red-950/20 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-red-400 hover:bg-red-950/40 transition cursor-pointer select-none"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" /> Quitar
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div className="space-y-1.5">
                     <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-zinc-500">Ruta de Mini Imagen (Artista)</p>
@@ -739,6 +842,126 @@ export default function EventsSection(_props: EventsSectionProps) {
                         <p className="text-[8px] font-bold text-zinc-600 uppercase text-center py-4 border border-dashed border-white/10 rounded-2xl">No hay cronograma configurado.</p>
                       )}
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: Bar & Bebidas */}
+              {modalTab === ("drinks" as any) && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center mb-3">
+                    <div>
+                      <p className="text-[11px] font-black uppercase text-white tracking-wider">Carta de Bebidas & Botellas</p>
+                      <p className="text-[8px] font-bold uppercase tracking-widest text-zinc-500 mt-0.5">Administra los tragos de autor, precios y botellas</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setForm((f) => ({
+                          ...f,
+                          drinks: [
+                            ...(f.drinks || []),
+                            {
+                              id: `d-${Date.now()}`,
+                              name: "",
+                              category: "Cocteles Especiales",
+                              price: "$10",
+                              description: "",
+                              badge: "",
+                            },
+                          ],
+                        }))
+                      }
+                      className="px-3 py-2 text-[8px] font-black bg-red-600 text-white rounded-xl hover:bg-red-500 uppercase tracking-wider transition shadow-[0_0_15px_rgba(220,38,38,0.3)] cursor-pointer"
+                    >
+                      + Añadir Bebida / Botella
+                    </button>
+                  </div>
+
+                  <div className="space-y-3 max-h-[45vh] overflow-y-auto no-scrollbar pr-1">
+                    {form.drinks?.map((drink, idx) => (
+                      <div
+                        key={drink.id || idx}
+                        className="flex flex-col gap-3 border border-white/10 bg-black/40 p-4 rounded-2xl"
+                      >
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <input
+                            value={drink.name}
+                            onChange={(e) => {
+                              const next = [...(form.drinks || [])];
+                              next[idx] = { ...next[idx], name: e.target.value };
+                              setForm({ ...form, drinks: next });
+                            }}
+                            placeholder="Nombre (ej: Mojito Eleva)"
+                            className="flex-1 rounded-xl border border-white/10 bg-black/60 px-3 py-2 text-xs font-bold text-white outline-none focus:border-red-500/50"
+                          />
+                          <select
+                            value={drink.category}
+                            onChange={(e) => {
+                              const next = [...(form.drinks || [])];
+                              next[idx] = {
+                                ...next[idx],
+                                category: e.target.value as any,
+                              };
+                              setForm({ ...form, drinks: next });
+                            }}
+                            className="rounded-xl border border-white/10 bg-black/60 px-3 py-2 text-xs font-bold text-white outline-none"
+                          >
+                            <option value="Cocteles Especiales" className="bg-zinc-900">Cocteles Especiales</option>
+                            <option value="Botellas" className="bg-zinc-900">Botellas</option>
+                          </select>
+                          <input
+                            value={drink.price}
+                            onChange={(e) => {
+                              const next = [...(form.drinks || [])];
+                              next[idx] = { ...next[idx], price: e.target.value };
+                              setForm({ ...form, drinks: next });
+                            }}
+                            placeholder="Precio (ej: $8)"
+                            className="w-28 rounded-xl border border-white/10 bg-black/60 px-3 py-2 text-xs font-bold text-white outline-none focus:border-red-500/50"
+                          />
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <input
+                            value={drink.description || ""}
+                            onChange={(e) => {
+                              const next = [...(form.drinks || [])];
+                              next[idx] = { ...next[idx], description: e.target.value };
+                              setForm({ ...form, drinks: next });
+                            }}
+                            placeholder="Descripción (ej: Ron blanco, menta fresca, soda de lima...)"
+                            className="flex-1 rounded-xl border border-white/10 bg-black/60 px-3 py-2 text-xs text-white outline-none focus:border-red-500/50"
+                          />
+                          <input
+                            value={drink.badge || ""}
+                            onChange={(e) => {
+                              const next = [...(form.drinks || [])];
+                              next[idx] = { ...next[idx], badge: e.target.value };
+                              setForm({ ...form, drinks: next });
+                            }}
+                            placeholder="Badge (ej: ESPECIAL DE LA NOCHE)"
+                            className="w-44 rounded-xl border border-white/10 bg-black/60 px-3 py-2 text-xs text-white outline-none focus:border-red-500/50"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setForm({
+                                ...form,
+                                drinks: (form.drinks || []).filter((_, i) => i !== idx),
+                              });
+                            }}
+                            className="px-3 py-2 rounded-xl border border-red-500/20 bg-red-950/20 text-red-400 hover:bg-red-950/40 transition font-bold text-xs cursor-pointer"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {(form.drinks?.length ?? 0) === 0 && (
+                      <p className="text-[9px] font-bold text-zinc-600 uppercase text-center py-6 border border-dashed border-white/10 rounded-2xl">
+                        No hay bebidas configuradas para este evento.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
@@ -870,6 +1093,14 @@ export default function EventsSection(_props: EventsSectionProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*"
+        style={{ display: "none" }}
+      />
     </div>
   );
 }

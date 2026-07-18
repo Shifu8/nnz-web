@@ -99,6 +99,7 @@ export async function PUT(
           importantInfo: (fe as any).importantInfo || [],
           socialLinks: (fe as any).socialLinks || {},
           merch: (fe as any).merch || [],
+          drinks: (fe as any).drinks || [],
         };
         const created = createEvent(fullEvent);
         if (body.position !== undefined) {
@@ -141,6 +142,7 @@ export async function PUT(
         importantInfo: body.importantInfo ?? existing.importantInfo,
         socialLinks: body.socialLinks ?? existing.socialLinks,
         merch: body.merch ?? existing.merch,
+        drinks: body.drinks ?? existing.drinks,
       };
       if (!positionChanged && body.position !== undefined) {
         updateFields.position = Number(body.position);
@@ -184,6 +186,7 @@ export async function PUT(
       importantInfo: body.importantInfo || [],
       socialLinks: body.socialLinks || {},
       merch: body.merch || [],
+      drinks: body.drinks || [],
     });
 
     return NextResponse.json({ success: true, event: created });

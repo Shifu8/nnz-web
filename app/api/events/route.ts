@@ -46,6 +46,7 @@ function toFrontendEvent(adminEvent: any): EventWithPosition {
     importantInfo: adminEvent.importantInfo || [],
     socialLinks: adminEvent.socialLinks || {},
     merch: adminEvent.merch || [],
+    drinks: adminEvent.drinks || [],
 
     // Carousel specific fields
     badge: adminEvent.badge || "LIVE ACCESS",

@@ -7,7 +7,6 @@ import TurnstileWidget, { hasTurnstileSiteKey } from "@/frontend/components/Turn
 import {
   applyEmailSuggestion,
   cleanEmailInput,
-  emailDomains,
   getEmailHint,
   getEmailSuggestion,
 } from "@/frontend/utils/emailInput";
@@ -218,15 +217,15 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
             Recuperar entrada
           </p>
           <h2 className="mt-4 text-3xl font-black uppercase leading-[0.9] tracking-[-0.05em] text-white sm:text-4xl">
-            Tu entrada.
+            ¿Perdiste tu
             <br />
-            Sin vueltas.
+            entrada digital?
           </h2>
           <p className="mt-5 inline-flex items-center text-xl font-black uppercase tracking-[-0.03em] text-white">
-            Recuperación OTP
+            Recupérala al instante
           </p>
           <p className="mt-5 max-w-lg text-sm leading-7 text-zinc-400">
-            Validamos tu correo con un código privado y mostramos únicamente la entrada aprobada del evento actual.
+            Si no te llegó tu entrada o no la encuentras, ingresa el correo que usaste para la compra y la recibirás de inmediato.
           </p>
         </div>
 
@@ -305,19 +304,12 @@ export default function TicketRecovery({ embedded = false, className = "", pulse
                       autoComplete="email"
                       autoCapitalize="none"
                       spellCheck={false}
-                      list="recovery-email-domains"
                       value={email}
                       onChange={(event) => setEmail(cleanEmailInput(event.target.value))}
                       placeholder="tu@gmail.com"
                       className="h-12 w-full bg-transparent px-3 text-sm font-bold text-white outline-none placeholder:text-zinc-700"
                     />
                   </div>
-                  <datalist key={email.split("@")[0] || "tu"} id="recovery-email-domains">
-                    {emailDomains.map((domain) => {
-                      const local = email.split("@")[0] || "tu";
-                      return <option key={domain} value={`${local}@${domain}`} />;
-                    })}
-                  </datalist>
 
                   {/* Suggestions and Hints */}
                   <div className="mt-3 flex flex-wrap items-center gap-2 min-h-[24px]">

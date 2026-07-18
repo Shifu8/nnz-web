@@ -46,6 +46,14 @@ export type AdminEvent = {
     price: string;
     image?: string;
   }[];
+  drinks?: {
+    id: string;
+    name: string;
+    category: string;
+    price: string;
+    description?: string;
+    badge?: string;
+  }[];
 };
 
 export type AdminStats = {

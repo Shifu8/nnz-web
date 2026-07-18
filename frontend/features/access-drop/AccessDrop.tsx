@@ -10,7 +10,6 @@ import TurnstileWidget, { hasTurnstileSiteKey } from "@/frontend/components/Turn
 import {
   applyEmailSuggestion,
   cleanEmailInput,
-  emailDomains,
   getEmailHint,
   getEmailSuggestion,
 } from "@/frontend/utils/emailInput";
@@ -196,75 +195,73 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
         // 1. Reveal parent container
         tl.fromTo(".success-reveal",
           { opacity: 0 },
-          { opacity: 1, duration: 0.3 }
+          { opacity: 1, duration: 0.4 }
         );
 
-        // 2. Ticket card drop & bounce with 3D tilts
+        // 2. Ticket card: Elegant slide up, fade in & 3D tilt reveal
         tl.fromTo(".success-ticket-card",
-          { scale: 1.6, rotationX: -30, rotationY: 20, y: -100, opacity: 0, filter: "blur(8px)" },
-          { scale: 1, rotationX: 0, rotationY: 0, y: 0, opacity: 1, filter: "blur(0px)", duration: 0.8, ease: "back.out(1.5)" }
-        );
-
-        // 3. Stamp slams down
-        tl.fromTo(".success-stamp",
-          { scale: 4.5, opacity: 0, rotation: 30 },
-          { scale: 1, opacity: 1, rotation: -12, duration: 0.35, ease: "bounce.out" },
+          { scale: 0.85, rotationY: -15, rotationX: 10, y: 30, opacity: 0 },
+          { scale: 1, rotationY: 0, rotationX: 0, y: 0, opacity: 1, duration: 0.9, ease: "power4.out" },
           "-=0.2"
         );
 
-        // 3.5. Camera Shake on stamp hit
-        tl.to(".success-ticket-card", {
-          x: "random(-4, 4)",
-          y: "random(-4, 4)",
-          duration: 0.05,
-          repeat: 5,
-          yoyo: true,
-          clearProps: "x,y"
-        }, "-=0.2");
-
-        // 4. Energy ring expand on hit
-        tl.fromTo(".success-energy-ring",
-          { scale: 0, opacity: 0.8 },
-          { scale: 5, opacity: 0, duration: 0.8, ease: "power2.out" },
-          "-=0.25"
+        // 3. Stamp/Checkmark: Elastic pop in, aligned perfectly horizontal (no messy tilt)
+        tl.fromTo(".success-stamp",
+          { scale: 0, opacity: 0, rotation: 15 },
+          { scale: 1, opacity: 1, rotation: 0, duration: 0.6, ease: "back.out(1.8)" },
+          "-=0.6"
         );
 
-        // 5. Draw checkmark
+        // 4. Gloss sweep shine animation
+        tl.fromTo(".success-shine",
+          { left: "-100%" },
+          { left: "150%", duration: 1.1, ease: "power3.inOut" },
+          "-=0.55"
+        );
+
+        // 5. Energy ring expand on checkmark pop
+        tl.fromTo(".success-energy-ring",
+          { scale: 0.5, opacity: 1, borderWidth: "4px" },
+          { scale: 3.5, opacity: 0, borderWidth: "1px", duration: 1.0, ease: "power3.out" },
+          "-=0.6"
+        );
+
+        // 6. Draw checkmark path
         const checkPath = scope.current?.querySelector<SVGPathElement>(".success-check-path");
         if (checkPath) {
           const length = checkPath.getTotalLength();
           gsap.set(checkPath, { strokeDasharray: length, strokeDashoffset: length });
-          tl.to(checkPath, { strokeDashoffset: 0, duration: 0.3, ease: "power1.inOut" }, "-=0.2");
+          tl.to(checkPath, { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" }, "-=0.7");
         }
 
-        // 6. Burst sparkles
+        // 7. Burst sparkles (more elegant drift)
         if (sparklesRef.current) {
           const sparkles = sparklesRef.current.querySelectorAll<HTMLDivElement>(".success-sparkle");
           sparkles.forEach((s) => {
             const angle = Math.random() * Math.PI * 2;
-            const dist = 60 + Math.random() * 110;
+            const dist = 70 + Math.random() * 110;
             const x = Math.cos(angle) * dist;
             const y = Math.sin(angle) * dist;
             gsap.fromTo(s,
-              { x: 0, y: 0, scale: 0.2, opacity: 1 },
+              { x: 0, y: 0, scale: 0, opacity: 1 },
               {
                 x,
                 y,
                 opacity: 0,
-                scale: "random(0.3, 1.2)",
-                rotation: "random(-360, 360)",
-                duration: 1.2 + Math.random() * 0.6,
-                ease: "power2.out"
+                scale: "random(0.4, 1.3)",
+                rotation: "random(-180, 180)",
+                duration: 1.4 + Math.random() * 0.5,
+                ease: "power3.out"
               }
             );
           });
         }
 
-        // 7. Text details entries
-        tl.fromTo(".success-name", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4 }, "-=0.15");
-        tl.fromTo(".success-text", { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3 }, "-=0.1");
-        tl.fromTo(".success-msg", { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3 }, "-=0.15");
-        tl.fromTo(".success-btn-container", { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35 }, "-=0.2");
+        // 8. Text details entries (staggered & clean)
+        tl.fromTo(".success-name", { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45 }, "-=0.6");
+        tl.fromTo(".success-text", { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35 }, "-=0.35");
+        tl.fromTo(".success-msg", { y: 8, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35 }, "-=0.3");
+        tl.fromTo(".success-btn-container", { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4 }, "-=0.3");
       }
     },
     { scope, dependencies: [dropState] }
@@ -570,18 +567,11 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
                         autoComplete="email"
                         autoCapitalize="none"
                         spellCheck={false}
-                        list="ticket-email-domains"
                         placeholder="tu@gmail.com"
                         className="w-full bg-transparent text-xs font-bold text-white placeholder-zinc-800 outline-none mt-0"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: cleanEmailInput(e.target.value) })}
                       />
-                      <datalist key={formData.email.split("@")[0] || "tu"} id="ticket-email-domains">
-                        {emailDomains.map((domain) => {
-                          const local = formData.email.split("@")[0] || "tu";
-                          return <option key={domain} value={`${local}@${domain}`} />;
-                        })}
-                      </datalist>
                       {/* Hint única vez */}
                       <div className="mt-1 flex flex-wrap items-center gap-2">
                         {emailHint.text && (
@@ -1035,6 +1025,9 @@ const AccessDrop = forwardRef<AccessDropHandle, { onClose?: () => void; onFarewe
               <div className="success-ticket-card relative mb-8 w-64 h-36 rounded-2xl border border-white/12 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 overflow-hidden flex flex-col justify-between p-4 shadow-[0_20px_45px_rgba(0,0,0,0.8),0_0_30px_rgba(225,0,117,0.06)]">
                 {/* Background grid texture */}
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:14px_14px] pointer-events-none" />
+
+                {/* Gloss sweep shine effect */}
+                <div className="success-shine absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 pointer-events-none z-10" style={{ left: "-100%" }} />
 
                 {/* Energy Ring inside card for centering the blast */}
                 <div className="success-energy-ring absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border-2 border-[#e10075] opacity-0 pointer-events-none" />

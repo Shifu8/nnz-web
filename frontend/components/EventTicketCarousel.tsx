@@ -97,7 +97,7 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     description: "Voz única y flows de la calle. Autenticidad reggaetonera premium en una atmósfera brutal de luz cenital diseñada para vivirse al límite.",
     // Extended editorial data
     organizer: "NENEZ",
-    venue: "Venue TBA · Loja",
+    venue: "Mónaco Nightclub · Av. Pío Jaramillo Alvarado, Loja",
     time: "10:00 PM",
     category: "Reggaetón / Urban",
     ageRestriction: "18+",
@@ -118,8 +118,8 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     importantInfo: [
       { icon: "🎫", title: "Entrada", description: "Acceso digital verificado. Confirmación por email." },
       { icon: "🔞", title: "Edad Mínima", description: "18+ requerido. Presentar identificación válida." },
-      { icon: "🅿️", title: "Parking", description: "Estacionamiento disponible en el venue. Capacidad limitada." },
-      { icon: "♿", title: "Accesibilidad", description: "Venue accesible para personas con movilidad reducida." },
+      { icon: "📍", title: "Ubicación", description: "Mónaco Nightclub - Av. Pío Jaramillo Alvarado, Loja." },
+      { icon: "🍸", title: "Bar & Barra", description: "Servicio de botellas premium y tragos de autor adentro." },
     ],
     socialLinks: {
       instagram: "https://instagram.com/omarcourtz",
@@ -127,6 +127,14 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
       spotify: "https://open.spotify.com/artist/omarcourtz",
       youtube: "https://youtube.com/@omarcourtz",
     },
+    drinks: [
+      { id: "mojito-eleva", name: "Mojito Eleva", category: "Cocteles Especiales", price: "$8", description: "Ron blanco, menta fresca, soda de lima e infusión secreta NENEZ.", badge: "ESPECIAL DE LA NOCHE" },
+      { id: "gran-malo", name: "Gran Malo Tequila (750ml)", category: "Botellas", price: "$35", description: "Tequila especiado con infusión sabor horchata.", badge: "POPULAR" },
+      { id: "jagger", name: "Jägermeister (750ml)", category: "Botellas", price: "$45", description: "Servido helado a -18°C con 4 energizantes." },
+      { id: "black-label", name: "Black Label Whisky (750ml)", category: "Botellas", price: "$75", description: "Johnnie Walker Black Label 12 Años." },
+      { id: "absolut", name: "Absolut Vodka (750ml)", category: "Botellas", price: "$40", description: "Vodka sueco ultra refinado con mixers." },
+      { id: "don-julio", name: "Don Julio Reposado (750ml)", category: "Botellas", price: "$95", description: "Tequila 100% agave azul de la casa." },
+    ],
     merch: [
       { id: "dn-hoodie", name: "DAWG NIGHT Hoodie", category: "Hoodie", price: "$75", image: "/images/nenez-studio-fit-front.png" },
       { id: "dn-jersey", name: "Courtz Jersey", category: "Jersey", price: "$85", image: "/images/nenez-studio-portrait.png" },
@@ -222,7 +230,17 @@ export default function EventTicketCarousel({
 
   useEffect(() => {
     const handleResize = () => {
-      setRadius(window.innerWidth > 1024 ? 380 : window.innerWidth > 768 ? 340 : 320);
+      setRadius(
+        window.innerWidth > 1536
+          ? 480
+          : window.innerWidth > 1280
+          ? 430
+          : window.innerWidth > 1024
+          ? 390
+          : window.innerWidth > 768
+          ? 340
+          : 320
+      );
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -380,7 +398,7 @@ export default function EventTicketCarousel({
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className="relative w-full h-[520px] md:h-[560px] lg:h-[620px] flex items-center justify-center select-none overflow-visible"
+      className="relative w-full h-[520px] md:h-[560px] lg:h-[680px] xl:h-[740px] 2xl:h-[780px] flex items-center justify-center select-none overflow-visible"
     >
       {/* 3D Scene Wrapper */}
       <div 
@@ -431,7 +449,7 @@ export default function EventTicketCarousel({
                   }
                 }
               }}
-              className={`absolute w-[290px] h-[410px] md:w-[330px] md:h-[460px] lg:w-[370px] lg:h-[520px] rounded-[32px] cursor-pointer origin-center transition-all animate-float group ${
+              className={`absolute w-[290px] h-[410px] md:w-[330px] md:h-[460px] lg:w-[410px] lg:h-[560px] xl:w-[460px] xl:h-[620px] 2xl:w-[490px] 2xl:h-[660px] rounded-[32px] cursor-pointer origin-center transition-all animate-float group ${
                 diff === 0 && isTicketPulse ? "ticket-pulse-active" : ""
               }`}
               style={{
@@ -446,17 +464,9 @@ export default function EventTicketCarousel({
                   : "0 20px 40px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05)",
                 background: "rgba(10, 10, 10, 0.72)",
                 backdropFilter: "blur(24px)",
-                border: diff === 0 ? "none" : "1px solid rgba(255,255,255,0.08)",
+                border: diff === 0 ? "1px solid rgba(255,255,255,0.18)" : "1px solid rgba(255,255,255,0.08)",
               }}
             >
-              {/* Spinning border glow for active card */}
-              {diff === 0 && (
-                <div className="absolute inset-[-1px] rounded-[32px] overflow-hidden pointer-events-none z-0">
-                  <div className="absolute inset-[-200%] animate-[spin_5s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_30%,#e10075_50%,transparent_70%)] opacity-85" />
-                  <div className="absolute inset-[1px] rounded-[31px] bg-zinc-950/95 backdrop-blur-2xl" />
-                </div>
-              )}
-
               {/* Tooltip on hover if inactive */}
               {event.status !== "available" && (
                 <div 
@@ -473,32 +483,38 @@ export default function EventTicketCarousel({
                   <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-950" />
                 </div>
               )}
-              <div className="relative w-full h-full p-5 flex flex-col justify-between z-10" style={{ transform: "translateZ(20px)" }}>
+              <div className="relative w-full h-full p-5 xl:p-6 flex flex-col justify-between z-10" style={{ transform: "translateZ(20px)" }}>
                 
                 {/* Grayscale Artist Cover */}
                 <div className={`relative w-full rounded-[20px] overflow-hidden bg-zinc-900 border border-white/5 transition-all duration-500 ${
-                  diff === 0 ? "h-[50%] md:h-[55%] lg:h-[62%]" : "h-[62%]"
+                  diff === 0 ? "h-[50%] md:h-[54%] lg:h-[58%] xl:h-[60%]" : "h-[58%] xl:h-[62%]"
                 }`}>
-                  <Image
-                    src={event.poster}
-                    alt={event.title}
-                    fill
-                    sizes="(max-width: 768px) 290px, (max-width: 1024px) 330px, 370px"
-                    className="object-cover grayscale contrast-[1.15] brightness-[0.82] transition duration-1000 group-hover:scale-105"
-                    priority={idx === 0}
-                  />
+                  {event.poster ? (
+                    <Image
+                      src={event.poster}
+                      alt={event.title}
+                      fill
+                      sizes="(max-width: 768px) 290px, (max-width: 1024px) 330px, (max-width: 1280px) 410px, 490px"
+                      className="object-cover grayscale contrast-[1.15] brightness-[0.82] transition duration-1000 group-hover:scale-105"
+                      priority={idx === 0}
+                    />
+                  ) : (
+                    <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-zinc-900 to-zinc-950 border-b border-white/5">
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-700">Próximamente</span>
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                   
                   {/* Minimal Monochrome Price Badge */}
-                  <div className="absolute top-3 left-3 rounded-full border border-white/10 bg-black/75 px-3 py-1.5 backdrop-blur-md">
-                    <span className="text-[10px] font-black text-white tracking-wider">
-                      ${event.price} <span className="text-zinc-500 font-bold text-[8px]">{event.currency}</span>
+                  <div className="absolute top-3.5 left-3.5 rounded-full border border-white/10 bg-black/75 px-3 py-1.5 backdrop-blur-md">
+                    <span className="text-[10px] xl:text-xs font-black text-white tracking-wider">
+                      ${event.price} <span className="text-zinc-500 font-bold text-[8px] xl:text-[9px]">{event.currency}</span>
                     </span>
                   </div>
 
                   {/* Status badge */}
                   {event.status && (
-                    <div className={`absolute top-3 right-3 rounded-full px-2.5 py-1 text-[7px] font-black uppercase tracking-wider backdrop-blur-md ${
+                    <div className={`absolute top-3.5 right-3.5 rounded-full px-2.5 py-1 text-[7px] xl:text-[8px] font-black uppercase tracking-wider backdrop-blur-md ${
                       event.status === "available" 
                         ? "bg-white/10 border border-white/20 text-white" 
                         : event.status === "sold-out" 
@@ -511,32 +527,32 @@ export default function EventTicketCarousel({
                 </div>
 
                 {/* Event info details */}
-                <div className="flex-1 flex flex-col justify-end mt-3 text-left">
+                <div className="flex-1 flex flex-col justify-end mt-3 xl:mt-4 text-left">
                   <div>
-                    <span className="text-[7px] font-black tracking-[0.3em] text-zinc-500 uppercase">
+                    <span className="text-[7px] xl:text-[8px] font-black tracking-[0.3em] text-zinc-500 uppercase">
                       {event.badge || "NENEZ EXPERIENCE"}
                     </span>
-                    <h4 className="text-xl font-black text-white uppercase mt-0.5 tracking-tight">
+                    <h4 className="text-xl md:text-2xl xl:text-3xl font-black text-white uppercase mt-0.5 tracking-tight">
                       {event.title}
                     </h4>
-                    <p className="text-[9px] font-bold text-zinc-400 uppercase mt-0.5 tracking-wider">
+                    <p className="text-[9px] md:text-[10px] xl:text-xs font-bold text-zinc-400 uppercase mt-0.5 tracking-wider">
                       {event.subtitle}
                     </p>
                   </div>
 
                   {/* Horizontal dividers & metadata details */}
-                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/5 text-zinc-400">
-                    <div className="flex items-center text-[8px] font-black uppercase tracking-wider">
+                  <div className="flex items-center gap-4 mt-3 xl:mt-4 pt-3 border-t border-white/5 text-zinc-400">
+                    <div className="flex items-center text-[8px] md:text-[9px] xl:text-[10px] font-black uppercase tracking-wider">
                       <span>{event.dateLabel}</span>
                     </div>
-                    <div className="flex items-center text-[8px] font-black uppercase tracking-wider">
+                    <div className="flex items-center text-[8px] md:text-[9px] xl:text-[10px] font-black uppercase tracking-wider">
                       <span>{event.city}</span>
                     </div>
                   </div>
 
-                  {/* Active Card Action Buttons */}
+                  {/* Active Card Action Buttons (Mobile & Desktop) */}
                   {diff === 0 && (
-                    <div className="flex lg:hidden gap-2 mt-3 pt-3 border-t border-white/5 w-full z-50">
+                    <div className="flex gap-2 mt-3 xl:mt-4 pt-3 border-t border-white/5 w-full z-50">
                       <button
                         type="button"
                         disabled={event.status === "coming-soon"}
@@ -545,17 +561,17 @@ export default function EventTicketCarousel({
                           if (clickMovedRef.current) return;
                           onViewDetails(event);
                         }}
-                        className={`flex-1 h-9 rounded-full border text-[8px] font-black uppercase tracking-[0.15em] transition duration-300 ${
+                        className={`flex-1 h-9 xl:h-10 rounded-full border text-[8px] xl:text-[9px] font-black uppercase tracking-[0.15em] transition duration-300 ${
                           event.status === "coming-soon"
                             ? "border-zinc-800 bg-zinc-900/20 text-zinc-600 cursor-not-allowed opacity-50"
-                            : "border-white/10 bg-black/45 text-zinc-300 hover:border-white/30 hover:bg-white/5 hover:text-white active:scale-95 cursor-pointer"
+                            : "border-white/25 bg-white/10 text-white hover:border-white/50 hover:bg-white/25 active:scale-95 cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.5)] backdrop-blur-md"
                         }`}
                       >
-                        Detalles
+                        Ver Detalle
                       </button>
 
                       {event.status === "available" ? (
-                        <div className="flex-1 relative p-[1px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_12px_rgba(225,0,117,0.15)] group/btn">
+                        <div className="flex-1 relative p-[1.5px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_15px_rgba(225,0,117,0.2)] group/btn">
                           {/* Pink spinning line */}
                           <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#e10075_50%,transparent_65%)] pointer-events-none" />
                           <button
@@ -565,9 +581,9 @@ export default function EventTicketCarousel({
                               if (clickMovedRef.current) return;
                               onBuy(event);
                             }}
-                            className="relative z-10 w-full h-[34px] rounded-full bg-zinc-950 text-[8px] font-black uppercase tracking-[0.15em] text-white hover:bg-white hover:text-black transition-all duration-300 active:scale-95 cursor-pointer"
+                            className="relative z-10 w-full h-[34px] xl:h-[38px] rounded-full bg-zinc-950 text-[8px] xl:text-[9px] font-black uppercase tracking-[0.15em] text-white hover:bg-zinc-900 transition-all duration-300 active:scale-95 cursor-pointer"
                           >
-                            Comprar
+                            Comprar Entrada
                           </button>
                         </div>
                       ) : (
