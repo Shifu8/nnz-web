@@ -1,0 +1,549 @@
+{
+  "totalCount": 51,
+  "totalRevenue": 637,
+  "cashierName": "Viviana Calva",
+  "lastUpdated": "2026-07-21T18:39:12.185Z",
+  "items": {
+    "mojito-eleva": {
+      "name": "Mojito Eleva",
+      "price": 2,
+      "category": "Cocteles Especiales",
+      "count": 21,
+      "revenue": 42,
+      "stock": 181,
+      "initialStock": 200
+    },
+    "cuba-eleva": {
+      "name": "Cuba Elevá",
+      "price": 15,
+      "category": "Cocteles Especiales",
+      "count": 24,
+      "revenue": 360,
+      "stock": 77,
+      "initialStock": 100
+    },
+    "gran-malo": {
+      "name": "Gran Malo Tequila (750ml)",
+      "price": 35,
+      "category": "Botellas",
+      "count": 3,
+      "revenue": 105,
+      "stock": 47,
+      "initialStock": 50
+    },
+    "jagger": {
+      "name": "Jägermeister (750ml)",
+      "price": 45,
+      "category": "Botellas",
+      "count": 2,
+      "revenue": 90,
+      "stock": 38,
+      "initialStock": 40
+    },
+    "black-label": {
+      "name": "Black Label Whisky (750ml)",
+      "price": 75,
+      "category": "Botellas",
+      "count": 0,
+      "revenue": 0,
+      "stock": 30,
+      "initialStock": 30
+    },
+    "absolut": {
+      "name": "Absolut Vodka (750ml)",
+      "price": 40,
+      "category": "Botellas",
+      "count": 1,
+      "revenue": 40,
+      "stock": 49,
+      "initialStock": 50
+    },
+    "don-julio": {
+      "name": "Don Julio Reposado (750ml)",
+      "price": 95,
+      "category": "Botellas",
+      "count": 0,
+      "revenue": 0,
+      "stock": 20,
+      "initialStock": 20
+    }
+  },
+  "transactions": [
+    {
+      "id": "d4720f7c-7eb3-4db9-b723-bfd74116e380",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:39:12.185Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "0bee3896-023a-4def-a547-b672e482a290",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:39:11.724Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "32c703bd-4b7e-413a-8bcc-3e160d5daf57",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:39:03.348Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "2eecc6a9-cd2b-45af-82d0-1cf85cf8e26a",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:38:56.909Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "03475a93-de68-4edf-820c-eac76da9c4b4",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:51.363Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "dbb80f9e-95e8-4095-9708-d781d7ea0ea5",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:50.952Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "b5616763-3c16-44ab-8196-5dd99e9a86a9",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:50.520Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "5b8ca7b8-acab-4238-8c68-e51006d9edc1",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:50.117Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "608abbd3-fb40-4ff8-8a29-ca189fbb2215",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:49.432Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "8c00b5ed-73b5-44f9-b48c-cdf1291fdaf7",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:48.919Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "ac1c0fae-8a62-4940-b0d5-bb11e41ec157",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:48.167Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "1392856c-8db0-472d-8b21-436ac83f49c8",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:47.565Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "06e0dfb6-032b-4b8a-8266-cb110796713a",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:47.228Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "3935054d-066b-45ae-83e9-dfc14e14d474",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:46.915Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "292bc001-e084-46f7-86bf-d929601951e4",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:46.569Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "b09c6eb3-b23a-494e-ac99-3fe62a97e051",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:46.222Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "b02188ea-6a3b-40f4-8f4a-d540d45c623a",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:45.887Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "87d5f488-9c56-4a4e-8584-f21cf1ba1dcf",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:45.541Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "eacf44bf-4289-4064-ab8a-02251f4aff0c",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:45.213Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "82f83802-a303-47ea-b082-7da236b2a3e0",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:44.911Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "cfb33178-9b0e-4735-83af-9750a72b0214",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:44.573Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "be7c38d2-e068-48ce-aba9-64dc0655d901",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:44.222Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "d24d664f-c33f-4536-b98d-9c80ef9d871c",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:43.871Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "c7a74f81-7266-41e2-9ede-25f1020ffad6",
+      "drinkId": "cuba-eleva",
+      "drinkName": "Cuba Elevá",
+      "price": 15,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:43.518Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "66d80d22-573f-4600-add6-2ec668367b80",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:35.699Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "fc341146-89e5-4455-965c-8a7ab0f85e11",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:35.204Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "678befd0-ed1c-46ec-a6d1-19aa44a00a64",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:34.769Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "3c4e3fd9-0c35-4e7b-a6a6-fd26a0f85b82",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:34.372Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "a71b9160-5949-463d-b93e-aeb93a1c2d8e",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:33.977Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "0e3bda8a-ec69-4569-9b08-bde863462be9",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:33.602Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "944ede68-1ac7-4539-a095-d2e00f8ec2d8",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:33.237Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "f8d66569-93b3-4cf6-ae12-a1d90654ebd3",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:32.864Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "ed6f240a-a3c8-4fcd-9760-5b31140378d1",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:32.532Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "3c670527-6335-4077-b9c1-60eadaa1b967",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:32.161Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "9a7917e1-2f71-4f67-8e2b-425011275f0c",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:31.476Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "1ebe1230-ed93-4e4b-87b8-006b8aa23947",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:30.968Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "cc050c71-e1f1-4e94-a929-62c2aad5f0ee",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:30.496Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "7b4efb24-4807-49fb-8ea2-b8ae83e60205",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:29.877Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "810929a7-facd-42c2-93f1-e67992ccb569",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:29.252Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "014c1e28-c3f1-4287-83ec-575c6d5fe050",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:28.702Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "ad9081ef-e99a-462a-8a06-2461a08ff7ed",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:28.095Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "5189b5df-22e0-41b8-8135-9911c7b5227e",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:27.465Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "12552063-01b4-4194-92e4-a2a1de76aa29",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:26.682Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "de1ea769-b824-4e0c-b7b5-9e0e92c66c7c",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:25.539Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "32af7c46-8529-4ba8-938a-a1822dd91e09",
+      "drinkId": "jagger",
+      "drinkName": "Jägermeister (750ml)",
+      "price": 45,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:11.309Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "c24b244e-f8e2-4164-ad23-f3e5b40585df",
+      "drinkId": "jagger",
+      "drinkName": "Jägermeister (750ml)",
+      "price": 45,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:09.350Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "cde1cb30-ecb8-4033-aa69-7e88bae9f2c6",
+      "drinkId": "gran-malo",
+      "drinkName": "Gran Malo Tequila (750ml)",
+      "price": 35,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:05.399Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "c65ec829-4450-483e-80a8-08ce4c03a799",
+      "drinkId": "gran-malo",
+      "drinkName": "Gran Malo Tequila (750ml)",
+      "price": 35,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:03.893Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "0945d0d4-8bf0-4a01-8c70-1ce399d25ab5",
+      "drinkId": "absolut",
+      "drinkName": "Absolut Vodka (750ml)",
+      "price": 40,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:37:03.178Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "ce8f9617-0cc9-4833-ac57-9c463dbaac59",
+      "drinkId": "gran-malo",
+      "drinkName": "Gran Malo Tequila (750ml)",
+      "price": 35,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:36:55.724Z",
+      "bartender": "Viviana Calva"
+    },
+    {
+      "id": "4d4a5b87-302d-4511-bb6e-ba296e30be13",
+      "drinkId": "mojito-eleva",
+      "drinkName": "Mojito Eleva",
+      "price": 2,
+      "quantity": 1,
+      "timestamp": "2026-07-21T18:08:22.964Z"
+    }
+  ],
+  "bartenders": {
+    "Viviana Calva": {
+      "count": 50,
+      "revenue": 635
+    },
+    "Carlos Ruiz": {
+      "count": 0,
+      "revenue": 0
+    },
+    "Mateo Gómez": {
+      "count": 0,
+      "revenue": 0
+    },
+    "Sofía Vega": {
+      "count": 0,
+      "revenue": 0
+    }
+  }
+}

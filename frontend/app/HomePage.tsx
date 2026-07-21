@@ -31,6 +31,7 @@ import TicketRecovery from "@/frontend/features/access-drop/TicketRecovery";
 import OutfitBuilderSection from "@/frontend/features/merch/OutfitBuilderSection";
 import StaffModal from "@/frontend/features/staff/StaffModal";
 import BoxOfficeSalesModal from "@/frontend/features/staff/BoxOfficeSalesModal";
+import DrinksSalesModal from "@/frontend/features/staff/DrinksSalesModal";
 import EventTicketCarousel, { CAROUSEL_EVENTS } from "@/frontend/components/EventTicketCarousel";
 import EventDetailOverlay from "@/frontend/features/events/EventDetailOverlay";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
@@ -94,6 +95,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   const [showHiddenMenu, setShowHiddenMenu] = useState(false);
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [isPosModalOpen, setIsPosModalOpen] = useState(false);
+  const [isDrinksPosModalOpen, setIsDrinksPosModalOpen] = useState(false);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [showFarewell, setShowFarewell] = useState(false);
   const [farewellName, setFarewellName] = useState("");
@@ -1056,6 +1058,16 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         event={selectedCarouselEvent || activeEvent}
       />
 
+      {/* POS Drinks Sales Modal */}
+      <DrinksSalesModal
+        isOpen={isDrinksPosModalOpen}
+        onClose={() => {
+          setIsDrinksPosModalOpen(false);
+          setShowHiddenMenu(true);
+        }}
+        event={selectedCarouselEvent || activeEvent}
+      />
+
       {/* Hidden agent modules menu */}
       <AnimatePresence>
         {showHiddenMenu && (
@@ -1113,6 +1125,16 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                   className="flex w-full items-center justify-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 px-5 py-4 text-[11px] font-black uppercase tracking-wider text-emerald-400 transition hover:border-emerald-500/50 hover:bg-emerald-950/40 hover:text-emerald-300 cursor-pointer"
                 >
                   Ventas de Taquilla
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowHiddenMenu(false);
+                    setIsDrinksPosModalOpen(true);
+                  }}
+                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-amber-500/30 bg-amber-950/20 px-5 py-4 text-[11px] font-black uppercase tracking-wider text-amber-400 transition hover:border-amber-500/50 hover:bg-amber-950/40 hover:text-amber-300 cursor-pointer"
+                >
+                  Ventas de Barra
                 </button>
                 <button
                   type="button"

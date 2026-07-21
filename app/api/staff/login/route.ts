@@ -17,7 +17,7 @@ export const runtime = "nodejs";
 
 const loginSchema = z.object({
   password: z.string().min(4).max(160),
-  role: z.enum(["staff", "admin", "sales"]).default("staff"),
+  role: z.enum(["staff", "admin", "sales", "drinks"]).default("staff"),
   turnstileToken: z.string().max(2048).optional(),
 });
 
@@ -39,6 +39,22 @@ export async function POST(request: Request) {
       isValid =
         password === "ventas123" ||
         password === "ventas" ||
+        (await verifyRolePassword(password, "staff").catch(() => false)) ||
+        (await verifyRolePassword(password, "admin").catch(() => false));
+    } else if (role === "drinks") {
+      isValid =
+        password === "bebidas123" ||
+        password === "bebidas" ||
+        password === "bar123" ||
+        password === "bar" ||
+        password === "viviana" ||
+        password === "viviana123" ||
+        password === "carlos" ||
+        password === "carlos123" ||
+        password === "mateo" ||
+        password === "mateo123" ||
+        password === "sofia" ||
+        password === "sofia123" ||
         (await verifyRolePassword(password, "staff").catch(() => false)) ||
         (await verifyRolePassword(password, "admin").catch(() => false));
     } else {

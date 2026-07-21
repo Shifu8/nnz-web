@@ -628,5 +628,158 @@
       "expiresAt": "2026-07-21T13:53:14.085Z"
     },
     "createdAt": "2026-07-21T01:53:14.086Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "sales",
+      "sessionId": "36bee50f-2676-4f87-a7e3-773a32b2bcf9",
+      "expiresAt": "2026-07-22T05:44:45.224Z"
+    },
+    "createdAt": "2026-07-21T17:44:45.228Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "drinks",
+      "sessionId": "6d3084c3-f73d-4495-bd6d-21401834d530",
+      "expiresAt": "2026-07-22T06:08:16.865Z"
+    },
+    "createdAt": "2026-07-21T18:08:16.871Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "drinks",
+      "sessionId": "c96aa569-302c-468d-8768-64d24dcbf75a",
+      "expiresAt": "2026-07-22T06:09:55.072Z"
+    },
+    "createdAt": "2026-07-21T18:09:55.076Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "drinks",
+      "sessionId": "79b7073e-fd20-4c5a-be98-a17cb3d5d58c",
+      "expiresAt": "2026-07-22T06:11:03.897Z"
+    },
+    "createdAt": "2026-07-21T18:11:03.900Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "drinks",
+      "sessionId": "668be5f1-9908-4423-80d9-afda69275a6a",
+      "expiresAt": "2026-07-22T06:17:57.463Z"
+    },
+    "createdAt": "2026-07-21T18:17:57.468Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "drinks",
+      "sessionId": "608fde59-ba75-4b93-a351-cc4dae898fab",
+      "expiresAt": "2026-07-22T06:19:38.048Z"
+    },
+    "createdAt": "2026-07-21T18:19:38.052Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "drinks",
+      "sessionId": "dbc19090-af31-421d-a495-7a1977e4f45c",
+      "expiresAt": "2026-07-22T06:31:38.094Z"
+    },
+    "createdAt": "2026-07-21T18:31:38.098Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "drinks",
+      "sessionId": "9c4075ad-8434-4190-ae84-232a17682dfd",
+      "expiresAt": "2026-07-22T06:32:51.358Z"
+    },
+    "createdAt": "2026-07-21T18:32:51.362Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "drinks",
+      "sessionId": "4852df7a-00c8-4eff-987b-5d2870c94176",
+      "expiresAt": "2026-07-22T06:33:11.475Z"
+    },
+    "createdAt": "2026-07-21T18:33:11.475Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "drinks",
+      "sessionId": "8f4006e5-b956-4262-b834-8761881fa81a",
+      "expiresAt": "2026-07-22T06:35:39.148Z"
+    },
+    "createdAt": "2026-07-21T18:35:39.151Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "drinks",
+      "sessionId": "90ab88f6-fcbf-4780-9d72-e8dd27254206",
+      "expiresAt": "2026-07-22T06:35:52.449Z"
+    },
+    "createdAt": "2026-07-21T18:35:52.449Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "drinks",
+      "sessionId": "a8a937ee-79a5-47d2-a651-60be215a2a9e",
+      "expiresAt": "2026-07-22T06:35:57.821Z"
+    },
+    "createdAt": "2026-07-21T18:35:57.821Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "drinks",
+      "sessionId": "dabd264b-387e-4b13-bdb6-9284d6322da0",
+      "expiresAt": "2026-07-22T06:36:03.714Z"
+    },
+    "createdAt": "2026-07-21T18:36:03.714Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "b5335624-be41-4bd7-90b7-791aff0ac301",
+      "expiresAt": "2026-07-22T06:41:16.052Z"
+    },
+    "createdAt": "2026-07-21T18:41:16.053Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "drinks",
+      "sessionId": "19193460-6568-4841-9332-a2e54e840b6c",
+      "expiresAt": "2026-07-22T06:42:41.986Z"
+    },
+    "createdAt": "2026-07-21T18:42:41.986Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "drinks",
+      "sessionId": "fdc679ad-01ea-441d-a89e-d16e274d9987",
+      "expiresAt": "2026-07-22T06:46:11.954Z"
+    },
+    "createdAt": "2026-07-21T18:46:11.958Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "drinks",
+      "sessionId": "80aed045-4c0a-4759-b5a5-dfb614a96f85",
+      "expiresAt": "2026-07-22T06:46:48.594Z"
+    },
+    "createdAt": "2026-07-21T18:46:48.594Z"
   }
 ]
