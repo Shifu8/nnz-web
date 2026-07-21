@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, DollarSign, Ticket, Calendar, ArrowUp, ArrowDown } from "lucide-react";
+import { TrendingUp, DollarSign, Ticket, Calendar, ArrowUp, ArrowDown, User } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import type { ReceiptRecord } from "@/lib/access-drop/types";
 
 type VentasSectionProps = {
   receipts: ReceiptRecord[];
+  posSales?: any;
+  onRefreshPosSales?: () => void;
 };
 
 function computeSalesChart(receipts: ReceiptRecord[]) {
@@ -30,8 +32,38 @@ function computeSalesChart(receipts: ReceiptRecord[]) {
   return buckets.map((b, i) => ({ name: `Sem ${i + 1}`, tickets: b.tickets, revenue: b.revenue }));
 }
 
-export default function VentasSection({ receipts }: VentasSectionProps) {
+export default function VentasSection({ receipts, posSales, onRefreshPosSales }: VentasSectionProps) {
   const chartData = useMemo(() => computeSalesChart(receipts), [receipts]);
+
+  const [cashierInput, setCashierInput] = useState(posSales?.cashierName || "Viviana Calva");
+  const [savingCashier, setSavingCashier] = useState(false);
+  const [cashierSavedToast, setCashierSavedToast] = useState(false);
+
+  useEffect(() => {
+    if (posSales?.cashierName) {
+      setCashierInput(posSales.cashierName);
+    }
+  }, [posSales?.cashierName]);
+
+  const handleSaveCashier = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingCashier(true);
+    try {
+      const res = await fetch("/api/pos/sales", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "update_cashier", cashierName: cashierInput }),
+      });
+      if (res.ok) {
+        setCashierSavedToast(true);
+        setTimeout(() => setCashierSavedToast(false), 3000);
+        if (onRefreshPosSales) onRefreshPosSales();
+      }
+    } catch {
+    } finally {
+      setSavingCashier(false);
+    }
+  };
 
   const stats = useMemo(() => {
     const approved = receipts.filter((r) => r.status === "aprobado");
@@ -42,22 +74,93 @@ export default function VentasSection({ receipts }: VentasSectionProps) {
     return { total, tickets, pendientes, pendingRevenue };
   }, [receipts]);
 
-  if (receipts.length === 0) {
-    return (
-      <div className="m-4 flex flex-col items-center justify-center rounded-[26px] border border-white/10 bg-[#18131d]/[0.62] py-20 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_24px_70px_rgba(0,0,0,0.2)] backdrop-blur-2xl md:m-6">
-        <TrendingUp className="mb-4 h-12 w-12 text-white/[0.28]" />
-        <p className="text-sm font-bold text-white/[0.45]">Sin datos de ventas</p>
-        <p className="text-[9px] text-zinc-700 mt-1">Las ventas aparecerán cuando hayas aprobado comprobantes.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-5 p-4 md:p-6">
       <div>
         <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/[0.42]">Analytics</p>
-        <p className="text-xl font-black text-white mt-1">Ventas</p>
+        <p className="text-xl font-black text-white mt-1">Ventas & Taquilla</p>
       </div>
+
+      {/* POS Taquilla Sales Summary Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-[26px] border border-emerald-500/30 bg-gradient-to-r from-emerald-950/40 via-zinc-950 to-black p-5 shadow-[0_10px_35px_rgba(16,185,129,0.15)]"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-500/40 bg-emerald-500/20 text-emerald-400">
+              <Ticket className="h-5 w-5" />
+            </div>
+            <div>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-950/60 px-2 py-0.5 text-[7.5px] font-black uppercase tracking-[0.2em] text-emerald-300">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Ventas de Taquilla en Puerta (Hoy)
+              </span>
+              <h3 className="text-base sm:text-lg font-black uppercase text-white tracking-wide mt-0.5">
+                Ventas en Vivo del Evento
+              </h3>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 text-right">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Recaudado en Puerta</p>
+              <p className="text-2xl font-black text-emerald-400">${posSales?.totalRevenue || 0}.00</p>
+            </div>
+            <div className="h-8 w-px bg-white/10" />
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Entradas Vendidas</p>
+              <p className="text-2xl font-black text-white">{posSales?.totalCount || 0}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+          <div className="flex items-center justify-between rounded-2xl border border-emerald-500/20 bg-emerald-950/20 p-3.5">
+            <div>
+              <span className="text-[8px] font-black uppercase tracking-widest text-emerald-400">Carnet Universitario ($5)</span>
+              <p className="text-sm font-black text-white mt-0.5">{posSales?.studentCount || 0} vendidas</p>
+            </div>
+            <span className="text-sm font-black text-emerald-300">${posSales?.studentRevenue || 0}</span>
+          </div>
+
+          <div className="flex items-center justify-between rounded-2xl border border-purple-500/20 bg-purple-950/20 p-3.5">
+            <div>
+              <span className="text-[8px] font-black uppercase tracking-widest text-purple-400">General Sin Carnet ($8)</span>
+              <p className="text-sm font-black text-white mt-0.5">{posSales?.generalCount || 0} vendidas</p>
+            </div>
+            <span className="text-sm font-black text-purple-300">${posSales?.generalRevenue || 0}</span>
+          </div>
+        </div>
+
+        {/* Taquillero / Encargado Manager Row */}
+        <div className="mt-4 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4 text-emerald-400" />
+            <span className="text-xs font-bold text-white uppercase tracking-wider">
+              Taquillero(a) a Cargo:
+            </span>
+          </div>
+
+          <form onSubmit={handleSaveCashier} className="flex items-center gap-2">
+            <input
+              type="text"
+              value={cashierInput}
+              onChange={(e) => setCashierInput(e.target.value)}
+              placeholder="Nombre de encargado"
+              className="rounded-xl border border-white/15 bg-black/60 px-3.5 py-2 text-xs font-bold text-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 min-w-[200px]"
+            />
+            <button
+              type="submit"
+              disabled={savingCashier}
+              className="rounded-xl border border-emerald-500/50 bg-emerald-500/20 px-4 py-2 text-xs font-black text-emerald-300 uppercase tracking-wider hover:bg-emerald-500 hover:text-black transition cursor-pointer disabled:opacity-50"
+            >
+              {savingCashier ? "Guardando..." : cashierSavedToast ? "✓ Guardado" : "Cambiar Nombre"}
+            </button>
+          </form>
+        </div>
+      </motion.div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[

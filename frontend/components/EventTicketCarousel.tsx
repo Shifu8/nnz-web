@@ -130,6 +130,7 @@ export const CAROUSEL_EVENTS: CarouselEvent[] = [
     },
     drinks: [
       { id: "mojito-eleva", name: "Mojito Eleva", category: "Cocteles Especiales", price: "Vaso $2", description: "Ron blanco, menta fresca, soda de lima e infusión secreta NENEZ.", badge: "ESPECIAL DE LA NOCHE" },
+      { id: "cuba-eleva", name: "Cuba Elevá", category: "Cocteles Especiales", price: "$15", description: "Ron dorado, cola premium, toque de lima e infusión secreta NENEZ.", badge: "ESPECIAL DE LA NOCHE" },
       { id: "gran-malo", name: "Gran Malo Tequila (750ml)", category: "Botellas", price: "$35", description: "Tequila especiado con infusión sabor horchata.", badge: "POPULAR" },
       { id: "jagger", name: "Jägermeister (750ml)", category: "Botellas", price: "$45", description: "Servido helado a -18°C con 4 energizantes." },
       { id: "black-label", name: "Black Label Whisky (750ml)", category: "Botellas", price: "$75", description: "Johnnie Walker Black Label 12 Años." },

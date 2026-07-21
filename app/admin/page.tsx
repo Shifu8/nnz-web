@@ -432,7 +432,7 @@ function EventCarousel({ events }: { events: AdminEvent[] }) {
   );
 }
 
-function DashboardContent({ receipts, events, onRefresh }: { receipts: ReceiptRecord[]; events: AdminEvent[]; onRefresh: () => void }) {
+function DashboardContent({ receipts, events, posSales, onRefresh }: { receipts: ReceiptRecord[]; events: AdminEvent[]; posSales?: any; onRefresh: () => void }) {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<ReceiptStatus | "todas">("todas");
   const [selected, setSelected] = useState<ReceiptRecord | null>(null);
@@ -473,8 +473,6 @@ function DashboardContent({ receipts, events, onRefresh }: { receipts: ReceiptRe
   const statusBars = useMemo(() => buildStatusBars(receipts), [receipts]);
   const trendLine = useMemo(() => buildMiniTrend(receipts), [receipts]);
   const topClients = useMemo(() => getTopClients(receipts), [receipts]);
-  const approvedRate = stats.total ? Math.round((stats.aprobados / stats.total) * 100) : 0;
-
   const handleApprove = async (id: string) => {
     setReviewing(true);
     try {
@@ -519,6 +517,8 @@ function DashboardContent({ receipts, events, onRefresh }: { receipts: ReceiptRe
     }
   };
 
+  const approvedRate = stats.total ? Math.round((stats.aprobados / stats.total) * 100) : 0;
+
   const metricCards = [
     { label: "Aprobadas", value: stats.aprobados.toLocaleString("en-US"), detail: `${approvedRate}% tasa aprobada`, icon: FileCheck },
     { label: "Pendientes", value: stats.pendientes.toLocaleString("en-US"), detail: "por revisar", icon: Clock },
@@ -541,6 +541,60 @@ function DashboardContent({ receipts, events, onRefresh }: { receipts: ReceiptRe
           />
         ))}
       </div>
+
+      {/* POS Door Sales Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-[26px] border border-emerald-500/30 bg-gradient-to-r from-emerald-950/40 via-zinc-950 to-black p-5 shadow-[0_10px_35px_rgba(16,185,129,0.15)]"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-500/40 bg-emerald-500/20 text-emerald-400">
+              <Ticket className="h-5 w-5" />
+            </div>
+            <div>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-950/60 px-2.5 py-0.5 text-[7.5px] font-black uppercase tracking-[0.2em] text-emerald-300">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Ventas de Puerta en Vivo (Taquilla)
+              </span>
+              <h3 className="text-lg font-black uppercase text-white tracking-wide mt-0.5">
+                Ventas en Taquilla del Evento Actual
+              </h3>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 text-right">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Total Recaudado en Puerta</p>
+              <p className="text-2xl font-black text-emerald-400">${posSales?.totalRevenue || 0}.00</p>
+            </div>
+            <div className="h-8 w-px bg-white/10" />
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Entradas Vendidas</p>
+              <p className="text-2xl font-black text-white">{posSales?.totalCount || 0}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+          <div className="flex items-center justify-between rounded-2xl border border-emerald-500/20 bg-emerald-950/20 p-3.5">
+            <div>
+              <span className="text-[8px] font-black uppercase tracking-widest text-emerald-400">Carnet Universitario ($5)</span>
+              <p className="text-sm font-black text-white mt-0.5">{posSales?.studentCount || 0} vendidas</p>
+            </div>
+            <span className="text-sm font-black text-emerald-300">${posSales?.studentRevenue || 0}</span>
+          </div>
+
+          <div className="flex items-center justify-between rounded-2xl border border-purple-500/20 bg-purple-950/20 p-3.5">
+            <div>
+              <span className="text-[8px] font-black uppercase tracking-widest text-purple-400">General Sin Carnet ($8)</span>
+              <p className="text-sm font-black text-white mt-0.5">{posSales?.generalCount || 0} vendidas</p>
+            </div>
+            <span className="text-sm font-black text-purple-300">${posSales?.generalRevenue || 0}</span>
+          </div>
+        </div>
+      </motion.div>
 
       <div className="grid gap-5 xl:grid-cols-[1.5fr_0.9fr]">
         <motion.section
@@ -895,6 +949,7 @@ function AdminDashboardInner({ onLogout, onOpenDesigner }: { onLogout: () => voi
   const [activeSection, setActiveSection] = useState("dashboard");
   const [receipts, setReceipts] = useState<ReceiptRecord[]>([]);
   const [events, setEvents] = useState<AdminEvent[]>([]);
+  const [posSales, setPosSales] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [clock, setClock] = useState("");
   const [greeting, setGreeting] = useState("");
@@ -903,12 +958,17 @@ function AdminDashboardInner({ onLogout, onOpenDesigner }: { onLogout: () => voi
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [receiptRes, eventRes] = await Promise.all([
+      const [receiptRes, eventRes, posRes] = await Promise.all([
         fetch("/api/access-drop/receipts"),
         fetch("/api/admin/events"),
+        fetch("/api/pos/sales").catch(() => null),
       ]);
       const receiptData = await receiptRes.json();
       const eventData = await eventRes.json();
+      if (posRes && posRes.ok) {
+        const posData = await posRes.json();
+        setPosSales(posData);
+      }
       setReceipts(receiptData.receipts || []);
       setEvents(eventData.events || []);
     } catch (err) {
@@ -941,7 +1001,7 @@ function AdminDashboardInner({ onLogout, onOpenDesigner }: { onLogout: () => voi
   const renderContent = () => {
     switch (activeSection) {
       case "dashboard":
-        return <DashboardContent receipts={receipts} events={events} onRefresh={loadData} />;
+        return <DashboardContent receipts={receipts} events={events} posSales={posSales} onRefresh={loadData} />;
       case "entradas":
         return (
           <div className="space-y-5 p-4 md:p-6">
@@ -953,7 +1013,7 @@ function AdminDashboardInner({ onLogout, onOpenDesigner }: { onLogout: () => voi
       case "eventos":
         return <EventsSection events={events} onEventsChange={loadData} />;
       case "ventas":
-        return <VentasSection receipts={receipts} />;
+        return <VentasSection receipts={receipts} posSales={posSales} onRefreshPosSales={loadData} />;
       case "clientes":
         return <ClientsSection receipts={receipts} />;
       case "homepage":

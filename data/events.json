@@ -5,7 +5,7 @@
     "title": "DAWG NIGHT",
     "subtitle": "OMAR COURTZ EXPERIENCE",
     "location": "Loja",
-    "date": "2026-08-15",
+    "date": "2026-07-18",
     "time": "22:00",
     "countdownDate": "2026-08-15",
     "price": 10,
@@ -18,7 +18,7 @@
     "status": "active",
     "isFeatured": true,
     "isAvailable": true,
-    "onlineSalesCutoffTime": "14:00",
+    "onlineSalesCutoffTime": "14:14",
     "badge": "TRENDING PRESET",
     "accentColor": "#ffffff",
     "miniImage": "/images/omar_courtz_card_bg.jpg",
@@ -95,6 +95,14 @@
         "badge": "ESPECIAL DE LA NOCHE"
       },
       {
+        "id": "cuba-eleva",
+        "name": "Cuba Elevá",
+        "category": "Cocteles Especiales",
+        "price": "$15",
+        "description": "Ron dorado, cola premium, toque de lima e infusión secreta NENEZ.",
+        "badge": "ESPECIAL DE LA NOCHE"
+      },
+      {
         "id": "gran-malo",
         "name": "Gran Malo Tequila (750ml)",
         "category": "Botellas",
@@ -141,7 +149,7 @@
       }
     ],
     "createdAt": "2026-06-03T23:57:02.581Z",
-    "updatedAt": "2026-07-18T00:05:00.000Z"
+    "updatedAt": "2026-07-21T00:11:07.358Z"
   },
   {
     "id": "trap-eclipse",

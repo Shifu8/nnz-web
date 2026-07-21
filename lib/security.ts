@@ -326,7 +326,7 @@ function timingSafeEqualString(left: string, right: string): boolean {
   return crypto.timingSafeEqual(leftBuffer, rightBuffer);
 }
 
-export type NenezAuthRole = "staff" | "admin";
+export type NenezAuthRole = "staff" | "admin" | "sales";
 
 function roleHashEnvNames(role: NenezAuthRole): { b64: string; plain: string } {
   return role === "admin"

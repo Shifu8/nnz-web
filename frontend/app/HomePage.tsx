@@ -30,6 +30,7 @@ import AccessDrop, { type AccessDropHandle } from "@/frontend/features/access-dr
 import TicketRecovery from "@/frontend/features/access-drop/TicketRecovery";
 import OutfitBuilderSection from "@/frontend/features/merch/OutfitBuilderSection";
 import StaffModal from "@/frontend/features/staff/StaffModal";
+import BoxOfficeSalesModal from "@/frontend/features/staff/BoxOfficeSalesModal";
 import EventTicketCarousel, { CAROUSEL_EVENTS } from "@/frontend/components/EventTicketCarousel";
 import EventDetailOverlay from "@/frontend/features/events/EventDetailOverlay";
 import { gsap, useGSAP } from "@/frontend/animations/gsapSetup";
@@ -92,6 +93,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
   const [activeSection, setActiveSection] = useState<HomeNavId>("show");
   const [showHiddenMenu, setShowHiddenMenu] = useState(false);
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
+  const [isPosModalOpen, setIsPosModalOpen] = useState(false);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [showFarewell, setShowFarewell] = useState(false);
   const [farewellName, setFarewellName] = useState("");
@@ -644,18 +646,23 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
             {/* Bar & Drinks Menu button (displayed on desktop screens) */}
             <div className="hidden lg:flex gap-4 pt-6">
-              <div className="relative p-[2px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.2)] hover:shadow-[0_0_30px_rgba(225,0,117,0.4)] transition-all duration-300 group">
+              <motion.div
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="relative p-[2px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.2)] hover:shadow-[0_0_30px_rgba(225,0,117,0.4)] transition-shadow duration-300 group cursor-pointer"
+              >
                 {/* Línea giratoria */}
                 <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#e10075_50%,transparent_65%)] pointer-events-none" />
                 
                 <button
                   type="button"
                   onClick={() => setShowDrinksModal(true)}
-                  className="relative z-10 flex h-[44px] px-7 items-center justify-center rounded-full bg-zinc-950 text-[9px] font-black uppercase tracking-[0.2em] text-white hover:bg-white hover:text-black transition-all duration-300 cursor-pointer active:scale-95"
+                  className="relative z-10 flex h-[44px] px-7 items-center justify-center rounded-full bg-zinc-950 text-[9px] font-black uppercase tracking-[0.2em] text-white group-hover:bg-white group-hover:text-black transition-colors duration-300 cursor-pointer"
                 >
                   Bar & Carta de Bebidas
                 </button>
-              </div>
+              </motion.div>
             </div>
           </div>
 
@@ -704,18 +711,23 @@ export default function HomePage({ initialConfig }: HomePageProps) {
 
           {/* Mobile Bar & Drinks Menu button (displayed under event cards on mobile screens) */}
           <div className="order-2 lg:hidden flex justify-center w-full pt-2 pb-2 relative z-30">
-            <div className="relative p-[2px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.2)] active:scale-95 transition-all duration-300 group">
+            <motion.div
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="relative p-[2px] rounded-full overflow-hidden bg-zinc-950 flex items-center justify-center shadow-[0_0_20px_rgba(225,0,117,0.2)] transition-shadow duration-300 group cursor-pointer"
+            >
               {/* Línea giratoria */}
               <div className="absolute inset-[-150%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_0deg,transparent_35%,#e10075_50%,transparent_65%)] pointer-events-none" />
               
               <button
                 type="button"
                 onClick={() => setShowDrinksModal(true)}
-                className="relative z-10 flex h-[44px] px-7 items-center justify-center rounded-full bg-zinc-950 text-[9px] font-black uppercase tracking-[0.2em] text-white hover:bg-white hover:text-black transition-all duration-300 cursor-pointer active:scale-95"
+                className="relative z-10 flex h-[44px] px-7 items-center justify-center rounded-full bg-zinc-950 text-[9px] font-black uppercase tracking-[0.2em] text-white group-hover:bg-white group-hover:text-black transition-colors duration-300 cursor-pointer"
               >
                 Bar & Carta de Bebidas
               </button>
-            </div>
+            </motion.div>
           </div>
 
           {/* Block 3: Upcoming Event Details */}
@@ -1007,24 +1019,23 @@ export default function HomePage({ initialConfig }: HomePageProps) {
       </div>
 
       {/* Premium Cinematic Event Detail Overlay */}
-      <AnimatePresence>
-        {showDetailOverlay && (
-          <EventDetailOverlay
-            event={selectedCarouselEvent}
-            allEvents={events}
-            onClose={() => setShowDetailOverlay(false)}
-            onBuy={(event) => {
-              onBuy(event);
-            }}
-            onSelectEvent={(event) => {
-              onSelectRelatedEvent(event);
-              setSelectedCarouselEvent(event);
-            }}
-            onOpenDrinks={() => setShowDrinksModal(true)}
-            isCheckoutOpen={isTicketModalOpen}
-          />
-        )}
-      </AnimatePresence>
+      {showDetailOverlay && (
+        <EventDetailOverlay
+          event={selectedCarouselEvent}
+          allEvents={events}
+          isOpen={showDetailOverlay}
+          onClose={() => setShowDetailOverlay(false)}
+          onBuy={(event) => {
+            onBuy(event);
+          }}
+          onSelectEvent={(event) => {
+            onSelectRelatedEvent(event);
+            setSelectedCarouselEvent(event);
+          }}
+          onOpenDrinks={() => setShowDrinksModal(true)}
+          isCheckoutOpen={isTicketModalOpen}
+        />
+      )}
 
       {/* Drinks & Bar Menu Modal */}
       <DrinksMenuModal
@@ -1035,6 +1046,16 @@ export default function HomePage({ initialConfig }: HomePageProps) {
         drinks={selectedCarouselEvent?.drinks || activeEvent?.drinks}
       />
 
+      {/* POS Door Ticket Sales Modal */}
+      <BoxOfficeSalesModal
+        isOpen={isPosModalOpen}
+        onClose={() => {
+          setIsPosModalOpen(false);
+          setShowHiddenMenu(true);
+        }}
+        event={selectedCarouselEvent || activeEvent}
+      />
+
       {/* Hidden agent modules menu */}
       <AnimatePresence>
         {showHiddenMenu && (
@@ -1042,24 +1063,31 @@ export default function HomePage({ initialConfig }: HomePageProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4 backdrop-blur-3xl"
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 p-4 backdrop-blur-3xl"
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="relative flex w-full max-w-sm flex-col items-center rounded-[40px] border border-white/[0.08] bg-white/[0.03] p-10 text-center backdrop-blur-2xl" style={{ boxShadow: "0 0 80px rgba(255,255,255,0.02)" }}
+              initial={{ opacity: 0, scale: 0.88, y: 28, filter: "blur(12px)" }}
+              animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, scale: 0.88, y: 28, filter: "blur(12px)" }}
+              transition={{ duration: 0.38, ease: [0.32, 0, 0.67, 0] }}
+              className="relative flex w-full max-w-sm flex-col items-center rounded-[40px] border border-white/[0.1] bg-[#09090b]/90 p-8 sm:p-10 text-center shadow-[0_30px_100px_rgba(0,0,0,0.9)] backdrop-blur-2xl"
             >
               <button
                 type="button"
                 onClick={() => setShowHiddenMenu(false)}
-                className="absolute left-5 top-5 z-10 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-[8px] font-black uppercase tracking-wider text-zinc-400 transition hover:border-white/20 hover:text-white"
+                className="absolute right-5 top-5 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-zinc-400 transition hover:border-white/30 hover:bg-white/10 hover:text-white cursor-pointer"
+                title="Cerrar System Access"
               >
-                Volver
+                <X className="h-4 w-4" />
               </button>
 
-              <div className="mb-5 mt-8">
+              <div className="mb-2 mt-4">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-zinc-300 shadow-[0_0_30px_rgba(255,255,255,0.05)]">
+                  <KeyRound className="h-6 w-6" />
+                </div>
               </div>
+
               <h2 className="text-2xl font-black uppercase tracking-[0.15em] text-white">System Access</h2>
               <p className="mb-8 mt-2 text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-500">
                 Selecciona el módulo
@@ -1072,7 +1100,7 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                     setShowHiddenMenu(false);
                     setIsStaffModalOpen(true);
                   }}
-                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-[11px] font-black uppercase tracking-wider text-zinc-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white"
+                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-[11px] font-black uppercase tracking-wider text-zinc-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white cursor-pointer"
                 >
                   Agente Staff
                 </button>
@@ -1080,9 +1108,19 @@ export default function HomePage({ initialConfig }: HomePageProps) {
                   type="button"
                   onClick={() => {
                     setShowHiddenMenu(false);
+                    setIsPosModalOpen(true);
+                  }}
+                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 px-5 py-4 text-[11px] font-black uppercase tracking-wider text-emerald-400 transition hover:border-emerald-500/50 hover:bg-emerald-950/40 hover:text-emerald-300 cursor-pointer"
+                >
+                  Ventas de Taquilla
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowHiddenMenu(false);
                     router.push("/admin");
                   }}
-                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-[11px] font-black uppercase tracking-wider text-zinc-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white"
+                  className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-4 text-[11px] font-black uppercase tracking-wider text-zinc-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white cursor-pointer"
                 >
                   Admin
                 </button>

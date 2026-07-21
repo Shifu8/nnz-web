@@ -7,7 +7,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion, useDragControls } from "framer-motion";
+import { motion, useDragControls } from "framer-motion";
+import { gsap } from "gsap";
 import {
   X,
   MapPin,
@@ -36,6 +37,7 @@ interface EventDetailOverlayProps {
   onBuy: (event: Event) => void;
   onSelectEvent: (event: Event) => void;
   onOpenDrinks?: () => void;
+  isOpen?: boolean;
   isCheckoutOpen?: boolean;
 }
 
@@ -110,16 +112,53 @@ export default function EventDetailOverlay({
   onBuy,
   onSelectEvent,
   onOpenDrinks,
+  isOpen = true,
   isCheckoutOpen = false,
 }: EventDetailOverlayProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+
   const [scrolled, setScrolled] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [activeMerchIdx, setActiveMerchIdx] = useState(0);
   const relatedEvents = allEvents.filter((e) => e.id !== event.id);
   const dragControls = useDragControls();
 
+  const handleClose = () => {
+    if (isClosing) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion || !modalRef.current || !backdropRef.current) {
+      onClose();
+      return;
+    }
+
+    setIsClosing(true);
+    gsap.killTweensOf([modalRef.current, backdropRef.current]);
+
+    gsap.to(backdropRef.current, {
+      autoAlpha: 0,
+      duration: 0.24,
+      ease: "power2.inOut",
+    });
+
+    gsap.to(modalRef.current, {
+      opacity: 0,
+      y: 18,
+      scale: 0.82,
+      filter: "blur(8px)",
+      transformOrigin: "center bottom",
+      duration: 0.34,
+      ease: "power3.in",
+      onComplete: () => {
+        onClose();
+      },
+    });
+  };
+
   const handleGoToMerch = () => {
-    onClose();
+    handleClose();
     setTimeout(() => {
       document.getElementById("wear")?.scrollIntoView({ behavior: "smooth" });
     }, 150);
@@ -131,6 +170,53 @@ export default function EventDetailOverlay({
       document.body.style.overflow = "";
     };
   }, []);
+
+  // GSAP enter animation
+  useEffect(() => {
+    if (!isClosing && modalRef.current && backdropRef.current) {
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      gsap.killTweensOf([modalRef.current, backdropRef.current]);
+
+      gsap.fromTo(
+        backdropRef.current,
+        { autoAlpha: 0 },
+        { autoAlpha: 1, duration: reduceMotion ? 0 : 0.24, ease: "power2.out" }
+      );
+
+      gsap.fromTo(
+        modalRef.current,
+        {
+          opacity: 0,
+          y: 18,
+          scale: reduceMotion ? 1 : 1.14,
+          filter: reduceMotion ? "none" : "blur(8px)",
+          transformOrigin: "center bottom",
+        },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          filter: "blur(0px)",
+          duration: reduceMotion ? 0 : 0.48,
+          ease: "power3.out",
+        }
+      );
+    }
+  }, []);
+
+  // Handle checkout drawer opening over details
+  useEffect(() => {
+    if (modalRef.current && !isClosing) {
+      gsap.to(modalRef.current, {
+        opacity: isCheckoutOpen ? 0.4 : 1,
+        scale: isCheckoutOpen ? 0.95 : 1,
+        y: isCheckoutOpen ? -12 : 0,
+        duration: 0.3,
+        ease: "power2.out",
+      });
+    }
+  }, [isCheckoutOpen, isClosing]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -159,47 +245,29 @@ export default function EventDetailOverlay({
   const hasImportantInfo = event.importantInfo && event.importantInfo.length > 0;
   const hasDrinks = event.drinks && event.drinks.length > 0;
 
-  const overlayTransition = {
-    hidden: { opacity: 0, y: 40, scale: 0.99 as number },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1 as number,
-    },
-    exit: {
-      opacity: 0,
-      y: 40,
-      scale: 0.99 as number,
-    },
-  };
-
   return (
-    <motion.div
-      key="event-detail-backdrop"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="fixed inset-0 z-[300] flex items-end md:items-center justify-center"
-      style={{ backdropFilter: "blur(24px)", background: "rgba(0,0,0,0.88)" }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
+    <div className="fixed inset-0 z-[300] flex items-end md:items-center justify-center">
+      {/* Backdrop */}
+      <div
+        ref={backdropRef}
+        className="absolute inset-0 bg-black/88 backdrop-blur-2xl"
+        onClick={handleClose}
+      />
+
+      {/* Modal Container */}
       <motion.div
-        initial={overlayTransition.hidden}
-        animate={isCheckoutOpen ? { opacity: 0.4, scale: 0.95, y: -12 } : overlayTransition.visible}
-        exit={overlayTransition.exit}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        ref={modalRef}
         drag="y"
         dragControls={dragControls}
         dragListener={false}
         dragConstraints={{ top: 0, bottom: 0 }}
         dragElastic={{ top: 0.05, bottom: 0.85 }}
-        onDragEnd={(event, info) => {
+        onDragEnd={(e, info) => {
           if (info.offset.y > 150 || info.velocity.y > 500) {
-            onClose();
+            handleClose();
           }
         }}
-        className="relative w-full h-[96dvh] md:h-[96vh] md:max-w-[860px] overflow-hidden flex flex-col rounded-t-[32px] md:rounded-[36px] bg-[#060606]"
+        className="relative w-full h-[96dvh] md:h-[96vh] md:max-w-[860px] overflow-hidden flex flex-col rounded-t-[32px] md:rounded-[36px] bg-[#060606] z-10"
         style={{
           border: "1px solid rgba(255,255,255,0.07)",
           boxShadow: "0 -20px 80px rgba(0,0,0,0.8), 0 60px 180px rgba(0,0,0,0.95)",
@@ -214,7 +282,7 @@ export default function EventDetailOverlay({
         </div>
         {/* Sticky close button — always on top */}
         <button
-          onClick={onClose}
+          onClick={handleClose}
           aria-label="Cerrar detalle"
           className={`absolute right-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 ${
             scrolled
@@ -438,15 +506,17 @@ export default function EventDetailOverlay({
                       Consulta los tragos especiales y servicio de botellas
                     </p>
                   </div>
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
                     type="button"
                     onClick={() => {
                       onOpenDrinks?.();
                     }}
-                    className="h-10 px-6 rounded-full border border-white/20 bg-white/10 text-[9px] font-black uppercase tracking-[0.2em] text-white hover:bg-white hover:text-black transition duration-300 cursor-pointer active:scale-95 shrink-0"
+                    className="h-10 px-6 rounded-full border border-white/20 bg-white/10 text-[9px] font-black uppercase tracking-[0.2em] text-white hover:bg-white hover:text-black transition-colors duration-300 cursor-pointer shrink-0"
                   >
                     Ir al Bar
-                  </button>
+                  </motion.button>
                 </div>
               </motion.div>
             )}
@@ -645,7 +715,7 @@ export default function EventDetailOverlay({
           </div>
         </div>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }
 

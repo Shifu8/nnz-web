@@ -1,0 +1,431 @@
+{
+  "studentCount": 50,
+  "studentRevenue": 250,
+  "generalCount": 10,
+  "generalRevenue": 80,
+  "totalCount": 60,
+  "totalRevenue": 330,
+  "lastUpdated": "2026-07-21T00:58:35.128Z",
+  "transactions": [
+    {
+      "id": "4deac23e-82f7-4682-8bc7-5b496cb9db24",
+      "ticketType": "general",
+      "ticketName": "Entrada General ($8)",
+      "price": 8,
+      "timestamp": "2026-07-21T00:58:35.128Z"
+    },
+    {
+      "id": "c15efe0d-be48-4920-880d-9d897ca5291e",
+      "ticketType": "general",
+      "ticketName": "Entrada General ($8)",
+      "price": 8,
+      "timestamp": "2026-07-21T00:58:34.904Z"
+    },
+    {
+      "id": "13f6e1e9-fbf2-43ec-ba60-8b088eadaf22",
+      "ticketType": "general",
+      "ticketName": "Entrada General ($8)",
+      "price": 8,
+      "timestamp": "2026-07-21T00:58:33.927Z"
+    },
+    {
+      "id": "bbe1f18e-2e8d-4ef3-81bc-bd10aff4af84",
+      "ticketType": "general",
+      "ticketName": "Entrada General ($8)",
+      "price": 8,
+      "timestamp": "2026-07-21T00:58:33.700Z"
+    },
+    {
+      "id": "512fc518-fe7a-46b0-9d6a-05e9b182e492",
+      "ticketType": "general",
+      "ticketName": "Entrada General ($8)",
+      "price": 8,
+      "timestamp": "2026-07-21T00:58:33.319Z"
+    },
+    {
+      "id": "9a53cb49-6a72-44f3-ac07-4c88213a0378",
+      "ticketType": "general",
+      "ticketName": "Entrada General ($8)",
+      "price": 8,
+      "timestamp": "2026-07-21T00:58:32.991Z"
+    },
+    {
+      "id": "aa69da30-5a77-45d6-8d7b-58c8e42f384d",
+      "ticketType": "general",
+      "ticketName": "Entrada General ($8)",
+      "price": 8,
+      "timestamp": "2026-07-21T00:58:32.771Z"
+    },
+    {
+      "id": "6565d596-1340-4ba8-be5b-3423580d42ad",
+      "ticketType": "general",
+      "ticketName": "Entrada General ($8)",
+      "price": 8,
+      "timestamp": "2026-07-21T00:58:32.448Z"
+    },
+    {
+      "id": "03acdad6-f506-462d-b21f-687c81e861a3",
+      "ticketType": "general",
+      "ticketName": "Entrada General ($8)",
+      "price": 8,
+      "timestamp": "2026-07-21T00:58:32.226Z"
+    },
+    {
+      "id": "f88bd49b-a6e7-4fb5-9f2c-4b6894db4c92",
+      "ticketType": "general",
+      "ticketName": "Entrada General ($8)",
+      "price": 8,
+      "timestamp": "2026-07-21T00:58:32.051Z"
+    },
+    {
+      "id": "8c616bb2-027c-470d-850b-323b227c36e5",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:30.713Z"
+    },
+    {
+      "id": "32e9b28a-e080-467c-80a0-798314d4513f",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:30.369Z"
+    },
+    {
+      "id": "1678c466-d3d9-44f0-ad0b-db19239cc71a",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:30.151Z"
+    },
+    {
+      "id": "5e69eeef-e2d1-42b8-8fc9-24aa6974b494",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:29.791Z"
+    },
+    {
+      "id": "859dd852-d86c-4e1d-adf4-252c2b5f08cd",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:29.572Z"
+    },
+    {
+      "id": "b1ea1146-a4eb-458b-952a-16755f097942",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:29.422Z"
+    },
+    {
+      "id": "fa896f40-8138-4860-bf4b-971293f2e61a",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:29.258Z"
+    },
+    {
+      "id": "4983a25a-9fce-4233-892a-b41d87d6a418",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:29.092Z"
+    },
+    {
+      "id": "7367eeed-fcad-4285-bec1-2c815bc2c3aa",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:28.931Z"
+    },
+    {
+      "id": "cd806094-d7c9-4d9a-8b9a-c7595d8d67f7",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:28.184Z"
+    },
+    {
+      "id": "f1530185-e406-4ef1-8e40-ba29f496e273",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:27.825Z"
+    },
+    {
+      "id": "d7b582a9-5586-4cc5-acf7-7b9cf65866b0",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:27.481Z"
+    },
+    {
+      "id": "e5cb6735-9c01-49e2-be86-2d788df2bc0e",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:27.257Z"
+    },
+    {
+      "id": "2bac52a2-2395-4826-b4b3-c979f03c933e",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:27.089Z"
+    },
+    {
+      "id": "a6fc90b6-03e9-442e-b307-217d251eee90",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:26.918Z"
+    },
+    {
+      "id": "4f11010b-ce2f-46d6-ad29-60741f590283",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:26.765Z"
+    },
+    {
+      "id": "d0071655-8e39-4c3c-8e87-941a1490515b",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:26.614Z"
+    },
+    {
+      "id": "8eddf4f4-832b-4382-a789-fe58dbe23d72",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:26.473Z"
+    },
+    {
+      "id": "8243b781-4116-4f51-9b8b-3b6750b46e5f",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:26.320Z"
+    },
+    {
+      "id": "01aa9dcf-27eb-4393-a62a-6f9c4b3bce61",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:26.162Z"
+    },
+    {
+      "id": "dcee4953-9ea3-4a2d-86a6-29b114e8cbb7",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:26.020Z"
+    },
+    {
+      "id": "24a85840-76be-435c-b3a8-977b9038580d",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:25.867Z"
+    },
+    {
+      "id": "f0f823c2-9e66-4d1f-8096-ee4969fe29c9",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:25.732Z"
+    },
+    {
+      "id": "6e9b3475-2bee-4a90-b5a1-c13775cf9920",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:25.588Z"
+    },
+    {
+      "id": "3df94802-5b42-4e94-94fc-1c106a6018e0",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:25.444Z"
+    },
+    {
+      "id": "ac7d948f-489d-42ff-ab7b-54e81f61b2e8",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:25.288Z"
+    },
+    {
+      "id": "978cdf37-f51a-401b-bd37-11d4ec25037d",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:25.137Z"
+    },
+    {
+      "id": "89183f6b-0d7e-4404-9e95-d6f1332a316e",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:24.979Z"
+    },
+    {
+      "id": "e2590eb0-e606-4d4c-a2a4-8a333a4fdf23",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:24.487Z"
+    },
+    {
+      "id": "22288a73-5fd1-450d-987a-b6604363a711",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:24.345Z"
+    },
+    {
+      "id": "610d7079-476b-4f82-a315-eb2fab209639",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:24.194Z"
+    },
+    {
+      "id": "a76a25f7-fd0e-4c3d-8474-a8a2e257924a",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:24.044Z"
+    },
+    {
+      "id": "2b4f4502-9df0-41e9-ba99-59cb0f4d9db7",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:23.887Z"
+    },
+    {
+      "id": "74783bb6-ac31-4b2c-a63e-ba3787320f5c",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:23.742Z"
+    },
+    {
+      "id": "de9b67b8-1df1-496c-9b84-79144d74e1d5",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:23.606Z"
+    },
+    {
+      "id": "5d0bace8-4a80-43bd-8923-41d3e3fefe0b",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:23.292Z"
+    },
+    {
+      "id": "d5edaeaf-2735-4109-a1c9-c5e029f23a2a",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:23.146Z"
+    },
+    {
+      "id": "63cf4ed5-752c-4162-98f1-70b34a8ba6a9",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:22.997Z"
+    },
+    {
+      "id": "1db26827-368e-481e-b418-db3f0ac9ce13",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:22.854Z"
+    },
+    {
+      "id": "e853325c-9bb5-4f74-938f-41da8ad51886",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:22.552Z"
+    },
+    {
+      "id": "3b882295-8091-485c-8e51-5908ce132194",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:22.399Z"
+    },
+    {
+      "id": "1f3ac9d3-cf8d-42fd-8603-b141d651d6cf",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:22.257Z"
+    },
+    {
+      "id": "7cfba0b2-a329-4db7-bec3-5a0c4f61bf07",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:22.092Z"
+    },
+    {
+      "id": "20c9804b-3f93-4484-86fc-38d3975714a0",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:21.940Z"
+    },
+    {
+      "id": "7392510f-4655-42f8-aca3-bdff892adc10",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:21.789Z"
+    },
+    {
+      "id": "58d56495-afdf-49ab-92da-57af97c755f1",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:21.645Z"
+    },
+    {
+      "id": "989ab88b-8904-4424-9bbc-d30641c9a8eb",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:21.501Z"
+    },
+    {
+      "id": "0c3b453d-03db-40da-82a1-020b01855881",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:21.353Z"
+    },
+    {
+      "id": "1c3f729d-c1cb-482c-a348-8eb6901826b0",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:21.195Z"
+    },
+    {
+      "id": "43353bd3-cebc-417c-a287-17a2188cf33b",
+      "ticketType": "student",
+      "ticketName": "Entrada Carnet Universitario ($5)",
+      "price": 5,
+      "timestamp": "2026-07-21T00:58:20.989Z"
+    }
+  ]
+}

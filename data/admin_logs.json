@@ -457,5 +457,176 @@
       "expiresAt": "2026-07-18T12:41:30.367Z"
     },
     "createdAt": "2026-07-18T00:41:30.372Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "52ab19cf-bbad-41d2-a4dc-6fd4c17c7a21",
+      "expiresAt": "2026-07-19T04:09:06.951Z"
+    },
+    "createdAt": "2026-07-18T16:09:06.959Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "d3193d00-1d42-4d1c-b49f-f6974d70109e",
+      "expiresAt": "2026-07-19T05:28:29.005Z"
+    },
+    "createdAt": "2026-07-18T17:28:29.014Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "afecbfb0-bf3b-46d6-810d-20779d942c6b",
+      "expiresAt": "2026-07-19T05:48:11.263Z"
+    },
+    "createdAt": "2026-07-18T17:48:11.267Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "f4062260-4d86-49f6-a128-0881c12f6864",
+      "expiresAt": "2026-07-21T11:59:56.737Z"
+    },
+    "createdAt": "2026-07-20T23:59:56.742Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "sales",
+      "sessionId": "6e3aa89c-a86f-453a-b355-6762f1a3f8d3",
+      "expiresAt": "2026-07-21T12:28:03.700Z"
+    },
+    "createdAt": "2026-07-21T00:28:03.706Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "d57a232c-4f9a-44d7-998c-33977653bb7c",
+      "expiresAt": "2026-07-21T12:30:03.329Z"
+    },
+    "createdAt": "2026-07-21T00:30:03.329Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "sales",
+      "sessionId": "64488637-a7be-49a2-813a-dafaadeca154",
+      "expiresAt": "2026-07-21T12:30:38.562Z"
+    },
+    "createdAt": "2026-07-21T00:30:38.562Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "887d75a6-cf65-4fa3-bbdf-ddc2d42a3441",
+      "expiresAt": "2026-07-21T12:45:49.559Z"
+    },
+    "createdAt": "2026-07-21T00:45:49.563Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "sales",
+      "sessionId": "1a00cafe-3a8b-4564-81b9-f3070a9c65b1",
+      "expiresAt": "2026-07-21T12:46:34.811Z"
+    },
+    "createdAt": "2026-07-21T00:46:34.812Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "admin",
+      "sessionId": "aed70378-5105-4ab9-bd83-d4905d3e1a37",
+      "expiresAt": "2026-07-21T12:46:47.917Z"
+    },
+    "createdAt": "2026-07-21T00:46:47.917Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "sales",
+      "sessionId": "58ef0fd1-e1ad-4cdf-907a-34bba8ec7efb",
+      "expiresAt": "2026-07-21T12:51:25.817Z"
+    },
+    "createdAt": "2026-07-21T00:51:25.822Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "sales",
+      "sessionId": "70dfc5ee-863b-487a-9116-8553d39fdbff",
+      "expiresAt": "2026-07-21T12:52:09.016Z"
+    },
+    "createdAt": "2026-07-21T00:52:09.020Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "sales",
+      "sessionId": "9ffcc1d5-5825-48d6-8a08-32bc8e2b7735",
+      "expiresAt": "2026-07-21T12:53:32.104Z"
+    },
+    "createdAt": "2026-07-21T00:53:32.109Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "sales",
+      "sessionId": "31819700-b13c-411b-8c28-7145c11452b7",
+      "expiresAt": "2026-07-21T12:53:47.781Z"
+    },
+    "createdAt": "2026-07-21T00:53:47.782Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "sales",
+      "sessionId": "3ed27d1c-f6f4-4fcb-8d31-12a15eeba1cc",
+      "expiresAt": "2026-07-21T13:37:39.896Z"
+    },
+    "createdAt": "2026-07-21T01:37:39.901Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "sales",
+      "sessionId": "6b34ad96-8937-495c-a108-a2748d6269ed",
+      "expiresAt": "2026-07-21T13:40:56.227Z"
+    },
+    "createdAt": "2026-07-21T01:40:56.231Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "sales",
+      "sessionId": "0707d3b8-ffa5-4e75-bf1d-414b79d4c0f6",
+      "expiresAt": "2026-07-21T13:46:01.247Z"
+    },
+    "createdAt": "2026-07-21T01:46:01.247Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "sales",
+      "sessionId": "0150d0b7-1af0-4f15-8851-1c39018204b1",
+      "expiresAt": "2026-07-21T13:49:30.711Z"
+    },
+    "createdAt": "2026-07-21T01:49:30.717Z"
+  },
+  {
+    "action": "STAFF_LOGIN",
+    "metadata": {
+      "role": "sales",
+      "sessionId": "8dc3cc81-5a83-432e-8695-245656b0a973",
+      "expiresAt": "2026-07-21T13:53:14.085Z"
+    },
+    "createdAt": "2026-07-21T01:53:14.086Z"
   }
 ]
