@@ -3772,12 +3772,9 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                               </p>
                             </div>
                             <div className="mt-5 flex flex-col items-center gap-3">
-                              {!isMounted && !initialLoggedIn && !userLoggedIn ? (
-                                <div className="h-11 w-44 rounded-full bg-white/10 backdrop-blur-xl animate-pulse" />
-                              ) : !userLoggedIn ? (
+                              {!userLoggedIn ? (
                                 /* GOOGLE SOCIAL LOGIN BUTTON */
                                 <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
-                                  {/* Google Login */}
                                   <button
                                     type="button"
                                     onClick={(e) => {
@@ -3814,8 +3811,11 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setActiveStoryScreen(0);
+                                    if (typeof window !== "undefined") {
+                                      window.scrollTo({ top: 0, behavior: "smooth" });
+                                    }
                                   }}
-                                  className="px-8 py-3.5 rounded-full bg-white/20 backdrop-blur-xl border border-white/40 text-white font-black text-xs uppercase tracking-widest hover:bg-white/30 shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all hover:scale-105 active:scale-95 cursor-pointer animate-pulse"
+                                  className="px-8 py-3.5 rounded-full bg-white/20 backdrop-blur-xl border border-white/40 text-white font-black text-xs sm:text-sm uppercase tracking-widest hover:bg-white/30 shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all hover:scale-105 active:scale-95 cursor-pointer animate-pulse"
                                 >
                                   PUBLICAR EVENTO
                                 </button>
