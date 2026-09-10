@@ -297,7 +297,7 @@ export default function DrinksMenuModal({
         </div>
 
         {/* Footer CTA */}
-        <div className="p-4 sm:p-6 border-t border-white/[0.06] bg-[#040404] flex items-center justify-between">
+        <div className="p-4 sm:p-6 pb-safe border-t border-white/[0.06] bg-[#040404] flex items-center justify-between">
           <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500">
             Venta exclusiva dentro del Local
           </span>

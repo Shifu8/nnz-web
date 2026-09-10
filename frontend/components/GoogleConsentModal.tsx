@@ -24,14 +24,15 @@ export default function GoogleConsentModal({
   onSuccess,
   domainName = "4go.ec",
 }: GoogleConsentModalProps) {
-  const [selectedEmail, setSelectedEmail] = useState("mrshifu879@gmail.com");
+  const [selectedEmail, setSelectedEmail] = useState("brandon.medina@unl.edu.ec");
   const [customName, setCustomName] = useState("Brandon Medina");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
 
   const availableAccounts = [
-    { email: "mrshifu879@gmail.com", name: "Brandon Medina (Cubic)" },
-    { email: "brandon.medina@unl.edu.ec", name: "Brandon Alexis Medina Jimenez (Sata)" },
+    { email: "brandon.medina@unl.edu.ec", name: "Brandon Medina (Master 4GO)" },
+    { email: "master@4go.live", name: "Master Admin 4GO" },
+    { email: "mrshifu879@gmail.com", name: "Brandon Medina (Cubic Loja)" },
   ];
 
   if (!isOpen) return null;
@@ -42,11 +43,11 @@ export default function GoogleConsentModal({
       const selectedAcc = availableAccounts.find((a) => a.email === selectedEmail);
       const nameToUse = selectedAcc ? selectedAcc.name : customName || selectedEmail.split("@")[0];
 
+      const isMaster = selectedEmail === "brandon.medina@unl.edu.ec" || selectedEmail === "master@4go.live";
       const isCubic = selectedEmail === "mrshifu879@gmail.com";
-      const isSata = selectedEmail === "brandon.medina@unl.edu.ec";
-      const orgType = isCubic ? "Discoteca / Club Nocturno" : "Organizador";
-      const venueName = isCubic ? "CUBIC LOJA" : "SATA MUSIC";
-      const avatar = isCubic ? "/images/cubic-official-logo.png" : "/images/sata-official-logo.jpg";
+      const orgType = isMaster ? "Organizador" : isCubic ? "Discoteca / Club Nocturno" : "Organizador";
+      const venueName = isMaster ? "4GO" : isCubic ? "CUBIC LOJA" : "";
+      const avatar = isMaster ? "/images/logo_4go_black_white.png" : isCubic ? "/images/cubic-official-logo.png" : "";
 
       // Save user to PostgreSQL database
       try {
@@ -65,7 +66,7 @@ export default function GoogleConsentModal({
       } catch { }
 
       const userObj = {
-        id: isCubic ? "cubic" : isSata ? "sata" : `user-${Date.now()}`,
+        id: isMaster ? "master_admin" : isCubic ? "cubic" : `user-${Date.now()}`,
         name: nameToUse,
         email: selectedEmail,
         type: orgType,
@@ -83,15 +84,16 @@ export default function GoogleConsentModal({
       onClose();
     } catch (err) {
       console.error("Error during Google auth consent:", err);
+      const isMaster = selectedEmail === "brandon.medina@unl.edu.ec" || selectedEmail === "master@4go.live";
       const isCubic = selectedEmail === "mrshifu879@gmail.com";
       const fallbackUser = {
-        id: isCubic ? "cubic" : "sata",
-        name: customName || "Brandon Medina",
+        id: isMaster ? "master_admin" : isCubic ? "cubic" : `user-${Date.now()}`,
+        name: customName || (isMaster ? "Brandon Medina (4GO)" : "Brandon Medina"),
         email: selectedEmail,
-        type: isCubic ? "Discoteca / Club Nocturno" : "Organizador",
-        venueName: isCubic ? "CUBIC LOJA" : "SATA MUSIC",
+        type: isMaster ? "Organizador" : isCubic ? "Discoteca / Club Nocturno" : "Organizador",
+        venueName: isMaster ? "4GO" : isCubic ? "CUBIC LOJA" : "",
         city: "Loja",
-        avatar: isCubic ? "/images/cubic-official-logo.png" : "/images/sata-official-logo.jpg",
+        avatar: isMaster ? "/images/logo_4go_black_white.png" : isCubic ? "/images/cubic-official-logo.png" : "",
         hasCompletedOnboarding: true,
       };
       localStorage.setItem("organizer_token", `google-token-${selectedEmail}`);

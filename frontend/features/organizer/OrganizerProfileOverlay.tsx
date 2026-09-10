@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   BadgeCheck,
   Calendar,
+  Check,
   ChevronLeft,
   MapPin,
   Share2,
@@ -69,6 +70,20 @@ export const ORGANIZER_DATA: Record<string, OrganizerProfile> = {
     schedule: "Eventos Especiales & Conciertos",
     description: "Productora oficial de eventos underground, conciertos y fiestas exclusivas en Ecuador.",
     followersCount: "8.9K",
+  },
+  "4go": {
+    id: "4go",
+    name: "4GO",
+    title: "4GO",
+    email: "master@4go.live",
+    type: "Organizador",
+    logo: "/images/logo_4go_black_white.png",
+    instagramUrl: "https://www.instagram.com/4gooooooooo/",
+    instagramHandle: "@4gooooooooo",
+    location: "Loja, Ecuador",
+    schedule: "Eventos Especiales & Fiestas",
+    description: "Plataforma oficial de eventos y experiencias en vivo en Loja, Ecuador.",
+    followersCount: "12K",
   },
   prueba1: {
     id: "prueba1",
@@ -148,9 +163,67 @@ export default function OrganizerProfileOverlay({
     followersCount: "475",
   };
 
-  const bgPosterSrc = getHdImageSrc(
-    displayEvents[0]?.poster || (matchedKey === "cubic" ? "/images/trap_loud_event_1779161392003.png" : org.logo)
-  );
+  // Grab authentic color & blur from the organizer's profile photo (org.logo)
+  const profileImgSrc = getHdImageSrc(org.logo);
+
+  const isCubic =
+    matchedKey === "cubic" ||
+    org.id === "cubic" ||
+    Boolean(org.name && org.name.toLowerCase().includes("cubic"));
+
+  const isWhiteAndBlackLogo =
+    isCubic ||
+    matchedKey === "prueba1" ||
+    Boolean(org.logo?.includes("logo_4go_black_white")) ||
+    Boolean(org.logo?.includes("cubic"));
+
+  const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    };
+  }, []);
+
+  const handleShareOrCopy = async () => {
+    const shareUrl = typeof window !== "undefined"
+      ? `${window.location.origin}/organizer/${org.id}`
+      : `https://4go.live/organizer/${org.id}`;
+
+    let success = false;
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        success = true;
+      } catch (err) {
+        console.warn("navigator.clipboard failed, trying fallback:", err);
+      }
+    }
+
+    if (!success && typeof document !== "undefined") {
+      try {
+        const textarea = document.createElement("textarea");
+        textarea.value = shareUrl;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        success = true;
+      } catch (err) {
+        console.error("Fallback copy failed:", err);
+      }
+    }
+
+    setCopied(true);
+    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    copyTimeoutRef.current = setTimeout(() => {
+      setCopied(false);
+    }, 2500);
+  };
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     setIsScrolledDown(e.currentTarget.scrollTop > 300);
@@ -164,18 +237,89 @@ export default function OrganizerProfileOverlay({
       transition={{ duration: 0.32, ease: "easeOut" }}
       className={`fixed inset-0 ${zIndex} bg-black text-white flex flex-col select-none overflow-hidden`}
     >
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[#0e0d14]">
-        <Image src={bgPosterSrc} alt={org.name} fill priority quality={100} sizes="100vw" className="object-cover object-center scale-150 blur-[120px] saturate-200 brightness-110 opacity-75" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#121218]/70 via-[#0e0d14]/85 to-[#0b0a10]" />
+      {/* ─── ULTRA-VIVID AMBIENT PROFILE COLOR BLUR (AUTHENTIC GRADIENT FADE TO DEEP BLACK) ─── */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-black transform-gpu">
+        {/* Ambient White/Silver Halo Glow for White/Black Logos like Cubic */}
+        {isWhiteAndBlackLogo && (
+          <div
+            className="absolute top-8 sm:top-12 left-1/2 -translate-x-1/2 w-[580px] sm:w-[820px] h-[520px] sm:h-[650px] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.48)_0%,rgba(255,255,255,0.22)_35%,rgba(255,255,255,0.06)_65%,transparent_80%)] blur-[75px] pointer-events-none"
+          />
+        )}
+
+        {/* Blurred Profile Image with Smooth Mask-Image Gradient Fade to Black */}
+        <div
+          className="absolute top-0 inset-x-0 h-[85vh] max-h-[850px] overflow-hidden"
+          style={{
+            WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 25%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0) 100%)",
+            maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 25%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0) 100%)",
+          }}
+        >
+          <Image
+            src={profileImgSrc}
+            alt=""
+            aria-hidden="true"
+            fill
+            priority
+            quality={20}
+            sizes="120px"
+            className={`object-cover object-center blur-[80px] transform-gpu will-change-transform ${
+              isWhiteAndBlackLogo
+                ? "scale-[3.2] brightness-200 contrast-125 opacity-95"
+                : "scale-150 saturate-200 brightness-110 opacity-85"
+            }`}
+          />
+        </div>
+
+        {/* Global Smooth Gradient Overlay */}
+        <div
+          className={`absolute inset-0 pointer-events-none ${
+            isWhiteAndBlackLogo
+              ? "bg-gradient-to-b from-transparent via-black/15 via-40% to-black"
+              : "bg-gradient-to-b from-black/10 via-black/25 via-40% to-black"
+          }`}
+        />
       </div>
 
-      <header className="fixed top-0 inset-x-0 z-[550] flex items-center justify-between px-4 sm:px-8 py-4 bg-gradient-to-b from-[#0c0714]/90 via-[#0c0714]/50 to-transparent pointer-events-none">
+      {/* Floating 'Link Copiado' Pill Toast */}
+      <AnimatePresence>
+        {copied && (
+          <motion.div
+            initial={{ opacity: 0, y: -15, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -15, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="fixed top-20 left-1/2 -translate-x-1/2 z-[600] pointer-events-none flex items-center gap-2 px-4 py-2 rounded-full bg-white text-black font-black text-xs uppercase tracking-wider shadow-[0_10px_35px_rgba(0,0,0,0.8)] border border-white/20"
+          >
+            <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
+            <span>Link copiado</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <header className="fixed top-0 inset-x-0 z-[550] flex items-center justify-between px-4 sm:px-8 py-4 bg-gradient-to-b from-black/90 via-black/40 to-transparent pointer-events-none">
         <button type="button" onClick={onClose} className="pointer-events-auto flex items-center justify-center w-11 h-11 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 backdrop-blur-xl transition-all cursor-pointer shadow-2xl active:scale-95" aria-label="Volver">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="pointer-events-auto flex items-center gap-2">
-          <button type="button" onClick={() => { if (navigator.share) { navigator.share({ title: `${org.title} - 4GO`, url: org.instagramUrl }); } }} className="flex items-center justify-center w-11 h-11 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 backdrop-blur-xl transition-all cursor-pointer shadow-2xl active:scale-95" aria-label="Compartir">
-            <Share2 className="w-5 h-5" />
+          {/* Share / Copy Web Link Button */}
+          <button
+            type="button"
+            onClick={handleShareOrCopy}
+            className={`flex items-center justify-center gap-1.5 h-11 px-3 sm:px-4 rounded-full border backdrop-blur-xl transition-all cursor-pointer shadow-2xl active:scale-95 ${
+              copied
+                ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-300"
+                : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+            }`}
+            aria-label="Compartir perfil"
+          >
+            {copied ? (
+              <>
+                <Check className="w-4 h-4 text-emerald-400 stroke-[3]" />
+                <span className="text-xs font-bold tracking-tight whitespace-nowrap">Link copiado</span>
+              </>
+            ) : (
+              <Share2 className="w-5 h-5" />
+            )}
           </button>
           <button type="button" onClick={onClose} className="flex items-center justify-center w-11 h-11 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 backdrop-blur-xl transition-all cursor-pointer shadow-2xl active:scale-95" aria-label="Cerrar">
             <X className="w-5 h-5" />

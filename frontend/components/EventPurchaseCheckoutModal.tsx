@@ -76,6 +76,46 @@ const BANK_ACCOUNTS = [
   },
 ];
 
+// Reusable Legal Notice Component with Favicon Image
+function LegalNotice({ userLoggedIn }: { userLoggedIn?: boolean }) {
+  return (
+    <div className="flex items-start gap-3.5 pt-2 text-left">
+      <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-md overflow-hidden p-1 border border-white/20">
+        <img
+          src="/images/logo_4go_black_white.png"
+          alt="4GO Favicon"
+          width={34}
+          height={34}
+          loading="eager"
+          decoding="sync"
+          className="w-[34px] h-[34px] object-contain rounded-xl"
+        />
+      </div>
+      <p className="text-[11px] sm:text-xs text-zinc-300 font-sans font-medium leading-relaxed tracking-normal">
+        {userLoggedIn ? (
+          <>
+            Comprando esta entrada, aceptarás nuestras{" "}
+            <strong className="text-white font-bold">Condiciones de Uso</strong> generales, la{" "}
+            <strong className="text-white font-bold">Política de Privacidad</strong> y las{" "}
+            <strong className="text-white font-bold">Condiciones de Compra</strong> de entradas.
+            Procesamos tus datos personales de acuerdo con nuestra{" "}
+            <strong className="text-white font-bold">Política de Privacidad</strong>.
+          </>
+        ) : (
+          <>
+            Comprando esta entrada, abrirás una cuenta y aceptarás nuestras{" "}
+            <strong className="text-white font-bold">Condiciones de Uso</strong> generales, la{" "}
+            <strong className="text-white font-bold">Política de Privacidad</strong> y las{" "}
+            <strong className="text-white font-bold">Condiciones de Compra</strong> de entradas.
+            Procesamos tus datos personales de acuerdo con nuestra{" "}
+            <strong className="text-white font-bold">Política de Privacidad</strong>.
+          </>
+        )}
+      </p>
+    </div>
+  );
+}
+
 export default function EventPurchaseCheckoutModal({
   isOpen,
   onClose,
@@ -477,43 +517,6 @@ export default function EventPurchaseCheckoutModal({
 
   const selectedBank = BANK_ACCOUNTS.find((b) => b.id === selectedBankId) || BANK_ACCOUNTS[0];
 
-  // Reusable Legal Notice Component with Favicon Image
-  const LegalNotice = () => (
-    <div className="flex items-start gap-3.5 pt-2 text-left">
-      <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-md overflow-hidden p-1 border border-white/20">
-        <Image
-          src="/images/logo_4go_black_white.png"
-          alt="4GO Favicon"
-          width={34}
-          height={34}
-          style={{ width: "auto", height: "auto" }}
-          className="object-contain rounded-xl"
-        />
-      </div>
-      <p className="text-[11px] sm:text-xs text-zinc-300 font-sans font-medium leading-relaxed tracking-normal">
-        {userLoggedIn ? (
-          <>
-            Comprando esta entrada, aceptarás nuestras{" "}
-            <strong className="text-white font-bold">Condiciones de Uso</strong> generales, la{" "}
-            <strong className="text-white font-bold">Política de Privacidad</strong> y las{" "}
-            <strong className="text-white font-bold">Condiciones de Compra</strong> de entradas.
-            Procesamos tus datos personales de acuerdo con nuestra{" "}
-            <strong className="text-white font-bold">Política de Privacidad</strong>.
-          </>
-        ) : (
-          <>
-            Comprando esta entrada, abrirás una cuenta y aceptarás nuestras{" "}
-            <strong className="text-white font-bold">Condiciones de Uso</strong> generales, la{" "}
-            <strong className="text-white font-bold">Política de Privacidad</strong> y las{" "}
-            <strong className="text-white font-bold">Condiciones de Compra</strong> de entradas.
-            Procesamos tus datos personales de acuerdo con nuestra{" "}
-            <strong className="text-white font-bold">Política de Privacidad</strong>.
-          </>
-        )}
-      </p>
-    </div>
-  );
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -639,8 +642,10 @@ export default function EventPurchaseCheckoutModal({
                     if (fallback) fallback.classList.remove("hidden");
                   }}
                 />
-              ) : null}
-              <User className={`checkout-user-fallback w-5 h-5 text-white ${userLoggedIn && userProfile?.avatar ? "hidden" : ""}`} />
+              ) : (
+                <User className="w-5 h-5 text-white" />
+              )}
+              <User className="checkout-user-fallback w-5 h-5 text-white hidden" />
             </button>
 
             {/* Hover Tooltip: Perfil */}
@@ -748,6 +753,8 @@ export default function EventPurchaseCheckoutModal({
                     src={getHdImageSrc(event.poster)}
                     alt={event.title}
                     fill
+                    priority
+                    unoptimized
                     sizes="(max-width: 640px) 64px, 80px"
                     className="object-cover"
                   />
@@ -965,7 +972,7 @@ export default function EventPurchaseCheckoutModal({
 
               {/* Mobile Only Legal Notice below Tiers List (Screenshot 3) */}
               <div className="lg:hidden pt-3">
-                <LegalNotice />
+                <LegalNotice userLoggedIn={userLoggedIn} />
               </div>
             </div>
 
@@ -1029,7 +1036,7 @@ export default function EventPurchaseCheckoutModal({
               </div>
 
               {/* Desktop Legal Notice */}
-              <LegalNotice />
+              <LegalNotice userLoggedIn={userLoggedIn} />
             </div>
           </div>
         )}
@@ -1181,6 +1188,8 @@ export default function EventPurchaseCheckoutModal({
                         src={selectedBank.qrImage}
                         alt={`QR ${selectedBank.bank}`}
                         fill
+                        priority
+                        unoptimized
                         sizes="144px"
                         className="object-contain"
                       />
@@ -1390,7 +1399,7 @@ export default function EventPurchaseCheckoutModal({
 
       {/* ─── MOBILE FIXED BOTTOM CHECKOUT BAR (SCREENSHOT 3 EXACT MATCH) ─── */}
       {currentStep === "select" && (
-        <div className="fixed bottom-0 inset-x-0 z-[530] bg-white text-black p-4 sm:p-5 flex flex-col gap-2 shadow-[0_-15px_40px_rgba(0,0,0,0.7)] lg:hidden rounded-t-3xl border-t border-zinc-200">
+        <div className="fixed bottom-0 inset-x-0 z-[530] bg-white text-black p-4 sm:p-5 pb-safe flex flex-col gap-2 shadow-[0_-15px_40px_rgba(0,0,0,0.7)] lg:hidden rounded-t-3xl border-t border-zinc-200">
           <div className="flex items-center justify-between">
             <div className="flex flex-col text-left">
               <span className="text-sm font-black tracking-tight text-black">

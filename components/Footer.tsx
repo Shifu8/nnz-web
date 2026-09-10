@@ -29,9 +29,10 @@ export default function Footer({ showTopBanner = false }: FooterProps) {
                 alt="4GO"
                 width={144}
                 height={144}
+                unoptimized
+                priority
                 style={{ width: "auto", height: "auto" }}
                 className="object-contain"
-                priority
               />
             </div>
 
@@ -42,7 +43,7 @@ export default function Footer({ showTopBanner = false }: FooterProps) {
 
             {/* Comprehensive Description */}
             <p className="text-sm sm:text-base text-zinc-300 font-medium leading-relaxed max-w-xl">
-              Obtén tus entradas oficiales y reservas de mesa al instante con confirmación directa, precios 100% transparentes sin recargos ocultos y acceso digital garantizado para tus eventos favoritos.
+              Compra tus entradas oficiales y reservas con total tranquilidad. Cada orden es validada y confirmada directamente por el organizador de cada evento, con precios 100% transparentes sin cargos ocultos y acceso digital garantizado.
             </p>
           </div>
         </section>
@@ -64,6 +65,8 @@ export default function Footer({ showTopBanner = false }: FooterProps) {
                   alt="4GO Logo"
                   width={96}
                   height={96}
+                  unoptimized
+                  priority
                   style={{ width: "auto", height: "auto" }}
                   className="object-contain"
                 />

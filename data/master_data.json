@@ -1,0 +1,75 @@
+{
+  "receivables": [
+    {
+      "id": "rec_cubic_001",
+      "organizerName": "Cubic Loja",
+      "organizerType": "Discoteca",
+      "organizerEmail": "mrshifu879@gmail.com",
+      "eventTitle": "TRAP LOUD",
+      "eventDate": "30 AGO 2026",
+      "totalSales": 18450,
+      "commissionRate": 0.06,
+      "commissionAmount": 1107,
+      "currency": "S/",
+      "status": "comprobante_subido",
+      "receiptUrl": "/images/now4go-hero-presentation-hd-v3.png",
+      "receiptDate": "01 SEP 2026",
+      "notes": "Transferencia Banco Pichincha ref #982341"
+    },
+    {
+      "id": "rec_sata_002",
+      "organizerName": "Sata Music",
+      "organizerType": "Organizador",
+      "organizerEmail": "contacto@satamusic.ec",
+      "eventTitle": "Kaskade: ORIGIN //",
+      "eventDate": "18 SEP 2026",
+      "totalSales": 24200,
+      "commissionRate": 0.06,
+      "commissionAmount": 1452,
+      "currency": "$",
+      "status": "pendiente",
+      "notes": "En venta activa. Liquidación al cierre del evento."
+    },
+    {
+      "id": "rec_under_003",
+      "organizerName": "Underground Club",
+      "organizerType": "Discoteca",
+      "organizerEmail": "contacto@underground.ec",
+      "eventTitle": "NOCTURNE LOUD",
+      "eventDate": "31 OCT 2026",
+      "totalSales": 9600,
+      "commissionRate": 0.06,
+      "commissionAmount": 576,
+      "currency": "$",
+      "status": "liquidado",
+      "paidAt": "15 AGO 2026",
+      "receiptUrl": "/images/logo_4go_black_white.png",
+      "notes": "Liquidado y verificado por Master"
+    }
+  ],
+  "roleRequests": [
+    {
+      "id": "req_sata_disc_01",
+      "organizerId": "sata",
+      "organizerName": "Sata Music",
+      "organizerEmail": "contacto@satamusic.ec",
+      "phone": "+593 98 765 4321",
+      "venueAddress": "Av. Salvador Bustamante Celi y Guayaquil, Loja",
+      "city": "Loja",
+      "openingDays": [
+        "Jueves",
+        "Viernes",
+        "Sábado"
+      ],
+      "capacity": "650 personas",
+      "proofDocumentUrl": "/images/sata-official-logo.jpg",
+      "status": "pendiente",
+      "submittedAt": "2026-09-04T04:25:57.734Z",
+      "hasZeroDebt": true,
+      "pendingDebtAmount": 0,
+      "completedEventsCount": 2,
+      "isNewUser": false,
+      "physicalLocationVerified": true
+    }
+  ]
+}

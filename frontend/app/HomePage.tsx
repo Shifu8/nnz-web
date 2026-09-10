@@ -109,6 +109,7 @@ export interface SearchProfile {
   name: string;
   type: "Organizador" | "Discoteca / Club Nocturno";
   avatar?: string;
+  instagramUrl?: string;
 }
 
 export const SEARCH_PROFILES: SearchProfile[] = Object.values(ORGANIZER_DATA).map((item) => ({
@@ -116,6 +117,7 @@ export const SEARCH_PROFILES: SearchProfile[] = Object.values(ORGANIZER_DATA).ma
   name: item.name,
   type: item.type,
   avatar: item.logo,
+  instagramUrl: item.instagramUrl,
 }));
 
 type HomeNavId = (typeof HOME_NAV_ITEMS)[number]["id"];
@@ -133,6 +135,7 @@ type FilterTabId = (typeof FILTER_TABS)[number]["id"] | "ciudad" | "publish";
 interface HomePageProps {
   initialConfig: HomepageConfig;
   initialEventSlug?: string;
+  initialLoggedIn?: boolean;
 }
 
 function TypewriterText({ text }: { text: string }) {
@@ -163,7 +166,7 @@ function TypewriterText({ text }: { text: string }) {
   );
 }
 
-export default function HomePage({ initialConfig, initialEventSlug }: HomePageProps) {
+export default function HomePage({ initialConfig, initialEventSlug, initialLoggedIn }: HomePageProps) {
   const router = useRouter();
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const manualActiveUntil = useRef(0);
@@ -188,10 +191,57 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
   const [isPosModalOpen, setIsPosModalOpen] = useState(false);
   const [isDrinksPosModalOpen, setIsDrinksPosModalOpen] = useState(false);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
+  const [showAuthModalForFavorites, setShowAuthModalForFavorites] = useState(false);
 
   const [isMounted, setIsMounted] = useState(false);
-  const [userLoggedIn, setUserLoggedIn] = useState<boolean>(false);
-  const [userProfile, setUserProfile] = useState<{ id: string; name: string; email: string; avatar?: string; type?: string; venueName?: string; city?: string; instagram?: string; address?: string; openingHours?: string; openingDays?: string[]; hasCompletedOnboarding?: boolean } | null>(null);
+  const [userLoggedIn, setUserLoggedIn] = useState<boolean>(() => {
+    if (initialLoggedIn) return true;
+    if (typeof window !== "undefined") {
+      try {
+        const token = localStorage.getItem("organizer_token");
+        const profile = localStorage.getItem("organizer_profile");
+        if (token && profile) {
+          document.cookie = "organizer_logged_in=1; path=/; max-age=31536000; SameSite=Lax";
+          return true;
+        }
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  });
+  const [userProfile, setUserProfile] = useState<{ id: string; name: string; email: string; avatar?: string; type?: string; venueName?: string; city?: string; instagram?: string; address?: string; openingHours?: string; openingDays?: string[]; hasCompletedOnboarding?: boolean } | null>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const profile = localStorage.getItem("organizer_profile");
+        if (profile) {
+          const parsed = JSON.parse(profile);
+          if (parsed && parsed.email) {
+            const cleanEmail = parsed.email.trim().toLowerCase();
+            const isMaster = cleanEmail === "brandon.medina@unl.edu.ec" || cleanEmail === "master@4go.live";
+            const isCubic = cleanEmail === "mrshifu879@gmail.com";
+            if (isMaster) {
+              parsed.id = "master_admin";
+              parsed.venueName = parsed.venueName && !parsed.venueName.includes("Master Headquarters") ? parsed.venueName : "4GO";
+              parsed.type = "Organizador";
+              parsed.avatar = parsed.avatar && !parsed.avatar.includes("presentation") ? parsed.avatar : "/images/logo_4go_black_white.png";
+              parsed.hasCompletedOnboarding = true;
+            } else if (isCubic) {
+              parsed.id = "cubic";
+              parsed.venueName = parsed.venueName || "CUBIC LOJA";
+              parsed.type = parsed.type || "Discoteca / Club Nocturno";
+              parsed.avatar = parsed.avatar || "/images/cubic-official-logo.png";
+              parsed.hasCompletedOnboarding = true;
+            }
+            return parsed;
+          }
+        }
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
   const [organizerSubView, setOrganizerSubView] = useState<'menu' | 'profile' | 'create_event' | 'published' | 'my_events' | 'favorites'>('menu');
   const [lastPublishedEvent, setLastPublishedEvent] = useState<any>(null);
   const [showEventPublishedToast, setShowEventPublishedToast] = useState(false);
@@ -226,6 +276,15 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
   const [newEventVenueAddress, setNewEventVenueAddress] = useState('');
   const [newEventCoOrganizers, setNewEventCoOrganizers] = useState<string[]>([]);
   const [isAccountDashboardOpen, setIsAccountDashboardOpen] = useState(false);
+  const [accountDashboardInitialTab, setAccountDashboardInitialTab] = useState<any>(undefined);
+  const [isMasterDashboardOpen, setIsMasterDashboardOpen] = useState(false);
+  const isMasterUser = Boolean(
+    userProfile &&
+    (userProfile.type === "Master Admin" ||
+     userProfile.type === "master" ||
+     userProfile.email?.toLowerCase().trim() === "brandon.medina@unl.edu.ec" ||
+     userProfile.email?.toLowerCase().trim() === "master@4go.live")
+  );
   const [isOnboardingSaving, setIsOnboardingSaving] = useState(false);
   const [isCoOrganizerModalOpen, setIsCoOrganizerModalOpen] = useState(false);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
@@ -274,14 +333,27 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
         sub?: string
       ) => {
         const cleanEmail = (email || "").trim().toLowerCase();
+        const isMaster = cleanEmail === "brandon.medina@unl.edu.ec" || cleanEmail === "master@4go.live";
         const isCubic = cleanEmail === "mrshifu879@gmail.com";
-        const isSata = cleanEmail === "brandon.medina@unl.edu.ec";
 
         let savedPerEmail: any = null;
         try {
           const stored = localStorage.getItem(`organizer_profile_${cleanEmail}`);
           if (stored) savedPerEmail = JSON.parse(stored);
         } catch { }
+
+        if (isMaster) {
+          return {
+            id: "master_admin",
+            name: name || "Brandon Medina (4GO)",
+            email: cleanEmail,
+            avatar: "/images/logo_4go_black_white.png",
+            type: "Organizador",
+            venueName: "4GO",
+            city: "Loja",
+            hasCompletedOnboarding: true,
+          };
+        }
 
         if (isCubic) {
           return {
@@ -291,19 +363,6 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
             avatar: "/images/cubic-official-logo.png",
             type: "Discoteca / Club Nocturno",
             venueName: "CUBIC LOJA",
-            city: "Loja",
-            hasCompletedOnboarding: true,
-          };
-        }
-
-        if (isSata) {
-          return {
-            id: "sata",
-            name: name || "Brandon Medina",
-            email: cleanEmail,
-            avatar: "/images/sata-official-logo.jpg",
-            type: "Organizador",
-            venueName: "SATA MUSIC",
             city: "Loja",
             hasCompletedOnboarding: true,
           };
@@ -376,6 +435,9 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
           localStorage.setItem("organizer_token", `google-auth-${email}-${Date.now()}`);
           localStorage.setItem("organizer_profile", JSON.stringify(userObj));
           localStorage.setItem(`organizer_profile_${email}`, JSON.stringify(userObj));
+          if (typeof document !== "undefined") {
+            document.cookie = "organizer_logged_in=1; path=/; max-age=31536000; SameSite=Lax";
+          }
 
           setUserProfile(userObj);
           setUserLoggedIn(true);
@@ -433,27 +495,33 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
             const parsed = JSON.parse(profile);
             if (parsed && parsed.email) {
               const cleanEmail = parsed.email.trim().toLowerCase();
+              const isMaster = cleanEmail === "brandon.medina@unl.edu.ec" || cleanEmail === "master@4go.live";
               const isCubic = cleanEmail === "mrshifu879@gmail.com";
-              const isSata = cleanEmail === "brandon.medina@unl.edu.ec";
 
-              if (isCubic) {
+              if (isMaster) {
+                parsed.id = "master_admin";
+                parsed.venueName = parsed.venueName && !parsed.venueName.includes("Master Headquarters") ? parsed.venueName : "4GO";
+                parsed.type = "Organizador";
+                parsed.avatar = parsed.avatar && !parsed.avatar.includes("presentation") ? parsed.avatar : "/images/logo_4go_black_white.png";
+                parsed.hasCompletedOnboarding = true;
+              } else if (isCubic) {
                 parsed.id = "cubic";
                 parsed.venueName = parsed.venueName || "CUBIC LOJA";
                 parsed.type = parsed.type || "Discoteca / Club Nocturno";
                 parsed.avatar = parsed.avatar || "/images/cubic-official-logo.png";
                 parsed.hasCompletedOnboarding = true;
-              } else if (isSata) {
-                parsed.id = "sata";
-                parsed.venueName = parsed.venueName || "SATA MUSIC";
-                parsed.type = parsed.type || "Organizador";
-                parsed.avatar = parsed.avatar || "/images/sata-official-logo.jpg";
-                parsed.hasCompletedOnboarding = true;
               }
 
+              if (typeof document !== "undefined") {
+                document.cookie = "organizer_logged_in=1; path=/; max-age=31536000; SameSite=Lax";
+              }
               setUserProfile(parsed);
               setUserLoggedIn(true);
             }
           } catch {
+            if (typeof document !== "undefined") {
+              document.cookie = "organizer_logged_in=; path=/; max-age=0; SameSite=Lax";
+            }
             localStorage.removeItem("organizer_token");
             localStorage.removeItem("organizer_profile");
           }
@@ -477,21 +545,24 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
   const handleConfirmAppleLogin = () => {
     if (!appleInputEmail.trim()) return;
     const cleanEmail = appleInputEmail.trim().toLowerCase();
+    const isMaster = cleanEmail === "brandon.medina@unl.edu.ec" || cleanEmail === "master@4go.live";
     const isCubic = cleanEmail === "mrshifu879@gmail.com";
-    const isSata = cleanEmail === "brandon.medina@unl.edu.ec";
     const mockProfile = {
-      id: isCubic ? "cubic" : isSata ? "sata" : `usr_${Date.now()}`,
-      name: appleInputName.trim() || cleanEmail.split('@')[0] || "Usuario Apple",
+      id: isMaster ? "master_admin" : isCubic ? "cubic" : `usr_${Date.now()}`,
+      name: appleInputName.trim() || cleanEmail.split('@')[0] || (isMaster ? "Brandon Medina (4GO)" : "Usuario Apple"),
       email: cleanEmail,
-      type: isCubic ? "Discoteca / Club Nocturno" : isSata ? "Organizador" : "Usuario",
-      venueName: isCubic ? "CUBIC LOJA" : isSata ? "SATA MUSIC" : "",
-      avatar: isCubic ? "/images/cubic-official-logo.png" : isSata ? "/images/sata-official-logo.jpg" : "",
+      type: isMaster ? "Organizador" : isCubic ? "Discoteca / Club Nocturno" : "Usuario",
+      venueName: isMaster ? "4GO" : isCubic ? "CUBIC LOJA" : "",
+      avatar: isMaster ? "/images/logo_4go_black_white.png" : isCubic ? "/images/cubic-official-logo.png" : "",
       city: "Loja",
-      hasCompletedOnboarding: isCubic || isSata,
+      hasCompletedOnboarding: isMaster || isCubic,
     };
     localStorage.setItem("organizer_token", `apple-token-${cleanEmail}-${Date.now()}`);
     localStorage.setItem("organizer_profile", JSON.stringify(mockProfile));
     localStorage.setItem(`organizer_profile_${cleanEmail}`, JSON.stringify(mockProfile));
+    if (typeof document !== "undefined") {
+      document.cookie = "organizer_logged_in=1; path=/; max-age=31536000; SameSite=Lax";
+    }
     setUserLoggedIn(true);
     setUserProfile(mockProfile);
     setOrganizerSubView("menu");
@@ -517,6 +588,9 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
   };
 
   const handleLogout = () => {
+    if (typeof document !== "undefined") {
+      document.cookie = "organizer_logged_in=; path=/; max-age=0; SameSite=Lax";
+    }
     localStorage.removeItem("organizer_token");
     localStorage.removeItem("organizer_profile");
     setUserLoggedIn(false);
@@ -605,6 +679,7 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
   const showOrganizerOverlay = activeOverlay === "organizer";
   const setShowDetailOverlay = (val: boolean) => setActiveOverlay(val ? "event" : null);
   const setShowOrganizerOverlay = (val: boolean) => setActiveOverlay(val ? "organizer" : null);
+  const [selectedOrganizerSlug, setSelectedOrganizerSlug] = useState("cubic");
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [reservationTargetEvent, setReservationTargetEvent] = useState<Event | null>(null);
   const [showQuickPreview, setShowQuickPreview] = useState(false);
@@ -617,10 +692,28 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
   // 3D Perspective Curved Carousel state for Eventos screen
   const [featuredCarouselIndex, setFeaturedCarouselIndex] = useState(0);
 
-  // Story-style screen navigation state (Instagram/TikTok lines)
   const [activeStoryScreen, setActiveStoryScreen] = useState(1);
   const [isLeftVideoMuted, setIsLeftVideoMuted] = useState(true);
   const leftVideoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (activeStoryScreen === 0 && leftVideoRef.current) {
+      leftVideoRef.current.muted = isLeftVideoMuted;
+      leftVideoRef.current.play().catch(() => {});
+    } else if (leftVideoRef.current) {
+      leftVideoRef.current.pause();
+    }
+  }, [activeStoryScreen, isLeftVideoMuted]);
+
+  // Responsive animation state: animations disabled on mobile, enabled on PC (>= 768px)
+  const [isDesktopAnimation, setIsDesktopAnimation] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const checkScreen = () => setIsDesktopAnimation(window.innerWidth >= 768);
+    checkScreen();
+    window.addEventListener("resize", checkScreen);
+    return () => window.removeEventListener("resize", checkScreen);
+  }, []);
 
   // Auto-play 3D Curved Carousel in Eventos screen (moving to the right)
   useEffect(() => {
@@ -653,17 +746,66 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
 
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
-      if (showDetailOverlay || isTicketModalOpen || showEventModal || showHiddenMenu || showUserMenu) return;
-      if (e.touches.length > 0) {
-        touchStartX.current = e.touches[0].clientX;
-        touchStartY.current = e.touches[0].clientY;
+      if (showDetailOverlay || isTicketModalOpen || showEventModal || showHiddenMenu || showUserMenu || showAuthModalForFavorites) return;
+      if (e.touches.length === 0) return;
+
+      const touch = e.touches[0];
+      const target = e.target as HTMLElement | null;
+
+      // 0. Edge swipe check: on mobile browsers (Brave, Chrome, Safari), swipes starting near edges are native back/forward gestures
+      const screenWidth = typeof window !== "undefined" ? window.innerWidth : 400;
+      if (touch.clientX < 45 || touch.clientX > screenWidth - 45) {
+        touchStartX.current = null;
+        touchStartY.current = null;
+        return;
       }
+
+      // 1. Direct target check inside carousel or trending events section
+      if (target?.closest("#trending-events-carousel, #trending-events-section, [data-carousel], .no-swipe")) {
+        touchStartX.current = null;
+        touchStartY.current = null;
+        return;
+      }
+
+      // 2. Position check: Only allow section swipe if higher up on the screen (above the carousel section)
+      const carouselSection = document.getElementById("trending-events-section");
+      if (carouselSection) {
+        const rect = carouselSection.getBoundingClientRect();
+        // If touch starts at or below the top of the carousel section, ignore section swipe!
+        if (touch.clientY >= rect.top - 20) {
+          touchStartX.current = null;
+          touchStartY.current = null;
+          return;
+        }
+      }
+
+      touchStartX.current = touch.clientX;
+      touchStartY.current = touch.clientY;
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
-      if (showDetailOverlay || isTicketModalOpen || showEventModal || showHiddenMenu || showUserMenu) return;
+      if (showDetailOverlay || isTicketModalOpen || showEventModal || showHiddenMenu || showUserMenu || showAuthModalForFavorites) return;
       if (touchStartX.current === null || touchStartY.current === null) return;
       if (!e.changedTouches || e.changedTouches.length === 0) return;
+
+      const touch = e.changedTouches[0];
+      const target = e.target as HTMLElement | null;
+
+      if (target?.closest("#trending-events-carousel, #trending-events-section, [data-carousel], .no-swipe")) {
+        touchStartX.current = null;
+        touchStartY.current = null;
+        return;
+      }
+
+      const carouselSection = document.getElementById("trending-events-section");
+      if (carouselSection) {
+        const rect = carouselSection.getBoundingClientRect();
+        if (touch.clientY >= rect.top - 20) {
+          touchStartX.current = null;
+          touchStartY.current = null;
+          return;
+        }
+      }
 
       const now = Date.now();
       if (now - lastSwipeTime.current < 750) {
@@ -672,18 +814,18 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
         return;
       }
 
-      const touchEndX = e.changedTouches[0].clientX;
-      const touchEndY = e.changedTouches[0].clientY;
+      const touchEndX = touch.clientX;
+      const touchEndY = touch.clientY;
 
       const diffX = touchEndX - touchStartX.current;
       const diffY = touchEndY - touchStartY.current;
 
-      // Ensure horizontal swipe is dominant and above 35px threshold
-      if (Math.abs(diffX) > 35 && Math.abs(diffX) > Math.abs(diffY) * 1.5) {
-        if (diffX < -35) {
+      // Ensure horizontal swipe is dominant and above 80px threshold
+      if (Math.abs(diffX) > 80 && Math.abs(diffX) > Math.abs(diffY) * 1.5) {
+        if (diffX < -80) {
           setActiveStoryScreen((prev) => Math.min(prev + 1, storyScreens.length - 1));
           lastSwipeTime.current = now;
-        } else if (diffX > 35) {
+        } else if (diffX > 80) {
           setActiveStoryScreen((prev) => Math.max(prev - 1, 0));
           lastSwipeTime.current = now;
         }
@@ -694,7 +836,20 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
     };
 
     const handleWheel = (e: WheelEvent) => {
-      if (showDetailOverlay || isTicketModalOpen || showEventModal || showHiddenMenu || showUserMenu) return;
+      if (showDetailOverlay || isTicketModalOpen || showEventModal || showHiddenMenu || showUserMenu || showAuthModalForFavorites) return;
+
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("#trending-events-carousel, #trending-events-section, [data-carousel], .no-swipe")) {
+        return;
+      }
+
+      const carouselSection = document.getElementById("trending-events-section");
+      if (carouselSection) {
+        const rect = carouselSection.getBoundingClientRect();
+        if (e.clientY >= rect.top - 20) {
+          return;
+        }
+      }
 
       const now = Date.now();
       if (now - lastSwipeTime.current < 750) return;
@@ -714,7 +869,7 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeTag = (document.activeElement?.tagName || "").toUpperCase();
       if (["INPUT", "TEXTAREA"].includes(activeTag)) return;
-      if (showDetailOverlay || isTicketModalOpen || showEventModal || showHiddenMenu || showUserMenu) return;
+      if (showDetailOverlay || isTicketModalOpen || showEventModal || showHiddenMenu || showUserMenu || showAuthModalForFavorites) return;
 
       const now = Date.now();
       if (now - lastSwipeTime.current < 400) return;
@@ -739,7 +894,7 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [storyScreens.length, showDetailOverlay, isTicketModalOpen, showEventModal, showHiddenMenu, showUserMenu]);
+  }, [storyScreens.length, showDetailOverlay, isTicketModalOpen, showEventModal, showHiddenMenu, showUserMenu, showAuthModalForFavorites]);
 
   const isInitialRestored = useRef(false);
 
@@ -761,6 +916,12 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
     const targetIdentifier = initialEventSlug || urlEventParam || savedView?.eventSlug || savedView?.eventId;
     const shouldReserve = isReserveParam || Boolean(savedView?.showReservation);
     const shouldShowDetail = Boolean(initialEventSlug) || Boolean(urlEventParam) || Boolean(savedView?.showDetail) || shouldReserve;
+    const urlOrgParam = params.get("organizer") || params.get("org");
+
+    if (urlOrgParam) {
+      setSelectedOrganizerSlug(urlOrgParam.toLowerCase().trim());
+      setActiveOverlay("organizer");
+    }
 
     if (targetIdentifier) {
       const targetSlug = String(targetIdentifier).toLowerCase();
@@ -819,6 +980,14 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
       } else {
         url.searchParams.delete("reserve");
       }
+      url.searchParams.delete("organizer");
+      url.searchParams.delete("org");
+      window.history.replaceState({}, "", url.toString());
+    } else if (activeOverlay === "organizer" && selectedOrganizerSlug) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("organizer", selectedOrganizerSlug);
+      url.searchParams.delete("event");
+      url.searchParams.delete("reserve");
       window.history.replaceState({}, "", url.toString());
     } else {
       try {
@@ -826,13 +995,15 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
       } catch { }
 
       const url = new URL(window.location.href);
-      if (url.searchParams.has("event") || url.searchParams.has("reserve")) {
+      if (url.searchParams.has("event") || url.searchParams.has("reserve") || url.searchParams.has("organizer") || url.searchParams.has("org")) {
         url.searchParams.delete("event");
         url.searchParams.delete("reserve");
+        url.searchParams.delete("organizer");
+        url.searchParams.delete("org");
         window.history.replaceState({}, "", url.toString());
       }
     }
-  }, [showDetailOverlay, showReservationModal, isTicketModalOpen, selectedCarouselEvent, reservationTargetEvent]);
+  }, [showDetailOverlay, showReservationModal, isTicketModalOpen, selectedCarouselEvent, reservationTargetEvent, activeOverlay, selectedOrganizerSlug]);
 
   // Search & Catalog Filter State
   const [searchQuery, setSearchQuery] = useState("");
@@ -843,14 +1014,11 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
   const [selectedDay, setSelectedDay] = useState("todos");
   const [carteleraSearchQuery, setCarteleraSearchQuery] = useState("");
   const [selectedOrganizer, setSelectedOrganizer] = useState("todos");
-  const [selectedOrganizerSlug, setSelectedOrganizerSlug] = useState("cubic");
   const [openedFromOrganizerSlug, setOpenedFromOrganizerSlug] = useState<string | null>(null);
   const [openedFromEvent, setOpenedFromEvent] = useState<Event | null>(null);
   const [mobileDockTab, setMobileDockTab] = useState("inicio");
   const [heroIndex, setHeroIndex] = useState(0);
-  const homeCarouselRef = useRef<HTMLDivElement>(null);
   const [isCarouselHovered, setIsCarouselHovered] = useState(false);
-  const [showAuthModalForFavorites, setShowAuthModalForFavorites] = useState(false);
   const [likedEvents, setLikedEvents] = useState<Record<string, boolean>>({});
   const [userReservations, setUserReservations] = useState<Record<string, boolean>>({});
 
@@ -957,12 +1125,12 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
         })
         .catch((err) => console.error("Error loading user favorites from DB:", err));
     } else {
-      // Load guest favorites from localStorage
+      // Guest is not logged in: clear all likes and reservations!
+      setLikedEvents({});
+      setUserReservations({});
       try {
-        const guestFav = localStorage.getItem("organizer_favorites") || localStorage.getItem("guest_favorites");
-        if (guestFav) {
-          setLikedEvents(JSON.parse(guestFav));
-        }
+        localStorage.removeItem("organizer_favorites");
+        localStorage.removeItem("guest_favorites");
       } catch { }
     }
   }, [userProfile?.email, userLoggedIn]);
@@ -970,40 +1138,35 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
   const toggleFavorite = (eventId: string, e?: React.MouseEvent | React.TouchEvent) => {
     if (e) {
       e.stopPropagation();
+      e.preventDefault();
     }
-    const emailToUse = userProfile?.email || (() => {
-      if (typeof window === "undefined") return null;
-      try {
-        const stored = localStorage.getItem("organizer_profile");
-        return stored ? JSON.parse(stored).email : null;
-      } catch { return null; }
-    })();
 
-    setLikedEvents((prev) => {
-      const nextState = !prev[eventId];
-      const updated = { ...prev, [eventId]: nextState };
-      try {
-        if (emailToUse) {
-          localStorage.setItem(`user_favorites_${emailToUse}`, JSON.stringify(updated));
-        }
-        localStorage.setItem("organizer_favorites", JSON.stringify(updated));
-        localStorage.setItem("guest_favorites", JSON.stringify(updated));
-      } catch { }
+    // STRICT: Guest users CANNOT like events. Prompt login immediately!
+    if (!userLoggedIn || !userProfile?.email) {
+      setShowAuthModalForFavorites(true);
+      return;
+    }
 
-      if (emailToUse) {
-        fetch("/api/users/favorites", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: emailToUse,
-            eventId,
-            isFavorite: nextState,
-          }),
-        }).catch((err) => console.error("Error saving favorite to DB:", err));
-      }
+    const emailToUse = userProfile.email.trim().toLowerCase();
+    const nextState = !likedEvents[eventId];
+    const updated = { ...likedEvents, [eventId]: nextState };
+    setLikedEvents(updated);
 
-      return updated;
-    });
+    try {
+      localStorage.setItem(`user_favorites_${emailToUse}`, JSON.stringify(updated));
+    } catch { }
+
+    if (emailToUse) {
+      fetch("/api/users/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: emailToUse,
+          eventId,
+          isFavorite: nextState,
+        }),
+      }).catch((err) => console.error("Error saving favorite to DB:", err));
+    }
   };
 
   const handleOpenReservationModal = (evt: Event, e?: React.MouseEvent) => {
@@ -1069,8 +1232,8 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
         const title = (evt.title || "").toLowerCase();
         const venue = (evt.venue || "").toLowerCase();
 
-        if (tag === "favoritos") matchesCategory = Boolean(likedEvents[evt.id]);
-        else if (tag === "mis_reservas" || tag === "reservas") matchesCategory = Boolean(userReservations[evt.id]);
+        if (tag === "favoritos") matchesCategory = Boolean(userLoggedIn && likedEvents[evt.id]);
+        else if (tag === "mis_reservas" || tag === "reservas") matchesCategory = Boolean(userLoggedIn && userReservations[evt.id]);
         else if (tag === "dj") matchesCategory = cat.includes("dj") || sub.includes("dj") || title.includes("dj") || cat.includes("electro") || cat.includes("techno");
         else if (tag === "party" || tag === "fiesta") matchesCategory = cat.includes("fiesta") || cat.includes("party") || sub.includes("fiesta") || sub.includes("nocturno");
         else if (tag === "comedy" || tag === "comedia") matchesCategory = cat.includes("comedia") || cat.includes("comedy") || sub.includes("stand");
@@ -1108,6 +1271,7 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
         name: item.name,
         type: item.type,
         avatar: item.logo,
+        instagramUrl: item.instagramUrl,
       });
     });
 
@@ -1116,11 +1280,17 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
       const orgName = userProfile.venueName || userProfile.name;
       const id = (userProfile.id || orgName).toLowerCase().trim();
       const existing = map.get(id);
+      const userIg = userProfile.instagram
+        ? (userProfile.instagram.startsWith("http")
+            ? userProfile.instagram
+            : `https://www.instagram.com/${userProfile.instagram.replace(/^@/, "")}/`)
+        : existing?.instagramUrl;
       map.set(id, {
         id: existing?.id || id,
         name: orgName,
         type: (userProfile.type as any) || existing?.type || "Organizador",
         avatar: userProfile.avatar || existing?.avatar || "",
+        instagramUrl: userIg,
       });
     }
 
@@ -1134,32 +1304,46 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
 
         if (lower.includes("cubic")) {
           const c = map.get("cubic");
-          if (c && !c.avatar) c.avatar = "/images/cubic-official-logo.png";
+          if (c) {
+            if (!c.avatar) c.avatar = "/images/cubic-official-logo.png";
+            if (!c.instagramUrl) c.instagramUrl = ORGANIZER_DATA.cubic.instagramUrl;
+          }
           return;
         }
         if (lower.includes("sata")) {
           const s = map.get("sata");
-          if (s && !s.avatar) s.avatar = "/images/sata-official-logo.jpg";
+          if (s) {
+            if (!s.avatar) s.avatar = "/images/sata-official-logo.jpg";
+            if (!s.instagramUrl) s.instagramUrl = ORGANIZER_DATA.sata.instagramUrl;
+          }
           return;
         }
         if (lower.includes("prueba")) {
           const p = map.get("prueba1") || map.get(lower);
-          if (p && !p.avatar) p.avatar = "/images/logo_4go_black_white.png";
+          if (p) {
+            if (!p.avatar) p.avatar = "/images/logo_4go_black_white.png";
+            if (!p.instagramUrl) p.instagramUrl = ORGANIZER_DATA.prueba1.instagramUrl;
+          }
           return;
         }
 
         const resolvedAvatar = (evt as any).miniImage || evt.poster || evt.imageUrl || "";
+        const fallbackIg = (evt as any).organizerInstagram || (evt as any).instagramUrl || "";
         if (!map.has(lower)) {
           map.set(lower, {
             id: lower,
             name: raw,
             type: "Organizador",
             avatar: resolvedAvatar,
+            instagramUrl: fallbackIg,
           });
         } else {
           const existing = map.get(lower)!;
           if (!existing.avatar && resolvedAvatar) {
             existing.avatar = resolvedAvatar;
+          }
+          if (!existing.instagramUrl && fallbackIg) {
+            existing.instagramUrl = fallbackIg;
           }
         }
       });
@@ -1180,44 +1364,6 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
     );
   }, [carteleraSearchQuery, allSearchProfiles]);
 
-  // Smooth 60fps continuous slow auto-scroll to the right (no jumps, lentito)
-  useEffect(() => {
-    if (activeStoryScreen !== 1) return;
-
-    let animationFrameId: number;
-    const speed = 0.5; // Ultra-smooth, slow drift rate to the right
-
-    const step = () => {
-      if (homeCarouselRef.current && !isCarouselHovered) {
-        const container = homeCarouselRef.current;
-        container.scrollLeft += speed;
-
-        // Seamless infinite loop wrap check
-        const maxLoopPoint = (container.scrollWidth * 2) / 4;
-        if (container.scrollLeft >= maxLoopPoint) {
-          container.scrollLeft -= maxLoopPoint;
-        }
-      }
-      animationFrameId = requestAnimationFrame(step);
-    };
-
-    animationFrameId = requestAnimationFrame(step);
-
-    return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
-  }, [activeStoryScreen, isCarouselHovered]);
-
-  const scrollHomeCarousel = (direction: "left" | "right") => {
-    if (!homeCarouselRef.current) return;
-    const dist = homeCarouselRef.current.clientWidth * 0.75;
-    homeCarouselRef.current.scrollBy({
-      left: direction === "left" ? -dist : dist,
-      behavior: "smooth",
-    });
-  };
 
   // Classify events by type for filter tabs (strict, non-overlapping)
   const classifyEventType = (evt: Event): "fiesta" | "concierto" | "other" => {
@@ -1292,7 +1438,26 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
   const activeEvent = events[activeIndex] || selectedCarouselEvent;
   const [isLoading, setIsLoading] = useState(false);
 
-  // Clear loader on mount & popstate if needed
+  // Robust page restore on mount, popstate & bfcache pageshow
+  useEffect(() => {
+    const handlePageRestore = () => {
+      setIsLoading(false);
+      if (typeof document !== "undefined") {
+        document.body.style.overflow = "";
+      }
+      setActiveStoryScreen((prev) => (prev === 0 || prev === 1 || prev === 2 ? prev : 1));
+    };
+
+    window.addEventListener("pageshow", handlePageRestore);
+    window.addEventListener("popstate", handlePageRestore);
+
+    return () => {
+      window.removeEventListener("pageshow", handlePageRestore);
+      window.removeEventListener("popstate", handlePageRestore);
+    };
+  }, []);
+
+  // Clear loader timer if needed
   useEffect(() => {
     if (!isLoading) return;
 
@@ -1300,17 +1465,8 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
       setIsLoading(false);
     }, 1200);
 
-    const handlePageShow = () => {
-      setIsLoading(false);
-    };
-
-    window.addEventListener("pageshow", handlePageShow);
-    window.addEventListener("popstate", handlePageShow);
-
     return () => {
       clearTimeout(timer);
-      window.removeEventListener("pageshow", handlePageShow);
-      window.removeEventListener("popstate", handlePageShow);
     };
   }, [isLoading]);
 
@@ -1347,20 +1503,14 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
 
   const [checkoutState, setCheckoutState] = useState<string>("register");
 
-  // Auto-advance Featured Trending Presale Card every 5 seconds
+  // Auto-advance Featured Trending Presale Card every 6 seconds only when on Home screen
   useEffect(() => {
-    if (!events.length) return;
+    if (activeStoryScreen !== 1 || !events.length) return;
     const timer = setInterval(() => {
       setTrendingIndex((prev) => (prev + 1) % events.length);
-    }, 5000);
+    }, 6000);
     return () => clearInterval(timer);
-  }, [events.length]);
-
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    const timer = setInterval(() => setTick((t) => t + 1), 1000);
-    return () => clearInterval(timer);
-  }, []);
+  }, [activeStoryScreen, events.length]);
 
   const activeSalesStatus = getOnlineSalesStatus(activeEvent);
 
@@ -1515,38 +1665,43 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
   }, []);
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
       if (window.performance.now() < manualActiveUntil.current) return;
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        const supportSection = document.getElementById("support");
+        const isNearBottom =
+          window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 120;
 
-      const supportSection = document.getElementById("support");
-      const isNearBottom =
-        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 120;
+        if (supportSection && isNearBottom) {
+          setActiveSection("support");
+          return;
+        }
 
-      if (supportSection && isNearBottom) {
-        setActiveSection("support");
-        return;
-      }
+        const showSection = document.getElementById("show");
+        const exploreSection = document.getElementById("explore");
+        const wearSection = document.getElementById("wear");
 
-      const showSection = document.getElementById("show");
-      const exploreSection = document.getElementById("explore");
-      const wearSection = document.getElementById("wear");
+        const showTop = showSection ? showSection.getBoundingClientRect().top + window.scrollY : 0;
+        const exploreTop = exploreSection ? exploreSection.getBoundingClientRect().top + window.scrollY : 0;
+        const wearTop = wearSection ? wearSection.getBoundingClientRect().top + window.scrollY : 0;
 
-      const showTop = showSection ? showSection.getBoundingClientRect().top + window.scrollY : 0;
-      const exploreTop = exploreSection ? exploreSection.getBoundingClientRect().top + window.scrollY : 0;
-      const wearTop = wearSection ? wearSection.getBoundingClientRect().top + window.scrollY : 0;
+        const scrollPosition = window.scrollY + window.innerHeight * 0.45;
 
-      const scrollPosition = window.scrollY + window.innerHeight * 0.45;
+        let currentSection: HomeNavId = "home";
+        if (scrollPosition >= wearTop - 100) {
+          currentSection = "wear";
+        } else if (scrollPosition >= exploreTop - 100) {
+          currentSection = "explore";
+        } else {
+          currentSection = "home";
+        }
 
-      let currentSection: HomeNavId = "home";
-      if (scrollPosition >= wearTop - 100) {
-        currentSection = "wear";
-      } else if (scrollPosition >= exploreTop - 100) {
-        currentSection = "explore";
-      } else {
-        currentSection = "home";
-      }
-
-      setActiveSection(currentSection);
+        setActiveSection((prev) => (prev !== currentSection ? currentSection : prev));
+      });
     };
 
     handleScroll();
@@ -1737,8 +1892,8 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
       <Atmosphere />
 
       {/* --- APPLE ARCADE FULL-BLEED TRANSPARENT TOP HEADER WITH STORIES LINES OVERLAY --- */}
-      <header className={`absolute inset-x-0 top-0 ${isHeaderSearchOpen ? "z-[300]" : "z-50"} bg-gradient-to-b from-black/90 via-black/30 to-transparent pt-3 pb-6 transition-all duration-300 pointer-events-none px-4 sm:px-6 lg:px-8`}>
-        <div className="w-full relative flex flex-col gap-3 pointer-events-auto">
+      <header className={`absolute inset-x-0 top-0 ${isHeaderSearchOpen ? "z-[500]" : "z-[400]"} bg-gradient-to-b from-black/90 via-black/30 to-transparent pt-3 pb-6 transition-all duration-300 px-4 sm:px-6 lg:px-12 pointer-events-auto`}>
+        <div className="w-full relative flex flex-col gap-3">
           {/* 1. TOP STORY SEGMENT LINES (Permanently mounted, never jumps when search toggles) */}
           <div className="w-full max-w-xl mx-auto">
             <StoryLinesHeader
@@ -1749,16 +1904,18 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
           </div>
 
           {/* 2. DYNAMIC HEADER TITLE & ACCOUNT BADGE */}
-          <div className="w-full flex items-center relative">
-            {/* Dynamic Header Title: Aligned to the left on mobile, centered over Left Column on desktop */}
-            <div className="w-full lg:w-[30%] flex items-center justify-start lg:justify-center text-left lg:text-center">
+          <div className="w-full flex items-center justify-between relative gap-2">
+            {/* Dynamic Header Title: Aligned gracefully with spacing on PC */}
+            <div className="w-auto flex items-center justify-start text-left overflow-hidden lg:pl-4">
               <button
                 type="button"
                 onClick={() => {
                   setActiveStoryScreen(1);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  if (typeof window !== "undefined") {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
                 }}
-                className="flex items-center justify-start lg:justify-center gap-2 cursor-pointer group focus:outline-none text-left lg:text-center"
+                className="flex items-center justify-start gap-2 cursor-pointer group focus:outline-none text-left max-w-full"
               >
                 <AnimatePresence mode="wait">
                   <motion.h1
@@ -1767,7 +1924,7 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 6 }}
                     transition={{ duration: 0.25, ease: "easeOut" }}
-                    className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white font-sans drop-shadow-md group-hover:text-purple-300 transition-colors whitespace-nowrap text-left lg:text-center"
+                    className="text-xl sm:text-4xl font-extrabold tracking-tight text-white font-sans drop-shadow-md group-hover:text-purple-300 transition-colors whitespace-nowrap text-left"
                   >
                     {storyScreens[activeStoryScreen]?.label || "Home"}
                   </motion.h1>
@@ -1776,20 +1933,21 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
             </div>
 
             {/* Right: + Crear on Left, Buscar in Middle, Avatar on Far Right (Horizontal Glass Buttons) */}
-            <div className="absolute right-0 top-0 flex flex-row items-center gap-2 sm:gap-2.5 shrink-0 z-[300] pr-1 sm:pr-2 lg:pr-4">
+            <div className="flex flex-row items-center gap-1.5 sm:gap-2.5 shrink-0 z-[450] relative">
               {/* + Crear Glass Pill Button (Left) */}
               <button
                 type="button"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setActiveStoryScreen(0);
                   if (typeof window !== "undefined") {
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }
                 }}
-                className="h-10 px-3.5 sm:px-4 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-xl flex items-center gap-1.5 text-white font-bold text-xs sm:text-sm shadow-lg cursor-pointer transition-all active:scale-95 whitespace-nowrap"
+                className="h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-xl flex items-center gap-1 sm:gap-1.5 text-white font-bold text-xs sm:text-sm shadow-lg cursor-pointer transition-all active:scale-95 whitespace-nowrap"
                 aria-label="Crear Evento"
               >
-                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
                 <span>Crear</span>
               </button>
 
@@ -1797,36 +1955,39 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
               <div className="relative group flex items-center justify-center">
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setIsHeaderSearchOpen((prev) => !prev);
                     if (!isHeaderSearchOpen) {
                       setTimeout(() => headerSearchInputRef.current?.focus(), 100);
                     }
                   }}
-                  className={`w-10 h-10 rounded-full border backdrop-blur-xl flex items-center justify-center shadow-lg cursor-pointer transition-all active:scale-95 ${isHeaderSearchOpen
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full border backdrop-blur-xl flex items-center justify-center shadow-lg cursor-pointer transition-all active:scale-95 ${isHeaderSearchOpen
                     ? "bg-white border-white text-zinc-900 shadow-xl scale-105"
                     : "bg-white/10 border-white/20 hover:bg-white/20 text-white"
                     }`}
                   aria-label="Buscar"
                 >
-                  <Search className={`w-5 h-5 ${isHeaderSearchOpen ? "text-zinc-900" : "text-white"}`} />
+                  <Search className={`w-4 h-4 sm:w-5 sm:h-5 ${isHeaderSearchOpen ? "text-zinc-900" : "text-white"}`} />
                 </button>
-
-                {/* Hover Tooltip: Buscar */}
-                <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-zinc-950/90 border border-white/20 text-white text-[11px] font-bold uppercase tracking-wider backdrop-blur-xl shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 -translate-y-1 group-hover:translate-y-0 whitespace-nowrap z-50">
-                  Buscar
-                </div>
               </div>
 
-              {/* Profile Button with Hover Preview (Far Right) */}
-              <div className="relative group flex items-center justify-center">
+              {/* Profile Button with Dropdown (Far Right) */}
+              <div className="relative flex items-center justify-center">
                 <button
                   type="button"
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="w-10 h-10 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl flex items-center justify-center text-white hover:bg-white/20 shadow-lg cursor-pointer transition-all active:scale-95 overflow-hidden relative"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!userLoggedIn) {
+                      setShowAuthModalForFavorites(true);
+                    } else {
+                      setShowUserMenu(!showUserMenu);
+                    }
+                  }}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl flex items-center justify-center text-white hover:bg-white/20 shadow-lg cursor-pointer transition-all active:scale-95 overflow-hidden relative"
                   aria-label="Perfil"
                 >
-                  {userLoggedIn && userProfile?.avatar ? (
+                  {isMounted && userLoggedIn && userProfile?.avatar ? (
                     <img
                       src={userProfile.avatar}
                       alt={userProfile.venueName || userProfile.name || "Perfil"}
@@ -1837,14 +1998,113 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                         if (fallback) fallback.classList.remove("hidden");
                       }}
                     />
-                  ) : null}
-                  <User className={`header-user-fallback w-5 h-5 text-white ${userLoggedIn && userProfile?.avatar ? "hidden" : ""}`} />
+                  ) : (
+                    <User className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  )}
+                  <User className="header-user-fallback w-4 h-4 sm:w-5 sm:h-5 text-white hidden" />
                 </button>
 
-                {/* Hover Tooltip: Perfil */}
-                <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-zinc-950/90 border border-white/20 text-white text-[11px] font-bold uppercase tracking-wider backdrop-blur-xl shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 -translate-y-1 group-hover:translate-y-0 whitespace-nowrap z-50">
-                  Perfil
-                </div>
+                {/* Hover Tooltip: Perfil (only when menu closed) */}
+                {!showUserMenu && (
+                  <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-zinc-950/90 border border-white/20 text-white text-[11px] font-bold uppercase tracking-wider backdrop-blur-xl shadow-2xl opacity-0 hover:opacity-100 pointer-events-none transition-all duration-200 -translate-y-1 hover:translate-y-0 whitespace-nowrap z-50">
+                    Perfil
+                  </div>
+                )}
+
+                {/* User Dropdown Menu */}
+                <AnimatePresence>
+                  {showUserMenu && userLoggedIn && (
+                    <>
+                      <motion.div
+                        initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+                        animate={{ opacity: 1, backdropFilter: "blur(12px)" }}
+                        exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed inset-0 z-40 bg-black/65 backdrop-blur-md"
+                        onClick={() => setShowUserMenu(false)}
+                      />
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ duration: 0.16, ease: "easeOut" }}
+                        className="absolute right-0 top-[calc(100%+10px)] w-72 sm:w-80 rounded-[28px] bg-zinc-950/70 border border-white/20 backdrop-blur-3xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] p-4 z-50 text-white font-sans space-y-3"
+                      >
+                        {/* User Header */}
+                        <div className="px-1.5 py-1 flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-full overflow-hidden bg-white/10 border border-white/20 shrink-0 flex items-center justify-center shadow-inner">
+                            {userProfile?.avatar ? (
+                              <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                              <User className="w-5 h-5 text-white" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-black uppercase text-white truncate">{userProfile?.venueName || userProfile?.name || "Usuario"}</p>
+                            </div>
+                            <p className="text-[11px] text-zinc-400 font-medium truncate">{userProfile?.email}</p>
+                            <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-md text-[9.5px] font-black uppercase tracking-wider ${
+                              isMasterUser
+                                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                                : userProfile?.type === "Discoteca / Club Nocturno"
+                                ? "bg-white/10 text-white border border-white/20"
+                                : "bg-white/10 text-white border border-white/20"
+                            }`}>
+                              {isMasterUser ? "Master Superadmin" : (userProfile?.type || "Organizador")}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="space-y-2 font-sans">
+                          {/* Regular Dashboard / My Account */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              setAccountDashboardInitialTab(isMasterUser ? "master_receivables" : "events");
+                              setIsAccountDashboardOpen(true);
+                            }}
+                            className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.10] border border-white/10 hover:border-white/20 text-white transition-all active:scale-[0.98] cursor-pointer text-xs font-bold uppercase tracking-wider"
+                          >
+                            <span>Mi Perfil &amp; Dashboard</span>
+                            <ChevronRight className="w-4 h-4 text-zinc-400" />
+                          </button>
+
+                          {/* Publish Event */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              setActiveStoryScreen(0);
+                              setTimeout(() => {
+                                document.getElementById("subir-evento-section")?.scrollIntoView({ behavior: "smooth" });
+                              }, 100);
+                            }}
+                            className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.10] border border-white/10 hover:border-white/20 text-white transition-all active:scale-[0.98] cursor-pointer text-xs font-bold uppercase tracking-wider"
+                          >
+                            <span>Publicar Evento</span>
+                            <ChevronRight className="w-4 h-4 text-zinc-400" />
+                          </button>
+
+                          {/* Logout */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              handleLogout();
+                            }}
+                            className="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-red-400 hover:bg-red-500/10 border border-red-500/20 transition-all active:scale-[0.98] cursor-pointer text-xs font-bold uppercase tracking-wider mt-1"
+                          >
+                            <span>Cerrar Sesión</span>
+                            <LogOut className="w-4 h-4 text-red-400" />
+                          </button>
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
@@ -1974,14 +2234,26 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                toggleFollowProfile(prof.id);
+                                const igUrl =
+                                  prof.instagramUrl ||
+                                  (prof.id.toLowerCase().includes("cubic")
+                                    ? "https://www.instagram.com/cubic_loja/?hl=es"
+                                    : prof.id.toLowerCase().includes("sata")
+                                    ? "https://www.instagram.com/sata_events/"
+                                    : prof.id.toLowerCase().includes("prueba")
+                                    ? "https://www.instagram.com/brandon.mdna/"
+                                    : `https://www.instagram.com/${prof.name.toLowerCase().replace(/[^a-z0-9_.]/g, "") || "4gooooooooo"}/`);
+                                if (typeof window !== "undefined") {
+                                  window.open(igUrl, "_blank", "noopener,noreferrer");
+                                }
                               }}
-                              className={`px-5 py-2 rounded-full text-[11px] font-extrabold uppercase tracking-wider transition-all border shrink-0 cursor-pointer active:scale-95 ${followedProfiles[prof.id]
-                                ? "bg-zinc-900 text-white border-zinc-900 shadow-sm"
-                                : "bg-zinc-100 hover:bg-zinc-200 text-zinc-900 border-zinc-200/80"
-                                }`}
+                              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-zinc-900 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200/80 transition-all cursor-pointer active:scale-95 shrink-0 shadow-sm"
+                              title={`Instagram de ${prof.name}`}
                             >
-                              {followedProfiles[prof.id] ? "SIGUIENDO" : "SEGUIR"}
+                              <svg className="w-3.5 h-3.5 text-[#E1306C] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                              </svg>
+                              <span>Instagram</span>
                             </button>
                           </div>
                         ))}
@@ -2038,14 +2310,14 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
       {/* --- MAIN HOME CONTENT (FULL BLEED HERO photo STARTING AT TOP:0) --- */}
       <div className="pb-0 min-h-screen bg-black text-white pt-0">
         <div className="w-full">
-          <AnimatePresence mode="wait">
+          <AnimatePresence initial={false}>
             {activeStoryScreen === 0 && (
               <motion.div
                 key="screen-0-create-event"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
                 className="relative w-full flex flex-col select-none -mt-20 sm:-mt-24 -mb-16 lg:-mb-24"
               >
                 {/* --- TOP HERO ROW (30% LEFT VIDEO / 70% RIGHT AUTH FORM WITH VIDEO) --- */}
@@ -2058,9 +2330,12 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                       loop
                       muted={isLeftVideoMuted}
                       playsInline
+                      poster="/videos/subir_evento_left_poster.jpg"
+                      preload="auto"
                       className="absolute inset-0 w-full h-full object-cover brightness-105"
                     >
-                      <source src="/videos/subir_evento_left_video.mp4" type="video/mp4" />
+                      <source media="(min-width: 768px)" src="/videos/subir_evento_left_video.mp4" type="video/mp4" />
+                      <source src="/videos/subir_evento_left_video_mobile.mp4" type="video/mp4" />
                     </video>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent opacity-90" />
 
@@ -2094,31 +2369,16 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                     </div>
                   </div>
 
-                  {/* 2. RIGHT COLUMN (70% WIDTH): CENTERED AUTH FORM WITH BACKGROUND VIDEO */}
+                  {/* 2. RIGHT COLUMN (70% WIDTH): CENTERED AUTH FORM WITH DEEP BLACK BG & SOFT WHITE BLUR GLOW */}
                   <div id="subir-evento-section" className="relative w-full lg:w-[70%] flex-1 min-h-[58vh] lg:min-h-screen px-4 sm:px-8 lg:px-12 py-8 sm:py-12 lg:py-16 flex flex-col items-center justify-center bg-black text-white font-sans overflow-hidden">
-                    <video
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      onPlay={(e) => {
-                        e.currentTarget.playbackRate = 0.5;
-                      }}
-                      onLoadedMetadata={(e) => {
-                        e.currentTarget.playbackRate = 0.5;
-                      }}
-                      className="absolute inset-0 w-full h-full object-cover brightness-95 blur-2xl scale-125 pointer-events-none"
-                    >
-                      <source src="/videos/subir_evento_bg.mp4" type="video/mp4" />
-                    </video>
-
-                    {/* Overlay for legibility & seamless edge blending */}
-                    <div className="absolute inset-0 bg-black/45 backdrop-blur-xl" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60 pointer-events-none" />
+                    {/* Ambient soft white/radial glow behind the card */}
+                    <div className="absolute inset-0 bg-black pointer-events-none" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] sm:w-[520px] h-[340px] sm:h-[520px] bg-white/[0.05] rounded-full blur-[110px] pointer-events-none" />
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.06)_0%,transparent_70%)] pointer-events-none" />
 
                     {/* Centered Dark Glass Auth / Vertical Dashboard Card */}
                     {!(isMounted && userLoggedIn) ? (
-                      <div className="relative z-10 w-full max-w-lg mx-auto bg-zinc-950/60 backdrop-blur-2xl p-5 sm:p-8 lg:p-10 rounded-3xl border border-white/20 shadow-2xl space-y-4 sm:space-y-6 text-white font-sans my-auto">
+                      <div className="relative z-10 w-full max-w-lg mx-auto bg-zinc-950/90 p-5 sm:p-8 lg:p-10 rounded-3xl border border-white/20 shadow-2xl space-y-4 sm:space-y-6 text-white font-sans my-auto backdrop-blur-md">
                         <div className="text-center space-y-1.5 sm:space-y-2">
                           <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white font-sans leading-tight">
                             Sube tu Evento &amp; Administra tu Cuenta 4GO
@@ -2392,16 +2652,16 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                                     setIsOnboardingSaving(true);
 
                                     const emailClean = (userProfile?.email || "usuario@ejemplo.com").trim().toLowerCase();
+                                    const isMaster = emailClean === "brandon.medina@unl.edu.ec" || emailClean === "master@4go.live";
                                     const isCubic = emailClean === "mrshifu879@gmail.com";
-                                    const isSata = emailClean === "brandon.medina@unl.edu.ec";
 
                                     const updated = {
-                                      id: isCubic ? "cubic" : isSata ? "sata" : (userProfile?.id || `usr_${Date.now()}`),
+                                      id: isMaster ? "master_admin" : isCubic ? "cubic" : (userProfile?.id || `usr_${Date.now()}`),
                                       name: currentName,
                                       email: emailClean,
-                                      avatar: brandLogoUrl || userProfile?.avatar || (isCubic ? "/images/cubic-official-logo.png" : isSata ? "/images/sata-official-logo.jpg" : ""),
+                                      avatar: brandLogoUrl || (userProfile?.avatar && !userProfile.avatar.includes("presentation") ? userProfile.avatar : "") || (isMaster ? "/images/logo_4go_black_white.png" : isCubic ? "/images/cubic-official-logo.png" : ""),
                                       venueName: currentName,
-                                      type: currentType,
+                                      type: isMaster ? "Organizador" : currentType,
                                       city: "Loja",
                                       instagram: currentIg ? `@${currentIg.replace(/^@/, '')}` : "",
                                       address: currentAddr,
@@ -3327,10 +3587,10 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                   <div className="max-w-xl mx-auto flex flex-col items-center text-center space-y-16 sm:space-y-24">
                     {/* Main Centered Header */}
                     <motion.div
-                      initial={{ opacity: 0, y: 30 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: false, amount: "some" }}
-                      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                      initial={isDesktopAnimation ? { opacity: 0, y: 30 } : false}
+                      whileInView={isDesktopAnimation ? { opacity: 1, y: 0 } : undefined}
+                      viewport={isDesktopAnimation ? { once: false, amount: "some" } : undefined}
+                      transition={isDesktopAnimation ? { duration: 0.55, ease: [0.22, 1, 0.36, 1] } : { duration: 0 }}
                       className="space-y-2 text-center"
                     >
                       <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight leading-tight text-black font-sans">
@@ -3338,7 +3598,7 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                       </h2>
                     </motion.div>
 
-                    {/* Centered Scroll-Animated Feature Items with Unique Alien Faces (No zoom, pure smooth glide) */}
+                    {/* Centered Scroll-Animated Feature Items with Unique Alien Faces (No zoom, pure smooth glide on PC, static on mobile) */}
                     {[
                       {
                         face: "/images/alien_face_v2_1.png",
@@ -3368,10 +3628,10 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                     ].map((item) => (
                       <motion.div
                         key={item.title}
-                        initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: false, amount: "some" }}
-                        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                        initial={isDesktopAnimation ? { opacity: 0, y: 20 } : false}
+                        whileInView={isDesktopAnimation ? { opacity: 1, y: 0 } : undefined}
+                        viewport={isDesktopAnimation ? { once: true, amount: 0.05 } : undefined}
+                        transition={isDesktopAnimation ? { duration: 0.4, ease: "easeOut" } : { duration: 0 }}
                         className="flex flex-col items-center text-center space-y-3.5"
                       >
                         {/* Distinct Larger Alien Face Illustration (No zoom) */}
@@ -3380,6 +3640,8 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                             src={item.face}
                             alt={item.title}
                             fill
+                            priority
+                            unoptimized
                             sizes="(max-width: 640px) 128px, 160px"
                             className="object-contain"
                           />
@@ -3399,10 +3661,10 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
 
                     {/* Centered CTA Button */}
                     <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: false, amount: "some" }}
-                      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                      initial={isDesktopAnimation ? { opacity: 0, y: 20 } : false}
+                      whileInView={isDesktopAnimation ? { opacity: 1, y: 0 } : undefined}
+                      viewport={isDesktopAnimation ? { once: false, amount: "some" } : undefined}
+                      transition={isDesktopAnimation ? { duration: 0.55, ease: [0.22, 1, 0.36, 1] } : { duration: 0 }}
                       className="pt-4"
                     >
                       <button
@@ -3422,13 +3684,13 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
               </motion.div>
             )}
 
-            {activeStoryScreen === 1 && (
+            {(activeStoryScreen === 1 || (activeStoryScreen !== 0 && activeStoryScreen !== 2)) && (
               <motion.div
                 key="screen-1-home"
                 initial={{ opacity: 0 }}
-                animate={{ opacity: [0.2, 1] }}
+                animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.5, ease: "easeInOut" }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
                 className="bg-black text-white min-h-screen pt-0 pb-0 font-sans"
               >
                 {/* --- 1. FULL-BLEED HERO SHOWCASE --- */}
@@ -3510,7 +3772,9 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                               </p>
                             </div>
                             <div className="mt-5 flex flex-col items-center gap-3">
-                              {!(isMounted && userLoggedIn) ? (
+                              {!isMounted && !initialLoggedIn && !userLoggedIn ? (
+                                <div className="h-11 w-44 rounded-full bg-white/10 backdrop-blur-xl animate-pulse" />
+                              ) : !userLoggedIn ? (
                                 /* GOOGLE SOCIAL LOGIN BUTTON */
                                 <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
                                   {/* Google Login */}
@@ -3551,7 +3815,7 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                                     e.stopPropagation();
                                     setActiveStoryScreen(0);
                                   }}
-                                  className="px-8 py-3.5 rounded-full bg-white/20 backdrop-blur-xl border border-white/40 text-white font-black text-xs uppercase tracking-widest hover:bg-white/30 shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                                  className="px-8 py-3.5 rounded-full bg-white/20 backdrop-blur-xl border border-white/40 text-white font-black text-xs uppercase tracking-widest hover:bg-white/30 shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all hover:scale-105 active:scale-95 cursor-pointer animate-pulse"
                                 >
                                   PUBLICAR EVENTO
                                 </button>
@@ -3565,7 +3829,7 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                 </section>
 
                 {/* --- HORIZONTAL EVENT CAROUSEL ("Trending on 4GO" FULL BLEED EDGE-TO-EDGE) --- */}
-                <section className="w-full bg-white text-black py-8 sm:py-12 relative z-20 overflow-x-hidden">
+                <section id="trending-events-section" className="w-full bg-white text-black py-8 sm:py-12 relative z-20 overflow-x-hidden">
                   <div className="max-w-[1400px] mx-auto px-4 sm:px-8 mb-6">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-zinc-200 pb-4">
                       <div className="max-w-2xl">
@@ -3592,6 +3856,8 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
 
                   {/* Horizontal Scroll Row (Edge-to-Edge 100% Full Bleed Screen Width) */}
                   <div
+                    id="trending-events-carousel"
+                    data-carousel="true"
                     onMouseEnter={() => setIsCarouselHovered(true)}
                     onMouseLeave={() => setIsCarouselHovered(false)}
                     onTouchStart={() => setIsCarouselHovered(true)}
@@ -3630,6 +3896,8 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                               src={evt.poster || "/images/now4go-hero-presentation-hd-v3.png"}
                               alt={evt.title}
                               fill
+                              unoptimized
+                              priority
                               className="object-cover brightness-105"
                               sizes="(max-width: 640px) 150px, 300px"
                             />
@@ -3642,16 +3910,22 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  e.preventDefault();
+                                  if (!userLoggedIn) {
+                                    setShowAuthModalForFavorites(true);
+                                    return;
+                                  }
                                   toggleFavorite(evt.id, e);
                                 }}
                                 className="w-8 h-8 sm:w-8 sm:h-8 rounded-full bg-white hover:bg-zinc-100 active:bg-zinc-200 border border-white flex items-center justify-center transition-transform active:scale-90 shadow-md cursor-pointer touch-manipulation select-none"
                                 aria-label="Guardar favorito"
                               >
                                 <Heart
-                                  className={`w-4 h-4 transition-colors ${likedEvents[evt.id]
-                                    ? "text-red-500 fill-red-500"
-                                    : "text-zinc-900"
-                                    }`}
+                                  className={`w-4 h-4 transition-colors ${
+                                    userLoggedIn && likedEvents[evt.id]
+                                      ? "text-red-500 fill-red-500"
+                                      : "text-zinc-900"
+                                  }`}
                                 />
                               </button>
                             </div>
@@ -3717,6 +3991,8 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                               src={item.face}
                               alt={item.title}
                               fill
+                              priority
+                              unoptimized
                               sizes="(max-width: 640px) 128px, 144px"
                               className="object-contain"
                             />
@@ -3782,39 +4058,6 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                   </div>
                 </section>
 
-                {/* --- 5. WHITE BANNER SECTION (VIVE EXPERIENCIAS ÚNICAS) --- */}
-                <section className="w-full bg-white text-black py-16 sm:py-24 relative z-20 font-sans border-t border-zinc-200">
-                  <div className="max-w-[1300px] mx-auto px-6 sm:px-12">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-                      {/* Left Column: Rounded Video Container & Copyright watermark */}
-                      <div className="lg:col-span-6 w-full flex justify-center lg:justify-start order-2 lg:order-1">
-                        <div className="relative w-full max-w-[540px] aspect-[4/3.5] rounded-[2.5rem] overflow-hidden shadow-2xl border border-black/10 bg-zinc-950">
-                          <video
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
-                            className="w-full h-full object-cover"
-                          >
-                            <source src="/videos/relaxed_summer_coast_vibes.mp4" type="video/mp4" />
-                          </video>
-                          {/* Overlay copyright text on bottom left */}
-                          <span className="absolute bottom-4 left-5 text-[10px] sm:text-[11px] font-extrabold text-white/90 tracking-wider shadow-md drop-shadow z-10">
-                            © 4GO 2026, all rights reserved
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Right Column: Title Only */}
-                      <div className="lg:col-span-6 text-left order-1 lg:order-2">
-                        <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-black tracking-tight font-sans uppercase leading-[1.05]">
-                          VIVE EXPERIENCIAS ÚNICAS &amp; ACCEDE AL INSTANTE
-                        </h2>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
                 {/* --- 6. MERCH 4GO SECTION WITH CLEAN MINIMAL OVERLAY --- */}
                 <section id="merch-4go-section" className="w-full relative z-20 font-sans py-36 sm:py-48 lg:py-56 overflow-hidden border-t border-white/10 text-white min-h-[550px] sm:min-h-[680px] lg:min-h-[850px] flex items-end justify-center pb-16 sm:pb-24 lg:pb-28">
                   {/* Full-bleed Vivid Hero Image as Section Background */}
@@ -3843,11 +4086,19 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
 
                     <button
                       type="button"
-                      onClick={() => router.push("/merch")}
+                      onClick={() => {
+                        const message = "Hola 4GO, deseo comprar prendas del Merch";
+                        if (typeof window !== "undefined") {
+                          window.open(`https://wa.me/593988831372?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+                        }
+                      }}
                       className="mt-5 px-8 py-3.5 rounded-full bg-white text-black font-black uppercase text-xs sm:text-sm tracking-wider hover:bg-zinc-100 active:scale-95 transition-all shadow-[0_10px_30px_rgba(0,0,0,0.5)] cursor-pointer"
                     >
                       COMPRAR AHORA
                     </button>
+                    <p className="mt-2.5 text-[11px] text-zinc-400 font-medium">
+                      Asegúrate de tener WhatsApp abierto
+                    </p>
                   </div>
                 </section>
               </motion.div>
@@ -3859,7 +4110,7 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
                 className="w-full text-white min-h-screen pt-28 sm:pt-32 pb-40 px-4 sm:px-8 relative z-10 bg-black overflow-hidden"
               >
                 {/* ─── ULTRA-VIVID AMBIENT POSTER COLOR BLUR (AUTHENTIC GRADIENT FADE TO DEEP BLACK) ─── */}
@@ -3877,10 +4128,10 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                       alt=""
                       aria-hidden="true"
                       fill
-                      priority
+                      loading="lazy"
                       quality={20}
                       sizes="120px"
-                      className="object-cover object-top scale-150 blur-[90px] saturate-200 brightness-110 opacity-85 transform-gpu will-change-transform"
+                      className="object-cover object-top scale-125 blur-2xl opacity-60 transform-gpu"
                     />
                   </div>
 
@@ -3921,27 +4172,31 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
 
                     {/* Bottom: Chips Horizontal Carousel (Centered on PC, Scrollable on Mobile) */}
                     <div className="relative w-full max-w-5xl mx-auto flex items-center justify-center">
-                      {/* Floating Left Scroll Arrow Button (Mobile only) */}
+                      {/* Floating Left Scroll Arrow Button */}
                       <AnimatePresence>
                         {canChipsScrollLeft && (
-                          <motion.button
-                            type="button"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            transition={{ duration: 0.18, ease: "easeOut" }}
-                            onClick={() => {
-                              const el = carteleraChipsRef.current;
-                              if (el) {
-                                el.scrollBy({ left: -220, behavior: "smooth" });
-                                setTimeout(checkChipsScroll, 250);
-                              }
-                            }}
-                            className="md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-[#181818] hover:bg-[#282828] text-white flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-[0_2px_10px_rgba(0,0,0,0.7)] border border-white/15"
-                            aria-label="Anterior"
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute left-0 inset-y-0 z-20 flex items-center pl-1 pr-6 bg-gradient-to-r from-black via-black/85 to-transparent pointer-events-none"
                           >
-                            <ChevronLeft className="w-4 h-4 text-white stroke-[2.5]" />
-                          </motion.button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const el = carteleraChipsRef.current;
+                                if (el) {
+                                  el.scrollBy({ left: -220, behavior: "smooth" });
+                                  setTimeout(checkChipsScroll, 250);
+                                }
+                              }}
+                              className="pointer-events-auto w-7 h-7 rounded-full bg-[#202020] hover:bg-[#303030] text-white flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-md border border-white/15"
+                              aria-label="Anterior"
+                            >
+                              <ChevronLeft className="w-4 h-4 text-white stroke-[2.5]" />
+                            </button>
+                          </motion.div>
                         )}
                       </AnimatePresence>
 
@@ -3949,13 +4204,12 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                         ref={carteleraChipsRef}
                         id="cartelera-chips-container"
                         onScroll={checkChipsScroll}
-                        className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1 px-1 w-full justify-start md:justify-center"
+                        className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1 px-8 sm:px-10 w-full justify-start md:justify-center"
                       >
                         {[
                           { id: "todos", label: "Todo" },
                           { id: "favoritos", label: "Favoritos" },
                           { id: "mis_reservas", label: "Mis Reservas" },
-                          { id: "dj", label: "DJ" },
                           { id: "party", label: "Fiesta" },
                           { id: "comedy", label: "Comedia" },
                           { id: "gigs", label: "Gigs" },
@@ -3968,7 +4222,13 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                             <button
                               key={`chip-${cat.id}`}
                               type="button"
-                              onClick={() => setSelectedDay(cat.id)}
+                              onClick={() => {
+                                if (!userLoggedIn && (cat.id === "favoritos" || cat.id === "mis_reservas")) {
+                                  setShowAuthModalForFavorites(true);
+                                  return;
+                                }
+                                setSelectedDay(cat.id);
+                              }}
                               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold shrink-0 transition-colors cursor-pointer select-none ${
                                 isActive
                                   ? "bg-white text-black shadow-sm"
@@ -3981,27 +4241,31 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                         })}
                       </div>
 
-                      {/* Floating Right Scroll Arrow Button (Mobile only) */}
+                      {/* Floating Right Scroll Arrow Button */}
                       <AnimatePresence>
                         {canChipsScrollRight && (
-                          <motion.button
-                            type="button"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            transition={{ duration: 0.18, ease: "easeOut" }}
-                            onClick={() => {
-                              const el = carteleraChipsRef.current;
-                              if (el) {
-                                el.scrollBy({ left: 220, behavior: "smooth" });
-                                setTimeout(checkChipsScroll, 250);
-                              }
-                            }}
-                            className="md:hidden absolute right-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-[#181818] hover:bg-[#282828] text-white flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-[0_2px_10px_rgba(0,0,0,0.7)] border border-white/15"
-                            aria-label="Siguiente"
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute right-0 inset-y-0 z-20 flex items-center pr-1 pl-6 bg-gradient-to-l from-black via-black/85 to-transparent pointer-events-none"
                           >
-                            <ChevronRight className="w-4 h-4 text-white stroke-[2.5]" />
-                          </motion.button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const el = carteleraChipsRef.current;
+                                if (el) {
+                                  el.scrollBy({ left: 220, behavior: "smooth" });
+                                  setTimeout(checkChipsScroll, 250);
+                                }
+                              }}
+                              className="pointer-events-auto w-7 h-7 rounded-full bg-[#202020] hover:bg-[#303030] text-white flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-md border border-white/15"
+                              aria-label="Siguiente"
+                            >
+                              <ChevronRight className="w-4 h-4 text-white stroke-[2.5]" />
+                            </button>
+                          </motion.div>
                         )}
                       </AnimatePresence>
                     </div>
@@ -4072,14 +4336,22 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
                                     type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
+                                      e.preventDefault();
+                                      if (!userLoggedIn) {
+                                        setShowAuthModalForFavorites(true);
+                                        return;
+                                      }
                                       toggleFavorite(evt.id, e);
                                     }}
                                     className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/25 flex items-center justify-center text-white hover:scale-110 active:scale-90 transition-transform shadow-lg cursor-pointer touch-manipulation select-none"
                                     aria-label="Guardar favorito"
                                   >
                                     <Heart
-                                      className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors ${likedEvents[evt.id] ? "text-red-500 fill-red-500" : "text-white hover:text-red-400"
-                                        }`}
+                                      className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors ${
+                                        userLoggedIn && likedEvents[evt.id]
+                                          ? "text-red-500 fill-red-500"
+                                          : "text-white hover:text-red-400"
+                                      }`}
                                     />
                                   </button>
                                 </div>
@@ -4245,7 +4517,7 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
             }}
             userLoggedIn={userLoggedIn}
             userProfile={userProfile}
-            isFavorite={!!likedEvents[selectedCarouselEvent?.id || ""]}
+            isFavorite={userLoggedIn && !!likedEvents[selectedCarouselEvent?.id || ""]}
             onToggleFavorite={(eventId, e) => toggleFavorite(eventId, e)}
             onOpenAuth={() => setShowAuthModalForFavorites(true)}
             isCheckoutOpen={showReservationModal || isTicketModalOpen}
@@ -4424,126 +4696,7 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
         )}
       </AnimatePresence>
 
-      {/* User Profile Floating Glass Dropdown Menu */}
-      <AnimatePresence>
-        {showUserMenu && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowUserMenu(false)}
-              className="fixed inset-0 z-[660] bg-black/65 backdrop-blur-md"
-            />
-            <motion.div
-              initial={{ opacity: 0, x: 80, scale: 0.95 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 80, scale: 0.95 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed top-16 right-4 z-[670] w-80 rounded-[32px] border border-white/20 bg-zinc-900/60 backdrop-blur-3xl p-5 shadow-[0_25px_60px_rgba(0,0,0,0.7)] space-y-4 text-white font-sans"
-            >
-              {/* Header with Clean Icon & Close Button (MI CUENTA) */}
-              <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="h-11 w-11 rounded-full bg-zinc-800 border border-white/20 text-white flex items-center justify-center shrink-0 overflow-hidden relative shadow-inner">
-                    {userLoggedIn && userProfile?.avatar ? (
-                      <img
-                        src={userProfile.avatar}
-                        alt={userProfile.name || userProfile.venueName || "Avatar"}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                          const fallback = e.currentTarget.parentElement?.querySelector(".modal-user-fallback");
-                          if (fallback) fallback.classList.remove("hidden");
-                        }}
-                      />
-                    ) : null}
-                    <User className={`modal-user-fallback w-5 h-5 text-white ${userLoggedIn && userProfile?.avatar ? "hidden" : ""}`} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <h4 className="text-sm font-black uppercase text-white tracking-wider leading-tight truncate">
-                        {userLoggedIn && userProfile?.venueName ? userProfile.venueName : "MI CUENTA"}
-                      </h4>
-                    </div>
-                    {userLoggedIn && userProfile && (
-                      <p className="text-[10px] text-zinc-400 font-medium truncate max-w-[160px] mt-0.5">{userProfile.email}</p>
-                    )}
-                    {userLoggedIn && userProfile?.hasCompletedOnboarding && (
-                      <div className="mt-1 flex items-center">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-white/10 border border-white/20 text-white text-[9.5px] font-bold uppercase tracking-wider">
-                          Partner 4GO
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowUserMenu(false)}
-                  className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/15 text-zinc-400 hover:text-white flex items-center justify-center transition cursor-pointer shrink-0 ml-2"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
 
-              {/* Logged Out Actions: Google Login Only */}
-              {!userLoggedIn ? (
-                <div className="space-y-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowUserMenu(false);
-                      handleQuickSocialLogin('google');
-                    }}
-                    className="w-full py-3 px-4 rounded-2xl bg-white text-black font-black text-xs uppercase tracking-wider flex items-center justify-center hover:bg-zinc-100 transition-all shadow-md active:scale-95 cursor-pointer"
-                  >
-                    <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                    </svg>
-                    <span>Entrar con Google</span>
-                  </button>
-                </div>
-              ) : (
-                /* Menu Options (Visible only when logged in) */
-                <div className="space-y-1.5 pt-1 font-sans">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowUserMenu(false);
-                      router.push("/cuenta");
-                    }}
-                    className="w-full px-4 py-3 rounded-2xl text-left text-xs font-black uppercase tracking-wider text-zinc-100 hover:bg-white/10 hover:text-white transition-all cursor-pointer border border-white/5 block flex items-center justify-between"
-                  >
-                    <span>Mi Cuenta</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleStartPublishEvent}
-                    className="w-full px-4 py-3 rounded-2xl text-left text-xs font-black uppercase tracking-wider text-zinc-200 hover:bg-white/10 hover:text-white transition-all cursor-pointer border border-white/5 block"
-                  >
-                    Publicar un Evento
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="w-full px-4 py-3 rounded-2xl text-left text-xs font-black uppercase tracking-wider text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all cursor-pointer border border-red-500/20 flex items-center justify-between mt-2"
-                  >
-                    <span>Cerrar Sesión</span>
-                    <LogOut className="w-4 h-4 text-red-400 shrink-0" />
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
 
       {/* Organizer / Brand Onboarding Modal */}
       <OrganizerOnboardingModal
@@ -4635,7 +4788,7 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[800] bg-black/65 backdrop-blur-md flex items-center justify-center p-4"
+            className="fixed inset-0 z-[1200] bg-black/65 backdrop-blur-md flex items-center justify-center p-4"
             onClick={() => setShowAuthModalForFavorites(false)}
           >
             <motion.div
@@ -4719,6 +4872,7 @@ export default function HomePage({ initialConfig, initialEventSlug }: HomePagePr
       <MyAccountDashboardModal
         isOpen={isAccountDashboardOpen}
         onClose={() => setIsAccountDashboardOpen(false)}
+        initialTab={accountDashboardInitialTab}
         userProfile={userProfile}
         onUpdateProfile={(updated) => setUserProfile(updated)}
         allEvents={events}

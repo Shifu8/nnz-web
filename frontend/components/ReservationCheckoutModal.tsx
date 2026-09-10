@@ -463,11 +463,13 @@ export default function ReservationCheckoutModal({
 
                   <div className="flex items-center gap-4 text-zinc-300 text-[11px] leading-relaxed pt-2">
                     <div className="w-12 h-12 rounded-2xl bg-black flex items-center justify-center shrink-0 shadow-lg overflow-hidden border border-white/20">
-                      <Image
+                      <img
                         src="/images/logo_4go_black_white.png"
                         alt="4GO Favicon Logo"
                         width={48}
                         height={48}
+                        loading="eager"
+                        decoding="sync"
                         className="object-cover w-full h-full"
                       />
                     </div>

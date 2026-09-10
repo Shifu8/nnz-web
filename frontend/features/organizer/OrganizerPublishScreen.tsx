@@ -161,25 +161,25 @@ export default function OrganizerPublishScreen() {
 
     const emailClean = form.email.trim().toLowerCase();
 
-    // Acceso predeterminado para Cubic y Sata
+    // Acceso predeterminado para Cubic y Master
     if (emailClean === "mrshifu879@gmail.com" || emailClean === "brandon.medina@unl.edu.ec") {
-      const isCubic = emailClean === "mrshifu879@gmail.com";
-      const orgProfile = isCubic
+      const isMaster = emailClean === "brandon.medina@unl.edu.ec";
+      const orgProfile = isMaster
         ? {
+            id: "master_admin",
+            name: "Brandon Medina (4GO)",
+            business_name: "4GO",
+            email: "brandon.medina@unl.edu.ec",
+            type: "Organizador",
+            logo_url: "/images/logo_4go_black_white.png",
+          }
+        : {
             id: "cubic",
             name: "Cubic",
             business_name: "CUBIC LOJA",
             email: "mrshifu879@gmail.com",
             type: "Discoteca / Club Nocturno",
             logo_url: "/images/cubic-official-logo.png",
-          }
-        : {
-            id: "sata",
-            name: "Sata Music",
-            business_name: "SATA MUSIC",
-            email: "brandon.medina@unl.edu.ec",
-            type: "Organizador",
-            logo_url: "/images/sata-official-logo.jpg",
           };
       localStorage.setItem("organizer_token", `token-${orgProfile.id}`);
       localStorage.setItem("organizer_refresh", `refresh-${orgProfile.id}`);

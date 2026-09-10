@@ -33,6 +33,11 @@ import {
   Copy,
   FileX,
   ZoomIn,
+  Send,
+  Crown,
+  Search,
+  AlertTriangle,
+  XCircle,
 } from "lucide-react";
 import Image from "next/image";
 import type { Event } from "@/frontend/types/domain";
@@ -106,6 +111,7 @@ export interface MyAccountDashboardModalProps {
   allEvents: Event[];
   onOpenEventDetail?: (event: Event) => void;
   onStartCreateEvent?: () => void;
+  initialTab?: "master_receivables" | "master_roles" | "events" | "tickets" | "reservations" | "favorites" | "partner_profile" | "payouts";
 }
 
 export default function MyAccountDashboardModal({
@@ -116,10 +122,26 @@ export default function MyAccountDashboardModal({
   allEvents = [],
   onOpenEventDetail,
   onStartCreateEvent,
+  initialTab,
 }: MyAccountDashboardModalProps) {
+  const isMasterUser = Boolean(
+    userProfile &&
+    (userProfile.type === "Master Admin" ||
+     userProfile.type === "master" ||
+     userProfile.email?.toLowerCase().trim() === "brandon.medina@unl.edu.ec" ||
+     userProfile.email?.toLowerCase().trim() === "master@4go.live")
+  );
+
   const [activeTab, setActiveTab] = useState<
-    "events" | "tickets" | "reservations" | "favorites" | "partner_profile" | "payouts"
-  >("events");
+    "master_receivables" | "master_roles" | "events" | "tickets" | "reservations" | "favorites" | "partner_profile" | "payouts"
+  >(initialTab || (isMasterUser ? "master_receivables" : "events"));
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+      setManagingEvent(null);
+    }
+  }, [initialTab]);
 
   // Real events created by this user
   const [myCreatedEvents, setMyCreatedEvents] = useState<any[]>([]);
@@ -139,6 +161,20 @@ export default function MyAccountDashboardModal({
   const [editDays, setEditDays] = useState<string[]>(userProfile?.openingDays || ["Jueves", "Viernes", "Sábado"]);
   const [isSavingPartner, setIsSavingPartner] = useState(false);
   const [partnerSaveSuccess, setPartnerSaveSuccess] = useState(false);
+
+  // Master Dashboard Data & Role Requests
+  const [masterPayouts, setMasterPayouts] = useState<any[]>([]);
+  const [masterRoleRequests, setMasterRoleRequests] = useState<any[]>([]);
+  const [loadingMasterData, setLoadingMasterData] = useState(false);
+  const [masterStatusFilter, setMasterStatusFilter] = useState<string>("todos");
+  const [masterSearchQuery, setMasterSearchQuery] = useState<string>("");
+  const [masterToast, setMasterToast] = useState<string | null>(null);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  // Clean Discoteca Role Request State (No extra photo modals)
+  const [hasPendingRoleRequest, setHasPendingRoleRequest] = useState(false);
+  const [isSubmittingRoleReq, setIsSubmittingRoleReq] = useState(false);
+  const [roleReqSuccess, setRoleReqSuccess] = useState(false);
 
   // Real User purchased tickets, reservations & favorites
   const [userPurchasedTickets, setUserPurchasedTickets] = useState<any[]>([]);
@@ -239,11 +275,138 @@ export default function MyAccountDashboardModal({
         } else {
           setUserReservations([]);
         }
+        // 5. Check pending Master role requests
+        fetch("/api/master")
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.ok && data.data?.roleRequests) {
+              const pending = data.data.roleRequests.find(
+                (r: any) => r.organizerEmail.toLowerCase() === currentEmail && r.status === "pendiente"
+              );
+              setHasPendingRoleRequest(!!pending);
+            }
+          })
+          .catch(() => {});
       } catch (err) {
         console.error("Error loading account data:", err);
       }
     }
   }, [isOpen, userProfile, allEvents]);
+
+  const fetchMasterData = async () => {
+    setLoadingMasterData(true);
+    try {
+      const res = await fetch("/api/master");
+      const json = await res.json();
+      if (json.ok && json.data) {
+        setMasterPayouts(json.data.payouts || []);
+        setMasterRoleRequests(json.data.roleRequests || []);
+      }
+    } catch (e) {
+      console.error("Error fetching master data:", e);
+    } finally {
+      setLoadingMasterData(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen && isMasterUser) {
+      fetchMasterData();
+      if (!initialTab && (activeTab === "events" || !activeTab)) {
+        setActiveTab("master_receivables");
+      }
+    }
+  }, [isOpen, isMasterUser, initialTab]);
+
+  const handleApprovePayout = async (payoutId: string) => {
+    try {
+      const res = await fetch("/api/master", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "approve_payout", payoutId }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setMasterPayouts((prev) =>
+          prev.map((p) => (p.id === payoutId ? { ...p, status: "liquidado" } : p))
+        );
+        setMasterToast("✓ Liquidación aprobada y registrada.");
+        setTimeout(() => setMasterToast(null), 3500);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleApproveRoleRequest = async (requestId: string, orgId: string, orgName: string) => {
+    try {
+      const res = await fetch("/api/master", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "approve_role_request", requestId, organizerId: orgId }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setMasterRoleRequests((prev) =>
+          prev.map((r) => (r.id === requestId ? { ...r, status: "aprobado" } : r))
+        );
+        setMasterToast(`✓ ${orgName} ha sido ascendido a Discoteca Oficial.`);
+        setTimeout(() => setMasterToast(null), 3500);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleRejectRoleRequest = async (requestId: string) => {
+    try {
+      const res = await fetch("/api/master", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reject_role_request", requestId, reason: "No cumple con las condiciones requeridas." }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setMasterRoleRequests((prev) =>
+          prev.map((r) => (r.id === requestId ? { ...r, status: "rechazado" } : r))
+        );
+        setMasterToast("Solicitud rechazada.");
+        setTimeout(() => setMasterToast(null), 3000);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleRequestDiscotecaRole = async () => {
+    setIsSubmittingRoleReq(true);
+    try {
+      const res = await fetch("/api/master", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "submit_role_request",
+          organizerId: userProfile?.id || (userProfile?.email || "").split("@")[0],
+          organizerName: editBrandName.trim() || userProfile?.venueName || userProfile?.name || "Organizador",
+          organizerEmail: userProfile?.email || "",
+          phone: "+593 98 000 0000",
+          venueAddress: editAddress.trim() || userProfile?.address || "Av. Salvador Bustamante Celi, Loja",
+          city: userProfile?.city || "Loja",
+          openingDays: editDays,
+        }),
+      });
+      const result = await res.json();
+      if (result.ok) {
+        setHasPendingRoleRequest(true);
+        setRoleReqSuccess(true);
+        setTimeout(() => setRoleReqSuccess(false), 4000);
+      }
+    } catch (err) {
+      console.error("Failed to submit role request:", err);
+    } finally {
+      setIsSubmittingRoleReq(false);
+    }
+  };
 
   // Remove event from favorites and sync with billboard
   const handleRemoveFavorite = (eventId: string) => {
@@ -407,8 +570,6 @@ export default function MyAccountDashboardModal({
     }
   };
 
-  if (!isOpen) return null;
-
   // Calculate per-event statistics
   const approvedReceiptsCount = receiptsList.filter((r) => r.status === "aprobado").length;
   const pendingReceiptsCount = receiptsList.filter((r) => r.status === "en_verificacion" || !r.status).length;
@@ -419,161 +580,1030 @@ export default function MyAccountDashboardModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[600] flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-lg">
+      {isOpen && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.96, y: 15 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 15 }}
-          transition={{ duration: 0.22 }}
-          className="w-full max-w-5xl bg-[#09090b] text-white rounded-[32px] border border-zinc-800 shadow-2xl overflow-hidden font-sans relative flex flex-col max-h-[92vh]"
+          key="my-account-dashboard"
+          initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+          animate={{ opacity: 1, backdropFilter: "blur(24px)" }}
+          exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+          transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+          className="fixed inset-0 z-[600] overflow-y-auto bg-black/90 backdrop-blur-2xl text-white selection:bg-[#dfff28] selection:text-black font-sans"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b border-zinc-800/80 bg-zinc-950/80 shrink-0">
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700 overflow-hidden flex items-center justify-center shrink-0">
-                {userProfile?.avatar ? (
-                  <img
-                    src={userProfile.avatar}
-                    alt={userProfile.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <User className="w-6 h-6 text-zinc-400" />
-                )}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base sm:text-lg font-black uppercase tracking-tight text-white">
-                    {userProfile?.venueName || userProfile?.name || "Mi Cuenta"}
-                  </h2>
-                  <span className="px-2 py-0.5 rounded-full bg-white/10 text-[9px] font-black uppercase tracking-wider text-zinc-200 border border-white/15">
-                    Partner 4GO
-                  </span>
+        {/* Dynamic Atmospheric Ambient Atmosphere */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden select-none z-0">
+          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[1100px] h-[600px] bg-gradient-to-b from-zinc-800/25 via-zinc-900/10 to-transparent blur-[140px] rounded-full pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/90 to-black pointer-events-none" />
+        </div>
+
+        {/* ─── CASE A: GESTIONAR EVENTO ESPECÍFICO (PANTALLA COMPLETA CINEMÁTICA) ─── */}
+        {managingEvent ? (
+          (() => {
+            const activeReceipt =
+              receiptsList.find((r) => r.id === selectedReceiptId) ||
+              receiptsList.find((r) => r.status === "pendiente") ||
+              receiptsList[0] ||
+              null;
+
+            const eventImageSrc = managingEvent.imageUrl || managingEvent.poster || "/images/now4go-hero-presentation-hd-v3_3840w.jpg";
+            const activeTotalQty = activeReceipt?.quantity || 1;
+            const activeTotalAmount = activeReceipt?.totalAmount || activeTotalQty * eventBasePrice;
+            const activeUnitPrice = activeReceipt?.totalAmount ? activeReceipt.totalAmount / activeTotalQty : eventBasePrice;
+
+            const sanitizedPhone = (activeReceipt?.phone || "").replace(/[^0-9]/g, "");
+            const whatsappNumber = sanitizedPhone.startsWith("593")
+              ? sanitizedPhone
+              : sanitizedPhone.startsWith("0")
+              ? `593${sanitizedPhone.slice(1)}`
+              : `593${sanitizedPhone}`;
+            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+              `¡Hola ${activeReceipt?.firstName || ""}! Te saludamos de ${managingEvent.title} (NENEZ). Respecto a tu solicitud de compra #${(activeReceipt?.id || "").slice(0, 8)} por ${activeTotalQty} entrada(s)...`
+            )}`;
+
+            return (
+              <div className="relative z-10 min-h-screen">
+                {/* Dynamic Blurred Event Poster Atmosphere */}
+                <div className="fixed inset-0 pointer-events-none overflow-hidden select-none z-0">
+                  <div className="absolute inset-0 scale-125 transform-gpu">
+                    <Image
+                      src={eventImageSrc}
+                      alt={managingEvent.title}
+                      fill
+                      priority
+                      quality={20}
+                      sizes="120px"
+                      className="object-cover object-top scale-150 blur-[90px] saturate-200 brightness-110 opacity-85 transform-gpu will-change-transform"
+                    />
+                  </div>
+                  <div className="absolute top-0 inset-x-0 h-44 bg-gradient-to-b from-black/90 via-black/40 to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/35 to-black pointer-events-none" />
                 </div>
-                <p className="text-xs text-zinc-400 font-medium truncate max-w-xs">{userProfile?.email}</p>
+
+                {/* Top Navigation Header Bar */}
+                <header className="fixed top-0 inset-x-0 z-[600] flex items-center justify-between px-4 sm:px-8 py-4 bg-gradient-to-b from-black/95 via-black/50 to-transparent pointer-events-none">
+                  <div className="pointer-events-auto flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setManagingEvent(null)}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-black/70 hover:bg-white/20 border border-white/20 hover:border-white/40 text-white backdrop-blur-xl transition-all duration-200 cursor-pointer shadow-2xl active:scale-95 text-xs font-bold uppercase tracking-wider"
+                    >
+                      <span>← Volver a Mis Eventos</span>
+                    </button>
+                  </div>
+
+                  <div className="pointer-events-auto flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setConfiguringEvent(managingEvent);
+                        setEditEventForm({ ...managingEvent });
+                      }}
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-black/70 hover:bg-white/20 border border-white/20 hover:border-white/40 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-xl transition-all duration-200 active:scale-95 shadow-2xl cursor-pointer"
+                    >
+                      <span>Configuración del Evento</span>
+                    </button>
+                  </div>
+                </header>
+
+                {/* Main Content Container */}
+                <main className="relative z-10 mx-auto max-w-7xl px-4 sm:px-8 pt-24 pb-28 space-y-10">
+                  {receiptActionMessage && (
+                    <div className="p-4 rounded-2xl bg-zinc-950/90 border border-[#dfff28]/50 text-white text-xs font-bold shadow-2xl backdrop-blur-xl">
+                      <span>{receiptActionMessage}</span>
+                    </div>
+                  )}
+
+                  {/* Dual-Column Request Review */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    {/* Left Column: Requests List + Compact Receipt Preview + Buyer Info */}
+                    <div className="lg:col-span-7 space-y-6">
+                      {/* Event Brand Header */}
+                      <div className="flex items-center gap-4">
+                        <div className="relative w-16 h-16 rounded-2xl overflow-hidden border border-white/25 bg-black/40 shadow-2xl shrink-0">
+                          <Image src={eventImageSrc} alt={managingEvent.title} fill sizes="64px" className="object-cover" />
+                        </div>
+                        <div className="min-w-0">
+                          <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white truncate">
+                            {managingEvent.title}
+                          </h1>
+                          <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-zinc-300 mt-0.5">
+                            <span>{managingEvent.dateLabel || managingEvent.date || "30 AGO 2026"} • {managingEvent.time || "22:00"}</span>
+                            <span className="text-zinc-500">•</span>
+                            <span className="text-zinc-400 font-medium">{managingEvent.venue || "CUBIC"}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Metrics Summary Strip */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="p-3.5 rounded-2xl bg-black/50 border border-white/10 backdrop-blur-xl space-y-0.5">
+                          <span className="text-[9.5px] text-zinc-400 font-bold uppercase block">
+                            Recaudado
+                          </span>
+                          <p className="text-base sm:text-lg font-black text-white">${totalRevenueForEvent.toFixed(2)} USD</p>
+                        </div>
+
+                        <div className="p-3.5 rounded-2xl bg-black/50 border border-white/10 backdrop-blur-xl space-y-0.5">
+                          <span className="text-[9.5px] text-zinc-400 font-bold uppercase block">
+                            Vendidas
+                          </span>
+                          <p className="text-base sm:text-lg font-black text-white">{approvedReceiptsCount} Pases</p>
+                        </div>
+
+                        <div className="p-3.5 rounded-2xl bg-black/50 border border-white/10 backdrop-blur-xl space-y-0.5">
+                          <span className="text-[9.5px] text-zinc-400 font-bold uppercase block">
+                            Por Verificar
+                          </span>
+                          <p className="text-base sm:text-lg font-black text-white">{pendingReceiptsCount} Solicitudes</p>
+                        </div>
+
+                        <div className="p-3.5 rounded-2xl bg-black/50 border border-white/10 backdrop-blur-xl space-y-0.5">
+                          <span className="text-[9.5px] text-zinc-400 font-bold uppercase block">
+                            Precio Base
+                          </span>
+                          <p className="text-base sm:text-lg font-black text-white">${eventBasePrice} USD</p>
+                        </div>
+                      </div>
+
+                      {/* Solicitudes de Compra List */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h2 className="text-xs font-black uppercase tracking-wider text-zinc-400">
+                            Solicitudes de Compra ({receiptsList.length})
+                          </h2>
+                          <span className="text-[10px] text-zinc-500 font-medium">Selecciona una solicitud</span>
+                        </div>
+
+                        {loadingReceipts ? (
+                          <div className="p-8 rounded-2xl bg-black/40 border border-white/10 text-center text-xs text-zinc-400">
+                            Cargando solicitudes...
+                          </div>
+                        ) : receiptsList.length === 0 ? (
+                          <div className="p-8 rounded-2xl bg-black/40 border border-white/10 text-center space-y-2">
+                            <Ticket className="w-8 h-8 text-zinc-600 mx-auto" />
+                            <p className="text-xs font-bold text-zinc-400 uppercase">Sin solicitudes pendientes para este evento</p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {receiptsList.map((r) => {
+                              const isSelected = activeReceipt?.id === r.id;
+                              const isApproved = r.status === "aprobado";
+                              const isRejected = r.status === "rechazado";
+                              const qty = r.quantity || 1;
+                              const itemAmount = r.totalAmount || qty * eventBasePrice;
+
+                              return (
+                                <div
+                                  key={r.id}
+                                  onClick={() => setSelectedReceiptId(r.id)}
+                                  className={`p-3.5 rounded-2xl transition-all cursor-pointer border flex flex-col justify-between space-y-3 ${
+                                    isSelected
+                                      ? "bg-zinc-900 border-[#dfff28] shadow-[0_0_20px_rgba(223,255,40,0.15)] ring-1 ring-[#dfff28]"
+                                      : "bg-black/50 hover:bg-zinc-900/80 border-white/10"
+                                  }`}
+                                >
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0">
+                                      <h4 className={`text-xs font-black uppercase truncate ${isSelected ? "text-[#dfff28]" : "text-white"}`}>
+                                        {r.firstName || "Comprador"} {r.lastName || ""}
+                                      </h4>
+                                      <p className="text-[11px] text-zinc-400 font-bold mt-0.5">
+                                        {qty}x Entrada (${itemAmount.toFixed(0)} USD)
+                                      </p>
+                                    </div>
+
+                                    <span
+                                      className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider shrink-0 ${
+                                        isApproved
+                                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                          : isRejected
+                                          ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                                          : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                                      }`}
+                                    >
+                                      {isApproved ? "Confirmado" : isRejected ? "Rechazado" : "Por Verificar"}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-2 border-t border-white/5">
+                                    <span className="font-mono text-zinc-500">Ref: #{r.referenceNumber || r.id?.slice(0, 8)}</span>
+                                    <span className="font-medium text-zinc-400">{getReceiptBankName(r)}</span>
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setViewingReceiptImage(r);
+                                    }}
+                                    className="w-full py-1.5 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer border border-white/10"
+                                  >
+                                    <Eye className="w-3 h-3 text-[#dfff28]" />
+                                    <span>Ver Comprobante</span>
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Datos del Comprador Seleccionado */}
+                      {activeReceipt && (
+                        <div className="p-5 rounded-3xl bg-black/60 border border-white/10 backdrop-blur-xl space-y-4">
+                          <h3 className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-2">
+                            <User className="w-3.5 h-3.5 text-[#dfff28]" />
+                            <span>Datos del Comprador</span>
+                          </h3>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div className="p-3 rounded-2xl bg-zinc-950/80 border border-white/5 space-y-0.5">
+                              <span className="text-[10px] text-zinc-400 font-bold uppercase block">Nombre Completo</span>
+                              <p className="font-black text-white uppercase">{activeReceipt.firstName || ""} {activeReceipt.lastName || ""}</p>
+                            </div>
+
+                            <div className="p-3 rounded-2xl bg-zinc-950/80 border border-white/5 space-y-0.5">
+                              <span className="text-[10px] text-zinc-400 font-bold uppercase block">Cédula / Documento</span>
+                              <p className="font-mono text-zinc-300 font-bold">{activeReceipt.dni || activeReceipt.cedula || "No especificado"}</p>
+                            </div>
+
+                            <div className="p-3 rounded-2xl bg-zinc-950/80 border border-white/5 flex items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <span className="text-[10px] text-zinc-400 font-bold uppercase block">Teléfono / WhatsApp</span>
+                                <p className="font-mono text-zinc-300 font-bold truncate">{activeReceipt.phone || "No especificado"}</p>
+                              </div>
+                              {activeReceipt.phone && (
+                                <a
+                                  href={whatsappUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase tracking-wider transition shrink-0 flex items-center gap-1 cursor-pointer"
+                                >
+                                  <MessageCircle className="w-3 h-3" />
+                                  <span>WhatsApp</span>
+                                </a>
+                              )}
+                            </div>
+
+                            <div className="p-3 rounded-2xl bg-zinc-950/80 border border-white/5 flex items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <span className="text-[10px] text-zinc-400 font-bold uppercase block">Correo Electrónico</span>
+                                <p className="text-zinc-300 font-medium truncate">{activeReceipt.email || "No especificado"}</p>
+                              </div>
+                              {activeReceipt.email && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(activeReceipt.email);
+                                    setReceiptActionMessage("Correo copiado al portapapeles.");
+                                    setTimeout(() => setReceiptActionMessage(null), 2500);
+                                  }}
+                                  className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-zinc-300 text-[10px] font-bold uppercase transition shrink-0 flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Copy className="w-3 h-3" />
+                                  <span>Copiar</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right Column: Meet2Go Physical Ticket Simulation Card */}
+                    {activeReceipt && (
+                      <div className="lg:col-span-5 sticky top-24 space-y-4">
+                        <div className="w-full bg-white text-black rounded-[32px] p-6 sm:p-7 shadow-2xl space-y-6 font-sans border border-zinc-200">
+                          {/* Ticket Header & Price */}
+                          <div className="border-b border-zinc-200 pb-5 space-y-1">
+                            <h3 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-zinc-950">
+                              {activeTotalQty} {activeTotalQty === 1 ? "ENTRADA" : "ENTRADAS"}
+                            </h3>
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-base font-bold text-zinc-800 uppercase tracking-wider">Total —</span>
+                              <span className="text-2xl font-black text-black">${activeTotalAmount.toFixed(0)} $</span>
+                            </div>
+                          </div>
+
+                          {/* Ticket Summary Details */}
+                          <div className="space-y-2.5 text-xs">
+                            <div className="flex justify-between items-center">
+                              <span className="text-zinc-500 font-bold uppercase text-[9px]">Comprador:</span>
+                              <span className="font-black text-zinc-900 uppercase">{activeReceipt.firstName} {activeReceipt.lastName}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-zinc-500 font-bold uppercase text-[9px]">Referencia:</span>
+                              <span className="font-mono font-bold text-zinc-900">{activeReceipt.referenceNumber || "32561683"}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-zinc-500 font-bold uppercase text-[9px]">Método de pago:</span>
+                              <span className="font-bold text-zinc-900 uppercase">{getReceiptBankName(activeReceipt)}</span>
+                            </div>
+                            <div className="flex justify-between items-center pt-1 border-t border-zinc-200">
+                              <span className="text-zinc-500 font-bold uppercase text-[9px]">Estado:</span>
+                              <span className="px-2.5 py-0.5 rounded-full text-[9.5px] font-black uppercase bg-zinc-200 text-zinc-800 border border-zinc-300">
+                                {activeReceipt.status === "aprobado" ? "Confirmado" : activeReceipt.status === "rechazado" ? "Rechazado" : "Pendiente de Aceptación"}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Primary Buttons */}
+                          {activeReceipt.status !== "aprobado" ? (
+                            <div className="space-y-3">
+                              <button
+                                type="button"
+                                onClick={() => handleReviewReceipt(activeReceipt.id, "aprobado")}
+                                className="w-full py-4 px-4 rounded-2xl bg-[#dfff28] hover:bg-[#ebff52] text-black font-black text-xs sm:text-sm uppercase tracking-widest shadow-2xl transition active:scale-[0.98] cursor-pointer"
+                              >
+                                <span>ACEPTAR Y EMITIR ENTRADA</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleReviewReceipt(activeReceipt.id, "rechazado")}
+                                className="w-full py-3 rounded-2xl bg-zinc-100 hover:bg-rose-50 text-rose-700 border border-zinc-200 font-bold text-xs uppercase tracking-wider transition active:scale-[0.98] cursor-pointer"
+                              >
+                                <span>Rechazar Solicitud</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="rounded-2xl bg-zinc-100 border border-zinc-200 p-3.5 text-center">
+                                <p className="text-xs font-black uppercase text-zinc-900">
+                                  Pase Digital QR Emitido con Éxito
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleReviewReceipt(activeReceipt.id, "rechazado")}
+                                className="w-full text-xs text-zinc-500 hover:text-rose-700 font-bold uppercase py-2 transition text-center cursor-pointer"
+                              >
+                                Cambiar a Rechazado
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Security terms note */}
+                          <div className="pt-2 border-t border-zinc-200 text-zinc-500 text-[10px] leading-relaxed">
+                            <span>Al aceptar esta solicitud de compra, se validará el comprobante bancario, se generará el <strong>código QR dinámico único</strong> y se enviará la entrada digital con confirmación inmediata al correo y WhatsApp del comprador.</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </main>
               </div>
+            );
+          })()
+        ) : (
+          /* ─── CASE B: PANEL PRINCIPAL (CUENTA ORGANIZADOR / DISCOTECA / MASTER ADMIN) ─── */
+          <div className="relative z-10 flex flex-col min-h-screen">
+            {/* Top Navigation Header Bar */}
+            <header className="sticky top-0 inset-x-0 z-40 flex items-center justify-between px-4 sm:px-8 py-4 bg-black/85 backdrop-blur-xl border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-black/70 hover:bg-white/20 border border-white/20 hover:border-white/40 text-white backdrop-blur-xl transition-all duration-200 cursor-pointer shadow-2xl active:scale-95 text-xs font-bold uppercase tracking-wider"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Volver a Cartelera</span>
+                </button>
+              </div>
+
+              {/* Profile / Venue Branding */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-700 overflow-hidden flex items-center justify-center shrink-0 shadow-md">
+                  {userProfile?.avatar ? (
+                    <img
+                      src={userProfile.avatar}
+                      alt={userProfile.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-5 h-5 text-zinc-400" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm sm:text-base font-black uppercase tracking-tight text-white truncate">
+                      {isMasterUser ? "PANEL MASTER 4GO" : (userProfile?.venueName || userProfile?.name || "Mi Cuenta")}
+                    </h2>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                      isMasterUser
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                        : "bg-white/10 text-zinc-200 border border-white/15"
+                    }`}>
+                      {isMasterUser ? "Master Admin" : "Partner 4GO"}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 font-medium truncate max-w-xs">{userProfile?.email}</p>
+                </div>
+              </div>
+
+              {/* Right: Publish Event + Close Button */}
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onStartCreateEvent?.();
+                  }}
+                  className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-black text-xs font-black uppercase tracking-wider transition-all duration-200 cursor-pointer shadow-2xl active:scale-95"
+                >
+                  <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>Publicar Evento</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-10 h-10 rounded-full bg-black/70 hover:bg-white/20 border border-white/20 hover:border-white/40 text-white backdrop-blur-xl flex items-center justify-center transition-all duration-200 cursor-pointer shadow-2xl active:scale-95 text-sm font-bold"
+                  title="Cerrar"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </header>
+
+            {/* Tab Navigation Strip */}
+            <div className="sticky top-[73px] z-30 flex items-center gap-2 px-4 sm:px-8 py-3 bg-black/75 backdrop-blur-xl border-b border-white/10 overflow-x-auto no-scrollbar shrink-0 text-xs font-bold uppercase tracking-wider">
+              {isMasterUser && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("master_receivables");
+                      setManagingEvent(null);
+                    }}
+                    className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                      activeTab === "master_receivables"
+                        ? "bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black shadow-lg shadow-amber-500/20"
+                        : "text-amber-300 hover:text-white hover:bg-amber-500/15 border border-amber-500/30"
+                    }`}
+                  >
+                    <Crown className="w-3.5 h-3.5" />
+                    <span>Cuentas por Cobrar (6%)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("master_roles");
+                      setManagingEvent(null);
+                    }}
+                    className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                      activeTab === "master_roles"
+                        ? "bg-white text-black font-black shadow-lg"
+                        : "text-purple-300 hover:text-white hover:bg-purple-500/15 border border-purple-500/30"
+                    }`}
+                  >
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span>
+                      Solicitudes Discoteca ({masterRoleRequests.filter((r) => r.status === "pendiente").length})
+                    </span>
+                  </button>
+                </>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("events");
+                  setManagingEvent(null);
+                }}
+                className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                  activeTab === "events"
+                    ? "bg-white text-black font-black shadow-lg"
+                    : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
+                }`}
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                <span>Mis Eventos ({myCreatedEvents.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("tickets");
+                  setManagingEvent(null);
+                }}
+                className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                  activeTab === "tickets"
+                    ? "bg-white text-black font-black shadow-lg"
+                    : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
+                }`}
+              >
+                <Ticket className="w-3.5 h-3.5" />
+                <span>Mis Tickets ({userPurchasedTickets.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("reservations");
+                  setManagingEvent(null);
+                }}
+                className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                  activeTab === "reservations"
+                    ? "bg-white text-black font-black shadow-lg"
+                    : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Mis Reservas</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("favorites");
+                  setManagingEvent(null);
+                }}
+                className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                  activeTab === "favorites"
+                    ? "bg-white text-black font-black shadow-lg"
+                    : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
+                }`}
+              >
+                <Heart className="w-3.5 h-3.5" />
+                <span>Mis Favoritos ({favoriteEvents.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("partner_profile");
+                  setManagingEvent(null);
+                }}
+                className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                  activeTab === "partner_profile"
+                    ? "bg-white text-black font-black shadow-lg"
+                    : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Datos de Partner</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("payouts");
+                  setManagingEvent(null);
+                }}
+                className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                  activeTab === "payouts"
+                    ? "bg-white text-black font-black shadow-lg"
+                    : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
+                }`}
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                <span>Pagos y Liquidaciones</span>
+              </button>
             </div>
 
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-9 h-9 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-700 flex items-center justify-center transition cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+            {/* Main Content Area */}
+            <main className="relative z-10 mx-auto max-w-7xl w-full px-4 sm:px-8 py-8 space-y-8 flex-1">
 
-          {/* Monochrome Tab Selector */}
-          <div className="flex items-center gap-1.5 px-6 sm:px-8 py-2.5 bg-zinc-950/40 border-b border-zinc-800/60 overflow-x-auto no-scrollbar shrink-0 text-xs font-bold uppercase tracking-wider">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab("events");
-                setManagingEvent(null);
-              }}
-              className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-                activeTab === "events"
-                  ? "bg-white text-black font-black shadow-md"
-                  : "text-zinc-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              <span>Mis Eventos ({myCreatedEvents.length})</span>
-            </button>
+            {/* MASTER TOAST NOTIFICATION */}
+            {masterToast && (
+              <div className="p-3.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-black flex items-center justify-between shadow-xl">
+                <span>{masterToast}</span>
+                <button type="button" onClick={() => setMasterToast(null)} className="text-emerald-400 hover:text-white">✕</button>
+              </div>
+            )}
 
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab("tickets");
-                setManagingEvent(null);
-              }}
-              className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-                activeTab === "tickets"
-                  ? "bg-white text-black font-black shadow-md"
-                  : "text-zinc-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Ticket className="w-3.5 h-3.5" />
-              <span>Mis Tickets ({userPurchasedTickets.length})</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab("reservations");
-                setManagingEvent(null);
-              }}
-              className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-                activeTab === "reservations"
-                  ? "bg-white text-black font-black shadow-md"
-                  : "text-zinc-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              <span>Mis Reservas</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab("favorites");
-                setManagingEvent(null);
-              }}
-              className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-                activeTab === "favorites"
-                  ? "bg-white text-black font-black shadow-md"
-                  : "text-zinc-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <Heart className="w-3.5 h-3.5" />
-              <span>Mis Favoritos ({favoriteEvents.length})</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab("partner_profile");
-                setManagingEvent(null);
-              }}
-              className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-                activeTab === "partner_profile"
-                  ? "bg-white text-black font-black shadow-md"
-                  : "text-zinc-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Datos de Partner</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab("payouts");
-                setManagingEvent(null);
-              }}
-              className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-                activeTab === "payouts"
-                  ? "bg-white text-black font-black shadow-md"
-                  : "text-zinc-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <CreditCard className="w-3.5 h-3.5" />
-              <span>Pagos y Liquidaciones</span>
-            </button>
-          </div>
-
-          {/* Main Body */}
-          <div className="overflow-y-auto px-6 sm:px-8 py-6 space-y-6 flex-1">
-            
-            {/* TAB 1: MIS EVENTOS */}
-            {activeTab === "events" && !managingEvent && (
-              <div className="space-y-5">
-                <div className="flex items-center justify-between">
+            {/* MASTER TAB 1: CUENTAS POR COBRAR (6% COMISIONES) */}
+            {activeTab === "master_receivables" && isMasterUser && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-lg font-black uppercase tracking-tight text-white">
-                      Eventos Creados con tu Cuenta
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">👑</span>
+                      <h3 className="text-xl font-black uppercase tracking-tight text-white">
+                        Tabla de Cuentas por Cobrar
+                      </h3>
+                    </div>
+                    <p className="text-xs text-zinc-400 font-medium mt-1">
+                      Comisión de la plataforma calculada al 6% de lo recaudado por discotecas y organizadores.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={fetchMasterData}
+                    disabled={loadingMasterData}
+                    className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold uppercase tracking-wider transition flex items-center gap-2 cursor-pointer"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${loadingMasterData ? "animate-spin" : ""}`} />
+                    <span>Actualizar Datos</span>
+                  </button>
+                </div>
+
+                {/* Metric Summary Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800 space-y-1">
+                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total Recaudado</span>
+                    <h4 className="text-xl sm:text-2xl font-black text-white">
+                      S/ {masterPayouts.reduce((acc, p) => acc + (p.totalCollected || 0), 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    </h4>
+                    <span className="text-[10px] text-zinc-500 font-bold">Venta total eventos</span>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-zinc-900/90 border border-amber-500/30 space-y-1">
+                    <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Comisión 4GO (6%)</span>
+                    <h4 className="text-xl sm:text-2xl font-black text-amber-300">
+                      S/ {masterPayouts.reduce((acc, p) => acc + (p.platformFee || 0), 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    </h4>
+                    <span className="text-[10px] text-amber-400/80 font-bold">Total comisión generada</span>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-zinc-900/90 border border-red-500/30 space-y-1">
+                    <span className="text-[10px] text-red-400 font-bold uppercase tracking-wider">Por Cobrar / Pendiente</span>
+                    <h4 className="text-xl sm:text-2xl font-black text-red-300">
+                      S/ {masterPayouts.filter(p => p.status !== "liquidado").reduce((acc, p) => acc + (p.platformFee || 0), 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    </h4>
+                    <span className="text-[10px] text-red-400/80 font-bold">Comisiones por cobrar</span>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-zinc-900/90 border border-emerald-500/30 space-y-1">
+                    <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Liquidado / Aprobado</span>
+                    <h4 className="text-xl sm:text-2xl font-black text-emerald-300">
+                      S/ {masterPayouts.filter(p => p.status === "liquidado").reduce((acc, p) => acc + (p.platformFee || 0), 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    </h4>
+                    <span className="text-[10px] text-emerald-400/80 font-bold">Cobros completados</span>
+                  </div>
+                </div>
+
+                {/* Filter Selector & Search */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+                    {[
+                      { id: "todos", label: "Todos" },
+                      { id: "pendiente_pago", label: "Pendientes de Pago" },
+                      { id: "comprobante_subido", label: "Comprobante Subido" },
+                      { id: "liquidado", label: "Liquidados" },
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setMasterStatusFilter(tab.id)}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                          masterStatusFilter === tab.id
+                            ? "bg-white text-black font-black shadow-md"
+                            : "bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800"
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                    <input
+                      type="text"
+                      placeholder="Buscar discoteca o evento..."
+                      value={masterSearchQuery}
+                      onChange={(e) => setMasterSearchQuery(e.target.value)}
+                      className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Tabla de Cuentas por Cobrar */}
+                <div className="rounded-2xl border border-zinc-800 overflow-hidden bg-zinc-950/60 shadow-xl">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-zinc-300">
+                      <thead className="bg-zinc-900/90 text-zinc-400 font-extrabold uppercase tracking-wider text-[10px] border-b border-zinc-800">
+                        <tr>
+                          <th className="px-4 py-3.5">Discoteca / Productora</th>
+                          <th className="px-4 py-3.5">Evento y Fecha</th>
+                          <th className="px-4 py-3.5">Total Recaudado</th>
+                          <th className="px-4 py-3.5 text-amber-300">Comisión 4GO (6%)</th>
+                          <th className="px-4 py-3.5">Estado</th>
+                          <th className="px-4 py-3.5 text-right">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-900">
+                        {masterPayouts
+                          .filter((p) => {
+                            if (masterStatusFilter !== "todos" && p.status !== masterStatusFilter) return false;
+                            if (masterSearchQuery.trim()) {
+                              const q = masterSearchQuery.toLowerCase();
+                              return (
+                                (p.organizerName || "").toLowerCase().includes(q) ||
+                                (p.eventTitle || "").toLowerCase().includes(q)
+                              );
+                            }
+                            return true;
+                          })
+                          .map((p, pIdx) => {
+                            const isLiquidated = p.status === "liquidado";
+                            const hasReceipt = p.status === "comprobante_subido";
+
+                            return (
+                              <tr key={p.id || `payout-${pIdx}`} className="hover:bg-zinc-900/40 transition">
+                                <td className="px-4 py-3 font-bold text-white whitespace-nowrap">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-lg bg-zinc-800 flex items-center justify-center text-xs font-black">
+                                      {p.organizerName ? p.organizerName[0] : "D"}
+                                    </div>
+                                    <span>{p.organizerName}</span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="font-semibold text-white line-clamp-1">{p.eventTitle}</div>
+                                  <div className="text-[11px] text-zinc-500">{p.eventDate}</div>
+                                </td>
+                                <td className="px-4 py-3 font-bold text-white whitespace-nowrap">
+                                  S/ {(p.totalCollected || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                </td>
+                                <td className="px-4 py-3 font-black text-amber-400 whitespace-nowrap">
+                                  S/ {(p.platformFee || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider inline-flex items-center gap-1.5 ${
+                                    isLiquidated
+                                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                                      : hasReceipt
+                                      ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                                      : "bg-red-500/20 text-red-300 border border-red-500/30"
+                                  }`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${
+                                      isLiquidated ? "bg-emerald-400" : hasReceipt ? "bg-amber-400" : "bg-red-400"
+                                    }`} />
+                                    {isLiquidated
+                                      ? "Liquidado / Aprobado"
+                                      : hasReceipt
+                                      ? "Comprobante Subido"
+                                      : "Pendiente de Pago"}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-right whitespace-nowrap">
+                                  <div className="flex items-center justify-end gap-2">
+                                    {/* Ver Comprobante Button */}
+                                    {p.receiptUrl && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setViewingReceiptImage({
+                                            id: p.id,
+                                            receiptImage: p.receiptUrl,
+                                            referenceNumber: p.id,
+                                            bank: "Banco Pichincha / Deuna",
+                                          });
+                                        }}
+                                        className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                                        title="Ver comprobante subido"
+                                      >
+                                        <Eye className="w-3.5 h-3.5" />
+                                        <span>Comprobante</span>
+                                      </button>
+                                    )}
+
+                                    {/* Recordar Cobro por WhatsApp */}
+                                    {!isLiquidated && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const msg = `Hola ${p.organizerName}, te saluda Brandon de 4GO Master. Adjuntamos el reporte de liquidación del evento "${p.eventTitle}" por un total recaudado de S/ ${(p.totalCollected || 0).toFixed(2)}. La comisión acordada del 6% es de S/ ${(p.platformFee || 0).toFixed(2)}. Por favor sube el comprobante de pago por el panel o confírmanos por aquí. ¡Gracias!`;
+                                          navigator.clipboard.writeText(msg);
+                                          setCopiedIndex(pIdx);
+                                          setTimeout(() => setCopiedIndex(null), 2500);
+                                        }}
+                                        className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                                        title="Copiar recordatorio de WhatsApp"
+                                      >
+                                        {copiedIndex === pIdx ? (
+                                          <>
+                                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                            <span className="text-emerald-400">¡Copiado!</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                                            <span>WhatsApp</span>
+                                          </>
+                                        )}
+                                      </button>
+                                    )}
+
+                                    {/* Aprobar Liquidación */}
+                                    {!isLiquidated ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleApprovePayout(p.id)}
+                                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider transition shadow-md active:scale-95 cursor-pointer flex items-center gap-1"
+                                      >
+                                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                        <span>Aprobar</span>
+                                      </button>
+                                    ) : (
+                                      <span className="text-[11px] text-emerald-400 font-bold flex items-center gap-1">
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                        <span>Liquidado</span>
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* MASTER TAB 2: SOLICITUDES DE ASCENSO A DISCOTECA */}
+            {activeTab === "master_roles" && isMasterUser && (
+              <div className="space-y-6">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-5 h-5 text-purple-400" />
+                    <h3 className="text-xl font-black uppercase tracking-tight text-white">
+                      Solicitudes de Ascenso a Discoteca
                     </h3>
-                    <p className="text-xs text-zinc-400 font-medium">
+                  </div>
+                  <p className="text-xs text-zinc-400 font-medium mt-1">
+                    Regla de oro: El usuario NUNCA puede cambiarse de rol por sí mismo. Solo tú como Master apruebas el cambio tras auditar las 3 condiciones.
+                  </p>
+                </div>
+
+                {/* 3 Automated Audit Rules Banner */}
+                <div className="p-4 rounded-2xl bg-purple-950/30 border border-purple-500/30 space-y-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-purple-300">
+                    Condiciones Obligatorias para Aprobar:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">
+                    <div className="p-2.5 rounded-xl bg-black/40 border border-purple-500/20 space-y-1">
+                      <span className="font-bold text-white flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        1. Historial Limpio (Deuda Cero)
+                      </span>
+                      <p className="text-[11px] text-zinc-400 leading-snug">
+                        El sistema audita automáticamente que no tenga comisiones pendientes de ningún evento anterior.
+                      </p>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-black/40 border border-purple-500/20 space-y-1">
+                      <span className="font-bold text-white flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        2. Reputación Previa
+                      </span>
+                      <p className="text-[11px] text-zinc-400 leading-snug">
+                        Haber completado con éxito 1 o 2 eventos pagando comisiones al día (o pagar primera cuota adelantada si es nuevo).
+                      </p>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-black/40 border border-purple-500/20 space-y-1">
+                      <span className="font-bold text-white flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        3. Verificación Física del Local
+                      </span>
+                      <p className="text-[11px] text-zinc-400 leading-snug">
+                        Local comercial propio y fijo con dirección confirmada, no un promotor que alquila por una noche.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Solicitudes List */}
+                <div className="space-y-3">
+                  {masterRoleRequests.length === 0 ? (
+                    <div className="p-8 rounded-2xl bg-zinc-900/50 border border-zinc-800 text-center space-y-2">
+                      <Building2 className="w-8 h-8 text-zinc-600 mx-auto" />
+                      <p className="text-sm font-bold text-zinc-400">No hay solicitudes de cambio de rol pendientes</p>
+                    </div>
+                  ) : (
+                    masterRoleRequests.map((req) => {
+                      const isPending = req.status === "pendiente";
+                      const isApproved = req.status === "aprobado";
+                      const hasCleanDebt = (req.currentDebt || 0) === 0;
+                      const hasGoodReputation = (req.completedEvents || 0) >= 1;
+
+                      return (
+                        <div
+                          key={req.id}
+                          className="p-5 rounded-2xl bg-zinc-950/80 border border-zinc-800 hover:border-zinc-700 transition space-y-4 shadow-xl"
+                        >
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-zinc-800/80">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-base font-black text-white">{req.organizerName}</h4>
+                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                                  isApproved
+                                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                                    : isPending
+                                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                                    : "bg-red-500/20 text-red-300 border border-red-500/30"
+                                }`}>
+                                  {req.status}
+                                </span>
+                              </div>
+                              <p className="text-xs text-zinc-400">{req.organizerEmail} • Tel: {req.phone || "No especificado"}</p>
+                            </div>
+
+                            <div className="text-right text-xs text-zinc-500">
+                              <span>Solicitado: {req.requestedAt?.split("T")[0] || "2026-09-02"}</span>
+                            </div>
+                          </div>
+
+                          {/* 3 Audit Checks Details */}
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                            <div className={`p-3 rounded-xl border ${
+                              hasCleanDebt ? "bg-emerald-950/20 border-emerald-500/30" : "bg-red-950/20 border-red-500/30"
+                            }`}>
+                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                                Condición 1: Historial de Comisiones
+                              </span>
+                              <div className="flex items-center gap-1.5 mt-1 font-extrabold text-white">
+                                {hasCleanDebt ? (
+                                  <>
+                                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                                    <span className="text-emerald-300">Deuda Cero (S/ 0.00) ✓</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                                    <span className="text-red-400">Tiene deuda pendiente</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className={`p-3 rounded-xl border ${
+                              hasGoodReputation ? "bg-emerald-950/20 border-emerald-500/30" : "bg-yellow-950/20 border-yellow-500/30"
+                            }`}>
+                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                                Condición 2: Reputación Previa
+                              </span>
+                              <div className="flex items-center gap-1.5 mt-1 font-extrabold text-white">
+                                {hasGoodReputation ? (
+                                  <>
+                                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                                    <span className="text-emerald-300">{req.completedEvents || 2} eventos cumplidos ✓</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Clock className="w-4 h-4 text-yellow-400 shrink-0" />
+                                    <span className="text-yellow-300">Usuario Nuevo (Pago adelantado)</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="p-3 rounded-xl bg-zinc-900 border border-zinc-800">
+                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                                Condición 3: Local Físico Fijo
+                              </span>
+                              <div className="flex items-center gap-1.5 mt-1 font-medium text-white truncate" title={req.venueAddress}>
+                                <MapPin className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                                <span className="truncate">{req.venueAddress || "Av. Salvador Bustamante Celi, Loja"}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          {isPending && (
+                            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-zinc-900">
+                              <button
+                                type="button"
+                                onClick={() => handleRejectRoleRequest(req.id)}
+                                className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white font-bold text-xs cursor-pointer transition active:scale-95"
+                              >
+                                Rechazar Solicitud
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleApproveRoleRequest(req.id, req.organizerId, req.organizerName)}
+                                className="px-5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-emerald-600 hover:from-purple-500 hover:to-emerald-500 text-white font-black text-xs uppercase tracking-wider transition shadow-lg active:scale-95 flex items-center gap-2 cursor-pointer"
+                              >
+                                <Check className="w-4 h-4 stroke-[3]" />
+                                <span>Aprobar como Discoteca</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 1: MIS EVENTOS */}
+            {activeTab === "events" && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-white">
+                      Eventos Creados con tu Cuenta
+                    </h2>
+                    <p className="text-xs sm:text-sm text-zinc-400 font-medium mt-1">
                       Revisa recaudación, comprobantes por verificar y detalles de cada evento.
                     </p>
                   </div>
@@ -584,7 +1614,7 @@ export default function MyAccountDashboardModal({
                       onClose();
                       onStartCreateEvent?.();
                     }}
-                    className="px-4 py-2 rounded-full bg-white hover:bg-zinc-200 text-black text-xs font-black uppercase tracking-wider transition cursor-pointer shadow-lg flex items-center gap-1.5"
+                    className="px-5 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-black text-xs font-black uppercase tracking-wider transition cursor-pointer shadow-xl flex items-center gap-2 self-start sm:self-auto active:scale-95"
                   >
                     <Plus className="w-3.5 h-3.5 stroke-[3]" />
                     <span>Publicar Nuevo Evento</span>
@@ -592,7 +1622,7 @@ export default function MyAccountDashboardModal({
                 </div>
 
                 {myCreatedEvents.length === 0 ? (
-                  <div className="p-10 rounded-3xl bg-zinc-950 border border-zinc-800 text-center space-y-3">
+                  <div className="p-12 rounded-3xl bg-zinc-950/80 border border-zinc-800 text-center space-y-3 shadow-xl">
                     <Calendar className="w-8 h-8 text-zinc-500 mx-auto" />
                     <h4 className="text-sm font-black uppercase text-white">
                       Aún no has creado eventos
@@ -614,7 +1644,7 @@ export default function MyAccountDashboardModal({
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
                     {myCreatedEvents.map((evt) => {
                       const eventDateStr = evt.date || evt.startsAt || "";
                       const isPast = eventDateStr ? new Date(eventDateStr).getTime() < new Date().setHours(0, 0, 0, 0) : false;
@@ -623,10 +1653,10 @@ export default function MyAccountDashboardModal({
                       return (
                         <div
                           key={evt.id}
-                          className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition flex flex-col justify-between space-y-4 shadow-lg"
+                          className="p-5 rounded-3xl bg-zinc-900/90 border border-zinc-800 hover:border-zinc-700 transition flex flex-col justify-between space-y-4 shadow-xl backdrop-blur-md"
                         >
-                          <div className="flex items-start gap-3.5">
-                            <div className="w-16 h-20 rounded-xl overflow-hidden bg-black shrink-0 relative border border-zinc-700 shadow-md">
+                          <div className="flex items-start gap-4">
+                            <div className="w-18 h-22 sm:w-20 sm:h-24 rounded-2xl overflow-hidden bg-black shrink-0 relative border border-zinc-700 shadow-md">
                               <img
                                 src={evt.poster || "/images/4go_red_girl_showcase.jpg"}
                                 alt={evt.title}
@@ -634,7 +1664,7 @@ export default function MyAccountDashboardModal({
                               />
                             </div>
                             <div className="space-y-1 min-w-0 flex-1">
-                              <h4 className="text-sm sm:text-base font-black uppercase text-white truncate">
+                              <h4 className="text-base font-black uppercase text-white truncate">
                                 {evt.title}
                               </h4>
                               <p className="text-xs text-zinc-400 font-medium truncate">
@@ -646,23 +1676,26 @@ export default function MyAccountDashboardModal({
 
                               <div className="pt-1 flex items-center gap-2 flex-wrap">
                                 {isPast ? (
-                                  <span className="px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-400 text-[9.5px] font-bold uppercase border border-zinc-700">
+                                  <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-400 text-[9.5px] font-bold uppercase border border-zinc-700">
                                     Evento Finalizado
                                   </span>
                                 ) : (
-                                  <span className="px-2 py-0.5 rounded-md bg-white/10 text-white text-[9.5px] font-bold uppercase border border-white/20">
+                                  <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-white text-[9.5px] font-bold uppercase border border-white/20">
                                     Publicado / Activo
                                   </span>
                                 )}
+                                <span className="text-[10px] text-zinc-400 font-bold">
+                                  Base: ${evt.price || 10} USD
+                                </span>
                               </div>
                             </div>
                           </div>
 
-                          <div className="pt-2 border-t border-zinc-800/80 space-y-2">
+                          <div className="pt-3 border-t border-zinc-800/80 space-y-2">
                             <button
                               type="button"
                               onClick={() => handleSelectManageEvent(evt)}
-                              className="w-full py-2 px-3 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-black uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm active:scale-98"
+                              className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-black uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-2 shadow-sm active:scale-98"
                             >
                               <span>Gestionar Evento y Estadísticas</span>
                               <span>&gt;</span>
@@ -674,7 +1707,7 @@ export default function MyAccountDashboardModal({
                                 setConfiguringEvent(evt);
                                 setEditEventForm({ ...evt, venue: displayVenue });
                               }}
-                              className="w-full py-1.5 px-3 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700/60 text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-98"
+                              className="w-full py-2 px-4 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700/60 text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-2 active:scale-98"
                             >
                               <span>Configuración & Opciones del Evento</span>
                             </button>
@@ -686,509 +1719,6 @@ export default function MyAccountDashboardModal({
                 )}
               </div>
             )}
-
-            {/* MODAL: CONFIGURACIÓN & OPCIONES DEL EVENTO */}
-            {configuringEvent && (() => {
-              const eventDateStr = configuringEvent.date || configuringEvent.startsAt || "";
-              const isPast = eventDateStr ? new Date(eventDateStr).getTime() < new Date().setHours(0, 0, 0, 0) : false;
-
-              return (
-                <div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-                  <div className="w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl overflow-y-auto max-h-[90vh]">
-                    <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-4 w-1 bg-[#dfff28] rounded-full" />
-                        <h3 className="text-lg font-black uppercase tracking-wider text-white">
-                          Configuración & Opciones del Evento
-                        </h3>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setConfiguringEvent(null)}
-                        className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center text-sm font-bold cursor-pointer transition"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    {/* 1. Promotores y Co-Organizadores */}
-                    <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-white">
-                          Promotores y Co-Organizadores de este Evento
-                        </h4>
-                        <span className="text-[10px] text-zinc-400 font-bold uppercase">
-                          Alianzas del Evento
-                        </span>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2.5 pt-1">
-                        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-black/70 border border-zinc-700 text-xs font-bold text-white shadow-sm">
-                          <span>{configuringEvent.organizer || userProfile?.venueName || userProfile?.name || "Organizador Principal"}</span>
-                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-white text-black font-black uppercase">
-                            Principal
-                          </span>
-                        </div>
-
-                        {configuringEvent.lineup && Array.isArray(configuringEvent.lineup) && configuringEvent.lineup.length > 1 ? (
-                          configuringEvent.lineup.slice(1).map((coHost: string, idx: number) => (
-                            <div
-                              key={idx}
-                              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-black/60 border border-zinc-800 text-xs font-bold text-zinc-300"
-                            >
-                              <span>{coHost}</span>
-                              <span className="text-[9px] px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 font-bold uppercase">
-                                Co-Host Confirmado
-                              </span>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="text-xs text-zinc-400 font-medium self-center">
-                            Producción individual sin co-organizadores vinculados.
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 2. Editar Información del Evento */}
-                    <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-4">
-                      <form onSubmit={handleSaveEditedEvent} className="space-y-4">
-                        <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-white">
-                            Editar Información del Evento
-                          </h4>
-
-                          {isPast ? (
-                            <div className="px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 text-[10px] font-black uppercase">
-                              <span>Evento Pasado (Edición Bloqueada)</span>
-                            </div>
-                          ) : (
-                            <span className="text-[10px] text-zinc-400 font-bold uppercase">
-                              Edición Activa
-                            </span>
-                          )}
-                        </div>
-
-                        {isPast && (
-                          <div className="p-3 rounded-xl bg-black/60 border border-zinc-800 text-xs text-zinc-400 font-medium">
-                            Este evento ya finalizó en fecha <span className="text-white font-bold">{configuringEvent.dateLabel || configuringEvent.date}</span>. Los eventos pasados no pueden ser editados.
-                          </div>
-                        )}
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 block">
-                              Título del Evento
-                            </label>
-                            <input
-                              type="text"
-                              disabled={isPast}
-                              value={editEventForm?.title || ""}
-                              onChange={(e) => setEditEventForm((prev: any) => ({ ...prev, title: e.target.value }))}
-                              className="w-full px-4 py-2.5 rounded-xl bg-black/70 border border-zinc-800 text-xs sm:text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-[#dfff28]"
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 block">
-                              Subtítulo / Sala
-                            </label>
-                            <input
-                              type="text"
-                              disabled={isPast}
-                              value={editEventForm?.subtitle || ""}
-                              onChange={(e) => setEditEventForm((prev: any) => ({ ...prev, subtitle: e.target.value }))}
-                              className="w-full px-4 py-2.5 rounded-xl bg-black/70 border border-zinc-800 text-xs sm:text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-[#dfff28]"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 block">
-                              Lugar / Venue
-                            </label>
-                            <input
-                              type="text"
-                              disabled={isPast}
-                              value={editEventForm?.venue || ""}
-                              onChange={(e) => setEditEventForm((prev: any) => ({ ...prev, venue: e.target.value }))}
-                              className="w-full px-4 py-2.5 rounded-xl bg-black/70 border border-zinc-800 text-xs sm:text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-[#dfff28]"
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 block">
-                              Precio Base ($ USD)
-                            </label>
-                            <input
-                              type="number"
-                              disabled={isPast}
-                              value={editEventForm?.price || 0}
-                              onChange={(e) => setEditEventForm((prev: any) => ({ ...prev, price: Number(e.target.value) }))}
-                              className="w-full px-4 py-2.5 rounded-xl bg-black/70 border border-zinc-800 text-xs sm:text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-[#dfff28]"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="pt-3 flex items-center justify-end gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setConfiguringEvent(null)}
-                            className="px-5 py-2.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-bold uppercase transition"
-                          >
-                            Cancelar
-                          </button>
-                          {!isPast && (
-                            <button
-                              type="submit"
-                              className="px-6 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-black text-xs font-black uppercase tracking-wider transition cursor-pointer shadow-xl active:scale-95"
-                            >
-                              Guardar Cambios del Evento
-                            </button>
-                          )}
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* EVENT MANAGEMENT VIEW */}
-            {activeTab === "events" && managingEvent && (() => {
-              const activeReceipt =
-                receiptsList.find((r) => r.id === selectedReceiptId) ||
-                receiptsList.find((r) => r.status === "pendiente") ||
-                receiptsList[0] ||
-                null;
-
-              const eventImageSrc = managingEvent.imageUrl || managingEvent.poster || "/images/now4go-hero-presentation-hd-v3_3840w.jpg";
-              const activeTotalQty = activeReceipt?.quantity || 1;
-              const activeTotalAmount = activeReceipt?.totalAmount || activeTotalQty * eventBasePrice;
-              const activeUnitPrice = activeReceipt?.totalAmount ? activeReceipt.totalAmount / activeTotalQty : eventBasePrice;
-
-              const sanitizedPhone = (activeReceipt?.phone || "").replace(/[^0-9]/g, "");
-              const whatsappNumber = sanitizedPhone.startsWith("593")
-                ? sanitizedPhone
-                : sanitizedPhone.startsWith("0")
-                ? `593${sanitizedPhone.slice(1)}`
-                : `593${sanitizedPhone}`;
-              const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-                `¡Hola ${activeReceipt?.firstName || ""}! Te saludamos de ${managingEvent.title} (NENEZ). Respecto a tu solicitud de compra #${(activeReceipt?.id || "").slice(0, 8)} por ${activeTotalQty} entrada(s)...`
-              )}`;
-
-              return (
-                <div className="fixed inset-0 z-[700] overflow-y-auto bg-black text-white selection:bg-[#dfff28] selection:text-black">
-                  {/* Dynamic Blurred Event Poster Atmosphere */}
-                  <div className="fixed inset-0 pointer-events-none overflow-hidden select-none z-0">
-                    <div className="absolute inset-0 scale-125 transform-gpu">
-                      <Image
-                        src={eventImageSrc}
-                        alt={managingEvent.title}
-                        fill
-                        priority
-                        quality={20}
-                        sizes="120px"
-                        className="object-cover object-top scale-150 blur-[90px] saturate-200 brightness-110 opacity-85 transform-gpu will-change-transform"
-                      />
-                    </div>
-                    <div className="absolute top-0 inset-x-0 h-44 bg-gradient-to-b from-black/90 via-black/40 to-transparent pointer-events-none" />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/35 to-black pointer-events-none" />
-                  </div>
-
-                  {/* Top Navigation Header Bar */}
-                  <header className="fixed top-0 inset-x-0 z-[600] flex items-center justify-between px-4 sm:px-8 py-4 bg-gradient-to-b from-black/95 via-black/50 to-transparent pointer-events-none">
-                    <div className="pointer-events-auto flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setManagingEvent(null)}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-black/70 hover:bg-white/20 border border-white/20 hover:border-white/40 text-white backdrop-blur-xl transition-all duration-200 cursor-pointer shadow-2xl active:scale-95 text-xs font-bold uppercase tracking-wider"
-                      >
-                        <span>← Volver a Mis Eventos</span>
-                      </button>
-                    </div>
-
-                    <div className="pointer-events-auto flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setConfiguringEvent(managingEvent);
-                          setEditEventForm({ ...managingEvent });
-                        }}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-black/70 hover:bg-white/20 border border-white/20 hover:border-white/40 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-xl transition-all duration-200 active:scale-95 shadow-2xl cursor-pointer"
-                      >
-                        <span>Configuración del Evento</span>
-                      </button>
-                    </div>
-                  </header>
-
-                  {/* Main Content Container */}
-                  <main className="relative z-10 mx-auto max-w-7xl px-4 sm:px-8 pt-24 pb-28 space-y-10">
-                    {receiptActionMessage && (
-                      <div className="p-4 rounded-2xl bg-zinc-950/90 border border-[#dfff28]/50 text-white text-xs font-bold shadow-2xl backdrop-blur-xl">
-                        <span>{receiptActionMessage}</span>
-                      </div>
-                    )}
-
-                    {/* Dual-Column Request Review */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                      {/* Left Column: Requests List + Compact Receipt Preview + Buyer Info */}
-                      <div className="lg:col-span-7 space-y-6">
-                        {/* Event Brand Header */}
-                        <div className="flex items-center gap-4">
-                          <div className="relative w-16 h-16 rounded-2xl overflow-hidden border border-white/25 bg-black/40 shadow-2xl shrink-0">
-                            <Image src={eventImageSrc} alt={managingEvent.title} fill sizes="64px" className="object-cover" />
-                          </div>
-                          <div className="min-w-0">
-                            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white truncate">
-                              {managingEvent.title}
-                            </h1>
-                            <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-zinc-300 mt-0.5">
-                              <span>{managingEvent.dateLabel || managingEvent.date || "30 AGO 2026"} • {managingEvent.time || "22:00"}</span>
-                              <span className="text-zinc-500">•</span>
-                              <span className="text-zinc-400 font-medium">{managingEvent.venue || "CUBIC"}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Metrics Summary Strip */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                          <div className="p-3.5 rounded-2xl bg-black/50 border border-white/10 backdrop-blur-xl space-y-0.5">
-                            <span className="text-[9.5px] text-zinc-400 font-bold uppercase block">
-                              Recaudado
-                            </span>
-                            <p className="text-base sm:text-lg font-black text-white">${totalRevenueForEvent.toFixed(2)} USD</p>
-                          </div>
-
-                          <div className="p-3.5 rounded-2xl bg-black/50 border border-white/10 backdrop-blur-xl space-y-0.5">
-                            <span className="text-[9.5px] text-zinc-400 font-bold uppercase block">
-                              Vendidas
-                            </span>
-                            <p className="text-base sm:text-lg font-black text-white">{approvedReceiptsCount} Pases</p>
-                          </div>
-
-                          <div className="p-3.5 rounded-2xl bg-black/50 border border-white/10 backdrop-blur-xl space-y-0.5">
-                            <span className="text-[9.5px] text-zinc-400 font-bold uppercase block">
-                              Por Verificar
-                            </span>
-                            <p className="text-base sm:text-lg font-black text-white">{pendingReceiptsCount} Solicitudes</p>
-                          </div>
-
-                          <div className="p-3.5 rounded-2xl bg-black/50 border border-white/10 backdrop-blur-xl space-y-0.5">
-                            <span className="text-[9.5px] text-zinc-400 font-bold uppercase block">
-                              Precio Base
-                            </span>
-                            <p className="text-base sm:text-lg font-black text-white">${eventBasePrice} USD</p>
-                          </div>
-                        </div>
-
-                        {/* List of Purchase Requests */}
-                        {receiptsList.length > 0 && (
-                          <div className="space-y-2.5">
-                            <div className="flex items-center justify-between">
-                              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/60">
-                                SOLICITUDES DE COMPRA ({receiptsList.length})
-                              </p>
-                              <span className="text-[10px] text-zinc-400 font-medium">Selecciona una solicitud</span>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                              {receiptsList.map((r) => {
-                                const isCurrent = activeReceipt?.id === r.id;
-                                const rQty = r.quantity || 1;
-                                const rTotal = r.totalAmount || rQty * eventBasePrice;
-
-                                return (
-                                  <div
-                                    key={r.id}
-                                    onClick={() => setSelectedReceiptId(r.id)}
-                                    className={`p-3.5 rounded-2xl border transition cursor-pointer flex flex-col justify-between gap-2.5 ${
-                                      isCurrent
-                                        ? "bg-zinc-900 border-[#dfff28] shadow-[0_0_20px_rgba(223,255,40,0.2)] ring-1 ring-[#dfff28]"
-                                        : "bg-black/50 border-white/10 hover:border-white/30 hover:bg-zinc-900/50"
-                                    }`}
-                                  >
-                                    <div className="flex items-center justify-between gap-2">
-                                      <span className={`text-xs font-black uppercase truncate ${isCurrent ? "text-[#dfff28]" : "text-white"}`}>
-                                        {r.firstName} {r.lastName}
-                                      </span>
-                                      <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 text-[8.5px] font-black uppercase border border-zinc-700">
-                                        {r.status === "aprobado" ? "Confirmado" : r.status === "rechazado" ? "Rechazado" : "Pendiente"}
-                                      </span>
-                                    </div>
-
-                                    <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                                      <span className="font-bold text-zinc-300">{rQty}x Entrada (${rTotal} USD)</span>
-                                      <span className="font-mono text-zinc-400 text-[10px]">Ref: {r.referenceNumber || "32561683"}</span>
-                                    </div>
-
-                                    <div className="pt-2 border-t border-white/10 flex items-center justify-between">
-                                      <span className="text-[10px] text-zinc-400 font-bold uppercase">{getReceiptBankName(r)}</span>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setSelectedReceiptId(r.id);
-                                          setViewingReceiptImage(r);
-                                        }}
-                                        className="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold uppercase transition border border-white/15 cursor-pointer"
-                                      >
-                                        Ver Comprobante
-                                      </button>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Active Request Details: Buyer Info */}
-                        {activeReceipt ? (
-                          <div className="space-y-4">
-                            {/* Datos del Comprador & Entrega */}
-                            <div className="rounded-2xl border border-white/15 bg-black/50 backdrop-blur-xl p-5 shadow-2xl space-y-3">
-                              <div className="border-b border-white/10 pb-3">
-                                <h3 className="text-xs font-black uppercase tracking-wider text-white">
-                                  Datos del Comprador
-                                </h3>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                                <div className="p-3 rounded-xl bg-zinc-950/70 border border-white/10 space-y-0.5">
-                                  <span className="text-[10px] font-bold uppercase text-zinc-400 block">Nombre Completo</span>
-                                  <p className="font-black text-white uppercase">{activeReceipt.firstName} {activeReceipt.lastName}</p>
-                                </div>
-
-                                <div className="p-3 rounded-xl bg-zinc-950/70 border border-white/10 space-y-0.5">
-                                  <span className="text-[10px] font-bold uppercase text-zinc-400 block">Cédula / Documento</span>
-                                  <p className="font-mono font-medium text-white">{activeReceipt.cedula || "No especificado"}</p>
-                                </div>
-
-                                <div className="p-3 rounded-xl bg-zinc-950/70 border border-white/10 flex items-center justify-between">
-                                  <div className="space-y-0.5 min-w-0">
-                                    <span className="text-[10px] font-bold uppercase text-zinc-400 block">Teléfono / WhatsApp</span>
-                                    <p className="font-mono text-white truncate">{activeReceipt.phone || "No especificado"}</p>
-                                  </div>
-                                  <a
-                                    href={whatsappUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-3.5 py-1.5 rounded-lg bg-[#25D366] hover:bg-[#20bd5a] text-black text-[10px] font-black uppercase transition shadow-md shrink-0 ml-2"
-                                  >
-                                    WHATSAPP
-                                  </a>
-                                </div>
-
-                                <div className="p-3 rounded-xl bg-zinc-950/70 border border-white/10 flex items-center justify-between">
-                                  <div className="space-y-0.5 min-w-0">
-                                    <span className="text-[10px] font-bold uppercase text-zinc-400 block">Correo Electrónico</span>
-                                    <p className="font-mono text-white truncate text-[11px]">{activeReceipt.email}</p>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      if (navigator.clipboard) navigator.clipboard.writeText(activeReceipt.email);
-                                    }}
-                                    className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white text-[10px] font-bold uppercase transition shrink-0 ml-2"
-                                  >
-                                    Copiar
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="p-8 text-center rounded-2xl border border-white/10 bg-black/40 text-zinc-400 text-xs font-medium">
-                            No hay solicitudes de compra pendientes para este evento.
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right Column: Floating Accept & Action Card (Sticky) */}
-                      {activeReceipt && (
-                        <div className="lg:col-span-5 lg:sticky lg:top-24 space-y-4">
-                          <div className="rounded-[32px] bg-white text-zinc-900 p-6 sm:p-8 shadow-[0_30px_90px_rgba(0,0,0,0.6)] backdrop-blur-2xl border border-white/40 space-y-6">
-                            <div>
-                              <h4 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-black">
-                                {activeTotalQty} {activeTotalQty === 1 ? "entrada" : "entradas"}
-                              </h4>
-                              <p className="text-2xl sm:text-3xl font-black text-zinc-800 mt-0.5">
-                                Total — {activeTotalAmount.toFixed(0)} $
-                              </p>
-                            </div>
-
-                            {/* Summary Details Card */}
-                            <div className="rounded-2xl bg-zinc-100 p-4 space-y-2 border border-zinc-200 text-xs">
-                              <div className="flex justify-between items-center">
-                                <span className="text-zinc-500 font-bold uppercase text-[9px]">Comprador:</span>
-                                <span className="font-black text-zinc-900 uppercase">{activeReceipt.firstName} {activeReceipt.lastName}</span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-zinc-500 font-bold uppercase text-[9px]">Referencia:</span>
-                                <span className="font-mono font-bold text-zinc-900">{activeReceipt.referenceNumber || "32561683"}</span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-zinc-500 font-bold uppercase text-[9px]">Método de pago:</span>
-                                <span className="font-bold text-zinc-900 uppercase">{getReceiptBankName(activeReceipt)}</span>
-                              </div>
-                              <div className="flex justify-between items-center pt-1 border-t border-zinc-200">
-                                <span className="text-zinc-500 font-bold uppercase text-[9px]">Estado:</span>
-                                <span className="px-2.5 py-0.5 rounded-full text-[9.5px] font-black uppercase bg-zinc-200 text-zinc-800 border border-zinc-300">
-                                  {activeReceipt.status === "aprobado" ? "Confirmado" : activeReceipt.status === "rechazado" ? "Rechazado" : "Pendiente de Aceptación"}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Primary Buttons */}
-                            {activeReceipt.status !== "aprobado" ? (
-                              <div className="space-y-3">
-                                <button
-                                  type="button"
-                                  onClick={() => handleReviewReceipt(activeReceipt.id, "aprobado")}
-                                  className="w-full py-4 px-4 rounded-2xl bg-[#dfff28] hover:bg-[#ebff52] text-black font-black text-xs sm:text-sm uppercase tracking-widest shadow-2xl transition active:scale-[0.98] cursor-pointer"
-                                >
-                                  <span>ACEPTAR Y EMITIR ENTRADA</span>
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => handleReviewReceipt(activeReceipt.id, "rechazado")}
-                                  className="w-full py-3 rounded-2xl bg-zinc-100 hover:bg-rose-50 text-rose-700 border border-zinc-200 font-bold text-xs uppercase tracking-wider transition active:scale-[0.98] cursor-pointer"
-                                >
-                                  <span>Rechazar Solicitud</span>
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="space-y-2">
-                                <div className="rounded-2xl bg-zinc-100 border border-zinc-200 p-3.5 text-center">
-                                  <p className="text-xs font-black uppercase text-zinc-900">
-                                    Pase Digital QR Emitido con Éxito
-                                  </p>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleReviewReceipt(activeReceipt.id, "rechazado")}
-                                  className="w-full text-xs text-zinc-500 hover:text-rose-700 font-bold uppercase py-2 transition text-center cursor-pointer"
-                                >
-                                  Cambiar a Rechazado
-                                </button>
-                              </div>
-                            )}
-
-                            {/* Security terms note */}
-                            <div className="pt-2 border-t border-zinc-200 text-zinc-500 text-[10px] leading-relaxed">
-                              <span>Al aceptar esta solicitud de compra, se validará el comprobante bancario, se generará el <strong>código QR dinámico único</strong> y se enviará la entrada digital con confirmación inmediata al correo y WhatsApp del comprador.</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </main>
-                </div>
-              );
-            })()}
 
             {/* TAB 2: MIS TICKETS */}
             {activeTab === "tickets" && (
@@ -1205,48 +1735,44 @@ export default function MyAccountDashboardModal({
                 {userPurchasedTickets.length === 0 ? (
                   <div className="p-8 rounded-2xl bg-zinc-950 border border-zinc-800 text-center space-y-3">
                     <Ticket className="w-8 h-8 text-zinc-500 mx-auto" />
-                    <p className="text-xs text-zinc-400 font-medium">
-                      Aún no has comprado entradas para ningún evento.
+                    <h4 className="text-sm font-bold uppercase text-white">
+                      No tienes entradas compradas
+                    </h4>
+                    <p className="text-xs text-zinc-400 font-medium max-w-sm mx-auto">
+                      Explora los eventos en la cartelera principal y compra tus tickets de acceso directo.
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {userPurchasedTickets.map((tkt) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {userPurchasedTickets.map((t, idx) => (
                       <div
-                        key={tkt.id}
-                        className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-3 flex flex-col justify-between"
+                        key={t.id || idx}
+                        className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition flex flex-col justify-between space-y-3"
                       >
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-mono text-zinc-500 uppercase">
-                              Pase #{tkt.id}
-                            </span>
-                            <span className="px-2.5 py-0.5 rounded-full bg-white text-black text-[9.5px] font-black uppercase">
-                              {tkt.status === "confirmed" ? "Confirmado • QR Activo" : "En Verificación"}
-                            </span>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <span className="text-[10px] text-zinc-400 font-bold uppercase">Entrada Oficial</span>
+                            <h4 className="text-sm font-black uppercase text-white mt-0.5">
+                              {t.eventName || t.title || "Evento 4GO"}
+                            </h4>
+                            <p className="text-xs text-zinc-400 font-medium">{t.venue || "CUBIC"} • {t.date || "Fecha por confirmar"}</p>
                           </div>
-
-                          <h4 className="text-sm sm:text-base font-black text-white uppercase">
-                            {tkt.eventTitle}
-                          </h4>
-
-                          <div className="space-y-0.5 text-xs text-zinc-400">
-                            <p>📍 {tkt.venue}</p>
-                            <p>🗓️ {tkt.date}</p>
-                            <p className="font-semibold text-zinc-200">
-                              {tkt.tierName?.replace(/^\d+x\s*/i, "")} (${tkt.totalAmount} USD)
-                            </p>
-                          </div>
+                          <span className="px-2 py-0.5 rounded-full bg-white/10 text-white text-[9px] font-bold uppercase border border-white/15">
+                            {t.status || "Activo"}
+                          </span>
                         </div>
 
-                        <div className="pt-2 border-t border-zinc-800">
+                        <div className="pt-2 border-t border-zinc-800 flex items-center justify-between">
+                          <span className="text-xs font-mono font-bold text-zinc-300">
+                            Pase #{t.ticketCode || t.id?.slice(0, 8)}
+                          </span>
                           <button
                             type="button"
-                            onClick={() => setViewingTicketQr(tkt)}
-                            className="w-full py-2 px-3 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-black uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5"
+                            onClick={() => setViewingTicketQr(t)}
+                            className="px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-black uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5"
                           >
                             <QrCode className="w-3.5 h-3.5" />
-                            <span>Ver Ticket</span>
+                            <span>Ver QR</span>
                           </button>
                         </div>
                       </div>
@@ -1261,38 +1787,41 @@ export default function MyAccountDashboardModal({
               <div className="space-y-5">
                 <div>
                   <h3 className="text-lg font-black uppercase tracking-tight text-white">
-                    Mis Reservas de Mesas y Botellas VIP
+                    Mis Reservas de Mesa / Box
                   </h3>
                   <p className="text-xs text-zinc-400 font-medium">
-                    Reservas activas en discotecas aliadas y clubs nocturnos 4GO.
+                    Reservaciones de espacios VIP y mesas exclusivas en locales asociados.
                   </p>
                 </div>
 
                 {userReservations.length === 0 ? (
                   <div className="p-8 rounded-2xl bg-zinc-950 border border-zinc-800 text-center space-y-3">
                     <Building2 className="w-8 h-8 text-zinc-500 mx-auto" />
-                    <p className="text-xs text-zinc-400 font-medium">
-                      No tienes reservas de mesas activas en este momento.
+                    <h4 className="text-sm font-bold uppercase text-white">
+                      No tienes reservas registradas
+                    </h4>
+                    <p className="text-xs text-zinc-400 font-medium max-w-sm mx-auto">
+                      Reserva tus mesas, salas lounge y consumiciones para los mejores eventos nocturnos.
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {userReservations.map((res) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {userReservations.map((res, idx) => (
                       <div
-                        key={res.id}
-                        className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 space-y-3"
+                        key={res.id || idx}
+                        className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition space-y-3"
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-black text-white uppercase">{res.venue}</span>
-                          <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-white text-[9.5px] font-bold uppercase">
-                            {res.status}
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <span className="text-[10px] text-zinc-400 font-bold uppercase">{res.zoneName || "Mesa VIP"}</span>
+                            <h4 className="text-sm font-black uppercase text-white mt-0.5">
+                              {res.eventName || "Reserva Oficial"}
+                            </h4>
+                            <p className="text-xs text-zinc-400 font-medium">{res.venue || "CUBIC"} • {res.date || "Próximamente"}</p>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-full bg-white/10 text-white text-[9px] font-bold uppercase border border-white/15">
+                            {res.status || "Confirmada"}
                           </span>
-                        </div>
-
-                        <div className="space-y-1 text-xs text-zinc-300">
-                          <p className="font-bold text-white">{res.tableNumber}</p>
-                          <p className="text-zinc-400">🗓️ {res.date} • {res.guests} Personas</p>
-                          <p className="text-xs text-zinc-400 font-medium">🍾 Consumo: {res.bottles}</p>
                         </div>
                       </div>
                     ))}
@@ -1301,23 +1830,26 @@ export default function MyAccountDashboardModal({
               </div>
             )}
 
-            {/* TAB 4: MIS FAVORITOS (SYNCED) */}
+            {/* TAB 4: MIS FAVORITOS */}
             {activeTab === "favorites" && (
               <div className="space-y-5">
                 <div>
                   <h3 className="text-lg font-black uppercase tracking-tight text-white">
-                    Eventos Guardados en Favoritos
+                    Mis Eventos Favoritos
                   </h3>
                   <p className="text-xs text-zinc-400 font-medium">
-                    Tus eventos guardados sincronizados con la cartelera oficial.
+                    Eventos guardados que te interesan para no perderte ninguna actualización.
                   </p>
                 </div>
 
                 {favoriteEvents.length === 0 ? (
                   <div className="p-8 rounded-2xl bg-zinc-950 border border-zinc-800 text-center space-y-3">
                     <Heart className="w-8 h-8 text-zinc-500 mx-auto" />
-                    <p className="text-xs text-zinc-400 font-medium">
-                      No tienes eventos guardados en favoritos.
+                    <h4 className="text-sm font-bold uppercase text-white">
+                      Aún no has guardado favoritos
+                    </h4>
+                    <p className="text-xs text-zinc-400 font-medium max-w-sm mx-auto">
+                      Toca el ícono de corazón en cualquier evento para guardarlo en tu lista personal.
                     </p>
                   </div>
                 ) : (
@@ -1325,30 +1857,18 @@ export default function MyAccountDashboardModal({
                     {favoriteEvents.map((evt) => (
                       <div
                         key={evt.id}
-                        className="p-3.5 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col justify-between space-y-3 relative group"
+                        className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition flex flex-col justify-between space-y-3"
                       >
-                        <div className="space-y-2">
-                          <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-black relative border border-zinc-800 shadow-md">
-                            <img
-                              src={evt.poster || "/images/4go_red_girl_showcase.jpg"}
-                              alt={evt.title}
-                              className="w-full h-full object-cover"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveFavorite(evt.id)}
-                              className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-black/70 hover:bg-black text-red-500 flex items-center justify-center transition cursor-pointer backdrop-blur-md"
-                            >
-                              <Heart className="w-3.5 h-3.5 fill-red-500" />
-                            </button>
+                        <div className="flex items-start gap-3">
+                          <div className="w-14 h-18 rounded-xl overflow-hidden bg-black shrink-0 border border-zinc-700 relative">
+                            <img src={evt.poster} alt={evt.title} className="w-full h-full object-cover" />
                           </div>
-                          <div>
-                            <h4 className="text-xs sm:text-sm font-black text-white uppercase truncate">
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-xs sm:text-sm font-black uppercase text-white truncate">
                               {evt.title}
                             </h4>
-                            <p className="text-[11px] text-zinc-400 font-medium">
-                              {evt.venue} • {evt.dateLabel || evt.date}
-                            </p>
+                            <p className="text-xs text-zinc-400 truncate">{evt.venue || "CUBIC"} • {evt.city || "Loja"}</p>
+                            <p className="text-[11px] text-zinc-500">{evt.dateLabel || evt.date}</p>
                           </div>
                         </div>
 
@@ -1457,18 +1977,29 @@ export default function MyAccountDashboardModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 block">
-                      Partner Type
+                      Rol / Tipo de Partner
                     </label>
-                    <select
-                      value={editType}
-                      onChange={(e) => setEditType(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-bold text-white focus:outline-none focus:border-white transition cursor-pointer"
-                    >
-                      <option value="Discoteca / Club">Discoteca / Club</option>
-                      <option value="Organizador / Promotor">Organizador / Promotor</option>
-                      <option value="Artista / DJ">Artista / DJ</option>
-                      <option value="Venue / Espacio">Venue / Espacio</option>
-                    </select>
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900 border border-zinc-800">
+                      <div className="flex items-center gap-2">
+                        {editType.toLowerCase().includes("discoteca") ? (
+                          <Building2 className="w-4 h-4 text-purple-400" />
+                        ) : (
+                          <Sparkles className="w-4 h-4 text-yellow-400" />
+                        )}
+                        <span className="text-xs font-black text-white uppercase tracking-wider">
+                          {editType.toLowerCase().includes("discoteca") ? "Discoteca / Club" : "Organizador de Eventos"}
+                        </span>
+                      </div>
+                      {editType.toLowerCase().includes("discoteca") ? (
+                        <span className="px-2.5 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 text-[10px] font-extrabold uppercase">
+                          Local Verificado
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 text-[10px] font-extrabold uppercase">
+                          Organizador
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-1">
@@ -1479,42 +2010,100 @@ export default function MyAccountDashboardModal({
                       type="text"
                       disabled
                       value={userProfile?.city || "Loja"}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-xs font-bold text-zinc-400 cursor-not-allowed"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900/50 border border-zinc-800 text-xs font-bold text-zinc-400 cursor-not-allowed"
                     />
                   </div>
                 </div>
 
+                {/* Solicitud de Cambio a Discoteca (Regla de Oro Master) */}
+                {!editType.toLowerCase().includes("discoteca") && (
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/40 via-zinc-900 to-zinc-900 border border-purple-500/30 space-y-3">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-1.5 text-purple-400 font-black text-xs uppercase tracking-wider">
+                          <Building2 className="w-4 h-4" />
+                          <span>¿Tienes un local físico fijo? Solicita ser Discoteca</span>
+                        </div>
+                        <p className="text-xs text-zinc-300 mt-1 leading-relaxed">
+                          En 4GO el cambio a Discoteca requiere aprobación manual en el <strong>Panel Master</strong> tras auditar: (1) Historial limpio de deuda cero, (2) eventos previos completados y (3) verificación física del local.
+                        </p>
+                      </div>
+
+                      {hasPendingRoleRequest ? (
+                        <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-extrabold uppercase shrink-0">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>En Revisión Master</span>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleRequestDiscotecaRole();
+                          }}
+                          disabled={isSubmittingRoleReq}
+                          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs uppercase tracking-wider transition cursor-pointer shrink-0 shadow-lg active:scale-95 flex items-center gap-1.5"
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                          <span>{isSubmittingRoleReq ? "Enviando..." : "Solicitar Ascenso a Discoteca"}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Dirección Física */}
                 <div className="space-y-1">
                   <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 block">
-                    Ubicación / Dirección Física
+                    Dirección Física del Local / Oficina
                   </label>
                   <input
                     type="text"
                     value={editAddress}
                     onChange={(e) => setEditAddress(e.target.value)}
-                    placeholder="Av. Salvador Bustamante Celi y Guayaquil, Loja"
+                    placeholder="Ej. Av. Salvador Bustamante Celi y Guayaquil, Loja"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs sm:text-sm text-white focus:outline-none focus:border-white transition font-medium"
                   />
                 </div>
 
-                <div className="pt-2 flex justify-end">
+                {/* Días de Apertura */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 block">
+                    Días de Apertura Habituales
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {["Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map((day) => {
+                      const isSelected = editDays.includes(day);
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              setEditDays(editDays.filter((d) => d !== day));
+                            } else {
+                              setEditDays([...editDays, day]);
+                            }
+                          }}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                            isSelected
+                              ? "bg-white text-black font-black"
+                              : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"
+                          }`}
+                        >
+                          {day}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="pt-3">
                   <button
                     type="submit"
-                    disabled={isSavingPartner || !editBrandName.trim()}
-                    className="px-8 py-3 rounded-full bg-white hover:bg-zinc-200 disabled:opacity-50 text-black text-xs font-black uppercase tracking-widest transition shadow-xl cursor-pointer flex items-center gap-2"
+                    disabled={isSavingPartner}
+                    className="px-6 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-black uppercase tracking-wider transition cursor-pointer shadow-lg disabled:opacity-50"
                   >
-                    {isSavingPartner ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        <span>Guardando...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Check className="w-4 h-4" />
-                        <span>Guardar Perfil Partner</span>
-                      </>
-                    )}
+                    {isSavingPartner ? "Guardando..." : "Guardar Cambios de Partner"}
                   </button>
                 </div>
               </form>
@@ -1522,10 +2111,10 @@ export default function MyAccountDashboardModal({
 
             {/* TAB 6: PAGOS Y LIQUIDACIONES */}
             {activeTab === "payouts" && (
-              <div className="space-y-5 max-w-3xl">
+              <div className="space-y-5">
                 <div>
                   <h3 className="text-lg font-black uppercase tracking-tight text-white">
-                    Historial de Pagos y Liquidaciones
+                    Historial de Liquidaciones & Recaudación
                   </h3>
                   <p className="text-xs text-zinc-400 font-medium">
                     Liquidaciones automáticas a tu cuenta bancaria registrada en Ecuador.
@@ -1571,9 +2160,179 @@ export default function MyAccountDashboardModal({
                 </div>
               </div>
             )}
+          </main>
+        </div>
+      )}
+      </motion.div>
+      )}
+
+      {/* ─── MODAL: CONFIGURACIÓN & OPCIONES DEL EVENTO ─── */}
+      {configuringEvent && (() => {
+        const eventDateStr = configuringEvent.date || configuringEvent.startsAt || "";
+        const isPast = eventDateStr ? new Date(eventDateStr).getTime() < new Date().setHours(0, 0, 0, 0) : false;
+
+        return (
+          <div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+            <div className="w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+              <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-4 w-1 bg-[#dfff28] rounded-full" />
+                  <h3 className="text-lg font-black uppercase tracking-wider text-white">
+                    Configuración & Opciones del Evento
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setConfiguringEvent(null)}
+                  className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center text-sm font-bold cursor-pointer transition"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* 1. Promotores y Co-Organizadores */}
+              <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-white">
+                    Promotores y Co-Organizadores de este Evento
+                  </h4>
+                  <span className="text-[10px] text-zinc-400 font-bold uppercase">
+                    Alianzas del Evento
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-2.5 pt-1">
+                  <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-black/70 border border-zinc-700 text-xs font-bold text-white shadow-sm">
+                    <span>{configuringEvent.organizer || userProfile?.venueName || userProfile?.name || "Organizador Principal"}</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-white text-black font-black uppercase">
+                      Principal
+                    </span>
+                  </div>
+
+                  {configuringEvent.lineup && Array.isArray(configuringEvent.lineup) && configuringEvent.lineup.length > 1 ? (
+                    configuringEvent.lineup.slice(1).map((coHost: string, idx: number) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-black/60 border border-zinc-800 text-xs font-bold text-zinc-300"
+                      >
+                        <span>{coHost}</span>
+                        <span className="text-[9px] px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 font-bold uppercase">
+                          Co-Host Confirmado
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-xs text-zinc-400 font-medium self-center">
+                      Producción individual sin co-organizadores vinculados.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 2. Editar Información del Evento */}
+              <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-4">
+                <form onSubmit={handleSaveEditedEvent} className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-white">
+                      Editar Información del Evento
+                    </h4>
+
+                    {isPast ? (
+                      <div className="px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 text-[10px] font-black uppercase">
+                        <span>Evento Pasado (Edición Bloqueada)</span>
+                      </div>
+                    ) : (
+                      <span className="text-[10px] text-zinc-400 font-bold uppercase">
+                        Edición Activa
+                      </span>
+                    )}
+                  </div>
+
+                  {isPast && (
+                    <div className="p-3 rounded-xl bg-black/60 border border-zinc-800 text-xs text-zinc-400 font-medium">
+                      Este evento ya finalizó en fecha <span className="text-white font-bold">{configuringEvent.dateLabel || configuringEvent.date}</span>. Los eventos pasados no pueden ser editados.
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 block">
+                        Título del Evento
+                      </label>
+                      <input
+                        type="text"
+                        disabled={isPast}
+                        value={editEventForm?.title || ""}
+                        onChange={(e) => setEditEventForm((prev: any) => ({ ...prev, title: e.target.value }))}
+                        className="w-full px-4 py-2.5 rounded-xl bg-black/70 border border-zinc-800 text-xs sm:text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-[#dfff28]"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 block">
+                        Subtítulo / Sala
+                      </label>
+                      <input
+                        type="text"
+                        disabled={isPast}
+                        value={editEventForm?.subtitle || ""}
+                        onChange={(e) => setEditEventForm((prev: any) => ({ ...prev, subtitle: e.target.value }))}
+                        className="w-full px-4 py-2.5 rounded-xl bg-black/70 border border-zinc-800 text-xs sm:text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-[#dfff28]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 block">
+                        Lugar / Venue
+                      </label>
+                      <input
+                        type="text"
+                        disabled={isPast}
+                        value={editEventForm?.venue || ""}
+                        onChange={(e) => setEditEventForm((prev: any) => ({ ...prev, venue: e.target.value }))}
+                        className="w-full px-4 py-2.5 rounded-xl bg-black/70 border border-zinc-800 text-xs sm:text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-[#dfff28]"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 block">
+                        Precio Base ($ USD)
+                      </label>
+                      <input
+                        type="number"
+                        disabled={isPast}
+                        value={editEventForm?.price || 0}
+                        onChange={(e) => setEditEventForm((prev: any) => ({ ...prev, price: Number(e.target.value) }))}
+                        className="w-full px-4 py-2.5 rounded-xl bg-black/70 border border-zinc-800 text-xs sm:text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-[#dfff28]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-3 flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setConfiguringEvent(null)}
+                      className="px-5 py-2.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-bold uppercase transition"
+                    >
+                      Cancelar
+                    </button>
+                    {!isPast && (
+                      <button
+                        type="submit"
+                        className="px-6 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-black text-xs font-black uppercase tracking-wider transition cursor-pointer shadow-xl active:scale-95"
+                      >
+                        Guardar Cambios del Evento
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
+            </div>
           </div>
-        </motion.div>
-      </div>
+        );
+      })()}
 
       {/* ─── LIGHTBOX: SOLO LA IMAGEN DEL COMPROBANTE ─── */}
       {viewingReceiptImage && (

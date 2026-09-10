@@ -4,7 +4,7 @@
  * DescripciÃ³n: Layout raÃ­z de Next.js para NENEZ.
  */
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Comfortaa, Quicksand } from "next/font/google";
 
 import "./globals.css";
@@ -31,6 +31,14 @@ const quicksand = Quicksand({
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: "#000000",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
