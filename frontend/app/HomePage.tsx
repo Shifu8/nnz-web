@@ -198,8 +198,18 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
     if (initialLoggedIn) return true;
     if (typeof window !== "undefined") {
       try {
-        const token = localStorage.getItem("organizer_token");
         const profile = localStorage.getItem("organizer_profile");
+        if (profile) {
+          const parsed = JSON.parse(profile);
+          const email = (parsed?.email || "").trim().toLowerCase();
+          if (email && email !== "brandon.medina@unl.edu.ec") {
+            localStorage.removeItem("organizer_token");
+            localStorage.removeItem("organizer_profile");
+            localStorage.removeItem("organizer_refresh");
+            return false;
+          }
+        }
+        const token = localStorage.getItem("organizer_token");
         if (token && profile) {
           document.cookie = "organizer_logged_in=1; path=/; max-age=31536000; SameSite=Lax";
           return true;
@@ -218,14 +228,15 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
           const parsed = JSON.parse(profile);
           if (parsed && parsed.email) {
             const cleanEmail = parsed.email.trim().toLowerCase();
-            const isMaster = cleanEmail === "brandon.medina@unl.edu.ec";
-            if (isMaster) {
-              parsed.id = "master_admin";
-              parsed.venueName = parsed.venueName && !parsed.venueName.includes("Master Headquarters") ? parsed.venueName : "4GO";
-              parsed.type = "Organizador";
-              parsed.avatar = parsed.avatar && !parsed.avatar.includes("presentation") ? parsed.avatar : "/images/logo_4go_black_white.png";
-              parsed.hasCompletedOnboarding = true;
+            if (cleanEmail !== "brandon.medina@unl.edu.ec") {
+              return null;
             }
+            parsed.id = "master_admin";
+            parsed.name = parsed.name || "Brandon Medina";
+            parsed.venueName = parsed.venueName && !parsed.venueName.includes("Master Headquarters") ? parsed.venueName : "4GO";
+            parsed.type = "Organizador";
+            parsed.avatar = parsed.avatar && !parsed.avatar.includes("presentation") ? parsed.avatar : "/images/logo_4go_black_white.png";
+            parsed.hasCompletedOnboarding = true;
             return parsed;
           }
         }
@@ -328,6 +339,26 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
   useEffect(() => {
     setIsMounted(true);
     if (typeof window !== "undefined") {
+      // Auto-purge any stale accounts/sessions that are not brandon.medina@unl.edu.ec
+      try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key) {
+            if (
+              (key.startsWith("organizer_profile_") ||
+                key.startsWith("user_favorites_") ||
+                key.startsWith("user_reservations_") ||
+                key.startsWith("user_tickets_")) &&
+              !key.toLowerCase().includes("brandon.medina@unl.edu.ec")
+            ) {
+              keysToRemove.push(key);
+            }
+          }
+        }
+        keysToRemove.forEach((k) => localStorage.removeItem(k));
+      } catch (e) {}
+
       // Helper function to build dynamic profile for any logged in email
       const resolveProfileForEmail = (
         email: string,
@@ -482,23 +513,30 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
         if (token && profile) {
           try {
             const parsed = JSON.parse(profile);
-            if (parsed && parsed.email) {
-              const cleanEmail = parsed.email.trim().toLowerCase();
-              const isMaster = cleanEmail === "brandon.medina@unl.edu.ec";
-
-              if (isMaster) {
-                parsed.id = "master_admin";
-                parsed.venueName = parsed.venueName && !parsed.venueName.includes("Master Headquarters") ? parsed.venueName : "4GO";
-                parsed.type = "Organizador";
-                parsed.avatar = parsed.avatar && !parsed.avatar.includes("presentation") ? parsed.avatar : "/images/logo_4go_black_white.png";
-                parsed.hasCompletedOnboarding = true;
-              }
+            const cleanEmail = (parsed?.email || "").trim().toLowerCase();
+            if (cleanEmail === "brandon.medina@unl.edu.ec") {
+              parsed.id = "master_admin";
+              parsed.name = parsed.name || "Brandon Medina";
+              parsed.venueName = parsed.venueName && !parsed.venueName.includes("Master Headquarters") ? parsed.venueName : "4GO";
+              parsed.type = "Organizador";
+              parsed.avatar = parsed.avatar && !parsed.avatar.includes("presentation") ? parsed.avatar : "/images/logo_4go_black_white.png";
+              parsed.hasCompletedOnboarding = true;
 
               if (typeof document !== "undefined") {
                 document.cookie = "organizer_logged_in=1; path=/; max-age=31536000; SameSite=Lax";
               }
               setUserProfile(parsed);
               setUserLoggedIn(true);
+            } else {
+              // Any other account is purged
+              if (typeof document !== "undefined") {
+                document.cookie = "organizer_logged_in=; path=/; max-age=0; SameSite=Lax";
+              }
+              localStorage.removeItem("organizer_token");
+              localStorage.removeItem("organizer_profile");
+              localStorage.removeItem("organizer_refresh");
+              setUserLoggedIn(false);
+              setUserProfile(null);
             }
           } catch {
             if (typeof document !== "undefined") {
