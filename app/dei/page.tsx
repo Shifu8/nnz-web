@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import Image from "next/image";
@@ -28,46 +28,33 @@ export default function DeiPage() {
         </Link>
       </header>
 
-      {/* Main Content Layout - Quote & Statement Layout */}
-      <main className="max-w-4xl mx-auto px-6 py-16 sm:py-24 space-y-16">
-        <div className="space-y-4 text-left border-b border-zinc-200 pb-8">
+      {/* Main Content Layout - Centered without boxed cards */}
+      <main className="max-w-3xl mx-auto px-6 py-16 sm:py-24 space-y-16 text-center flex flex-col items-center">
+        <div className="space-y-4 max-w-2xl">
+          <span className="text-xs font-black uppercase tracking-widest text-zinc-400 block">
+            Compromiso Social
+          </span>
           <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-tighter text-zinc-950">
             DIVERSIDAD, EQUIDAD E INCLUSIÓN
           </h1>
-          <p className="text-lg sm:text-2xl text-zinc-700 font-medium leading-relaxed">
+          <p className="text-base sm:text-xl text-zinc-700 font-medium leading-relaxed pt-2">
             Construyendo espacios nocturnos seguros, diversos e inclusivos para todas las personas.
           </p>
         </div>
 
-        {/* Centered Quote Statement */}
-        <div className="p-8 sm:p-12 rounded-3xl bg-zinc-50 border border-zinc-200 text-center space-y-4">
-          <blockquote className="text-xl sm:text-3xl font-extrabold tracking-tight text-zinc-950 italic leading-snug">
-            “La pista de baile es el lugar donde las personas de todos los orígenes e identidades se reúnen para celebrar la música en absoluta libertad.”
-          </blockquote>
-          <p className="text-xs font-black uppercase tracking-widest text-zinc-500">Manifiesto 4GO</p>
-        </div>
 
-        {/* Full-width Banner Image Container */}
-        <div className="w-full aspect-[21/9] relative rounded-3xl overflow-hidden border border-zinc-200 bg-zinc-900 shadow-md">
-          <Image
-            src="/images/now4go-hero-presentation-hd-v3.png"
-            alt="Inclusión y Comunidad 4GO"
-            fill
-            className="object-cover"
-          />
-        </div>
 
-        {/* 2 Commitments Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left border-t border-zinc-200 pt-12">
-          <div className="space-y-3">
-            <h3 className="text-lg font-black uppercase tracking-wider text-zinc-950">Espacios Libres de Discriminación</h3>
-            <p className="text-sm text-zinc-600 leading-relaxed font-normal">
+        {/* 2 Commitments Grid - Centered without cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-6 border-t border-zinc-200 max-w-2xl w-full text-center">
+          <div className="space-y-2">
+            <h3 className="text-lg sm:text-xl font-black uppercase tracking-tight text-zinc-950">Espacios Libres de Discriminación</h3>
+            <p className="text-sm sm:text-base text-zinc-600 leading-relaxed font-normal">
               Exigimos a todas las discotecas y recintos aliados protocolos estrictos de respeto y cero tolerancia ante cualquier acto de acoso o discriminación.
             </p>
           </div>
-          <div className="space-y-3">
-            <h3 className="text-lg font-black uppercase tracking-wider text-zinc-950">Apoyo al Talento Emergente</h3>
-            <p className="text-sm text-zinc-600 leading-relaxed font-normal">
+          <div className="space-y-2">
+            <h3 className="text-lg sm:text-xl font-black uppercase tracking-tight text-zinc-950">Apoyo al Talento Emergente</h3>
+            <p className="text-sm sm:text-base text-zinc-600 leading-relaxed font-normal">
               Fomentamos la participación activa de colectivos culturales independientes y DJs emergentes para enriquecer la escena nocturna ecuatoriana.
             </p>
           </div>

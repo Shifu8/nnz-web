@@ -55,6 +55,7 @@ export type AdminEvent = {
     description?: string;
     badge?: string;
   }[];
+  presales?: any[];
 };
 
 export type AdminStats = {

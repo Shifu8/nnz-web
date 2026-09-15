@@ -56,6 +56,7 @@ const EMPTY_EVENT: Omit<AdminEvent, "id" | "createdAt" | "updatedAt"> & { slug: 
     website: "",
   },
   merch: [],
+  presales: [],
 };
 
 const AUTH_HEADERS = { Authorization: `Bearer ${Buffer.from("admin:nenez2026").toString("base64")}` };
@@ -137,6 +138,7 @@ export default function EventsSection(_props: EventsSectionProps) {
       },
       merch: event.merch || [],
       drinks: event.drinks || [],
+      presales: (event as any).presales || [],
     });
     setModalTab("general");
     setShowModal(true);

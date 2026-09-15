@@ -218,19 +218,12 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
           const parsed = JSON.parse(profile);
           if (parsed && parsed.email) {
             const cleanEmail = parsed.email.trim().toLowerCase();
-            const isMaster = cleanEmail === "brandon.medina@unl.edu.ec" || cleanEmail === "master@4go.live";
-            const isCubic = cleanEmail === "mrshifu879@gmail.com";
+            const isMaster = cleanEmail === "brandon.medina@unl.edu.ec";
             if (isMaster) {
               parsed.id = "master_admin";
               parsed.venueName = parsed.venueName && !parsed.venueName.includes("Master Headquarters") ? parsed.venueName : "4GO";
               parsed.type = "Organizador";
               parsed.avatar = parsed.avatar && !parsed.avatar.includes("presentation") ? parsed.avatar : "/images/logo_4go_black_white.png";
-              parsed.hasCompletedOnboarding = true;
-            } else if (isCubic) {
-              parsed.id = "cubic";
-              parsed.venueName = parsed.venueName || "CUBIC LOJA";
-              parsed.type = parsed.type || "Discoteca / Club Nocturno";
-              parsed.avatar = parsed.avatar || "/images/cubic-official-logo.png";
               parsed.hasCompletedOnboarding = true;
             }
             return parsed;
@@ -245,6 +238,17 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
   const [organizerSubView, setOrganizerSubView] = useState<'menu' | 'profile' | 'create_event' | 'published' | 'my_events' | 'favorites'>('menu');
   const [lastPublishedEvent, setLastPublishedEvent] = useState<any>(null);
   const [showEventPublishedToast, setShowEventPublishedToast] = useState(false);
+
+  // Check if admin account (brandon.medina@unl.edu.ec / master_admin)
+  const isMasterAdmin = Boolean(
+    userLoggedIn && (
+      userProfile?.email?.trim().toLowerCase() === "brandon.medina@unl.edu.ec" ||
+      userProfile?.id === "master_admin"
+    )
+  );
+
+  // If master admin is logged in, event creation dashboard & form is enabled!
+  const isEventCreationAllowed = isMasterAdmin;
 
   useEffect(() => {
     if (showEventPublishedToast) {
@@ -282,8 +286,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
     userProfile &&
     (userProfile.type === "Master Admin" ||
      userProfile.type === "master" ||
-     userProfile.email?.toLowerCase().trim() === "brandon.medina@unl.edu.ec" ||
-     userProfile.email?.toLowerCase().trim() === "master@4go.live")
+     userProfile.email?.toLowerCase().trim() === "brandon.medina@unl.edu.ec")
   );
   const [isOnboardingSaving, setIsOnboardingSaving] = useState(false);
   const [isCoOrganizerModalOpen, setIsCoOrganizerModalOpen] = useState(false);
@@ -333,8 +336,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
         sub?: string
       ) => {
         const cleanEmail = (email || "").trim().toLowerCase();
-        const isMaster = cleanEmail === "brandon.medina@unl.edu.ec" || cleanEmail === "master@4go.live";
-        const isCubic = cleanEmail === "mrshifu879@gmail.com";
+        const isMaster = cleanEmail === "brandon.medina@unl.edu.ec";
 
         let savedPerEmail: any = null;
         try {
@@ -350,19 +352,6 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
             avatar: "/images/logo_4go_black_white.png",
             type: "Organizador",
             venueName: "4GO",
-            city: "Loja",
-            hasCompletedOnboarding: true,
-          };
-        }
-
-        if (isCubic) {
-          return {
-            id: "cubic",
-            name: name || "Brandon Medina",
-            email: cleanEmail,
-            avatar: "/images/cubic-official-logo.png",
-            type: "Discoteca / Club Nocturno",
-            venueName: "CUBIC LOJA",
             city: "Loja",
             hasCompletedOnboarding: true,
           };
@@ -495,20 +484,13 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
             const parsed = JSON.parse(profile);
             if (parsed && parsed.email) {
               const cleanEmail = parsed.email.trim().toLowerCase();
-              const isMaster = cleanEmail === "brandon.medina@unl.edu.ec" || cleanEmail === "master@4go.live";
-              const isCubic = cleanEmail === "mrshifu879@gmail.com";
+              const isMaster = cleanEmail === "brandon.medina@unl.edu.ec";
 
               if (isMaster) {
                 parsed.id = "master_admin";
                 parsed.venueName = parsed.venueName && !parsed.venueName.includes("Master Headquarters") ? parsed.venueName : "4GO";
                 parsed.type = "Organizador";
                 parsed.avatar = parsed.avatar && !parsed.avatar.includes("presentation") ? parsed.avatar : "/images/logo_4go_black_white.png";
-                parsed.hasCompletedOnboarding = true;
-              } else if (isCubic) {
-                parsed.id = "cubic";
-                parsed.venueName = parsed.venueName || "CUBIC LOJA";
-                parsed.type = parsed.type || "Discoteca / Club Nocturno";
-                parsed.avatar = parsed.avatar || "/images/cubic-official-logo.png";
                 parsed.hasCompletedOnboarding = true;
               }
 
@@ -539,23 +521,22 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
   }, []);
 
   const [isAppleAuthModalOpen, setIsAppleAuthModalOpen] = useState(false);
-  const [appleInputEmail, setAppleInputEmail] = useState('brandon.medina@icloud.com');
+  const [appleInputEmail, setAppleInputEmail] = useState('brandon.medina@unl.edu.ec');
   const [appleInputName, setAppleInputName] = useState('Brandon Medina');
 
   const handleConfirmAppleLogin = () => {
     if (!appleInputEmail.trim()) return;
     const cleanEmail = appleInputEmail.trim().toLowerCase();
-    const isMaster = cleanEmail === "brandon.medina@unl.edu.ec" || cleanEmail === "master@4go.live";
-    const isCubic = cleanEmail === "mrshifu879@gmail.com";
+    const isMaster = cleanEmail === "brandon.medina@unl.edu.ec";
     const mockProfile = {
-      id: isMaster ? "master_admin" : isCubic ? "cubic" : `usr_${Date.now()}`,
-      name: appleInputName.trim() || cleanEmail.split('@')[0] || (isMaster ? "Brandon Medina (4GO)" : "Usuario Apple"),
+      id: isMaster ? "master_admin" : `usr_${Date.now()}`,
+      name: appleInputName.trim() || (isMaster ? "Brandon Medina (4GO)" : "Usuario Apple"),
       email: cleanEmail,
-      type: isMaster ? "Organizador" : isCubic ? "Discoteca / Club Nocturno" : "Usuario",
-      venueName: isMaster ? "4GO" : isCubic ? "CUBIC LOJA" : "",
-      avatar: isMaster ? "/images/logo_4go_black_white.png" : isCubic ? "/images/cubic-official-logo.png" : "",
+      type: isMaster ? "Organizador" : "Usuario",
+      venueName: isMaster ? "4GO" : "",
+      avatar: isMaster ? "/images/logo_4go_black_white.png" : "",
       city: "Loja",
-      hasCompletedOnboarding: isMaster || isCubic,
+      hasCompletedOnboarding: isMaster,
     };
     localStorage.setItem("organizer_token", `apple-token-${cleanEmail}-${Date.now()}`);
     localStorage.setItem("organizer_profile", JSON.stringify(mockProfile));
@@ -2044,13 +2025,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                               <p className="text-sm font-black uppercase text-white truncate">{userProfile?.venueName || userProfile?.name || "Usuario"}</p>
                             </div>
                             <p className="text-[11px] text-zinc-400 font-medium truncate">{userProfile?.email}</p>
-                            <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-md text-[9.5px] font-black uppercase tracking-wider ${
-                              isMasterUser
-                                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                                : userProfile?.type === "Discoteca / Club Nocturno"
-                                ? "bg-white/10 text-white border border-white/20"
-                                : "bg-white/10 text-white border border-white/20"
-                            }`}>
+                            <span className="inline-block mt-1 px-2.5 py-0.5 rounded-md text-[9.5px] font-black uppercase tracking-wider bg-white/10 text-white border border-white/20">
                               {isMasterUser ? "Master Superadmin" : (userProfile?.type || "Organizador")}
                             </span>
                           </div>
@@ -2063,6 +2038,8 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                             type="button"
                             onClick={() => {
                               setShowUserMenu(false);
+                              setShowDetailOverlay(false);
+                              setActiveOverlay(null);
                               setAccountDashboardInitialTab(isMasterUser ? "master_receivables" : "events");
                               setIsAccountDashboardOpen(true);
                             }}
@@ -2123,7 +2100,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                 setIsHeaderSearchOpen(false);
                 setHeaderSearchQuery("");
               }}
-              className="fixed inset-0 z-[660] bg-black/60 backdrop-blur-md cursor-pointer"
+              className="fixed inset-0 z-[1100] bg-black/60 backdrop-blur-md cursor-pointer"
             />
 
             <motion.div
@@ -2131,7 +2108,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -16, scale: 0.96 }}
               transition={{ type: "spring", stiffness: 450, damping: 32 }}
-              className="fixed top-4 inset-x-3 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-[540px] z-[670] pointer-events-auto"
+              className="fixed top-4 inset-x-3 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-[540px] z-[1110] pointer-events-auto"
             >
               {/* 1. White Pill Search Bar Input */}
               <div className="relative flex items-center h-12 px-4 rounded-full bg-white border border-zinc-200 shadow-2xl text-zinc-900 w-full">
@@ -2377,7 +2354,8 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.06)_0%,transparent_70%)] pointer-events-none" />
 
                     {/* Centered Dark Glass Auth / Vertical Dashboard Card */}
-                    {!(isMounted && userLoggedIn) ? (
+                    {isEventCreationAllowed ? (
+                      !(isMounted && userLoggedIn) ? (
                       <div className="relative z-10 w-full max-w-lg mx-auto bg-zinc-950/90 p-5 sm:p-8 lg:p-10 rounded-3xl border border-white/20 shadow-2xl space-y-4 sm:space-y-6 text-white font-sans my-auto backdrop-blur-md">
                         <div className="text-center space-y-1.5 sm:space-y-2">
                           <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white font-sans leading-tight">
@@ -2652,14 +2630,13 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                                     setIsOnboardingSaving(true);
 
                                     const emailClean = (userProfile?.email || "usuario@ejemplo.com").trim().toLowerCase();
-                                    const isMaster = emailClean === "brandon.medina@unl.edu.ec" || emailClean === "master@4go.live";
-                                    const isCubic = emailClean === "mrshifu879@gmail.com";
+                                    const isMaster = emailClean === "brandon.medina@unl.edu.ec";
 
                                     const updated = {
-                                      id: isMaster ? "master_admin" : isCubic ? "cubic" : (userProfile?.id || `usr_${Date.now()}`),
+                                      id: isMaster ? "master_admin" : (userProfile?.id || `usr_${Date.now()}`),
                                       name: currentName,
                                       email: emailClean,
-                                      avatar: brandLogoUrl || (userProfile?.avatar && !userProfile.avatar.includes("presentation") ? userProfile.avatar : "") || (isMaster ? "/images/logo_4go_black_white.png" : isCubic ? "/images/cubic-official-logo.png" : ""),
+                                      avatar: brandLogoUrl || (userProfile?.avatar && !userProfile.avatar.includes("presentation") ? userProfile.avatar : "") || (isMaster ? "/images/logo_4go_black_white.png" : ""),
                                       venueName: currentName,
                                       type: isMaster ? "Organizador" : currentType,
                                       city: "Loja",
@@ -3577,6 +3554,36 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                           </div>
                         </div>
                       </div>
+                      )
+                    ) : (
+                      /* ONLY the pulsing PRÓXIMAMENTE button + subtitle (Not clickable, No text glow) */
+                      <div className="relative z-10 w-full flex flex-col items-center justify-center my-auto py-12 space-y-4 text-center select-none">
+                        <motion.div
+                          animate={{
+                            opacity: [0.55, 1, 0.55],
+                            scale: [0.99, 1.01, 0.99],
+                            boxShadow: [
+                              "0 0 0px rgba(255,255,255,0)",
+                              "0 0 20px rgba(255,255,255,0.18)",
+                              "0 0 0px rgba(255,255,255,0)",
+                            ],
+                          }}
+                          transition={{
+                            duration: 1.8,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                          }}
+                          className="px-10 sm:px-14 py-3.5 sm:py-4 rounded-full bg-[#1c1c1e]/90 border border-white/30 text-white font-black text-xs sm:text-sm uppercase tracking-widest shadow-2xl pointer-events-none cursor-default"
+                        >
+                          <span className="font-black tracking-[0.18em] text-white">
+                            PRÓXIMAMENTE
+                          </span>
+                        </motion.div>
+
+                        <p className="text-xs sm:text-sm text-zinc-400 font-medium max-w-sm px-4 leading-relaxed">
+                          El registro de partners y creación abierta de eventos estará disponible muy pronto.
+                        </p>
+                      </div>
                     )}
                   </div>
 
@@ -3667,17 +3674,57 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                       transition={isDesktopAnimation ? { duration: 0.55, ease: [0.22, 1, 0.36, 1] } : { duration: 0 }}
                       className="pt-4"
                     >
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (typeof window !== "undefined") {
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                          }
-                        }}
-                        className="px-10 py-4 rounded-full bg-black hover:bg-zinc-800 text-white font-black text-xs sm:text-sm uppercase tracking-widest transition-all shadow-xl active:scale-95 cursor-pointer"
+                      <motion.div
+                        initial={isDesktopAnimation ? { opacity: 0, y: 20 } : false}
+                        whileInView={isDesktopAnimation ? { opacity: 1, y: 0 } : undefined}
+                        viewport={isDesktopAnimation ? { once: false, amount: "some" } : undefined}
+                        transition={isDesktopAnimation ? { duration: 0.55, ease: [0.22, 1, 0.36, 1] } : { duration: 0 }}
+                        className="pt-4 flex flex-col items-center space-y-3 text-center"
                       >
-                        ELEVA TU CUENTA A PARTNER 4GO
-                      </button>
+                        <motion.button
+                          type="button"
+                          onClick={() => {
+                            if (isMasterAdmin) {
+                              setActiveStoryScreen(0);
+                              if (typeof window !== "undefined") {
+                                window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+                                document.documentElement.scrollTop = 0;
+                                document.body.scrollTop = 0;
+                              }
+                            } else {
+                              setActiveStoryScreen(1);
+                              setTimeout(() => {
+                                const el = document.getElementById("explore") || document.getElementById("cartelera-section");
+                                if (el) {
+                                  el.scrollIntoView({ behavior: "smooth" });
+                                } else if (typeof window !== "undefined") {
+                                  window.scrollTo({ top: 600, behavior: "smooth" });
+                                }
+                              }, 50);
+                            }
+                          }}
+                          animate={{
+                            opacity: [0.7, 1, 0.7],
+                            scale: [0.99, 1.01, 0.99],
+                          }}
+                          transition={{
+                            duration: 1.8,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                          }}
+                          className="px-10 sm:px-14 py-4 rounded-full bg-[#1c1c1e] hover:bg-zinc-900 border border-black/30 text-white font-black text-xs sm:text-sm uppercase tracking-widest shadow-xl transition-all cursor-pointer active:scale-95 select-none"
+                        >
+                          <span className="font-black tracking-[0.18em]">
+                            {isMasterAdmin ? "PUBLICAR EVENTO" : "IR A EVENTOS"}
+                          </span>
+                        </motion.button>
+
+                        <p className="text-xs text-zinc-500 font-medium max-w-sm">
+                          {isMasterAdmin
+                            ? "Administra y publica tus eventos oficiales desde tu panel de organizador."
+                            : "Explora la cartelera oficial y asegura tus entradas en tiempo real."}
+                        </p>
+                      </motion.div>
                     </motion.div>
                   </div>
                 </div>
@@ -3871,15 +3918,19 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                       }
                     `}</style>
                     <div
-                      className="flex items-center gap-4 sm:gap-5 shrink-0 w-max pl-4 sm:pl-6"
+                      className={`flex items-center gap-4 sm:gap-6 py-2 overflow-x-auto no-scrollbar ${
+                        events.length <= 4
+                          ? "justify-center w-full min-w-full px-4 sm:px-8"
+                          : "justify-start w-max shrink-0 pl-4 sm:pl-6"
+                      }`}
                       style={{
-                        animation: "marqueeLeftResponsive 240s linear infinite",
+                        animation: events.length > 5 ? "marqueeLeftResponsive 240s linear infinite" : "none",
                         animationPlayState: isCarouselHovered ? "paused" : "running",
                         willChange: "transform",
                         WebkitBackfaceVisibility: "hidden",
                       }}
                     >
-                      {[...events, ...events].map((evt, idx) => (
+                      {events.map((evt, idx) => (
                         <div
                           key={`carousel-card-${evt.id}-${idx}`}
                           onClick={() => {
@@ -3888,7 +3939,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                             setOpenedFromOrganizerSlug(null);
                             setActiveOverlay("event");
                           }}
-                          className="w-36 sm:w-56 md:w-60 lg:w-64 shrink-0 flex flex-col space-y-2 cursor-pointer group"
+                          className="w-48 sm:w-56 md:w-60 lg:w-64 shrink-0 flex flex-col space-y-2 cursor-pointer group"
                         >
                           {/* Square Artwork Container with Play & Heart Overlays */}
                           <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-zinc-900 shadow-md border border-zinc-200 group-hover:border-zinc-400 transition-colors">
@@ -4308,7 +4359,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
 
                     <div className="w-full">
                       {filteredCarteleraEvents.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
+                        <div className="flex flex-wrap justify-center gap-6 sm:gap-8 max-w-6xl mx-auto">
                           {filteredCarteleraEvents.map((evt) => (
                             <div
                               key={`cartelera-card-${evt.id}`}
@@ -4318,7 +4369,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                                 setOpenedFromOrganizerSlug(null);
                                 setActiveOverlay("event");
                               }}
-                              className="group flex flex-col text-left cursor-pointer space-y-3 w-full max-w-[380px] mx-auto"
+                              className="group flex flex-col text-left cursor-pointer space-y-3 w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.35rem)] max-w-[360px]"
                             >
                               {/* Poster Artwork Container */}
                               <div className="relative w-full aspect-square rounded-[24px] sm:rounded-[28px] overflow-hidden bg-zinc-950 border border-white/10 group-hover:border-white/30 transition-all duration-300 shadow-[0_15px_35px_rgba(0,0,0,0.7)]">
@@ -4513,8 +4564,16 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
               setActiveStoryScreen(0);
               if (typeof window !== "undefined") {
                 window.scrollTo({ top: 0, behavior: "smooth" });
+                document.getElementById("subir-evento-section")?.scrollIntoView({ behavior: "smooth" });
               }
             }}
+            onOpenDashboard={() => {
+              setShowDetailOverlay(false);
+              setActiveOverlay(null);
+              setAccountDashboardInitialTab(isMasterUser ? "master_receivables" : "events");
+              setIsAccountDashboardOpen(true);
+            }}
+            onLogout={handleLogout}
             userLoggedIn={userLoggedIn}
             userProfile={userProfile}
             isFavorite={userLoggedIn && !!likedEvents[selectedCarouselEvent?.id || ""]}
@@ -4546,12 +4605,25 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
             onOpenCreate={() => {
               setShowReservationModal(false);
               setIsTicketModalOpen(false);
+              setShowDetailOverlay(false);
               setActiveOverlay(null);
               setActiveStoryScreen(0);
               if (typeof window !== "undefined") {
                 window.scrollTo({ top: 0, behavior: "smooth" });
+                setTimeout(() => {
+                  document.getElementById("subir-evento-section")?.scrollIntoView({ behavior: "smooth" });
+                }, 100);
               }
             }}
+            onOpenDashboard={() => {
+              setShowReservationModal(false);
+              setIsTicketModalOpen(false);
+              setShowDetailOverlay(false);
+              setActiveOverlay(null);
+              setAccountDashboardInitialTab(isMasterUser ? "master_receivables" : "events");
+              setIsAccountDashboardOpen(true);
+            }}
+            onLogout={handleLogout}
             onSuccessPurchase={(orderId) => {
               if (selectedCarouselEvent?.id) {
                 handleConfirmReservation(selectedCarouselEvent.id, "general");
@@ -4877,8 +4949,14 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
         onUpdateProfile={(updated) => setUserProfile(updated)}
         allEvents={events}
         onOpenEventDetail={(evt) => {
-          if (evt?.id) {
-            router.push(`/${evt.id}`);
+          setIsAccountDashboardOpen(false);
+          if (evt) {
+            setSelectedCarouselEvent(evt as any);
+            setReservationTargetEvent(evt as any);
+            setActiveOverlay("event");
+            if (typeof window !== "undefined") {
+              window.history.pushState({}, "", `/events/${(evt as any).slug || evt.id}`);
+            }
           }
         }}
         onStartCreateEvent={() => {

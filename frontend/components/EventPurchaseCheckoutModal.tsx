@@ -17,10 +17,11 @@ import {
   Building2,
   Lock,
   RefreshCw,
-  Tag,
   Search,
   User,
   Plus,
+  ChevronRight,
+  LogOut,
 } from "lucide-react";
 import type { Event } from "@/frontend/types/domain";
 import { getHdImageSrc, DEFAULT_HD_EVENT_POSTER } from "@/frontend/utils/hdImages";
@@ -37,6 +38,8 @@ interface EventPurchaseCheckoutModalProps {
   onOpenSearch?: () => void;
   onOpenProfile?: () => void;
   onOpenCreate?: () => void;
+  onOpenDashboard?: () => void;
+  onLogout?: () => void;
 }
 
 export interface PurchaseTier {
@@ -95,20 +98,82 @@ function LegalNotice({ userLoggedIn }: { userLoggedIn?: boolean }) {
         {userLoggedIn ? (
           <>
             Comprando esta entrada, aceptarás nuestras{" "}
-            <strong className="text-white font-bold">Condiciones de Uso</strong> generales, la{" "}
-            <strong className="text-white font-bold">Política de Privacidad</strong> y las{" "}
-            <strong className="text-white font-bold">Condiciones de Compra</strong> de entradas.
-            Procesamos tus datos personales de acuerdo con nuestra{" "}
-            <strong className="text-white font-bold">Política de Privacidad</strong>.
+            <a
+              href="/terms_and_conditions"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white font-bold underline hover:text-zinc-200 transition-colors"
+            >
+              Condiciones de Uso
+            </a>{" "}
+            generales, la{" "}
+            <a
+              href="/privacy_policy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white font-bold underline hover:text-zinc-200 transition-colors"
+            >
+              Política de Privacidad
+            </a>{" "}
+            y las{" "}
+            <a
+              href="/ticket_reservation_terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white font-bold underline hover:text-zinc-200 transition-colors"
+            >
+              Condiciones de Compra
+            </a>{" "}
+            de entradas. Procesamos tus datos personales de acuerdo con nuestra{" "}
+            <a
+              href="/privacy_policy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white font-bold underline hover:text-zinc-200 transition-colors"
+            >
+              Política de Privacidad
+            </a>
+            .
           </>
         ) : (
           <>
             Comprando esta entrada, abrirás una cuenta y aceptarás nuestras{" "}
-            <strong className="text-white font-bold">Condiciones de Uso</strong> generales, la{" "}
-            <strong className="text-white font-bold">Política de Privacidad</strong> y las{" "}
-            <strong className="text-white font-bold">Condiciones de Compra</strong> de entradas.
-            Procesamos tus datos personales de acuerdo con nuestra{" "}
-            <strong className="text-white font-bold">Política de Privacidad</strong>.
+            <a
+              href="/terms_and_conditions"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white font-bold underline hover:text-zinc-200 transition-colors"
+            >
+              Condiciones de Uso
+            </a>{" "}
+            generales, la{" "}
+            <a
+              href="/privacy_policy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white font-bold underline hover:text-zinc-200 transition-colors"
+            >
+              Política de Privacidad
+            </a>{" "}
+            y las{" "}
+            <a
+              href="/ticket_reservation_terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white font-bold underline hover:text-zinc-200 transition-colors"
+            >
+              Condiciones de Compra
+            </a>{" "}
+            de entradas. Procesamos tus datos personales de acuerdo con nuestra{" "}
+            <a
+              href="/privacy_policy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white font-bold underline hover:text-zinc-200 transition-colors"
+            >
+              Política de Privacidad
+            </a>
+            .
           </>
         )}
       </p>
@@ -127,9 +192,12 @@ export default function EventPurchaseCheckoutModal({
   onOpenSearch,
   onOpenProfile,
   onOpenCreate,
+  onOpenDashboard,
+  onLogout,
 }: EventPurchaseCheckoutModalProps) {
   // Steps: "select" (Paso 1: Entradas/Mesas) -> "payment" (Paso 2: Transferencia y Comprobante) -> "confirmed" (Paso 3: En espera de acreditación)
   const [currentStep, setCurrentStep] = useState<"select" | "payment" | "confirmed">("select");
+  const [showCheckoutUserMenu, setShowCheckoutUserMenu] = useState(false);
 
   // Counters start at 0
   const [quantities, setQuantities] = useState<Record<string, number>>({});
@@ -230,52 +298,42 @@ export default function EventPurchaseCheckoutModal({
 
   const basePrice = Math.round(event.price !== undefined ? event.price : 10);
 
-  // Compute clean tiers based on the event's actual presales or standard tiers
+  // Compute clean tiers based on the event's actual presales or standard single tier
   const tiers: PurchaseTier[] = (() => {
     if (event?.presales && Array.isArray(event.presales) && event.presales.length > 0) {
-      const list: PurchaseTier[] = (event.presales as any[]).map((p: any, idx: number) => ({
-        id: `presale-${p.id || idx}`,
-        name: `GA - ${p.name || `Preventa ${idx + 1}`}`,
-        price: Number(p.price) || basePrice,
-        releaseTag: p.duration === "1_semana" ? "Dura 1 Semana (7 días)" : p.duration === "2_semanas" ? "Dura 2 Semanas" : idx === 0 ? "Fase Actual Activa" : "Siguiente Fase",
-        type: "ticket",
-        status: "active",
-      }));
+      return (event.presales as any[]).map((p: any, idx: number) => {
+        let tag = "Fase actual";
+        if (p.duration === "1_semana") tag = "Dura 1 Semana (7 días)";
+        else if (p.duration === "2_semanas") tag = "Dura 2 Semanas";
+        else if (p.duration === "3_dias") tag = "Dura 3 Días";
+        else if (p.duration === "hasta_evento") tag = "Hasta el día del evento";
+        else if (p.duration === "aforo") tag = "Hasta agotar aforo";
+        else if (p.customEndDate) tag = `Hasta ${p.customEndDate}`;
+        else if (idx === 0) tag = "Fase actual · Acceso General";
+        else tag = `Fase ${idx + 1}`;
 
-      // Add a VIP option
-      list.push({
-        id: "vip-tier",
-        name: "VIP (Acceso Preferencial + Barra)",
-        price: (Number((event.presales as any[])[0]?.price) || basePrice) * 2,
-        releaseTag: "Acceso VIP Exclusivo",
-        type: "ticket",
-        status: "active",
+        const rawName = p.name || `Preventa ${idx + 1}`;
+        const cleanName = rawName.toUpperCase().startsWith("GA") || rawName.toUpperCase().startsWith("VIP")
+          ? rawName
+          : `GA - ${rawName}`;
+
+        return {
+          id: `presale-${p.id || idx}`,
+          name: cleanName,
+          price: Number(p.price) || basePrice,
+          releaseTag: tag,
+          type: "ticket",
+          status: "active",
+        };
       });
-      return list;
     }
 
     return [
       {
         id: "ga-preventa-1",
-        name: "GA - Preventa 1 (Early Bird)",
+        name: "GA - Preventa 1 (Acceso General)",
         price: basePrice,
         releaseTag: "Fase actual · Acceso General",
-        type: "ticket",
-        status: "active",
-      },
-      {
-        id: "ga-preventa-2",
-        name: "GA - Preventa 2 (Entry ANYTIME)",
-        price: basePrice + 5,
-        releaseTag: "Segunda fase de venta",
-        type: "ticket",
-        status: "active",
-      },
-      {
-        id: "vip-preventa",
-        name: "VIP (Entry ANYTIME)",
-        price: basePrice * 2,
-        releaseTag: "Acceso VIP + Barra Exclusiva",
         type: "ticket",
         status: "active",
       },
@@ -345,14 +403,51 @@ export default function EventPurchaseCheckoutModal({
       setPromoError("Ingresa un código.");
       return;
     }
+
+    // Check stored discount codes from admin
+    let customCodes: any[] = [];
+    try {
+      const raw = localStorage.getItem("4go_discount_codes");
+      if (raw) customCodes = JSON.parse(raw);
+    } catch {}
+
+    const matched = customCodes.find((c: any) => c.code?.toUpperCase() === cleaned);
+    if (matched) {
+      if (matched.active === false) {
+        setPromoError("Este código de descuento está pausado o inactivo.");
+        return;
+      }
+
+      // Check if code is global or specific to this event
+      const isGlobal = !matched.eventId || matched.eventId === "all";
+      const matchesThisEvent =
+        isGlobal ||
+        matched.eventId === event.id ||
+        ((event as any).slug && matched.eventId === (event as any).slug) ||
+        (matched.eventTitle && event.title && matched.eventTitle.trim().toLowerCase() === event.title.trim().toLowerCase());
+
+      if (!matchesThisEvent) {
+        setPromoError(
+          `Este código solo es válido para "${matched.eventTitle || "otro evento"}" y no aplica a este evento.`
+        );
+        return;
+      }
+
+      const disc = Number(matched.discount) || 2;
+      setAppliedPromo({ code: cleaned, discount: disc });
+      setPromoSuccess(`¡Código ${cleaned} aplicado! Descuento de $${disc}.00 USD`);
+      setTimeout(() => setShowPromoModal(false), 900);
+      return;
+    }
+
     if (cleaned === "4GO" || cleaned === "VIP" || cleaned === "LOJA" || cleaned === "DESCUENTO" || cleaned === "PARTY") {
       setAppliedPromo({ code: cleaned, discount: 5 });
-      setPromoSuccess("¡Código aplicado con éxito! Descuento de $5.00");
-      setTimeout(() => setShowPromoModal(false), 1000);
+      setPromoSuccess("¡Código aplicado con éxito! Descuento de $5.00 USD");
+      setTimeout(() => setShowPromoModal(false), 900);
     } else if (cleaned.length >= 3) {
       setAppliedPromo({ code: cleaned, discount: 2 });
-      setPromoSuccess(`¡Código ${cleaned} de organizador aplicado! Descuento de $2.00`);
-      setTimeout(() => setShowPromoModal(false), 1000);
+      setPromoSuccess(`¡Código ${cleaned} de organizador aplicado! Descuento de $2.00 USD`);
+      setTimeout(() => setShowPromoModal(false), 900);
     } else {
       setPromoError("Código promocional no válido.");
     }
@@ -555,12 +650,13 @@ export default function EventPurchaseCheckoutModal({
       </div>
 
       {/* ─── TOP NAVIGATION HEADER BAR (EXACT MATCHING POSITION AS EVENT DETAIL) ─── */}
-      <header className="fixed top-0 inset-x-0 z-[550] flex items-center justify-between px-4 sm:px-8 py-4 bg-gradient-to-b from-black/90 via-black/40 to-transparent pointer-events-none">
+      <header className="fixed top-0 inset-x-0 z-[550] flex items-center justify-between px-4 sm:px-8 py-4 bg-gradient-to-b from-[#0c0714]/95 via-[#0c0714]/70 to-transparent pointer-events-auto">
         {/* Left: Circular Back Arrow Button with Hover Tooltip */}
-        <div className="relative group pointer-events-auto flex items-center">
+        <div className="relative group flex items-center">
           <button
             type="button"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               if (currentStep === "payment") {
                 setCurrentStep("select");
               } else {
@@ -579,7 +675,7 @@ export default function EventPurchaseCheckoutModal({
         </div>
 
         {/* Center: Breadcrumbs (Desktop Centered in same row) */}
-        <div className="pointer-events-auto hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-3 text-xs sm:text-sm font-semibold tracking-normal text-zinc-400">
+        <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-3 text-xs sm:text-sm font-semibold tracking-normal text-zinc-400">
           <span className={currentStep === "select" ? "text-white font-bold" : "text-zinc-500"}>
             Entrada
           </span>
@@ -594,12 +690,15 @@ export default function EventPurchaseCheckoutModal({
         </div>
 
         {/* Right Controls: + Crear on Left, Buscar in Middle, Avatar on Far Right (Horizontal Glass Buttons) */}
-        <div className="pointer-events-auto flex flex-row items-center gap-2 sm:gap-2.5 shrink-0">
+        <div className="flex flex-row items-center gap-2 sm:gap-2.5 shrink-0 relative">
           {/* + Crear Glass Pill Button (Left) */}
           <button
             type="button"
-            onClick={() => onOpenCreate?.()}
-            className="h-10 px-3.5 sm:px-4 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-xl flex items-center gap-1.5 text-white font-bold text-xs sm:text-sm shadow-lg cursor-pointer transition-all active:scale-95 whitespace-nowrap"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenCreate?.();
+            }}
+            className="h-10 px-3.5 sm:px-4 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-xl flex items-center gap-1.5 text-white font-bold text-xs sm:text-sm shadow-lg cursor-pointer transition-all active:scale-95 whitespace-nowrap shrink-0"
             aria-label="Crear Evento"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
@@ -610,8 +709,11 @@ export default function EventPurchaseCheckoutModal({
           <div className="relative group flex items-center justify-center">
             <button
               type="button"
-              onClick={() => onOpenSearch?.()}
-              className="w-10 h-10 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 text-white backdrop-blur-xl flex items-center justify-center shadow-lg cursor-pointer transition-all active:scale-95"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenSearch?.();
+              }}
+              className="w-10 h-10 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 text-white backdrop-blur-xl flex items-center justify-center shadow-lg cursor-pointer transition-all active:scale-95 shrink-0"
               aria-label="Buscar"
             >
               <Search className="w-5 h-5 text-white" />
@@ -623,12 +725,19 @@ export default function EventPurchaseCheckoutModal({
             </div>
           </div>
 
-          {/* Profile Button with Hover Preview (Far Right) */}
-          <div className="relative group flex items-center justify-center">
+          {/* Profile Button with Dropdown (Far Right) */}
+          <div className="relative flex items-center justify-center">
             <button
               type="button"
-              onClick={() => onOpenProfile?.()}
-              className="w-10 h-10 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl flex items-center justify-center text-white hover:bg-white/20 shadow-lg cursor-pointer transition-all active:scale-95 overflow-hidden relative"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!userLoggedIn) {
+                  onOpenAuth?.();
+                } else {
+                  setShowCheckoutUserMenu((prev) => !prev);
+                }
+              }}
+              className="w-10 h-10 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl flex items-center justify-center text-white hover:bg-white/20 shadow-lg cursor-pointer transition-all active:scale-95 overflow-hidden relative shrink-0"
               aria-label="Perfil"
             >
               {userLoggedIn && userProfile?.avatar ? (
@@ -648,10 +757,100 @@ export default function EventPurchaseCheckoutModal({
               <User className="checkout-user-fallback w-5 h-5 text-white hidden" />
             </button>
 
-            {/* Hover Tooltip: Perfil */}
-            <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-zinc-950/90 border border-white/20 text-white text-[11px] font-bold uppercase tracking-wider backdrop-blur-xl shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 -translate-y-1 group-hover:translate-y-0 whitespace-nowrap z-50">
-              Perfil
-            </div>
+            {/* Hover Tooltip: Perfil (only when menu closed) */}
+            {!showCheckoutUserMenu && (
+              <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-zinc-950/90 border border-white/20 text-white text-[11px] font-bold uppercase tracking-wider backdrop-blur-xl shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 -translate-y-1 group-hover:translate-y-0 whitespace-nowrap z-50">
+                Perfil
+              </div>
+            )}
+
+            {/* User Dropdown Menu */}
+            <AnimatePresence>
+              {showCheckoutUserMenu && userLoggedIn && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm cursor-default"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowCheckoutUserMenu(false);
+                    }}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.16, ease: "easeOut" }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute right-0 top-[calc(100%+12px)] w-72 sm:w-80 rounded-[28px] bg-zinc-950/95 border border-white/20 backdrop-blur-3xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] p-4 z-50 text-white font-sans space-y-3"
+                  >
+                    {/* User Header */}
+                    <div className="px-1.5 py-1 flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-full overflow-hidden bg-white/10 border border-white/20 shrink-0 flex items-center justify-center shadow-inner">
+                        {userProfile?.avatar ? (
+                          <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-5 h-5 text-white" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-black uppercase text-white truncate">
+                            {userProfile?.venueName || userProfile?.name || "Usuario"}
+                          </p>
+                        </div>
+                        <p className="text-[11px] text-zinc-400 font-medium truncate">{userProfile?.email}</p>
+                        <span className="inline-block mt-1 px-2.5 py-0.5 rounded-md text-[9.5px] font-black uppercase tracking-wider bg-white/10 text-white border border-white/20">
+                          {userProfile?.type || "Organizador"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="space-y-2 font-sans">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCheckoutUserMenu(false);
+                          onOpenDashboard?.();
+                        }}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.10] border border-white/10 hover:border-white/20 text-white transition-all active:scale-[0.98] cursor-pointer text-xs font-bold uppercase tracking-wider"
+                      >
+                        <span>Mi Perfil & Dashboard</span>
+                        <ChevronRight className="w-4 h-4 text-zinc-400" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCheckoutUserMenu(false);
+                          onOpenCreate?.();
+                        }}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.10] border border-white/10 hover:border-white/20 text-white transition-all active:scale-[0.98] cursor-pointer text-xs font-bold uppercase tracking-wider"
+                      >
+                        <span>Publicar Evento</span>
+                        <ChevronRight className="w-4 h-4 text-zinc-400" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCheckoutUserMenu(false);
+                          onLogout?.();
+                        }}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-red-400 hover:bg-red-500/10 border border-red-500/20 transition-all active:scale-[0.98] cursor-pointer text-xs font-bold uppercase tracking-wider mt-1"
+                      >
+                        <span>Cerrar Sesión</span>
+                        <LogOut className="w-4 h-4 text-red-400" />
+                      </button>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </header>
@@ -674,22 +873,19 @@ export default function EventPurchaseCheckoutModal({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <div className="flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-[#dfff28]" />
-                  <h3 className="text-sm font-black uppercase tracking-wider text-white">
-                    Código de Descuento
-                  </h3>
-                </div>
+                <h3 className="text-sm font-black uppercase tracking-wider text-white">
+                  Código de Descuento
+                </h3>
                 <button
                   type="button"
                   onClick={() => setShowPromoModal(false)}
-                  className="p-1 rounded-full text-zinc-400 hover:text-white"
+                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-400 font-medium leading-relaxed">
                 Ingresa el código proporcionado por el organizador para obtener tu descuento oficial.
               </p>
 
@@ -699,20 +895,20 @@ export default function EventPurchaseCheckoutModal({
                   value={promoInput}
                   onChange={(e) => setPromoInput(e.target.value)}
                   placeholder="EJ. 4GO, VIP, LOJA"
-                  className="w-full px-4 py-3 rounded-2xl bg-black/50 border border-white/20 text-xs font-black uppercase tracking-widest text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#dfff28]"
+                  className="w-full px-4 py-3 rounded-2xl bg-black/60 border border-white/20 text-xs font-black uppercase tracking-widest text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/50 transition"
                   autoFocus
                 />
 
                 {promoError && (
-                  <p className="text-xs text-red-400 font-bold">{promoError}</p>
+                  <p className="text-xs text-rose-400 font-bold">{promoError}</p>
                 )}
                 {promoSuccess && (
-                  <p className="text-xs text-emerald-400 font-bold">{promoSuccess}</p>
+                  <p className="text-xs text-white font-bold bg-white/10 p-2.5 rounded-xl border border-white/20 text-center">{promoSuccess}</p>
                 )}
 
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-full bg-[#dfff28] hover:bg-[#d4f522] text-black font-black text-xs uppercase tracking-widest transition cursor-pointer shadow-lg active:scale-95"
+                  className="w-full py-3.5 rounded-full bg-white hover:bg-zinc-200 text-black font-black text-xs uppercase tracking-widest transition cursor-pointer shadow-lg active:scale-95"
                 >
                   APLICAR CÓDIGO
                 </button>
@@ -782,13 +978,13 @@ export default function EventPurchaseCheckoutModal({
                   </span>
 
                   <div className="space-y-2">
-                    {userExistingEventTickets.map((tkt) => {
+                    {userExistingEventTickets.map((tkt, idx) => {
                       const isConfirmed = tkt.status === "confirmed" || tkt.status === "aprobado";
                       const isRejected = tkt.status === "rejected" || tkt.status === "rechazado";
 
                       return (
                         <div
-                          key={tkt.id}
+                          key={tkt.id || `exist-tkt-${idx}`}
                           onClick={() => {
                             if (isConfirmed) {
                               setViewingTicketQr(tkt);
@@ -833,7 +1029,7 @@ export default function EventPurchaseCheckoutModal({
 
               {/* Tiers List */}
               <div className="space-y-3">
-                {tiers.map((tier) => {
+                {tiers.map((tier, idx) => {
                   const count = quantities[tier.id] || 0;
                   const isExpiredOrSoldOut = tier.status === "expired" || tier.status === "sold_out";
                   const isTierDisabled = isExpiredOrSoldOut || isMaxTicketsReached;
@@ -841,12 +1037,12 @@ export default function EventPurchaseCheckoutModal({
 
                   return (
                     <div
-                      key={tier.id}
+                      key={tier.id || `tier-${idx}`}
                       className={`relative rounded-3xl p-5 sm:p-6 transition-all border ${
                         isTierDisabled
                           ? "bg-black/25 border-white/5 opacity-50 cursor-not-allowed select-none"
                           : count > 0
-                          ? "bg-zinc-900/80 border-[#dfff28]/60 shadow-[0_10px_30px_rgba(223,255,40,0.08)]"
+                          ? "bg-zinc-900/90 border-white/40 shadow-[0_10px_30px_rgba(255,255,255,0.06)] ring-1 ring-white/20"
                           : "bg-black/40 hover:bg-black/60 border-white/15 backdrop-blur-xl"
                       }`}
                     >
@@ -891,7 +1087,7 @@ export default function EventPurchaseCheckoutModal({
                             disabled={count === 0 || isTierDisabled}
                             className={`w-8 h-8 flex items-center justify-center transition-all cursor-pointer ${
                               count > 0 && !isTierDisabled
-                                ? "text-white hover:text-[#dfff28] active:scale-90"
+                                ? "text-white hover:text-zinc-300 active:scale-90"
                                 : "text-zinc-600 cursor-not-allowed opacity-40"
                             }`}
                             aria-label="Disminuir cantidad"
@@ -909,14 +1105,14 @@ export default function EventPurchaseCheckoutModal({
                               xmlns="http://www.w3.org/2000/svg"
                               className={`w-full h-full transition-all ${
                                 count > 0
-                                  ? "text-zinc-700 drop-shadow-[0_2px_10px_rgba(223,255,40,0.25)]"
+                                  ? "text-zinc-700 drop-shadow-[0_2px_10px_rgba(255,255,255,0.15)]"
                                   : "text-zinc-800/90"
                               }`}
                             >
                               <path
                                 d="M5 2 C2.2 2 0 4.2 0 7 V17 C3.5 17 6.5 19.8 6.5 24 C6.5 28.2 3.5 31 0 31 V41 C0 43.8 2.2 46 5 46 H39 C41.8 46 44 43.8 44 41 V31 C40.5 31 37.5 28.2 37.5 24 C37.5 19.8 40.5 17 44 17 V7 C44 4.2 41.8 2 39 2 H5 Z"
                                 fill="currentColor"
-                                stroke={count > 0 ? "rgba(223,255,40,0.4)" : "rgba(255,255,255,0.12)"}
+                                stroke={count > 0 ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.12)"}
                                 strokeWidth="1.5"
                               />
                             </svg>
@@ -937,7 +1133,7 @@ export default function EventPurchaseCheckoutModal({
                             className={`w-8 h-8 flex items-center justify-center transition-all ${
                               !canIncrease
                                 ? "text-zinc-700 cursor-not-allowed opacity-30"
-                                : "text-white hover:text-[#dfff28] active:scale-90 cursor-pointer"
+                                : "text-white hover:text-zinc-300 active:scale-90 cursor-pointer"
                             }`}
                             aria-label="Aumentar cantidad"
                           >
@@ -948,7 +1144,7 @@ export default function EventPurchaseCheckoutModal({
                     </div>
                   );
                 })}
-                {/* Promo Code Link (Photo 3 Styling) */}
+                {/* Promo Code Link (Clean Minimal Styling) */}
                 <div className="pt-2 pb-1 text-left">
                   <button
                     type="button"
@@ -957,13 +1153,13 @@ export default function EventPurchaseCheckoutModal({
                     className={`text-base sm:text-lg font-black transition-colors text-left inline-flex items-center gap-2 ${
                       isMaxTicketsReached
                         ? "text-zinc-600 opacity-40 cursor-not-allowed select-none"
-                        : "text-white hover:text-[#dfff28] cursor-pointer"
+                        : "text-white hover:text-zinc-300 cursor-pointer"
                     }`}
                   >
                     <span>¿Tienes un código?</span>
                     {appliedPromo && (
-                      <span className="text-xs bg-emerald-500 text-black px-2.5 py-0.5 rounded-full font-bold">
-                        -{appliedPromo.discount}$ ({appliedPromo.code})
+                      <span className="text-xs bg-white text-black px-2.5 py-0.5 rounded-full font-bold">
+                        -{appliedPromo.discount}$
                       </span>
                     )}
                   </button>
@@ -989,8 +1185,8 @@ export default function EventPurchaseCheckoutModal({
                       Total – {totalPrice} $
                     </span>
                     {appliedPromo && discountAmount > 0 && (
-                      <span className="text-[11px] font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">
-                        -{discountAmount}$ Cupón {appliedPromo.code}
+                      <span className="text-[11px] font-bold text-black bg-zinc-100 px-2 py-0.5 rounded-full">
+                        -{discountAmount}$
                       </span>
                     )}
                   </div>
@@ -1009,7 +1205,7 @@ export default function EventPurchaseCheckoutModal({
                   >
                     <span>¿Tienes un código?</span>
                     {appliedPromo && (
-                      <span className="text-[10px] bg-emerald-500 text-black px-2 py-0.5 rounded-full font-bold">
+                      <span className="text-[10px] bg-black text-white px-2 py-0.5 rounded-full font-bold">
                         -{appliedPromo.discount}$
                       </span>
                     )}
@@ -1021,7 +1217,7 @@ export default function EventPurchaseCheckoutModal({
                     type="button"
                     onClick={handleProceedToPayment}
                     disabled={totalItemsCount === 0 || isMaxTicketsReached}
-                    className="w-full py-4 rounded-full bg-[#dfff28] hover:bg-[#d4f522] text-black font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-center"
+                    className="w-full py-4 rounded-full bg-black hover:bg-zinc-800 text-white font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-center"
                   >
                     FINALIZAR COMPRA
                   </button>
@@ -1052,7 +1248,7 @@ export default function EventPurchaseCheckoutModal({
                 <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
                   Resumen de tu pedido
                 </span>
-                <span className="text-xs font-black text-[#dfff28] uppercase">
+                <span className="text-xs font-black text-white uppercase">
                   {totalItemsCount} {totalItemsCount === 1 ? "Ítem" : "Ítems"}
                 </span>
               </div>
@@ -1074,8 +1270,8 @@ export default function EventPurchaseCheckoutModal({
                 })}
 
                 {appliedPromo && discountAmount > 0 && (
-                  <div className="flex justify-between text-xs text-emerald-400 font-bold pt-1 border-t border-white/5">
-                    <span>Descuento ({appliedPromo.code}):</span>
+                  <div className="flex justify-between text-xs text-white font-bold pt-1 border-t border-white/5">
+                    <span>Descuento:</span>
                     <span>-{discountAmount} $</span>
                   </div>
                 )}
@@ -1083,7 +1279,7 @@ export default function EventPurchaseCheckoutModal({
 
               <div className="flex justify-between items-baseline pt-3 border-t border-white/10">
                 <span className="text-sm font-black text-white">Total a Transferir:</span>
-                <span className="text-2xl font-black text-[#dfff28]">{totalPrice} $</span>
+                <span className="text-2xl font-black text-white">{totalPrice} $</span>
               </div>
             </div>
 
@@ -1101,7 +1297,7 @@ export default function EventPurchaseCheckoutModal({
                     onClick={() => setSelectedBankId(b.id)}
                     className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                       selectedBankId === b.id
-                        ? "bg-[#dfff28]/10 border-[#dfff28] text-white shadow-lg ring-1 ring-[#dfff28]/30"
+                        ? "bg-white/10 border-white text-white shadow-lg ring-1 ring-white/30"
                         : "bg-black/40 border-white/10 hover:bg-black/60 text-zinc-400"
                     }`}
                   >
@@ -1216,7 +1412,7 @@ export default function EventPurchaseCheckoutModal({
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Nombre y Apellido"
                     required
-                    className="w-full px-4 py-3.5 rounded-2xl bg-black/50 border border-white/15 text-xs font-bold text-white placeholder:text-zinc-500 focus:outline-none focus:border-[#dfff28]"
+                    className="w-full px-4 py-3.5 rounded-2xl bg-black/50 border border-white/15 text-xs font-bold text-white placeholder:text-zinc-500 focus:outline-none focus:border-white/50"
                   />
                 </div>
                 <div>
@@ -1226,7 +1422,7 @@ export default function EventPurchaseCheckoutModal({
                     onChange={(e) => setCustomerEmail(e.target.value)}
                     placeholder="Correo (Gmail preferido)"
                     required
-                    className="w-full px-4 py-3.5 rounded-2xl bg-black/50 border border-white/15 text-xs font-bold text-white placeholder:text-zinc-500 focus:outline-none focus:border-[#dfff28]"
+                    className="w-full px-4 py-3.5 rounded-2xl bg-black/50 border border-white/15 text-xs font-bold text-white placeholder:text-zinc-500 focus:outline-none focus:border-white/50"
                   />
                 </div>
               </div>
@@ -1249,9 +1445,9 @@ export default function EventPurchaseCheckoutModal({
               {!receiptPreview ? (
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full p-8 rounded-3xl border-2 border-dashed border-white/20 hover:border-[#dfff28] bg-black/40 hover:bg-black/60 transition-all flex flex-col items-center justify-center gap-3 cursor-pointer text-center group"
+                  className="w-full p-8 rounded-3xl border-2 border-dashed border-white/20 hover:border-white/50 bg-black/40 hover:bg-black/60 transition-all flex flex-col items-center justify-center gap-3 cursor-pointer text-center group"
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-white/10 group-hover:bg-[#dfff28] group-hover:text-black text-white flex items-center justify-center transition-colors shadow-lg">
+                  <div className="w-12 h-12 rounded-2xl bg-white/10 group-hover:bg-white group-hover:text-black text-white flex items-center justify-center transition-colors shadow-lg">
                     <Upload className="w-6 h-6" />
                   </div>
                   <div className="space-y-1">
@@ -1305,7 +1501,7 @@ export default function EventPurchaseCheckoutModal({
               <button
                 type="submit"
                 disabled={isUploading}
-                className="w-full py-4 rounded-full bg-[#dfff28] hover:bg-[#d4f522] text-black font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-4 rounded-full bg-white hover:bg-zinc-200 text-black font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isUploading ? (
                   <>
@@ -1410,7 +1606,7 @@ export default function EventPurchaseCheckoutModal({
                   Total – {totalPrice} $
                 </span>
                 {appliedPromo && discountAmount > 0 && (
-                  <span className="text-[10px] font-bold text-emerald-600">
+                  <span className="text-[10px] font-bold text-black bg-zinc-100 px-2 py-0.5 rounded-full">
                     (-{discountAmount}$)
                   </span>
                 )}
@@ -1421,7 +1617,7 @@ export default function EventPurchaseCheckoutModal({
               type="button"
               onClick={handleProceedToPayment}
               disabled={totalItemsCount === 0 || isMaxTicketsReached}
-              className="px-8 py-3.5 rounded-full bg-[#dfff28] hover:bg-[#d4f522] text-black font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-center"
+              className="px-8 py-3.5 rounded-full bg-black hover:bg-zinc-800 text-white font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-center"
             >
               FINALIZAR COMPRA
             </button>

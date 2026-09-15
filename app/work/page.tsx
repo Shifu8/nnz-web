@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import Image from "next/image";
@@ -28,56 +28,53 @@ export default function WorkPage() {
         </Link>
       </header>
 
-      {/* Main Content Layout - Split Screen Hero Layout */}
-      <main className="max-w-5xl mx-auto px-6 py-16 sm:py-24 space-y-16">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-center border-b border-zinc-200 pb-12">
-          {/* Left Text Block */}
-          <div className="md:col-span-7 space-y-6 text-left">
-            <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-tighter text-zinc-950">
-              TRABAJA CON NOSOTRXS
-            </h1>
-            <p className="text-base sm:text-xl text-zinc-700 font-medium leading-relaxed">
-              Únete a la plataforma de entretenimiento líder en Ecuador. Conecta tus eventos, festivales o talento profesional con miles de asistentes.
-            </p>
-            <p className="text-sm sm:text-base text-zinc-600 leading-relaxed font-normal">
-              Trabajamos con productores, clubes, fotógrafos, diseñadores y personal de puerta que buscan elevar el estándar de las experiencias nocturnas.
-            </p>
-          </div>
-
-          {/* Right Image Feature - 3D Cellphones Artwork */}
-          <div className="md:col-span-5 relative aspect-square rounded-3xl overflow-hidden border border-zinc-200 bg-zinc-950 shadow-xl">
-            <Image
-              src="/images/now4go-hero-presentation-hd-v3.png"
-              alt="4GO 3D Celulares Arte"
-              fill
-              className="object-cover"
-            />
-          </div>
+      {/* Main Content Layout - Centered without boxed cards */}
+      <main className="max-w-3xl mx-auto px-6 py-16 sm:py-24 space-y-16 text-center flex flex-col items-center">
+        {/* Title & Introduction */}
+        <div className="space-y-4 max-w-2xl">
+          <span className="text-xs font-black uppercase tracking-widest text-zinc-400 block">
+            Oportunidades & Alianzas
+          </span>
+          <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-tighter text-zinc-950">
+            TRABAJA CON NOSOTRXS
+          </h1>
+          <p className="text-base sm:text-xl text-zinc-700 font-medium leading-relaxed pt-2">
+            Únete a la plataforma de entretenimiento líder en Ecuador. Conecta tus eventos, festivales o talento profesional con miles de asistentes.
+          </p>
+          <p className="text-sm sm:text-base text-zinc-600 leading-relaxed font-normal">
+            Trabajamos con productores, clubes, fotógrafos, diseñadores y personal de puerta que buscan elevar el estándar de las experiencias nocturnas.
+          </p>
         </div>
 
-        {/* Roles Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-          <div className="p-8 rounded-3xl border border-zinc-200 bg-zinc-50 space-y-4">
-            <span className="text-xs font-black uppercase tracking-widest text-zinc-500">Para Creadores</span>
-            <h3 className="text-xl font-black text-zinc-950">Organizadores & Escenarios</h3>
-            <p className="text-sm text-zinc-600 leading-relaxed font-normal">
+        {/* Roles Section - Centered without boxed cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-6 border-t border-zinc-200 max-w-2xl w-full text-center">
+          <div className="space-y-4 flex flex-col items-center">
+            <span className="text-xs font-black uppercase tracking-widest text-zinc-400">Para Creadores</span>
+            <h3 className="text-xl sm:text-2xl font-black text-zinc-950 uppercase tracking-tight">Organizadores & Escenarios</h3>
+            <p className="text-sm sm:text-base text-zinc-600 leading-relaxed font-normal">
               Publica tus conciertos o fiestas en 4GO. Accede a herramientas de venta, control de aforo por escáner QR y liquidación transparente.
             </p>
             <div className="pt-2">
-              <a href="mailto:organizadores@4go.ec" className="inline-block px-5 py-2.5 rounded-xl bg-zinc-950 text-white font-bold text-xs uppercase tracking-wider hover:bg-zinc-800 transition">
+              <a
+                href="mailto:soporte.nenez@gmail.com"
+                className="inline-flex items-center px-6 py-3 rounded-full bg-zinc-950 text-white font-black text-xs uppercase tracking-widest hover:bg-zinc-800 active:scale-95 transition-all shadow-lg cursor-pointer"
+              >
                 organizadores@4go.ec
               </a>
             </div>
           </div>
 
-          <div className="p-8 rounded-3xl border border-zinc-200 bg-zinc-50 space-y-4">
-            <span className="text-xs font-black uppercase tracking-widest text-zinc-500">Para Talento</span>
-            <h3 className="text-xl font-black text-zinc-950">Staff & Colaboradores</h3>
-            <p className="text-sm text-zinc-600 leading-relaxed font-normal">
+          <div className="space-y-4 flex flex-col items-center">
+            <span className="text-xs font-black uppercase tracking-widest text-zinc-400">Para Talento</span>
+            <h3 className="text-xl sm:text-2xl font-black text-zinc-950 uppercase tracking-tight">Staff & Colaboradores</h3>
+            <p className="text-sm sm:text-base text-zinc-600 leading-relaxed font-normal">
               Si eres fotógrafo, diseñador gráfico, DJ o personal operativo de eventos, envíanos tu información y portafolio.
             </p>
             <div className="pt-2">
-              <a href="mailto:empleo@4go.ec" className="inline-block px-5 py-2.5 rounded-xl bg-zinc-200 text-zinc-950 font-bold text-xs uppercase tracking-wider hover:bg-zinc-300 transition">
+              <a
+                href="mailto:soporte.nenez@gmail.com"
+                className="inline-flex items-center px-6 py-3 rounded-full bg-zinc-950 text-white font-black text-xs uppercase tracking-widest hover:bg-zinc-800 active:scale-95 transition-all shadow-lg cursor-pointer"
+              >
                 empleo@4go.ec
               </a>
             </div>

@@ -31,8 +31,6 @@ export default function GoogleConsentModal({
 
   const availableAccounts = [
     { email: "brandon.medina@unl.edu.ec", name: "Brandon Medina (Master 4GO)" },
-    { email: "master@4go.live", name: "Master Admin 4GO" },
-    { email: "mrshifu879@gmail.com", name: "Brandon Medina (Cubic Loja)" },
   ];
 
   if (!isOpen) return null;
@@ -41,13 +39,12 @@ export default function GoogleConsentModal({
     setIsSubmitting(true);
     try {
       const selectedAcc = availableAccounts.find((a) => a.email === selectedEmail);
-      const nameToUse = selectedAcc ? selectedAcc.name : customName || selectedEmail.split("@")[0];
+      const nameToUse = selectedAcc ? selectedAcc.name : "Brandon Medina";
 
-      const isMaster = selectedEmail === "brandon.medina@unl.edu.ec" || selectedEmail === "master@4go.live";
-      const isCubic = selectedEmail === "mrshifu879@gmail.com";
-      const orgType = isMaster ? "Organizador" : isCubic ? "Discoteca / Club Nocturno" : "Organizador";
-      const venueName = isMaster ? "4GO" : isCubic ? "CUBIC LOJA" : "";
-      const avatar = isMaster ? "/images/logo_4go_black_white.png" : isCubic ? "/images/cubic-official-logo.png" : "";
+      const isMaster = selectedEmail === "brandon.medina@unl.edu.ec";
+      const orgType = "Organizador";
+      const venueName = "4GO";
+      const avatar = "/images/logo_4go_black_white.png";
 
       // Save user to PostgreSQL database
       try {
@@ -66,7 +63,7 @@ export default function GoogleConsentModal({
       } catch { }
 
       const userObj = {
-        id: isMaster ? "master_admin" : isCubic ? "cubic" : `user-${Date.now()}`,
+        id: "master_admin",
         name: nameToUse,
         email: selectedEmail,
         type: orgType,
@@ -84,16 +81,14 @@ export default function GoogleConsentModal({
       onClose();
     } catch (err) {
       console.error("Error during Google auth consent:", err);
-      const isMaster = selectedEmail === "brandon.medina@unl.edu.ec" || selectedEmail === "master@4go.live";
-      const isCubic = selectedEmail === "mrshifu879@gmail.com";
       const fallbackUser = {
-        id: isMaster ? "master_admin" : isCubic ? "cubic" : `user-${Date.now()}`,
-        name: customName || (isMaster ? "Brandon Medina (4GO)" : "Brandon Medina"),
+        id: "master_admin",
+        name: "Brandon Medina (4GO)",
         email: selectedEmail,
-        type: isMaster ? "Organizador" : isCubic ? "Discoteca / Club Nocturno" : "Organizador",
-        venueName: isMaster ? "4GO" : isCubic ? "CUBIC LOJA" : "",
+        type: "Organizador",
+        venueName: "4GO",
         city: "Loja",
-        avatar: isMaster ? "/images/logo_4go_black_white.png" : isCubic ? "/images/cubic-official-logo.png" : "",
+        avatar: "/images/logo_4go_black_white.png",
         hasCompletedOnboarding: true,
       };
       localStorage.setItem("organizer_token", `google-token-${selectedEmail}`);

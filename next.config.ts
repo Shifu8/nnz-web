@@ -27,6 +27,7 @@ const csp = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   turbopack: {
     root: projectRoot,
   },
@@ -54,11 +55,15 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "X-Frame-Options",
-            value: "DENY",
+            value: "SAMEORIGIN",
           },
           {
             key: "X-Content-Type-Options",
             value: "nosniff",
+          },
+          {
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
           },
           {
             key: "X-DNS-Prefetch-Control",
@@ -66,7 +71,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Referrer-Policy",
-            value: "origin-when-cross-origin",
+            value: "strict-origin-when-cross-origin",
           },
           {
             key: "Permissions-Policy",

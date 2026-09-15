@@ -31,6 +31,7 @@ import {
   User,
   Flame,
   Plus,
+  LogOut,
 } from "lucide-react";
 import type { Event } from "@/frontend/types/domain";
 import { DEFAULT_HD_EVENT_POSTER, getHdImageSrc } from "@/frontend/utils/hdImages";
@@ -48,6 +49,8 @@ interface EventDetailOverlayProps {
   onOpenSearch?: () => void;
   onOpenProfile?: () => void;
   onOpenCreate?: () => void;
+  onOpenDashboard?: () => void;
+  onLogout?: () => void;
   isCheckoutOpen?: boolean;
   userLoggedIn?: boolean;
   userProfile?: any;
@@ -66,6 +69,8 @@ export default function EventDetailOverlay({
   onOpenSearch,
   onOpenProfile,
   onOpenCreate,
+  onOpenDashboard,
+  onLogout,
   userLoggedIn = false,
   userProfile,
   isFavorite = false,
@@ -82,6 +87,7 @@ export default function EventDetailOverlay({
   const [followedIds, setFollowedIds] = useState<Record<string, boolean>>({});
   const [isAddressCopied, setIsAddressCopied] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [showDetailUserMenu, setShowDetailUserMenu] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
   const mainContainerRef = useRef<HTMLDivElement>(null);
@@ -234,13 +240,16 @@ export default function EventDetailOverlay({
       </div>
 
       {/* ─── TOP NAVIGATION BAR ─── */}
-      <header className="fixed top-0 inset-x-0 z-[350] flex items-center justify-between px-4 sm:px-8 py-4 bg-gradient-to-b from-[#0c0714]/90 via-[#0c0714]/50 to-transparent pointer-events-none">
+      <header className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-4 sm:px-8 py-4 bg-gradient-to-b from-[#0c0714]/95 via-[#0c0714]/70 to-transparent pointer-events-auto">
         {/* Left: Back Arrow Button [←] with Hover Tooltip */}
-        <div className="relative group pointer-events-auto flex items-center">
+        <div className="relative group flex items-center">
           <button
             type="button"
-            onClick={onClose}
-            className="flex items-center justify-center w-11 h-11 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 backdrop-blur-xl transition-all cursor-pointer shadow-2xl active:scale-95"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="flex items-center justify-center w-11 h-11 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 backdrop-blur-xl transition-all cursor-pointer shadow-2xl active:scale-95 shrink-0"
             aria-label="Atrás"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -252,12 +261,15 @@ export default function EventDetailOverlay({
         </div>
 
         {/* Right Controls: + Crear on Left, Buscar in Middle, Avatar on Far Right (Horizontal Glass Buttons) */}
-        <div className="pointer-events-auto flex flex-row items-center gap-2 sm:gap-2.5 shrink-0">
+        <div className="flex flex-row items-center gap-2 sm:gap-2.5 shrink-0 relative">
           {/* + Crear Glass Pill Button (Left) */}
           <button
             type="button"
-            onClick={() => onOpenCreate?.()}
-            className="h-10 px-3.5 sm:px-4 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-xl flex items-center gap-1.5 text-white font-bold text-xs sm:text-sm shadow-lg cursor-pointer transition-all active:scale-95 whitespace-nowrap"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenCreate?.();
+            }}
+            className="h-10 px-3.5 sm:px-4 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-xl flex items-center gap-1.5 text-white font-bold text-xs sm:text-sm shadow-lg cursor-pointer transition-all active:scale-95 whitespace-nowrap shrink-0"
             aria-label="Crear Evento"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
@@ -268,8 +280,11 @@ export default function EventDetailOverlay({
           <div className="relative group flex items-center justify-center">
             <button
               type="button"
-              onClick={() => onOpenSearch?.()}
-              className="w-10 h-10 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 text-white backdrop-blur-xl flex items-center justify-center shadow-lg cursor-pointer transition-all active:scale-95"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenSearch?.();
+              }}
+              className="w-10 h-10 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 text-white backdrop-blur-xl flex items-center justify-center shadow-lg cursor-pointer transition-all active:scale-95 shrink-0"
               aria-label="Buscar"
             >
               <Search className="w-5 h-5 text-white" />
@@ -281,18 +296,19 @@ export default function EventDetailOverlay({
             </div>
           </div>
 
-          {/* Profile Button with Hover Preview (Far Right) */}
-          <div className="relative group flex items-center justify-center">
+          {/* Profile Button with Dropdown (Far Right) */}
+          <div className="relative flex items-center justify-center">
             <button
               type="button"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 if (!userLoggedIn) {
                   onOpenAuth?.();
                 } else {
-                  onOpenProfile?.();
+                  setShowDetailUserMenu((prev) => !prev);
                 }
               }}
-              className="w-10 h-10 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl flex items-center justify-center text-white hover:bg-white/20 shadow-lg cursor-pointer transition-all active:scale-95 overflow-hidden relative"
+              className="w-10 h-10 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl flex items-center justify-center text-white hover:bg-white/20 shadow-lg cursor-pointer transition-all active:scale-95 overflow-hidden relative shrink-0"
               aria-label="Perfil"
             >
               {userLoggedIn && userProfile?.avatar ? (
@@ -312,10 +328,93 @@ export default function EventDetailOverlay({
               <User className="detail-user-fallback w-5 h-5 text-white hidden" />
             </button>
 
-            {/* Hover Tooltip: Perfil */}
-            <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-zinc-950/90 border border-white/20 text-white text-[11px] font-bold uppercase tracking-wider backdrop-blur-xl shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 -translate-y-1 group-hover:translate-y-0 whitespace-nowrap z-50">
-              Perfil
-            </div>
+            {/* User Dropdown Menu */}
+            <AnimatePresence>
+              {showDetailUserMenu && userLoggedIn && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm cursor-default"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDetailUserMenu(false);
+                    }}
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.16, ease: "easeOut" }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute right-0 top-[calc(100%+12px)] w-72 sm:w-80 rounded-[28px] bg-zinc-950/95 border border-white/20 backdrop-blur-3xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] p-4 z-50 text-white font-sans space-y-3"
+                  >
+                    {/* User Header */}
+                    <div className="px-1.5 py-1 flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-full overflow-hidden bg-white/10 border border-white/20 shrink-0 flex items-center justify-center shadow-inner">
+                        {userProfile?.avatar ? (
+                          <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-5 h-5 text-white" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-black uppercase text-white truncate">
+                            {userProfile?.venueName || userProfile?.name || "Usuario"}
+                          </p>
+                        </div>
+                        <p className="text-[11px] text-zinc-400 font-medium truncate">{userProfile?.email}</p>
+                        <span className="inline-block mt-1 px-2.5 py-0.5 rounded-md text-[9.5px] font-black uppercase tracking-wider bg-white/10 text-white border border-white/20">
+                          {userProfile?.type || "Organizador"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="space-y-2 font-sans">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowDetailUserMenu(false);
+                          onOpenDashboard?.();
+                        }}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.10] border border-white/10 hover:border-white/20 text-white transition-all active:scale-[0.98] cursor-pointer text-xs font-bold uppercase tracking-wider"
+                      >
+                        <span>Mi Perfil & Dashboard</span>
+                        <ChevronRight className="w-4 h-4 text-zinc-400" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowDetailUserMenu(false);
+                          onOpenCreate?.();
+                        }}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.10] border border-white/10 hover:border-white/20 text-white transition-all active:scale-[0.98] cursor-pointer text-xs font-bold uppercase tracking-wider"
+                      >
+                        <span>Publicar Evento</span>
+                        <ChevronRight className="w-4 h-4 text-zinc-400" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowDetailUserMenu(false);
+                          onLogout?.();
+                        }}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-red-400 hover:bg-red-500/10 border border-red-500/20 transition-all active:scale-[0.98] cursor-pointer text-xs font-bold uppercase tracking-wider mt-1"
+                      >
+                        <span>Cerrar Sesión</span>
+                        <LogOut className="w-4 h-4 text-red-400" />
+                      </button>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </header>

@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { assertSameOrigin, enforceRateLimit } from "@/lib/security";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const MASTER_FILE = path.join(DATA_DIR, "master_data.json");
@@ -56,7 +57,7 @@ const DEFAULT_MASTER_DATA: MasterData = {
       id: "rec_cubic_001",
       organizerName: "Cubic Loja",
       organizerType: "Discoteca",
-      organizerEmail: "mrshifu879@gmail.com",
+      organizerEmail: "cubic@loja.ec",
       eventTitle: "TRAP LOUD",
       eventDate: "30 AGO 2026",
       totalSales: 18450,
@@ -150,7 +151,17 @@ function writeMasterData(data: MasterData) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  try {
+    enforceRateLimit(req, {
+      namespace: "master-api-get",
+      limit: 60,
+      windowMs: 60_000,
+    });
+  } catch (err: any) {
+    return NextResponse.json({ ok: false, error: err.message }, { status: 429 });
+  }
+
   const data = readMasterData();
   const totalRecaudado = data.receivables.reduce((acc, r) => acc + r.totalSales, 0);
   const totalComisiones = data.receivables.reduce((acc, r) => acc + r.commissionAmount, 0);
@@ -175,8 +186,15 @@ export async function GET() {
   });
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    assertSameOrigin(req);
+    enforceRateLimit(req, {
+      namespace: "master-api-post",
+      limit: 20,
+      windowMs: 60_000,
+    });
+
     const body = await req.json();
     const { action } = body;
     const data = readMasterData();

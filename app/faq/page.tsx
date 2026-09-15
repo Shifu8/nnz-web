@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import Image from "next/image";
@@ -49,13 +49,16 @@ export default function FaqPage() {
         </Link>
       </header>
 
-      {/* Main Accordion Layout */}
-      <main className="max-w-4xl mx-auto px-6 py-16 sm:py-24 space-y-12">
-        <div className="space-y-4 text-left border-b border-zinc-200 pb-8">
+      {/* Main Accordion Layout - Centered */}
+      <main className="max-w-3xl mx-auto px-6 py-16 sm:py-24 space-y-12">
+        <div className="space-y-4 text-center max-w-2xl mx-auto border-b border-zinc-200 pb-8">
+          <span className="text-xs font-black uppercase tracking-widest text-zinc-400 block">
+            Centro de Respuestas
+          </span>
           <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-tighter text-zinc-950">
             PREGUNTAS FRECUENTES
           </h1>
-          <p className="text-lg sm:text-2xl text-zinc-700 font-medium leading-relaxed">
+          <p className="text-base sm:text-xl text-zinc-700 font-medium leading-relaxed pt-2">
             Respuestas simples a las dudas más comunes sobre reservas y entradas.
           </p>
         </div>

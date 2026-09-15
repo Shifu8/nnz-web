@@ -24,26 +24,16 @@ export default function OrganizerLoginPage() {
 
     const emailClean = form.email.trim().toLowerCase();
 
-    // Acceso directo preconfigurado para Cubic y Master
-    if (emailClean === "mrshifu879@gmail.com" || emailClean === "brandon.medina@unl.edu.ec") {
-      const isMaster = emailClean === "brandon.medina@unl.edu.ec";
-      const orgProfile = isMaster
-        ? {
-            id: "master_admin",
-            name: "Brandon Medina (4GO)",
-            business_name: "4GO",
-            email: "brandon.medina@unl.edu.ec",
-            type: "Organizador",
-            logo_url: "/images/logo_4go_black_white.png",
-          }
-        : {
-            id: "cubic",
-            name: "Cubic",
-            business_name: "CUBIC LOJA",
-            email: "mrshifu879@gmail.com",
-            type: "Discoteca / Club Nocturno",
-            logo_url: "/images/cubic-official-logo.png",
-          };
+    // Acceso directo preconfigurado para Master Superadmin
+    if (emailClean === "brandon.medina@unl.edu.ec") {
+      const orgProfile = {
+        id: "master_admin",
+        name: "Brandon Medina (4GO)",
+        business_name: "4GO",
+        email: "brandon.medina@unl.edu.ec",
+        type: "Organizador",
+        logo_url: "/images/logo_4go_black_white.png",
+      };
       localStorage.setItem("organizer_token", `token-${orgProfile.id}`);
       localStorage.setItem("organizer_refresh", `refresh-${orgProfile.id}`);
       localStorage.setItem("organizer_profile", JSON.stringify(orgProfile));
@@ -58,54 +48,32 @@ export default function OrganizerLoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.email, password: form.password }),
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al iniciar sesión");
 
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        setError(data?.error || data?.detail || "Credenciales incorrectas.");
-        return;
-      }
-
-      if (!data) {
-        setError("Respuesta del servidor no válida. Intenta de nuevo.");
-        return;
-      }
-
-      localStorage.setItem("organizer_token", data.access_token);
-      localStorage.setItem("organizer_refresh", data.refresh_token);
+      localStorage.setItem("organizer_token", data.token);
+      if (data.refresh_token) localStorage.setItem("organizer_refresh", data.refresh_token);
       localStorage.setItem("organizer_profile", JSON.stringify(data.organizer));
+
       router.push("/organizer/dashboard");
-    } catch {
-      setError("Error de conexión. Intenta de nuevo.");
+    } catch (err: any) {
+      setError(err.message || "Credenciales incorrectas.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleSocialLogin = (provider: string) => {
-    setSocialLoading(provider);
-    setError("");
+    setLoading(true);
     setTimeout(() => {
-      setSocialLoading(null);
-      // Asignar perfil predeterminado según el proveedor/cuenta
-      const isCubic = provider === "Google";
-      const isMaster = provider === "Apple";
-      const orgProfile = isMaster
-        ? {
-            id: "master_admin",
-            name: "Brandon Medina (4GO)",
-            business_name: "4GO",
-            email: "brandon.medina@unl.edu.ec",
-            type: "Organizador",
-            logo_url: "/images/logo_4go_black_white.png",
-          }
-        : {
-            id: "cubic",
-            name: "Cubic",
-            business_name: "CUBIC LOJA",
-            email: "mrshifu879@gmail.com",
-            type: "Discoteca / Club Nocturno",
-            logo_url: "/images/cubic-official-logo.png",
-          };
+      const orgProfile = {
+        id: "master_admin",
+        name: "Brandon Medina (4GO)",
+        business_name: "4GO",
+        email: "brandon.medina@unl.edu.ec",
+        type: "Organizador",
+        logo_url: "/images/logo_4go_black_white.png",
+      };
       localStorage.setItem("organizer_token", `token-${orgProfile.id}`);
       localStorage.setItem("organizer_refresh", `refresh-${orgProfile.id}`);
       localStorage.setItem("organizer_profile", JSON.stringify(orgProfile));

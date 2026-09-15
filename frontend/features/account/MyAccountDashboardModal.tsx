@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
@@ -38,10 +38,13 @@ import {
   Search,
   AlertTriangle,
   XCircle,
+  ExternalLink,
+  Wine,
 } from "lucide-react";
 import Image from "next/image";
 import type { Event } from "@/frontend/types/domain";
 import TicketPassModal from "@/frontend/components/TicketPassModal";
+import BarManagementModal from "@/frontend/components/BarManagementModal";
 
 function getReceiptBankName(r: any): string {
   if (!r) return "Ahorita (Banco de Loja)";
@@ -111,7 +114,7 @@ export interface MyAccountDashboardModalProps {
   allEvents: Event[];
   onOpenEventDetail?: (event: Event) => void;
   onStartCreateEvent?: () => void;
-  initialTab?: "master_receivables" | "master_roles" | "events" | "tickets" | "reservations" | "favorites" | "partner_profile" | "payouts";
+  initialTab?: "master_receivables" | "master_roles" | "master_discounts_support" | "events" | "tickets" | "reservations" | "favorites" | "partner_profile" | "payouts";
 }
 
 export default function MyAccountDashboardModal({
@@ -128,12 +131,11 @@ export default function MyAccountDashboardModal({
     userProfile &&
     (userProfile.type === "Master Admin" ||
      userProfile.type === "master" ||
-     userProfile.email?.toLowerCase().trim() === "brandon.medina@unl.edu.ec" ||
-     userProfile.email?.toLowerCase().trim() === "master@4go.live")
+     userProfile.email?.toLowerCase().trim() === "brandon.medina@unl.edu.ec")
   );
 
   const [activeTab, setActiveTab] = useState<
-    "master_receivables" | "master_roles" | "events" | "tickets" | "reservations" | "favorites" | "partner_profile" | "payouts"
+    "master_receivables" | "master_roles" | "master_discounts_support" | "events" | "tickets" | "reservations" | "favorites" | "partner_profile" | "payouts"
   >(initialTab || (isMasterUser ? "master_receivables" : "events"));
 
   useEffect(() => {
@@ -151,6 +153,31 @@ export default function MyAccountDashboardModal({
   const [receiptsList, setReceiptsList] = useState<any[]>([]);
   const [loadingReceipts, setLoadingReceipts] = useState(false);
   const [receiptActionMessage, setReceiptActionMessage] = useState<string | null>(null);
+
+  // Master Discount Codes & Support Email state
+  const [discountCodesList, setDiscountCodesList] = useState<any[]>([
+    { id: "1", code: "4GO", discount: 5, active: true, eventId: "all", eventTitle: "Todos los eventos" },
+    { id: "2", code: "VIP", discount: 5, active: true, eventId: "all", eventTitle: "Todos los eventos" },
+    { id: "3", code: "LOJA", discount: 5, active: true, eventId: "all", eventTitle: "Todos los eventos" },
+    { id: "4", code: "DESCUENTO", discount: 5, active: true, eventId: "all", eventTitle: "Todos los eventos" },
+  ]);
+  const [newCodeName, setNewCodeName] = useState("");
+  const [newCodeDiscount, setNewCodeDiscount] = useState("5");
+  const [newCodeEventId, setNewCodeEventId] = useState<string>("all");
+  const [supportEmailInput, setSupportEmailInput] = useState("soporte.nenez@gmail.com");
+  const [supportEmailSaved, setSupportEmailSaved] = useState(false);
+
+  // Available events for discount code targeting
+  const selectableEvents = useMemo(() => {
+    const map = new Map<string, { id: string; title: string }>();
+    (allEvents || []).forEach((e: any) => {
+      if (e.id && e.title) map.set(e.id, { id: e.id, title: e.title });
+    });
+    (myCreatedEvents || []).forEach((e: any) => {
+      if (e.id && e.title && !map.has(e.id)) map.set(e.id, { id: e.id, title: e.title });
+    });
+    return Array.from(map.values());
+  }, [allEvents, myCreatedEvents]);
 
   // Partner Profile Edit state
   const [editBrandName, setEditBrandName] = useState(userProfile?.venueName || userProfile?.name || "");
@@ -185,6 +212,19 @@ export default function MyAccountDashboardModal({
   const [viewingTicketQr, setViewingTicketQr] = useState<any | null>(null);
   const [viewingReceiptImage, setViewingReceiptImage] = useState<any | null>(null);
   const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
+
+  // Bar Management Modal
+  const [barEvent, setBarEvent] = useState<Event | null>(null);
+
+  const prevIsOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (isOpen && !prevIsOpenRef.current) {
+      setManagingEvent(null);
+      setConfiguringEvent(null);
+    }
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && typeof window !== "undefined") {
@@ -275,7 +315,29 @@ export default function MyAccountDashboardModal({
         } else {
           setUserReservations([]);
         }
-        // 5. Check pending Master role requests
+
+        // 5. Real Discount Codes & Support Email
+        const storedCodes = localStorage.getItem("4go_discount_codes");
+        if (storedCodes) {
+          try {
+            const parsed = JSON.parse(storedCodes);
+            if (Array.isArray(parsed) && parsed.length > 0) setDiscountCodesList(parsed);
+          } catch {}
+        }
+
+        const storedEmail = localStorage.getItem("4go_support_email");
+        if (storedEmail) {
+          setSupportEmailInput(storedEmail);
+        } else {
+          fetch("/api/homepage-config")
+            .then((r) => r.json())
+            .then((d) => {
+              if (d?.config?.footer?.email) setSupportEmailInput(d.config.footer.email);
+            })
+            .catch(() => {});
+        }
+
+        // 6. Check pending Master role requests
         fetch("/api/master")
           .then((res) => res.json())
           .then((data) => {
@@ -526,6 +588,9 @@ export default function MyAccountDashboardModal({
     }
 
     const updated = { ...targetEvt, ...editEventForm } as Event;
+    if (updated.presales?.[0]?.price) {
+      updated.price = Number(updated.presales[0].price) || updated.price;
+    }
     if (managingEvent) setManagingEvent(updated);
     if (configuringEvent) setConfiguringEvent(updated);
 
@@ -535,9 +600,88 @@ export default function MyAccountDashboardModal({
       return list;
     });
 
-    setReceiptActionMessage("Evento actualizado correctamente.");
+    setReceiptActionMessage("Evento y fases de preventa actualizados correctamente.");
     setTimeout(() => setReceiptActionMessage(null), 3000);
     setConfiguringEvent(null);
+  };
+
+  const handleAddDiscountCode = (e: React.FormEvent) => {
+    e.preventDefault();
+    const codeClean = newCodeName.trim().toUpperCase();
+    const disc = Number(newCodeDiscount) || 2;
+    if (!codeClean) return;
+
+    const selectedEventObj = selectableEvents.find((evt) => evt.id === newCodeEventId);
+    const targetEventTitle = newCodeEventId === "all" ? "Todos los eventos" : (selectedEventObj?.title || "Evento específico");
+
+    const newEntry = {
+      id: `code-${Date.now()}`,
+      code: codeClean,
+      discount: disc,
+      active: true,
+      eventId: newCodeEventId,
+      eventTitle: targetEventTitle,
+    };
+
+    setDiscountCodesList((prev) => {
+      const next = [...prev.filter((c) => c.code !== codeClean), newEntry];
+      try {
+        localStorage.setItem("4go_discount_codes", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    setNewCodeName("");
+    setMasterToast(`Código ${codeClean} guardado para ${targetEventTitle}.`);
+    setTimeout(() => setMasterToast(null), 3000);
+  };
+
+  const handleToggleCode = (id: string) => {
+    setDiscountCodesList((prev) => {
+      const next = prev.map((c) => (c.id === id ? { ...c, active: !c.active } : c));
+      try {
+        localStorage.setItem("4go_discount_codes", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const handleDeleteCode = (id: string) => {
+    setDiscountCodesList((prev) => {
+      const next = prev.filter((c) => c.id !== id);
+      try {
+        localStorage.setItem("4go_discount_codes", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    setMasterToast("Código eliminado.");
+    setTimeout(() => setMasterToast(null), 2500);
+  };
+
+  const handleSaveSupportEmail = async () => {
+    const emailClean = supportEmailInput.trim().toLowerCase();
+    if (!emailClean) return;
+    try {
+      localStorage.setItem("4go_support_email", emailClean);
+      fetch("/api/admin/homepage-config", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Buffer.from("admin:nenez2026").toString("base64")}`,
+        },
+        body: JSON.stringify({
+          config: {
+            footer: { email: emailClean },
+          },
+        }),
+      }).catch(() => {});
+
+      setSupportEmailSaved(true);
+      setMasterToast("Correo de soporte actualizado correctamente.");
+      setTimeout(() => {
+        setSupportEmailSaved(false);
+        setMasterToast(null);
+      }, 3000);
+    } catch {}
   };
 
   const handleSavePartnerProfile = async (e: React.FormEvent) => {
@@ -579,6 +723,7 @@ export default function MyAccountDashboardModal({
     .reduce((acc, r) => acc + (Number(r.totalAmount) || Number(r.quantity || 1) * eventBasePrice), 0);
 
   return (
+    <>
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -587,7 +732,7 @@ export default function MyAccountDashboardModal({
           animate={{ opacity: 1, backdropFilter: "blur(24px)" }}
           exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
           transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed inset-0 z-[600] overflow-y-auto bg-black/90 backdrop-blur-2xl text-white selection:bg-[#dfff28] selection:text-black font-sans"
+          className="fixed inset-0 z-[1200] overflow-y-auto bg-black/90 backdrop-blur-2xl text-white selection:bg-[#dfff28] selection:text-black font-sans"
         >
         {/* Dynamic Atmospheric Ambient Atmosphere */}
         <div className="fixed inset-0 pointer-events-none overflow-hidden select-none z-0">
@@ -654,10 +799,24 @@ export default function MyAccountDashboardModal({
                     <button
                       type="button"
                       onClick={() => {
+                        onClose();
+                        if (onOpenEventDetail) {
+                          onOpenEventDetail(managingEvent);
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-xs font-black uppercase tracking-wider text-black transition-all active:scale-95 shadow-2xl cursor-pointer"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <span>Ir al Evento ↗</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
                         setConfiguringEvent(managingEvent);
                         setEditEventForm({ ...managingEvent });
                       }}
-                      className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-black/70 hover:bg-white/20 border border-white/20 hover:border-white/40 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-xl transition-all duration-200 active:scale-95 shadow-2xl cursor-pointer"
+                      className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full bg-black/70 hover:bg-white/20 border border-white/20 hover:border-white/40 text-xs font-bold uppercase tracking-wider text-white backdrop-blur-xl transition-all duration-200 active:scale-95 shadow-2xl cursor-pointer"
                     >
                       <span>Configuración del Evento</span>
                     </button>
@@ -757,13 +916,13 @@ export default function MyAccountDashboardModal({
                                   onClick={() => setSelectedReceiptId(r.id)}
                                   className={`p-3.5 rounded-2xl transition-all cursor-pointer border flex flex-col justify-between space-y-3 ${
                                     isSelected
-                                      ? "bg-zinc-900 border-[#dfff28] shadow-[0_0_20px_rgba(223,255,40,0.15)] ring-1 ring-[#dfff28]"
+                                      ? "bg-zinc-900 border-white shadow-[0_0_20px_rgba(255,255,255,0.12)] ring-1 ring-white/50"
                                       : "bg-black/50 hover:bg-zinc-900/80 border-white/10"
                                   }`}
                                 >
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0">
-                                      <h4 className={`text-xs font-black uppercase truncate ${isSelected ? "text-[#dfff28]" : "text-white"}`}>
+                                      <h4 className="text-xs font-black uppercase truncate text-white">
                                         {r.firstName || "Comprador"} {r.lastName || ""}
                                       </h4>
                                       <p className="text-[11px] text-zinc-400 font-bold mt-0.5">
@@ -777,7 +936,7 @@ export default function MyAccountDashboardModal({
                                           ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                                           : isRejected
                                           ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                                          : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                                          : "bg-white/10 text-white border border-white/20"
                                       }`}
                                     >
                                       {isApproved ? "Confirmado" : isRejected ? "Rechazado" : "Por Verificar"}
@@ -795,9 +954,9 @@ export default function MyAccountDashboardModal({
                                       e.stopPropagation();
                                       setViewingReceiptImage(r);
                                     }}
-                                    className="w-full py-1.5 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer border border-white/10"
+                                    className="w-full py-2 px-2.5 rounded-xl bg-white hover:bg-zinc-200 text-black font-black text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-md"
                                   >
-                                    <Eye className="w-3 h-3 text-[#dfff28]" />
+                                    <Eye className="w-3.5 h-3.5 text-black stroke-[2.5]" />
                                     <span>Ver Comprobante</span>
                                   </button>
                                 </div>
@@ -811,7 +970,7 @@ export default function MyAccountDashboardModal({
                       {activeReceipt && (
                         <div className="p-5 rounded-3xl bg-black/60 border border-white/10 backdrop-blur-xl space-y-4">
                           <h3 className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-2">
-                            <User className="w-3.5 h-3.5 text-[#dfff28]" />
+                            <User className="w-3.5 h-3.5 text-white" />
                             <span>Datos del Comprador</span>
                           </h3>
 
@@ -912,7 +1071,7 @@ export default function MyAccountDashboardModal({
                               <button
                                 type="button"
                                 onClick={() => handleReviewReceipt(activeReceipt.id, "aprobado")}
-                                className="w-full py-4 px-4 rounded-2xl bg-[#dfff28] hover:bg-[#ebff52] text-black font-black text-xs sm:text-sm uppercase tracking-widest shadow-2xl transition active:scale-[0.98] cursor-pointer"
+                                className="w-full py-4 px-4 rounded-2xl bg-black hover:bg-zinc-800 text-white font-black text-xs sm:text-sm uppercase tracking-widest shadow-2xl transition active:scale-[0.98] cursor-pointer"
                               >
                                 <span>ACEPTAR Y EMITIR ENTRADA</span>
                               </button>
@@ -988,11 +1147,7 @@ export default function MyAccountDashboardModal({
                     <h2 className="text-sm sm:text-base font-black uppercase tracking-tight text-white truncate">
                       {isMasterUser ? "PANEL MASTER 4GO" : (userProfile?.venueName || userProfile?.name || "Mi Cuenta")}
                     </h2>
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                      isMasterUser
-                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                        : "bg-white/10 text-zinc-200 border border-white/15"
-                    }`}>
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-white/10 text-white border border-white/20">
                       {isMasterUser ? "Master Admin" : "Partner 4GO"}
                     </span>
                   </div>
@@ -1061,6 +1216,22 @@ export default function MyAccountDashboardModal({
                     <span>
                       Solicitudes Discoteca ({masterRoleRequests.filter((r) => r.status === "pendiente").length})
                     </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("master_discounts_support");
+                      setManagingEvent(null);
+                    }}
+                    className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                      activeTab === "master_discounts_support"
+                        ? "bg-white text-black font-black shadow-lg"
+                        : "text-zinc-300 hover:text-white hover:bg-white/10 border border-white/10"
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Descuentos &amp; Soporte</span>
                   </button>
                 </>
               )}
@@ -1595,6 +1766,197 @@ export default function MyAccountDashboardModal({
               </div>
             )}
 
+            {/* TAB MASTER: DESCUENTOS & CORREO DE SOPORTE */}
+            {activeTab === "master_discounts_support" && isMasterUser && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-white">
+                    Gestión de Códigos de Descuento &amp; Correo de Soporte
+                  </h2>
+                  <p className="text-xs sm:text-sm text-zinc-400 font-medium mt-1">
+                    Configura los cupones promocionales válidos en el checkout y el correo oficial de atención al cliente.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Left Column: Códigos de Descuento (7 cols) */}
+                  <div className="lg:col-span-7 space-y-4">
+                    <div className="p-6 rounded-3xl bg-zinc-900/90 border border-zinc-800 space-y-4 shadow-xl">
+                      <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                        <h3 className="text-sm font-black uppercase tracking-wider text-white">
+                          Códigos de Descuento Activos
+                        </h3>
+                        <span className="text-xs font-mono text-zinc-400">
+                          {discountCodesList.filter((c) => c.active).length} activos
+                        </span>
+                      </div>
+
+                      {/* Add Code Form */}
+                      <form onSubmit={handleAddDiscountCode} className="p-4 rounded-2xl bg-black/60 border border-zinc-800 space-y-3">
+                        <span className="text-xs font-bold uppercase tracking-wider text-zinc-300 block">
+                          Crear Nuevo Código Promocional
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                              Código (Texto)
+                            </label>
+                            <input
+                              type="text"
+                              value={newCodeName}
+                              onChange={(e) => setNewCodeName(e.target.value)}
+                              placeholder="Ej. FUGALIVE"
+                              className="w-full px-3.5 py-2 rounded-xl bg-black border border-zinc-700 text-xs font-black uppercase tracking-wider text-white placeholder:text-zinc-600 focus:outline-none focus:border-white"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                              Descuento ($ USD)
+                            </label>
+                            <input
+                              type="number"
+                              value={newCodeDiscount}
+                              onChange={(e) => setNewCodeDiscount(e.target.value)}
+                              min="1"
+                              max="100"
+                              className="w-full px-3.5 py-2 rounded-xl bg-black border border-zinc-700 text-xs font-bold text-white focus:outline-none focus:border-white"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                              Aplica a Evento
+                            </label>
+                            <select
+                              value={newCodeEventId}
+                              onChange={(e) => setNewCodeEventId(e.target.value)}
+                              className="w-full px-3 py-2 rounded-xl bg-black border border-zinc-700 text-xs font-bold text-white focus:outline-none focus:border-white truncate"
+                            >
+                              <option value="all">⚡ Todos los eventos (Global)</option>
+                              {selectableEvents.map((evt) => (
+                                <option key={evt.id} value={evt.id}>
+                                  🎯 {evt.title}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={!newCodeName.trim()}
+                          className="w-full py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-black uppercase tracking-wider transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-md active:scale-98"
+                        >
+                          + Guardar Código de Descuento
+                        </button>
+                      </form>
+
+                      {/* List of Codes */}
+                      <div className="space-y-2 pt-1">
+                        {discountCodesList.map((c) => (
+                          <div
+                            key={c.id}
+                            className="p-3.5 rounded-2xl bg-black/40 border border-zinc-800/80 hover:border-zinc-700 transition flex items-center justify-between gap-3"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-700 font-mono font-black text-xs text-white uppercase tracking-wider shrink-0">
+                                {c.code}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-xs font-black text-white">
+                                    -${c.discount}.00 USD
+                                  </span>
+                                  {c.eventId && c.eventId !== "all" ? (
+                                    <span className="px-2 py-0.5 rounded-md bg-purple-950/60 border border-purple-500/30 text-purple-300 text-[10px] font-bold truncate max-w-[170px]" title={c.eventTitle || "Evento específico"}>
+                                      Solo: {c.eventTitle || "Evento específico"}
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 py-0.5 rounded-md bg-zinc-800 border border-zinc-700 text-zinc-400 text-[10px] font-bold">
+                                      Todos los eventos
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="text-[10px] text-zinc-400 block font-medium">
+                                  {c.active ? "Válido en checkout" : "Desactivado"}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleCode(c.id)}
+                                className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider transition cursor-pointer ${
+                                  c.active
+                                    ? "bg-emerald-950/60 text-emerald-400 border border-emerald-500/30"
+                                    : "bg-zinc-900 text-zinc-400 border border-zinc-700"
+                                }`}
+                              >
+                                {c.active ? "Activo" : "Pausado"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCode(c.id)}
+                                className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 transition cursor-pointer"
+                                title="Eliminar código"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Correo de Soporte (5 cols) */}
+                  <div className="lg:col-span-5 space-y-4">
+                    <div className="p-6 rounded-3xl bg-zinc-900/90 border border-zinc-800 space-y-4 shadow-xl">
+                      <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+                        <h3 className="text-sm font-black uppercase tracking-wider text-white">
+                          Correo de Soporte Oficial
+                        </h3>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 font-mono">
+                          Público
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-zinc-400 font-medium leading-relaxed">
+                        Este correo electrónico se muestra a los compradores en la página de ayuda (/help) y en el pie de página de la aplicación.
+                      </p>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
+                          Email de Atención al Cliente
+                        </label>
+                        <input
+                          type="email"
+                          value={supportEmailInput}
+                          onChange={(e) => setSupportEmailInput(e.target.value)}
+                          placeholder="soporte.nenez@gmail.com"
+                          className="w-full px-4 py-3 rounded-2xl bg-black border border-zinc-700 text-xs font-bold text-white focus:outline-none focus:border-white transition"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleSaveSupportEmail}
+                        className="w-full py-3.5 rounded-full bg-white hover:bg-zinc-200 text-black text-xs font-black uppercase tracking-widest transition cursor-pointer shadow-xl active:scale-95 flex items-center justify-center gap-2"
+                      >
+                        {supportEmailSaved ? (
+                          <>
+                            <Check className="w-4 h-4 text-emerald-600" />
+                            <span>¡Correo Guardado!</span>
+                          </>
+                        ) : (
+                          <span>Guardar Correo Oficial</span>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* TAB 1: MIS EVENTOS */}
             {activeTab === "events" && (
               <div className="space-y-6">
@@ -1645,26 +2007,40 @@ export default function MyAccountDashboardModal({
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-                    {myCreatedEvents.map((evt) => {
+                    {myCreatedEvents.map((evt, idx) => {
                       const eventDateStr = evt.date || evt.startsAt || "";
                       const isPast = eventDateStr ? new Date(eventDateStr).getTime() < new Date().setHours(0, 0, 0, 0) : false;
                       const displayVenue = (evt.venue && !evt.venue.toLowerCase().startsWith("prueba") && evt.venue.toLowerCase() !== (userProfile?.venueName || "").toLowerCase()) ? evt.venue : "CUBIC";
 
                       return (
                         <div
-                          key={evt.id}
+                          key={evt.id || `created-evt-${idx}`}
                           className="p-5 rounded-3xl bg-zinc-900/90 border border-zinc-800 hover:border-zinc-700 transition flex flex-col justify-between space-y-4 shadow-xl backdrop-blur-md"
                         >
                           <div className="flex items-start gap-4">
-                            <div className="w-18 h-22 sm:w-20 sm:h-24 rounded-2xl overflow-hidden bg-black shrink-0 relative border border-zinc-700 shadow-md">
+                            <div
+                              onClick={() => {
+                                onClose();
+                                onOpenEventDetail?.(evt);
+                              }}
+                              className="w-18 h-22 sm:w-20 sm:h-24 rounded-2xl overflow-hidden bg-black shrink-0 relative border border-zinc-700 shadow-md cursor-pointer group hover:opacity-85 transition"
+                              title="Haz clic para ver el evento en vivo"
+                            >
                               <img
                                 src={evt.poster || "/images/4go_red_girl_showcase.jpg"}
                                 alt={evt.title}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                               />
                             </div>
                             <div className="space-y-1 min-w-0 flex-1">
-                              <h4 className="text-base font-black uppercase text-white truncate">
+                              <h4
+                                onClick={() => {
+                                  onClose();
+                                  onOpenEventDetail?.(evt);
+                                }}
+                                className="text-base font-black uppercase text-white truncate cursor-pointer hover:underline"
+                                title="Haz clic para ver el evento en vivo"
+                              >
                                 {evt.title}
                               </h4>
                               <p className="text-xs text-zinc-400 font-medium truncate">
@@ -1703,11 +2079,23 @@ export default function MyAccountDashboardModal({
 
                             <button
                               type="button"
+                              onClick={() => setBarEvent(evt)}
+                              className="w-full py-2 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-98"
+                            >
+                              <Wine className="w-3.5 h-3.5" />
+                              <span>Gestionar Bar</span>
+                            </button>
+
+                            <button
+                              type="button"
                               onClick={() => {
+                                const initialPresales = (evt.presales && Array.isArray(evt.presales) && evt.presales.length > 0)
+                                  ? evt.presales
+                                  : [{ id: Date.now(), name: "Preventa 1", price: evt.price || 10, duration: "1_semana", customEndDate: "" }];
                                 setConfiguringEvent(evt);
-                                setEditEventForm({ ...evt, venue: displayVenue });
+                                setEditEventForm({ ...evt, venue: displayVenue, presales: initialPresales });
                               }}
-                              className="w-full py-2 px-4 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700/60 text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-2 active:scale-98"
+                              className="w-full py-2 px-4 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-2 active:scale-98"
                             >
                               <span>Configuración & Opciones del Evento</span>
                             </button>
@@ -1854,9 +2242,9 @@ export default function MyAccountDashboardModal({
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {favoriteEvents.map((evt) => (
+                    {favoriteEvents.map((evt, idx) => (
                       <div
-                        key={evt.id}
+                        key={evt.id || `fav-${idx}`}
                         className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition flex flex-col justify-between space-y-3"
                       >
                         <div className="flex items-start gap-3">
@@ -2172,13 +2560,13 @@ export default function MyAccountDashboardModal({
         const isPast = eventDateStr ? new Date(eventDateStr).getTime() < new Date().setHours(0, 0, 0, 0) : false;
 
         return (
-          <div className="fixed inset-0 z-[800] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="fixed inset-0 z-[1300] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md font-sans">
             <div className="w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl overflow-y-auto max-h-[90vh]">
               <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-4 w-1 bg-[#dfff28] rounded-full" />
+                  <div className="h-4 w-1 bg-white rounded-full" />
                   <h3 className="text-lg font-black uppercase tracking-wider text-white">
-                    Configuración & Opciones del Evento
+                    Configuración &amp; Opciones del Evento
                   </h3>
                 </div>
                 <button
@@ -2212,7 +2600,7 @@ export default function MyAccountDashboardModal({
                   {configuringEvent.lineup && Array.isArray(configuringEvent.lineup) && configuringEvent.lineup.length > 1 ? (
                     configuringEvent.lineup.slice(1).map((coHost: string, idx: number) => (
                       <div
-                        key={idx}
+                        key={coHost || `cohost-${idx}`}
                         className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-black/60 border border-zinc-800 text-xs font-bold text-zinc-300"
                       >
                         <span>{coHost}</span>
@@ -2229,7 +2617,7 @@ export default function MyAccountDashboardModal({
                 </div>
               </div>
 
-              {/* 2. Editar Información del Evento */}
+              {/* 2. Editar Información del Evento & Preventas */}
               <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-4">
                 <form onSubmit={handleSaveEditedEvent} className="space-y-4">
                   <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
@@ -2264,7 +2652,7 @@ export default function MyAccountDashboardModal({
                         disabled={isPast}
                         value={editEventForm?.title || ""}
                         onChange={(e) => setEditEventForm((prev: any) => ({ ...prev, title: e.target.value }))}
-                        className="w-full px-4 py-2.5 rounded-xl bg-black/70 border border-zinc-800 text-xs sm:text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-[#dfff28]"
+                        className="w-full px-4 py-2.5 rounded-xl bg-black/70 border border-zinc-800 text-xs sm:text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-white"
                       />
                     </div>
 
@@ -2277,7 +2665,7 @@ export default function MyAccountDashboardModal({
                         disabled={isPast}
                         value={editEventForm?.subtitle || ""}
                         onChange={(e) => setEditEventForm((prev: any) => ({ ...prev, subtitle: e.target.value }))}
-                        className="w-full px-4 py-2.5 rounded-xl bg-black/70 border border-zinc-800 text-xs sm:text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-[#dfff28]"
+                        className="w-full px-4 py-2.5 rounded-xl bg-black/70 border border-zinc-800 text-xs sm:text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-white"
                       />
                     </div>
                   </div>
@@ -2292,7 +2680,7 @@ export default function MyAccountDashboardModal({
                         disabled={isPast}
                         value={editEventForm?.venue || ""}
                         onChange={(e) => setEditEventForm((prev: any) => ({ ...prev, venue: e.target.value }))}
-                        className="w-full px-4 py-2.5 rounded-xl bg-black/70 border border-zinc-800 text-xs sm:text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-[#dfff28]"
+                        className="w-full px-4 py-2.5 rounded-xl bg-black/70 border border-zinc-800 text-xs sm:text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-white"
                       />
                     </div>
 
@@ -2305,8 +2693,183 @@ export default function MyAccountDashboardModal({
                         disabled={isPast}
                         value={editEventForm?.price || 0}
                         onChange={(e) => setEditEventForm((prev: any) => ({ ...prev, price: Number(e.target.value) }))}
-                        className="w-full px-4 py-2.5 rounded-xl bg-black/70 border border-zinc-800 text-xs sm:text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-[#dfff28]"
+                        className="w-full px-4 py-2.5 rounded-xl bg-black/70 border border-zinc-800 text-xs sm:text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-white"
                       />
+                    </div>
+                  </div>
+
+                  {/* 3. Gestión de Preventas y Fases */}
+                  <div className="pt-2 space-y-3 border-t border-zinc-800">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-white">
+                          Fases de Preventa &amp; Entradas
+                        </h4>
+                        <p className="text-[11px] text-zinc-400 font-medium">
+                          Gestiona los nombres, precios y vigencia de las preventas de tu evento.
+                        </p>
+                      </div>
+                      {!isPast && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentPresales = editEventForm?.presales || [];
+                            const nextIndex = currentPresales.length + 1;
+                            const newPhase = {
+                              id: Date.now(),
+                              name: `Preventa ${nextIndex}`,
+                              price: (Number(currentPresales[currentPresales.length - 1]?.price) || editEventForm?.price || 10) + 5,
+                              duration: "1_semana",
+                              customEndDate: "",
+                            };
+                            setEditEventForm((prev: any) => ({
+                              ...prev,
+                              presales: [...(prev?.presales || []), newPhase],
+                            }));
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-white hover:bg-zinc-200 text-black text-[11px] font-black uppercase tracking-wider transition cursor-pointer flex items-center gap-1 shadow-sm"
+                        >
+                          <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                          <span>+ Agregar Preventa</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      {((editEventForm?.presales && Array.isArray(editEventForm.presales) && editEventForm.presales.length > 0)
+                        ? editEventForm.presales
+                        : [{ id: 1, name: "Preventa 1", price: editEventForm?.price || 10, duration: "1_semana", customEndDate: "" }]
+                      ).map((p: any, idx: number, arr: any[]) => (
+                        <div
+                          key={p.id || `presale-${idx}`}
+                          className="p-4 rounded-2xl bg-black/60 border border-zinc-800 space-y-3"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black uppercase tracking-wider text-zinc-300">
+                              Fase {idx + 1} {idx === 0 ? "(Fase Inicial)" : "(Siguiente Fase)"}
+                            </span>
+                            {arr.length > 1 && !isPast && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditEventForm((prev: any) => ({
+                                    ...prev,
+                                    presales: (prev?.presales || []).filter((_: any, i: number) => i !== idx),
+                                  }));
+                                }}
+                                className="text-[11px] font-bold text-red-400 hover:text-red-300 transition cursor-pointer"
+                              >
+                                Eliminar
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                                Nombre de la Preventa
+                              </label>
+                              <input
+                                type="text"
+                                disabled={isPast}
+                                value={p.name || ""}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditEventForm((prev: any) => {
+                                    const next = [...(prev?.presales || [])];
+                                    if (next[idx]) next[idx] = { ...next[idx], name: val };
+                                    return { ...prev, presales: next };
+                                  });
+                                }}
+                                placeholder="Ej. Preventa 1 (Early Bird)"
+                                className="w-full px-3.5 py-2 rounded-xl bg-black/80 border border-zinc-800 text-xs font-semibold text-white focus:outline-none focus:border-white"
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                                Precio ($ USD)
+                              </label>
+                              <input
+                                type="number"
+                                disabled={isPast}
+                                value={p.price || 0}
+                                onChange={(e) => {
+                                  const val = Number(e.target.value);
+                                  setEditEventForm((prev: any) => {
+                                    const next = [...(prev?.presales || [])];
+                                    if (next[idx]) next[idx] = { ...next[idx], price: val };
+                                    return { ...prev, presales: next };
+                                  });
+                                }}
+                                className="w-full px-3.5 py-2 rounded-xl bg-black/80 border border-zinc-800 text-xs font-semibold text-white focus:outline-none focus:border-white"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-zinc-400" />
+                                <span>Duración / Cierre de Preventa</span>
+                              </label>
+                              <select
+                                disabled={isPast}
+                                value={p.duration || "1_semana"}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setEditEventForm((prev: any) => {
+                                    const next = [...(prev?.presales || [])];
+                                    if (next[idx]) next[idx] = { ...next[idx], duration: val };
+                                    return { ...prev, presales: next };
+                                  });
+                                }}
+                                className="w-full px-3 py-2 rounded-xl bg-black/80 border border-zinc-800 text-xs font-semibold text-white focus:outline-none focus:border-white cursor-pointer"
+                              >
+                                <option value="1_semana">Dura 1 Semana (7 días)</option>
+                                <option value="2_semanas">Dura 2 Semanas (14 días)</option>
+                                <option value="3_dias">Dura 3 Días</option>
+                                <option value="hasta_evento">Hasta el día del evento</option>
+                                <option value="aforo">Hasta agotar aforo / cupos</option>
+                                <option value="fecha_custom">Fecha límite personalizada</option>
+                              </select>
+                            </div>
+
+                            {p.duration === "fecha_custom" ? (
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                                  Fecha de Cierre
+                                </label>
+                                <input
+                                  type="date"
+                                  disabled={isPast}
+                                  value={p.customEndDate || ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setEditEventForm((prev: any) => {
+                                      const next = [...(prev?.presales || [])];
+                                      if (next[idx]) next[idx] = { ...next[idx], customEndDate: val };
+                                      return { ...prev, presales: next };
+                                    });
+                                  }}
+                                  className="w-full px-3 py-2 rounded-xl bg-black/80 border border-zinc-800 text-xs font-semibold text-white focus:outline-none focus:border-white cursor-pointer"
+                                />
+                              </div>
+                            ) : (
+                              <div className="p-2.5 rounded-xl bg-black/40 border border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-400">
+                                <span>
+                                  {idx === 0
+                                    ? "Activa desde la publicación"
+                                    : `Se activa al vencer ${arr[idx - 1]?.name || 'fase previa'}`}
+                                </span>
+                                <span className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[9.5px] font-bold uppercase">
+                                  {idx === 0 ? "Fase 1" : `Fase ${idx + 1}`}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
@@ -2337,7 +2900,7 @@ export default function MyAccountDashboardModal({
       {/* ─── LIGHTBOX: SOLO LA IMAGEN DEL COMPROBANTE ─── */}
       {viewingReceiptImage && (
         <div
-          className="fixed inset-0 z-[850] flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-xl"
+          className="fixed inset-0 z-[1350] flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-xl"
           onClick={() => setViewingReceiptImage(null)}
         >
           <div
@@ -2389,5 +2952,18 @@ export default function MyAccountDashboardModal({
         ticket={viewingTicketQr}
       />
     </AnimatePresence>
+
+    {/* ─── BAR MANAGEMENT MODAL ─── */}
+    <BarManagementModal
+      isOpen={!!barEvent}
+      onClose={() => setBarEvent(null)}
+      event={barEvent ? {
+        id: barEvent.id,
+        title: barEvent.title,
+        date: barEvent.date,
+        dateLabel: barEvent.dateLabel,
+      } : null}
+    />
+    </>
   );
 }

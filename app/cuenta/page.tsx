@@ -166,15 +166,15 @@ function CuentaContent() {
         } else {
           // Default profile
           const defaultUser = {
-            id: "cubic",
-            name: "Cubic Club",
-            email: "mrshifu879@gmail.com",
-            avatar: "/images/cubic-official-logo.png",
-            venueName: "Cubic Club",
-            type: "Discoteca / Club",
+            id: "master_admin",
+            name: "Brandon Medina",
+            email: "brandon.medina@unl.edu.ec",
+            avatar: "/images/logo_4go_black_white.png",
+            venueName: "4GO",
+            type: "Organizador",
             city: "Loja",
-            instagram: "@cubic_loja",
-            address: "Av. Salvador Bustamante Celi y Guayaquil, Loja",
+            instagram: "@4gooooooooo",
+            address: "Loja, Ecuador",
             openingDays: ["Jueves", "Viernes", "Sábado"],
             hasCompletedOnboarding: true,
           };
@@ -182,7 +182,7 @@ function CuentaContent() {
           currentEmail = defaultUser.email;
           setEditBrandName(defaultUser.venueName);
           setEditBrandLogo(defaultUser.avatar);
-          setEditInstagram("cubic_loja");
+          setEditInstagram("4gooooooooo");
           setEditAddress(defaultUser.address);
         }
 
