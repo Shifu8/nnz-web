@@ -9,8 +9,13 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search")?.toLowerCase();
     const eventId = searchParams.get("eventId");
     const eventTitle = searchParams.get("eventTitle");
+    const email = searchParams.get("email")?.toLowerCase().trim();
 
     let receipts = loadAllReceipts();
+
+    if (email) {
+      receipts = receipts.filter((r) => r.email?.toLowerCase().trim() === email);
+    }
 
     if (eventId || eventTitle) {
       receipts = receipts.filter((r) => {

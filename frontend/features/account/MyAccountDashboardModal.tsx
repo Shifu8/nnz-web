@@ -114,7 +114,7 @@ export interface MyAccountDashboardModalProps {
   allEvents: Event[];
   onOpenEventDetail?: (event: Event) => void;
   onStartCreateEvent?: () => void;
-  initialTab?: "master_receivables" | "master_roles" | "master_discounts_support" | "events" | "tickets" | "reservations" | "favorites" | "partner_profile" | "payouts";
+  initialTab?: "master_receivables" | "master_roles" | "master_discounts_support" | "events" | "tickets" | "reservations" | "favorites" | "partner_profile" | "payouts" | "user_info";
 }
 
 export default function MyAccountDashboardModal({
@@ -135,7 +135,7 @@ export default function MyAccountDashboardModal({
   );
 
   const [activeTab, setActiveTab] = useState<
-    "master_receivables" | "master_roles" | "master_discounts_support" | "events" | "tickets" | "reservations" | "favorites" | "partner_profile" | "payouts"
+    "master_receivables" | "master_roles" | "master_discounts_support" | "events" | "tickets" | "reservations" | "favorites" | "partner_profile" | "payouts" | "user_info"
   >(initialTab || (isMasterUser ? "master_receivables" : "events"));
 
   useEffect(() => {
@@ -253,7 +253,10 @@ export default function MyAccountDashboardModal({
 
         // Fetch server events and merge with user profile
         fetch("/api/events")
-          .then((res) => res.json())
+          .then((res) => {
+            if (!res.ok) throw new Error("Status " + res.status);
+            return res.json();
+          })
           .then((data) => {
             if (data?.events && Array.isArray(data.events)) {
               const activeUserNames = [
@@ -284,7 +287,9 @@ export default function MyAccountDashboardModal({
               });
             }
           })
-          .catch((e) => console.error("Error fetching created events from /api/events:", e));
+          .catch((e) => {
+            // Silently fallback without crashing JSON parser
+          });
 
         // 2. Real Favorites (Connected to billboard hearts)
         const favKey = currentEmail ? `user_favorites_${currentEmail}` : "organizer_favorites";
@@ -298,14 +303,56 @@ export default function MyAccountDashboardModal({
           setFavoriteEvents([]);
         }
 
-        // 3. Real Purchased Tickets
-        const storedPurchases = localStorage.getItem("nenez_purchased_tickets");
-        if (storedPurchases) {
-          const parsed = JSON.parse(storedPurchases);
-          setUserPurchasedTickets(Array.isArray(parsed) ? parsed : []);
-        } else {
-          setUserPurchasedTickets([]);
-        }
+        // 3. Real Purchased Tickets (Server API + LocalStorage)
+        const loadUserTickets = async () => {
+          let serverTickets: any[] = [];
+          if (currentEmail) {
+            try {
+              const res = await fetch(`/api/access-drop/receipts?email=${encodeURIComponent(currentEmail)}`).catch(() => null);
+              if (res && res.ok) {
+                const data = await res.json().catch(() => ({}));
+                if (data.receipts && Array.isArray(data.receipts)) {
+                  serverTickets = data.receipts.map((r: any) => ({
+                    id: r.id,
+                    eventId: r.eventId || "evento",
+                    eventTitle: r.eventTitle || "Evento 4GO",
+                    venue: "Lugar del Evento",
+                    date: r.createdAt ? new Date(r.createdAt).toLocaleDateString("es-EC") : "Fecha",
+                    quantity: r.quantity || 1,
+                    tierName: "Acceso General",
+                    totalAmount: r.totalAmount || 10,
+                    status: r.status === "aprobado" ? "confirmed" : r.status === "rechazado" ? "rejected" : "en_verificacion",
+                    referenceNumber: r.referenceNumber,
+                    serialNumber: r.serialNumber,
+                    qrCode: r.qrPayload || `4GO-${r.serialNumber || r.id}`,
+                    ticketDesign: r.ticketDesign,
+                  }));
+                }
+              }
+            } catch {}
+          }
+
+          let localTickets: any[] = [];
+          try {
+            const userTicketKey = currentEmail ? `user_tickets_${currentEmail}` : null;
+            const storedPurchases = (userTicketKey ? localStorage.getItem(userTicketKey) : null) || localStorage.getItem("nenez_purchased_tickets");
+            if (storedPurchases) {
+              const parsed = JSON.parse(storedPurchases);
+              if (Array.isArray(parsed)) localTickets = parsed;
+            }
+          } catch {}
+
+          const merged = [...serverTickets];
+          localTickets.forEach((lt) => {
+            if (!merged.some((m) => m.id === lt.id || (m.referenceNumber && m.referenceNumber === lt.referenceNumber))) {
+              merged.push(lt);
+            }
+          });
+
+          setUserPurchasedTickets(merged);
+        };
+
+        loadUserTickets();
 
         // 4. Real Reservations
         const storedRes = localStorage.getItem("4go_user_reservations");
@@ -1117,72 +1164,71 @@ export default function MyAccountDashboardModal({
           /* ─── CASE B: PANEL PRINCIPAL (CUENTA ORGANIZADOR / DISCOTECA / MASTER ADMIN) ─── */
           <div className="relative z-10 flex flex-col min-h-screen">
             {/* Top Navigation Header Bar */}
-            <header className="sticky top-0 inset-x-0 z-40 flex items-center justify-between px-4 sm:px-8 py-4 bg-black/85 backdrop-blur-xl border-b border-white/10">
-              <div className="flex items-center gap-3">
+            <header className="sticky top-0 inset-x-0 z-40 px-4 sm:px-8 py-3 sm:py-4 bg-black/90 backdrop-blur-2xl border-b border-white/10">
+              <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 sm:gap-6">
+                {/* Left: Volver a Cartelera */}
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-black/70 hover:bg-white/20 border border-white/20 hover:border-white/40 text-white backdrop-blur-xl transition-all duration-200 cursor-pointer shadow-2xl active:scale-95 text-xs font-bold uppercase tracking-wider"
+                  className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white transition active:scale-95 shrink-0 cursor-pointer shadow-lg"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span>Volver a Cartelera</span>
+                  <span className="hidden xs:inline sm:inline">Volver</span>
+                  <span className="inline xs:hidden sm:hidden">Atrás</span>
                 </button>
-              </div>
 
-              {/* Profile / Venue Branding */}
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-700 overflow-hidden flex items-center justify-center shrink-0 shadow-md">
-                  {userProfile?.avatar ? (
-                    <img
-                      src={userProfile.avatar}
-                      alt={userProfile.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-5 h-5 text-zinc-400" />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-sm sm:text-base font-black uppercase tracking-tight text-white truncate">
-                      {isMasterUser ? "PANEL MASTER 4GO" : (userProfile?.venueName || userProfile?.name || "Mi Cuenta")}
-                    </h2>
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-white/10 text-white border border-white/20">
-                      {isMasterUser ? "Master Admin" : "Partner 4GO"}
-                    </span>
+                {/* Middle: Profile / User Branding */}
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 justify-start sm:justify-center">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 border border-white/20 overflow-hidden flex items-center justify-center shrink-0 shadow-inner">
+                    <User className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </div>
-                  <p className="text-[11px] text-zinc-400 font-medium truncate max-w-xs">{userProfile?.email}</p>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h2 className="text-xs sm:text-sm font-black uppercase tracking-tight text-white truncate max-w-[120px] xs:max-w-[180px] sm:max-w-none">
+                        {isMasterUser ? "PANEL MASTER 4GO" : (userProfile?.name || "Mi Cuenta")}
+                      </h2>
+                      {isMasterUser && (
+                        <span className="px-1.5 py-0.5 rounded-md text-[8.5px] sm:text-[9px] font-black uppercase tracking-wider bg-white/15 text-white border border-white/20 shrink-0">
+                          Master Admin
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] sm:text-[11px] text-zinc-400 font-medium truncate max-w-[130px] xs:max-w-[200px] sm:max-w-xs">{userProfile?.email}</p>
+                  </div>
                 </div>
-              </div>
 
-              {/* Right: Publish Event + Close Button */}
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    onClose();
-                    onStartCreateEvent?.();
-                  }}
-                  className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-full bg-white hover:bg-zinc-200 text-black text-xs font-black uppercase tracking-wider transition-all duration-200 cursor-pointer shadow-2xl active:scale-95"
-                >
-                  <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                  <span>Publicar Evento</span>
-                </button>
+                {/* Right: Publish Event (Master Only) + Close Button */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {isMasterUser && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onStartCreateEvent?.();
+                      }}
+                      className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full bg-white hover:bg-zinc-200 text-black text-[11px] sm:text-xs font-black uppercase tracking-wider transition duration-200 cursor-pointer shadow-lg active:scale-95 shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                      <span className="hidden sm:inline">Publicar Evento</span>
+                      <span className="inline sm:hidden">Publicar</span>
+                    </button>
+                  )}
 
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="w-10 h-10 rounded-full bg-black/70 hover:bg-white/20 border border-white/20 hover:border-white/40 text-white backdrop-blur-xl flex items-center justify-center transition-all duration-200 cursor-pointer shadow-2xl active:scale-95 text-sm font-bold"
-                  title="Cerrar"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white flex items-center justify-center transition duration-200 cursor-pointer shadow-lg active:scale-95 text-sm font-bold shrink-0"
+                    title="Cerrar"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </header>
 
             {/* Tab Navigation Strip */}
-            <div className="sticky top-[73px] z-30 flex items-center gap-2 px-4 sm:px-8 py-3 bg-black/75 backdrop-blur-xl border-b border-white/10 overflow-x-auto no-scrollbar shrink-0 text-xs font-bold uppercase tracking-wider">
-              {isMasterUser && (
+            <div className="sticky top-[61px] sm:top-[73px] z-30 flex items-center gap-2 px-4 sm:px-8 py-2.5 bg-black/85 backdrop-blur-xl border-b border-white/10 overflow-x-auto no-scrollbar shrink-0 text-xs font-bold uppercase tracking-wider">
+              {isMasterUser ? (
                 <>
                   <button
                     type="button"
@@ -1190,7 +1236,7 @@ export default function MyAccountDashboardModal({
                       setActiveTab("master_receivables");
                       setManagingEvent(null);
                     }}
-                    className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                    className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
                       activeTab === "master_receivables"
                         ? "bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black shadow-lg shadow-amber-500/20"
                         : "text-amber-300 hover:text-white hover:bg-amber-500/15 border border-amber-500/30"
@@ -1206,7 +1252,7 @@ export default function MyAccountDashboardModal({
                       setActiveTab("master_roles");
                       setManagingEvent(null);
                     }}
-                    className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                    className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
                       activeTab === "master_roles"
                         ? "bg-white text-black font-black shadow-lg"
                         : "text-purple-300 hover:text-white hover:bg-purple-500/15 border border-purple-500/30"
@@ -1224,7 +1270,7 @@ export default function MyAccountDashboardModal({
                       setActiveTab("master_discounts_support");
                       setManagingEvent(null);
                     }}
-                    className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                    className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
                       activeTab === "master_discounts_support"
                         ? "bg-white text-black font-black shadow-lg"
                         : "text-zinc-300 hover:text-white hover:bg-white/10 border border-white/10"
@@ -1233,104 +1279,136 @@ export default function MyAccountDashboardModal({
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>Descuentos &amp; Soporte</span>
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("events");
+                      setManagingEvent(null);
+                    }}
+                    className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                      activeTab === "events"
+                        ? "bg-white text-black font-black shadow-lg"
+                        : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
+                    }`}
+                  >
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>Mis Eventos ({myCreatedEvents.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("tickets");
+                      setManagingEvent(null);
+                    }}
+                    className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                      activeTab === "tickets"
+                        ? "bg-white text-black font-black shadow-lg"
+                        : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
+                    }`}
+                  >
+                    <Ticket className="w-3.5 h-3.5" />
+                    <span>Mis Tickets ({userPurchasedTickets.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("favorites");
+                      setManagingEvent(null);
+                    }}
+                    className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                      activeTab === "favorites"
+                        ? "bg-white text-black font-black shadow-lg"
+                        : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
+                    }`}
+                  >
+                    <Heart className="w-3.5 h-3.5" />
+                    <span>Mis Favoritos ({favoriteEvents.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("partner_profile");
+                      setManagingEvent(null);
+                    }}
+                    className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                      activeTab === "partner_profile"
+                        ? "bg-white text-black font-black shadow-lg"
+                        : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
+                    }`}
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Datos de Partner</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("payouts");
+                      setManagingEvent(null);
+                    }}
+                    className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                      activeTab === "payouts"
+                        ? "bg-white text-black font-black shadow-lg"
+                        : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
+                    }`}
+                  >
+                    <CreditCard className="w-3.5 h-3.5" />
+                    <span>Pagos y Liquidaciones</span>
+                  </button>
+                </>
+              ) : (
+                /* REGULAR USER TABS (Clean, No Partner, No Event Creation) */
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("tickets");
+                      setManagingEvent(null);
+                    }}
+                    className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                      activeTab === "tickets"
+                        ? "bg-white text-black font-black shadow-lg"
+                        : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
+                    }`}
+                  >
+                    <span>Mis Tickets ({userPurchasedTickets.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("favorites");
+                      setManagingEvent(null);
+                    }}
+                    className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                      activeTab === "favorites"
+                        ? "bg-white text-black font-black shadow-lg"
+                        : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
+                    }`}
+                  >
+                    <span>Mis Favoritos ({favoriteEvents.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("user_info");
+                      setManagingEvent(null);
+                    }}
+                    className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                      activeTab === "user_info"
+                        ? "bg-white text-black font-black shadow-lg"
+                        : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
+                    }`}
+                  >
+                    <span>Mis Datos</span>
+                  </button>
                 </>
               )}
-
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab("events");
-                  setManagingEvent(null);
-                }}
-                className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-                  activeTab === "events"
-                    ? "bg-white text-black font-black shadow-lg"
-                    : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
-                }`}
-              >
-                <Calendar className="w-3.5 h-3.5" />
-                <span>Mis Eventos ({myCreatedEvents.length})</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab("tickets");
-                  setManagingEvent(null);
-                }}
-                className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-                  activeTab === "tickets"
-                    ? "bg-white text-black font-black shadow-lg"
-                    : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
-                }`}
-              >
-                <Ticket className="w-3.5 h-3.5" />
-                <span>Mis Tickets ({userPurchasedTickets.length})</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab("reservations");
-                  setManagingEvent(null);
-                }}
-                className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-                  activeTab === "reservations"
-                    ? "bg-white text-black font-black shadow-lg"
-                    : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
-                }`}
-              >
-                <Building2 className="w-3.5 h-3.5" />
-                <span>Mis Reservas</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab("favorites");
-                  setManagingEvent(null);
-                }}
-                className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-                  activeTab === "favorites"
-                    ? "bg-white text-black font-black shadow-lg"
-                    : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
-                }`}
-              >
-                <Heart className="w-3.5 h-3.5" />
-                <span>Mis Favoritos ({favoriteEvents.length})</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab("partner_profile");
-                  setManagingEvent(null);
-                }}
-                className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-                  activeTab === "partner_profile"
-                    ? "bg-white text-black font-black shadow-lg"
-                    : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Datos de Partner</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab("payouts");
-                  setManagingEvent(null);
-                }}
-                className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-                  activeTab === "payouts"
-                    ? "bg-white text-black font-black shadow-lg"
-                    : "text-zinc-400 hover:text-white hover:bg-white/10 border border-white/5"
-                }`}
-              >
-                <CreditCard className="w-3.5 h-3.5" />
-                <span>Pagos y Liquidaciones</span>
-              </button>
             </div>
 
             {/* Main Content Area */}
@@ -2497,12 +2575,12 @@ export default function MyAccountDashboardModal({
               </form>
             )}
 
-            {/* TAB 6: PAGOS Y LIQUIDACIONES */}
-            {activeTab === "payouts" && (
+            {/* TAB 6: PAGOS Y LIQUIDACIONES (Master Only) */}
+            {activeTab === "payouts" && isMasterUser && (
               <div className="space-y-5">
                 <div>
                   <h3 className="text-lg font-black uppercase tracking-tight text-white">
-                    Historial de Liquidaciones & Recaudación
+                    Historial de Liquidaciones &amp; Recaudación
                   </h3>
                   <p className="text-xs text-zinc-400 font-medium">
                     Liquidaciones automáticas a tu cuenta bancaria registrada en Ecuador.
@@ -2545,6 +2623,66 @@ export default function MyAccountDashboardModal({
                   <p className="text-xs text-zinc-300 font-medium">
                     Banco de Loja / Banco Pichincha • Cuenta Corriente • <span className="font-mono text-white">****-4819</span>
                   </p>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 7: MIS DATOS (Usuario Normal) */}
+            {activeTab === "user_info" && (
+              <div className="space-y-6 max-w-2xl">
+                <div>
+                  <h3 className="text-lg font-black uppercase tracking-tight text-white">
+                    Datos de la Cuenta
+                  </h3>
+                  <p className="text-xs text-zinc-400 font-medium">
+                    Información personal asociada a tus entradas y accesos oficiales en 4GO.
+                  </p>
+                </div>
+
+                <div className="p-6 rounded-3xl bg-zinc-950 border border-white/10 space-y-5">
+                  <div className="flex items-center gap-4 pb-5 border-b border-white/10">
+                    <div className="w-14 h-14 rounded-full bg-zinc-800 border border-white/20 flex items-center justify-center shrink-0">
+                      <User className="w-7 h-7 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="text-base font-black text-white uppercase tracking-tight">
+                        {userProfile?.name || "Usuario"}
+                      </h4>
+                      <p className="text-xs text-zinc-400 font-mono mt-0.5">{userProfile?.email}</p>
+                      <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-white/10 text-white border border-white/20">
+                        Cuenta Verificada
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 space-y-1">
+                      <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider block">Nombre</span>
+                      <p className="text-xs font-bold text-white uppercase">{userProfile?.name || "No especificado"}</p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 space-y-1">
+                      <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider block">Correo Electrónico</span>
+                      <p className="text-xs font-bold text-white truncate">{userProfile?.email || "Sin correo"}</p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 space-y-1">
+                      <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider block">Ubicación</span>
+                      <p className="text-xs font-bold text-white">Loja, Ecuador</p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 space-y-1">
+                      <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider block">Estado de Membresía</span>
+                      <p className="text-xs font-bold text-white">Activo • Acceso Digital</p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1.5">
+                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider block">Seguridad &amp; Privacidad</span>
+                    <p className="text-xs text-zinc-400 font-normal leading-relaxed">
+                      Tus compras, entradas digitales y códigos QR están vinculados a este correo electrónico. Puedes acceder a tus tickets en cualquier momento desde esta sección.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}

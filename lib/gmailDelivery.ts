@@ -159,86 +159,108 @@ function ticketHtml(input: TicketPdfEmailInput): string {
   const serials = input.serialNumber.split(",");
   const quantity = Math.max(1, Number(input.quantity) || 1);
   const eventTitle = escapeHtml(input.eventTitle || "TRAP LOUD");
-  const eventName = escapeHtml(input.eventName || "YAN BLOCK EXPERIENCE");
+  const eventName = escapeHtml(input.eventName || "");
   const eventDate = escapeHtml(input.eventDate || "18 JUN 2026");
   const eventVenue = escapeHtml(input.eventVenue || "San Juan");
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
-  const eventUrl = input.eventId ? `${siteUrl}/?event=${encodeURIComponent(input.eventId)}` : siteUrl;
-
-  const serialsHtml = serials.map((s) => `
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;background-color:#f4f4f5;border:1px solid #e4e4e7;border-radius:12px;">
-                      <tr>
-                        <td style="padding:12px;text-align:center;">
-                          <p style="margin:0;font-size:8px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#71717a;">SERIAL DE SEGURIDAD</p>
-                          <p style="margin:6px 0 0;font-family:'Courier New',Courier,monospace;font-size:14px;font-weight:bold;letter-spacing:1px;color:#18181b;">${escapeHtml(s)}</p>
-                        </td>
-                      </tr>
-                    </table>
-  `).join("");
+  const eventUrl = input.eventId
+    ? `${siteUrl}/events/${encodeURIComponent(input.eventId)}`
+    : siteUrl;
+  const accountUrl = `${siteUrl}/cuenta`;
 
   const isPlural = quantity > 1;
-  const headingText = isPlural ? "¡Tus entradas están listas!" : "¡Tu entrada está lista!";
-  const bodyText = isPlural
-    ? "Tus pases de acceso oficiales han sido generados con éxito y se encuentran <strong>adjuntos en este correo electrónico en formato de imagen</strong>. Por favor, descarga las imágenes y presenta los códigos QR en la entrada del evento; recuerda que cada código es de un único uso."
-    : "Tu pase de acceso oficial ha sido generado con éxito y se encuentra <strong>adjunto en este correo electrónico en formato de imagen</strong>. Por favor, descarga la imagen y presenta el código QR en la entrada del evento; recuerda que cada código es de un único uso.";
+  const headingText = isPlural ? "¡Entradas Confirmadas!" : "¡Entrada Confirmada!";
+  const bodyIntro = isPlural
+    ? `Tu compra para <strong>${eventTitle}</strong> ha sido verificada y confirmada con éxito.`
+    : `Tu compra para <strong>${eventTitle}</strong> ha sido verificada y confirmada con éxito.`;
+  const bodyAttachment = isPlural
+    ? "Tus pases de acceso oficiales con código QR se encuentran <strong>adjuntos en este correo electrónico en formato de imagen</strong>. Descarga los archivos para presentarlos en el control de acceso el día del evento."
+    : "Tu pase de acceso oficial con código QR se encuentra <strong>adjunto en este correo electrónico en formato de imagen</strong>. Descarga el archivo para presentarlo en el control de acceso el día del evento.";
+
+  const serialsList = serials.map((s) => escapeHtml(s.trim())).join(" • ");
 
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Now4Go</title>
+  <title>4GO Events</title>
 </head>
-<body style="margin:0;padding:0;background-color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#18181b;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;padding:24px 0;">
+<body style="margin:0;padding:0;background-color:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#18181b;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:36px 12px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;border:1px solid #e4e4e7;border-radius:24px;background-color:#ffffff;box-shadow:0 4px 12px rgba(0,0,0,0.03);overflow:hidden;">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;border:1px solid #e4e4e7;border-radius:24px;background-color:#ffffff;box-shadow:0 8px 30px rgba(0,0,0,0.04);overflow:hidden;">
           <tr>
-            <td style="padding:40px 32px 20px;text-align:center;">
-              <p style="margin:0;font-size:11px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#71717a;">Now4Go</p>
-              <h1 style="margin:12px 0 0;font-size:26px;line-height:1.2;font-weight:800;letter-spacing:-0.5px;color:#18181b;">${headingText}</h1>
-              <p style="margin:8px 0 0;font-size:13px;font-weight:600;color:#71717a;">${eventTitle} - ${eventName}</p>
+            <td style="padding:40px 32px 20px;text-align:center;background:linear-gradient(180deg,#f8f9fc 0%,#ffffff 100%);">
+              <p style="margin:0;font-size:11px;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:#6366f1;">4GO EVENTS</p>
+              <h1 style="margin:12px 0 0;font-size:26px;line-height:1.2;font-weight:900;letter-spacing:-0.5px;color:#18181b;">${headingText}</h1>
+              <p style="margin:8px 0 0;font-size:13px;font-weight:600;color:#71717a;">${eventTitle}${eventName ? ` — ${eventName}` : ""}</p>
             </td>
           </tr>
           <tr>
-            <td style="padding:0 32px 24px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="font-size:14px;line-height:1.6;color:#3f3f46;">
-                    <p style="margin:0;font-size:15px;color:#18181b;">Hola <strong>${fullName}</strong>,</p>
-                    <p style="margin:12px 0 0;">${bodyText}</p>
-                    <p style="margin:16px 0 0;font-size:16px;font-weight:bold;color:#18181b;">
-                      ¡Nos vemos en <a href="${eventUrl}" style="color:#18181b;text-decoration:underline;font-weight:800;">${eventTitle}</a>!
-                    </p>
-                    
-                    ${serialsHtml}
+            <td style="padding:0 32px 32px;">
+              <p style="margin:0;font-size:15px;color:#18181b;line-height:1.5;">Hola <strong>${fullName}</strong>,</p>
+              <p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:#3f3f46;">
+                ${bodyIntro}
+              </p>
+              <p style="margin:10px 0 0;font-size:14px;line-height:1.6;color:#3f3f46;">
+                ${bodyAttachment}
+              </p>
 
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;border-top:1px solid #f4f4f5;">
+              <!-- Event Details Card -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;background-color:#fafafa;border:1px solid #e4e4e7;border-radius:16px;overflow:hidden;">
+                <tr>
+                  <td style="padding:18px 20px;border-bottom:1px solid #f1f1f4;">
+                    <p style="margin:0;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#71717a;">EVENTO</p>
+                    <p style="margin:4px 0 0;font-size:15px;font-weight:900;color:#18181b;">${eventTitle} <span style="font-weight:600;font-size:13px;color:#71717a;">(${quantity} ${quantity === 1 ? "entrada" : "entradas"})</span></p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 20px;border-bottom:1px solid #f1f1f4;">
+                    <p style="margin:0;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#71717a;">FECHA Y LUGAR</p>
+                    <p style="margin:4px 0 0;font-size:14px;font-weight:700;color:#18181b;">${eventDate} — ${eventVenue}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 20px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                       <tr>
-                        <td style="padding:14px 0 0;">
-                          <p style="margin:0;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#71717a;">EVENTO</p>
-                          <p style="margin:4px 0 0;font-size:14px;font-weight:800;color:#18181b;">${eventTitle} (${quantity} entrada${quantity === 1 ? "" : "s"})</p>
+                        <td>
+                          <p style="margin:0;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#71717a;">SERIAL DE SEGURIDAD</p>
+                          <p style="margin:4px 0 0;font-family:'Courier New',Courier,monospace;font-size:13px;font-weight:700;color:#18181b;">${serialsList}</p>
                         </td>
-                      </tr>
-                      <tr>
-                        <td style="padding:14px 0 0;">
-                          <p style="margin:0;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#71717a;">FECHA Y LUGAR</p>
-                          <p style="margin:4px 0 0;font-size:14px;font-weight:700;color:#18181b;">${eventDate} - ${eventVenue}</p>
+                        <td align="right">
+                          <p style="margin:0;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#71717a;">ESTADO</p>
+                          <p style="margin:4px 0 0;font-size:12px;font-weight:800;color:#16a34a;text-transform:uppercase;">Confirmado</p>
                         </td>
                       </tr>
                     </table>
                   </td>
                 </tr>
               </table>
-              <p style="margin:18px 0 0;text-align:center;font-size:11px;line-height:1.5;color:#71717a;">Por razones de seguridad, te recomendamos no compartir capturas de pantalla ni reenviar este archivo a terceros antes del espectáculo.</p>
+
+              <!-- Call to Action Button & Account Link -->
+              <div style="margin-top:28px;text-align:center;">
+                <a href="${eventUrl}" style="display:inline-block;padding:14px 28px;background-color:#09090b;color:#ffffff;text-decoration:none;font-size:13px;font-weight:800;letter-spacing:0.5px;border-radius:9999px;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+                  Ver Detalles del Evento
+                </a>
+                <p style="margin:14px 0 0;font-size:12px;color:#71717a;line-height:1.5;">
+                  También puedes revisar tus entradas y códigos QR en cualquier momento desde <a href="${accountUrl}" style="color:#18181b;font-weight:700;text-decoration:underline;">tu cuenta en 4GO</a>.
+                </p>
+              </div>
+
+              <p style="margin:24px 0 0;padding-top:16px;border-top:1px solid #f4f4f5;font-size:11px;line-height:1.5;color:#a1a1aa;text-align:center;">
+                Por motivos de seguridad, recuerda que cada código QR es de un único uso en portería. No compartas tu entrada con terceros antes del ingreso.
+              </p>
             </td>
           </tr>
           <tr>
-            <td style="padding:28px 32px;text-align:center;font-size:11px;color:#71717a;line-height:1.6;border-top:1px solid #f4f4f5;background-color:#fafafa;">
-              <p style="margin:0;">Este es un mensaje de confirmación de compra transaccional enviado automáticamente por el sistema de entradas de Now4Go.</p>
-              <p style="margin:10px 0 0;font-weight:bold;color:#18181b;">Now4Go ® · Loja, Ecuador</p>
+            <td style="padding:24px 32px;text-align:center;font-size:11px;color:#71717a;line-height:1.6;border-top:1px solid #f4f4f5;background-color:#fafafa;">
+              <p style="margin:0;">Mensaje de confirmación oficial enviado automáticamente por el sistema de 4GO.</p>
+              <p style="margin:4px 0 0;">Soporte directo: <a href="mailto:soporte.nenez@gmail.com" style="color:#18181b;font-weight:700;text-decoration:underline;">soporte.nenez@gmail.com</a></p>
+              <p style="margin:8px 0 0;font-weight:800;color:#18181b;">4GO ® · Loja, Ecuador</p>
             </td>
           </tr>
         </table>
@@ -417,17 +439,22 @@ async function sendViaGmailApi(input: GmailMessageInput): Promise<string | undef
 }
 
 async function sendViaSmtp(input: GmailMessageInput): Promise<string | undefined> {
-  const user = (process.env.SMTP_USER || process.env.GMAIL_USER || "").trim();
-  const pass = (process.env.SMTP_PASS || process.env.GMAIL_PASS || "").trim();
+  const user = (process.env.SMTP_USER || process.env.GMAIL_USER || DEFAULT_GMAIL_USER).trim();
+  const pass = (process.env.SMTP_PASS || process.env.GMAIL_PASS || "").replace(/\s+/g, "").trim();
   if (!user || !pass) throw new Error("SMTP_NOT_CONFIGURED");
 
-  const port = Number.parseInt(process.env.SMTP_PORT || "465", 10);
-  const transport = createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: Number.isFinite(port) ? port : 465,
-    secure: (Number.isFinite(port) ? port : 465) === 465,
-    auth: { user, pass },
-  });
+  const host = process.env.SMTP_HOST?.trim();
+  const transport = host && host !== "smtp.gmail.com"
+    ? createTransport({
+        host,
+        port: Number.parseInt(process.env.SMTP_PORT || "465", 10),
+        secure: (Number.parseInt(process.env.SMTP_PORT || "465", 10)) === 465,
+        auth: { user, pass },
+      })
+    : createTransport({
+        service: "gmail",
+        auth: { user, pass },
+      });
 
   const result = await transport.sendMail({
     from: gmailFrom(),
@@ -545,7 +572,7 @@ export async function sendTicketPdfViaGmailWithLimit(input: TicketPdfEmailInput)
 
   return sendGmailMessageWithLimit({
     to: input.to,
-    subject: `${subjectPrefix} NENEZ - ${cleanHeader(input.eventTitle || "TRAP LOUD")}`,
+    subject: `${subjectPrefix} 4GO — ${cleanHeader(input.eventTitle || "Evento")}`,
     html: ticketHtml(input),
     text: ticketText(input),
     logLabel: "ticket-image",
@@ -560,7 +587,7 @@ function recoveryOtpHtml(code: string): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>NENEZ</title>
+  <title>4GO Events</title>
 </head>
 <body style="margin:0;padding:0;background-color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#18181b;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;padding:24px 0;">
@@ -569,7 +596,7 @@ function recoveryOtpHtml(code: string): string {
         <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;border:1px solid #e4e4e7;border-radius:24px;background-color:#ffffff;box-shadow:0 4px 12px rgba(0,0,0,0.03);overflow:hidden;">
           <tr>
             <td style="padding:40px 32px 20px;text-align:center;">
-              <p style="margin:0;font-size:11px;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:#71717a;">NENEZ</p>
+              <p style="margin:0;font-size:11px;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:#71717a;">4GO</p>
               <h1 style="margin:12px 0 0;font-size:24px;line-height:1.2;font-weight:800;color:#18181b;">Recuperar entrada</h1>
               <p style="margin:10px auto 0;max-width:360px;font-size:13px;line-height:1.6;color:#71717a;">Usa este código de verificación para validar tu correo electrónico. Este código expira en 10 minutos por razones de seguridad.</p>
               
@@ -580,9 +607,9 @@ function recoveryOtpHtml(code: string): string {
           </tr>
           <tr>
             <td style="padding:20px 32px;text-align:center;font-size:11px;color:#71717a;line-height:1.6;border-top:1px solid #f4f4f5;background-color:#fafafa;">
-              <p style="margin:0;">Este es un mensaje de seguridad transaccional enviado automáticamente por NENEZ.</p>
+              <p style="margin:0;">Este es un mensaje de seguridad transaccional enviado automáticamente por 4GO.</p>
               <p style="margin:4px 0 0;">Si necesitas ayuda, escríbenos a <a href="mailto:soporte.nenez@gmail.com" style="color: #18181b; text-decoration: underline; font-weight: bold;">soporte.nenez@gmail.com</a>.</p>
-              <p style="margin:8px 0 0;font-weight:bold;color:#18181b;">NENEZ ® · Loja, Ecuador</p>
+              <p style="margin:8px 0 0;font-weight:bold;color:#18181b;">4GO ® · Loja, Ecuador</p>
             </td>
           </tr>
         </table>
@@ -596,20 +623,20 @@ function recoveryOtpHtml(code: string): string {
 function recoveryOtpText(code: string): string {
   return `Recuperar entrada - Código de verificación
 
-Usa este código de verificación para validar tu correo electrónico en el portal de NENEZ:
+Usa este código de verificación para validar tu correo electrónico en el portal de 4GO:
 
 Código: ${code}
 
 Este código expira en 10 minutos por razones de seguridad. Si tú no solicitaste este código, puedes ignorar este correo de forma segura.
 
 Si necesitas ayuda, escríbenos a soporte.nenez@gmail.com.
-NENEZ ® · Loja, Ecuador`;
+4GO ® · Loja, Ecuador`;
 }
 
 export async function sendRecoveryOtpViaGmail(to: string, code: string): Promise<GmailDeliveryResult> {
   return sendGmailMessageWithLimit({
     to,
-    subject: "Código de verificación — Recuperar entrada NENEZ",
+    subject: "Código de verificación — Recuperar entrada 4GO",
     html: recoveryOtpHtml(code),
     text: recoveryOtpText(code),
     logLabel: "recovery-otp",

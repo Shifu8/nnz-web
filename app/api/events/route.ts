@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
 import { loadAllEvents, saveAllEvents } from "@/lib/admin/events-store";
 import { events as fallbackEvents } from "@/frontend/services/nenezData";
 import type { Event } from "@/frontend/types/domain";
@@ -30,21 +32,21 @@ function toFrontendEvent(adminEvent: any): EventWithPosition {
     id,
     title: adminEvent.title,
     subtitle: adminEvent.subtitle || "",
-    city: adminEvent.location || "",
+    city: adminEvent.location || adminEvent.city || "Loja",
     dateLabel: formatDateLabel(adminEvent.date || adminEvent.dateLabel || ""),
     startsAt: adminEvent.date && adminEvent.time
       ? `${adminEvent.date}T${adminEvent.time}:00-05:00`
       : adminEvent.startsAt || "",
-    poster: adminEvent.imageUrl || adminEvent.poster || "",
+    poster: adminEvent.imageUrl || adminEvent.poster || "/images/4go_red_girl_showcase.jpg",
     lineup: adminEvent.lineup || [],
     description: adminEvent.description || "",
     position: adminEvent.position ?? 999,
 
     // Extended editorial fields
-    organizer: adminEvent.organizer || "NENEZ",
-    venue: adminEvent.venue || `${adminEvent.location || "Venue TBA"}`,
-    time: adminEvent.time || "",
-    category: adminEvent.category || "Trap / Urban",
+    organizer: adminEvent.organizer || "4GO",
+    venue: adminEvent.venue || `${adminEvent.location || "Cubic Loja"}`,
+    time: adminEvent.time || "22:00",
+    category: adminEvent.category || "Electronic / House",
     ageRestriction: adminEvent.ageRestriction || "18+",
     status: adminEvent.status === "active"
       ? (adminEvent.isAvailable !== false ? "available" : "coming-soon")
@@ -56,13 +58,14 @@ function toFrontendEvent(adminEvent: any): EventWithPosition {
     socialLinks: adminEvent.socialLinks || {},
     merch: adminEvent.merch || [],
     drinks: adminEvent.drinks || [],
+    presales: adminEvent.presales || [],
 
     // Carousel specific fields
-    badge: adminEvent.badge || "LIVE ACCESS",
+    badge: adminEvent.badge || "NUEVO",
     accentColor: adminEvent.accentColor || "#ffffff",
-    miniImage: adminEvent.miniImage || adminEvent.imageUrl || adminEvent.poster || "",
-    featuredImage: adminEvent.imageUrl || adminEvent.poster || "",
-    price: adminEvent.price || 10,
+    miniImage: adminEvent.miniImage || adminEvent.imageUrl || adminEvent.poster || "/images/4go_red_girl_showcase.jpg",
+    featuredImage: adminEvent.imageUrl || adminEvent.poster || "/images/4go_red_girl_showcase.jpg",
+    price: Number(adminEvent.price) || 10,
     currency: adminEvent.currency || "USD",
     onlineSalesCutoffTime: adminEvent.onlineSalesCutoffTime || "14:00",
   } as any;
@@ -70,6 +73,27 @@ function toFrontendEvent(adminEvent: any): EventWithPosition {
 
 function toFrontendEventFromFallback(fe: Event, index: number): EventWithPosition {
   return { ...fe, position: 999 + index + 1 };
+}
+
+function saveBase64Image(dataUri: string, filenameBase: string): string {
+  if (!dataUri || !dataUri.startsWith("data:image/")) return dataUri;
+  try {
+    const matches = dataUri.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
+    if (!matches) return dataUri;
+    const ext = matches[1] === "jpeg" ? "jpg" : matches[1];
+    const buffer = Buffer.from(matches[2], "base64");
+    const outDir = path.join(process.cwd(), "public", "images", "events");
+    if (!fs.existsSync(outDir)) {
+      fs.mkdirSync(outDir, { recursive: true });
+    }
+    const filename = `${filenameBase}.${ext}`;
+    const filePath = path.join(outDir, filename);
+    fs.writeFileSync(filePath, buffer);
+    return `/images/events/${filename}`;
+  } catch (err) {
+    console.error("Error saving base64 image:", err);
+    return dataUri;
+  }
 }
 
 export async function GET() {
@@ -89,8 +113,9 @@ export async function GET() {
     merged.sort((a, b) => a.position - b.position);
 
     return NextResponse.json({ success: true, events: merged });
-  } catch {
-    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+  } catch (err) {
+    console.error("GET /api/events error:", err);
+    return NextResponse.json({ success: false, events: fallbackEvents }, { status: 200 });
   }
 }
 
@@ -105,26 +130,32 @@ export async function POST(req: Request) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "") + `-${Date.now().toString().slice(-4)}`;
 
+    let posterUrl = body.poster || body.imageUrl || "/images/4go_red_girl_showcase.jpg";
+    if (typeof posterUrl === "string" && posterUrl.startsWith("data:image/")) {
+      posterUrl = saveBase64Image(posterUrl, slug);
+    }
+
     const newEvent: any = {
       id: slug,
       slug: slug,
       title: body.title || "Nuevo Evento",
       subtitle: body.subtitle || "CUBIC LOJA",
-      location: body.city || "Loja",
+      location: body.city || body.location || "Loja",
       date: body.date || new Date().toISOString().split("T")[0],
       dateLabel: body.dateLabel || body.date || "18 SEP 2026",
       time: body.time || "22:00",
       price: Number(body.price) || 10,
-      imageUrl: body.poster || body.imageUrl || "/images/4go_red_girl_showcase.jpg",
-      poster: body.poster || body.imageUrl || "/images/4go_red_girl_showcase.jpg",
-      miniImage: body.poster || body.imageUrl || "/images/4go_red_girl_showcase.jpg",
+      imageUrl: posterUrl,
+      poster: posterUrl,
+      miniImage: posterUrl,
       description: body.description || "Evento oficial con acceso asegurado.",
       lineup: Array.isArray(body.lineup) && body.lineup.length ? body.lineup : ["Cubic", "Sata"],
-      organizer: body.organizer || "Cubic",
-      organizers: Array.isArray(body.organizers) && body.organizers.length ? body.organizers : ["Cubic", "Sata"],
+      organizer: body.organizer || "Brandon Medina",
+      organizers: Array.isArray(body.organizers) && body.organizers.length ? body.organizers : ["Brandon Medina"],
       venue: body.venue || "Cubic Loja",
       category: body.category || "Electronic / House",
       ageRestriction: body.ageRestriction || "18+",
+      presales: Array.isArray(body.presales) ? body.presales : [],
       status: "active",
       isFeatured: true,
       isAvailable: true,

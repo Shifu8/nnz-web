@@ -198,18 +198,8 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
     if (initialLoggedIn) return true;
     if (typeof window !== "undefined") {
       try {
-        const profile = localStorage.getItem("organizer_profile");
-        if (profile) {
-          const parsed = JSON.parse(profile);
-          const email = (parsed?.email || "").trim().toLowerCase();
-          if (email && email !== "brandon.medina@unl.edu.ec") {
-            localStorage.removeItem("organizer_token");
-            localStorage.removeItem("organizer_profile");
-            localStorage.removeItem("organizer_refresh");
-            return false;
-          }
-        }
         const token = localStorage.getItem("organizer_token");
+        const profile = localStorage.getItem("organizer_profile");
         if (token && profile) {
           document.cookie = "organizer_logged_in=1; path=/; max-age=31536000; SameSite=Lax";
           return true;
@@ -228,16 +218,24 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
           const parsed = JSON.parse(profile);
           if (parsed && parsed.email) {
             const cleanEmail = parsed.email.trim().toLowerCase();
-            if (cleanEmail !== "brandon.medina@unl.edu.ec") {
-              return null;
+            const isMaster = cleanEmail === "brandon.medina@unl.edu.ec";
+            if (isMaster) {
+              parsed.id = "master_admin";
+              parsed.name = parsed.name || "Brandon Medina";
+              parsed.venueName = "4GO";
+              parsed.type = "Organizador";
+              parsed.hasCompletedOnboarding = true;
+              return parsed;
             }
-            parsed.id = "master_admin";
-            parsed.name = parsed.name || "Brandon Medina";
-            parsed.venueName = parsed.venueName && !parsed.venueName.includes("Master Headquarters") ? parsed.venueName : "4GO";
-            parsed.type = "Organizador";
-            parsed.avatar = parsed.avatar && !parsed.avatar.includes("presentation") ? parsed.avatar : "/images/logo_4go_black_white.png";
-            parsed.hasCompletedOnboarding = true;
-            return parsed;
+            return {
+              id: parsed.id || `usr_${cleanEmail.split("@")[0]}`,
+              name: parsed.name || cleanEmail.split("@")[0],
+              email: cleanEmail,
+              type: "Usuario",
+              venueName: "",
+              city: parsed.city || "Loja",
+              hasCompletedOnboarding: true,
+            };
           }
         }
       } catch {
@@ -339,26 +337,6 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
   useEffect(() => {
     setIsMounted(true);
     if (typeof window !== "undefined") {
-      // Auto-purge any stale accounts/sessions that are not brandon.medina@unl.edu.ec
-      try {
-        const keysToRemove: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key) {
-            if (
-              (key.startsWith("organizer_profile_") ||
-                key.startsWith("user_favorites_") ||
-                key.startsWith("user_reservations_") ||
-                key.startsWith("user_tickets_")) &&
-              !key.toLowerCase().includes("brandon.medina@unl.edu.ec")
-            ) {
-              keysToRemove.push(key);
-            }
-          }
-        }
-        keysToRemove.forEach((k) => localStorage.removeItem(k));
-      } catch (e) {}
-
       // Helper function to build dynamic profile for any logged in email
       const resolveProfileForEmail = (
         email: string,
@@ -378,7 +356,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
         if (isMaster) {
           return {
             id: "master_admin",
-            name: name || "Brandon Medina (4GO)",
+            name: name || "Brandon Medina",
             email: cleanEmail,
             avatar: "/images/logo_4go_black_white.png",
             type: "Organizador",
@@ -388,26 +366,28 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
           };
         }
 
-        if (savedPerEmail && savedPerEmail.hasCompletedOnboarding) {
+        if (savedPerEmail) {
           return {
             ...savedPerEmail,
             email: cleanEmail,
             name: savedPerEmail.name || name || cleanEmail.split("@")[0],
-            avatar: savedPerEmail.avatar || avatar || "",
+            type: "Usuario",
+            venueName: "",
+            city: savedPerEmail.city || "Loja",
             hasCompletedOnboarding: true,
           };
         }
 
         const fallbackName = cleanEmail ? cleanEmail.split("@")[0] : "Usuario";
         return {
-          id: sub ? `usr_${sub}` : `usr_${Date.now()}`,
+          id: sub ? `usr_${sub}` : `usr_${cleanEmail.split("@")[0] || Date.now()}`,
           name: name || fallbackName,
           email: cleanEmail,
-          avatar: avatar || "",
+          avatar: "",
           type: "Usuario",
           venueName: "",
           city: "Loja",
-          hasCompletedOnboarding: false,
+          hasCompletedOnboarding: true,
         };
       };
 
@@ -1995,32 +1975,17 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
               <div className="relative flex items-center justify-center">
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={() => {
                     if (!userLoggedIn) {
                       setShowAuthModalForFavorites(true);
                     } else {
                       setShowUserMenu(!showUserMenu);
                     }
                   }}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl flex items-center justify-center text-white hover:bg-white/20 shadow-lg cursor-pointer transition-all active:scale-95 overflow-hidden relative"
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-xl flex items-center justify-center text-white shadow-lg cursor-pointer transition-all active:scale-95 overflow-hidden relative"
                   aria-label="Perfil"
                 >
-                  {isMounted && userLoggedIn && userProfile?.avatar ? (
-                    <img
-                      src={userProfile.avatar}
-                      alt={userProfile.venueName || userProfile.name || "Perfil"}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                        const fallback = e.currentTarget.parentElement?.querySelector(".header-user-fallback");
-                        if (fallback) fallback.classList.remove("hidden");
-                      }}
-                    />
-                  ) : (
-                    <User className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                  )}
-                  <User className="header-user-fallback w-4 h-4 sm:w-5 sm:h-5 text-white hidden" />
+                  <User className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </button>
 
                 {/* Hover Tooltip: Perfil (only when menu closed) */}
@@ -2047,25 +2012,25 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         transition={{ duration: 0.16, ease: "easeOut" }}
-                        className="absolute right-0 top-[calc(100%+10px)] w-72 sm:w-80 rounded-[28px] bg-zinc-950/70 border border-white/20 backdrop-blur-3xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] p-4 z-50 text-white font-sans space-y-3"
+                        className="absolute right-0 top-[calc(100%+10px)] w-72 sm:w-80 rounded-[28px] bg-zinc-950/90 border border-white/20 backdrop-blur-3xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] p-4 z-50 text-white font-sans space-y-3"
                       >
                         {/* User Header */}
                         <div className="px-1.5 py-1 flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-full overflow-hidden bg-white/10 border border-white/20 shrink-0 flex items-center justify-center shadow-inner">
-                            {userProfile?.avatar ? (
-                              <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                            ) : (
-                              <User className="w-5 h-5 text-white" />
-                            )}
+                          <div className="w-11 h-11 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl shrink-0 flex items-center justify-center shadow-inner">
+                            <User className="w-5 h-5 text-white" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5">
-                              <p className="text-sm font-black uppercase text-white truncate">{userProfile?.venueName || userProfile?.name || "Usuario"}</p>
+                              <p className="text-sm font-black uppercase text-white truncate">
+                                {isMasterAdmin ? "Brandon Medina" : (userProfile?.name || "Usuario")}
+                              </p>
                             </div>
                             <p className="text-[11px] text-zinc-400 font-medium truncate">{userProfile?.email}</p>
-                            <span className="inline-block mt-1 px-2.5 py-0.5 rounded-md text-[9.5px] font-black uppercase tracking-wider bg-white/10 text-white border border-white/20">
-                              {isMasterUser ? "Master Superadmin" : (userProfile?.type || "Organizador")}
-                            </span>
+                            {isMasterAdmin && (
+                              <span className="inline-block mt-1 px-2.5 py-0.5 rounded-md text-[9.5px] font-black uppercase tracking-wider bg-white/10 text-white border border-white/20">
+                                Master Superadmin
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -2078,7 +2043,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                               setShowUserMenu(false);
                               setShowDetailOverlay(false);
                               setActiveOverlay(null);
-                              setAccountDashboardInitialTab(isMasterUser ? "master_receivables" : "events");
+                              setAccountDashboardInitialTab(isMasterUser ? "master_receivables" : "tickets");
                               setIsAccountDashboardOpen(true);
                             }}
                             className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.10] border border-white/10 hover:border-white/20 text-white transition-all active:scale-[0.98] cursor-pointer text-xs font-bold uppercase tracking-wider"
@@ -2087,21 +2052,23 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                             <ChevronRight className="w-4 h-4 text-zinc-400" />
                           </button>
 
-                          {/* Publish Event */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setShowUserMenu(false);
-                              setActiveStoryScreen(0);
-                              setTimeout(() => {
-                                document.getElementById("subir-evento-section")?.scrollIntoView({ behavior: "smooth" });
-                              }, 100);
-                            }}
-                            className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.10] border border-white/10 hover:border-white/20 text-white transition-all active:scale-[0.98] cursor-pointer text-xs font-bold uppercase tracking-wider"
-                          >
-                            <span>Publicar Evento</span>
-                            <ChevronRight className="w-4 h-4 text-zinc-400" />
-                          </button>
+                          {/* Publish Event (Only for Master Admin) */}
+                          {isMasterAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowUserMenu(false);
+                                setActiveStoryScreen(0);
+                                setTimeout(() => {
+                                  document.getElementById("subir-evento-section")?.scrollIntoView({ behavior: "smooth" });
+                                }, 100);
+                              }}
+                              className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.10] border border-white/10 hover:border-white/20 text-white transition-all active:scale-[0.98] cursor-pointer text-xs font-bold uppercase tracking-wider"
+                            >
+                              <span>Publicar Evento</span>
+                              <ChevronRight className="w-4 h-4 text-zinc-400" />
+                            </button>
+                          )}
 
                           {/* Logout */}
                           <button
@@ -3730,15 +3697,10 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                                 document.body.scrollTop = 0;
                               }
                             } else {
-                              setActiveStoryScreen(1);
-                              setTimeout(() => {
-                                const el = document.getElementById("explore") || document.getElementById("cartelera-section");
-                                if (el) {
-                                  el.scrollIntoView({ behavior: "smooth" });
-                                } else if (typeof window !== "undefined") {
-                                  window.scrollTo({ top: 600, behavior: "smooth" });
-                                }
-                              }, 50);
+                              setActiveStoryScreen(2);
+                              if (typeof window !== "undefined") {
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                              }
                             }
                           }}
                           animate={{
@@ -3890,19 +3852,26 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                                   </button>
                                 </div>
                               ) : (
-                                /* LOGGED IN: PUBLICAR EVENTO (Sleek Glassmorphism Animated Button) */
+                                /* LOGGED IN: PUBLICAR EVENTO (Admin) / IR A EVENTOS (User) */
                                 <button
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setActiveStoryScreen(0);
-                                    if (typeof window !== "undefined") {
-                                      window.scrollTo({ top: 0, behavior: "smooth" });
+                                    if (isMasterAdmin) {
+                                      setActiveStoryScreen(0);
+                                      if (typeof window !== "undefined") {
+                                        window.scrollTo({ top: 0, behavior: "smooth" });
+                                      }
+                                    } else {
+                                      setActiveStoryScreen(2);
+                                      if (typeof window !== "undefined") {
+                                        window.scrollTo({ top: 0, behavior: "smooth" });
+                                      }
                                     }
                                   }}
                                   className="px-8 py-3.5 rounded-full bg-white/20 backdrop-blur-xl border border-white/40 text-white font-black text-xs sm:text-sm uppercase tracking-widest hover:bg-white/30 shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all hover:scale-105 active:scale-95 cursor-pointer animate-pulse"
                                 >
-                                  PUBLICAR EVENTO
+                                  {isMasterAdmin ? "PUBLICAR EVENTO" : "IR A EVENTOS"}
                                 </button>
                               )}
                             </div>

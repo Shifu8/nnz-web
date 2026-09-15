@@ -254,40 +254,87 @@ export default function EventPurchaseCheckoutModal({
         setUserExistingEventTickets([]);
       }
 
-      if (userLoggedIn && userProfile?.email && event && typeof window !== "undefined") {
-        try {
-          const stored = localStorage.getItem("nenez_purchased_tickets");
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed)) {
-              const forEvent = parsed.filter(
-                (t: any) =>
-                  (t.eventId === event.id || t.eventTitle === event.title) &&
-                  (!t.userEmail || t.userEmail.toLowerCase() === userProfile.email.toLowerCase())
-              );
-              const individualPasses: any[] = [];
-              forEvent.forEach((item: any) => {
-                const qty = Number(item.quantity) || 1;
-                if (qty > 1) {
-                  for (let i = 0; i < qty; i++) {
-                    individualPasses.push({
-                      ...item,
-                      id: `${item.id}-${i + 1}`,
-                      singleIndex: i + 1,
-                      tierName: item.tierName?.replace(/^\d+x\s*/i, "") || "Entrada General",
-                    });
-                  }
-                } else {
+      if (userLoggedIn && userProfile?.email && event) {
+        const fetchUserEventTickets = async () => {
+          try {
+            const cleanUserEmail = userProfile.email.toLowerCase().trim();
+            const res = await fetch(`/api/access-drop/receipts?email=${encodeURIComponent(cleanUserEmail)}`).catch(() => null);
+            let serverTickets: any[] = [];
+            if (res && res.ok) {
+              const data = await res.json().catch(() => ({}));
+              if (data.receipts && Array.isArray(data.receipts)) {
+                serverTickets = data.receipts
+                  .filter((r: any) => {
+                    const eId = (r.eventId || "").toLowerCase();
+                    const eTitle = (r.eventTitle || "").toLowerCase();
+                    const targetId = (event.id || "").toLowerCase();
+                    const targetTitle = (event.title || "").toLowerCase();
+                    return (targetId && (eId === targetId || eId.includes(targetId))) ||
+                           (targetTitle && (eTitle === targetTitle || eTitle.includes(targetTitle)));
+                  })
+                  .map((r: any) => ({
+                    id: r.id,
+                    eventId: r.eventId || event.id,
+                    eventTitle: r.eventTitle || event.title,
+                    userEmail: r.email,
+                    quantity: r.quantity || 1,
+                    totalAmount: r.totalAmount || 10,
+                    status: r.status === "aprobado" ? "confirmed" : r.status === "rechazado" ? "rejected" : "en_verificacion",
+                    referenceNumber: r.referenceNumber,
+                    tierName: "Acceso General",
+                    serialNumber: r.serialNumber,
+                    qrCode: r.qrPayload || `4GO-${r.serialNumber || r.id}`,
+                  }));
+              }
+            }
+
+            const stored = typeof window !== "undefined" ? localStorage.getItem("nenez_purchased_tickets") : null;
+            let localTickets: any[] = [];
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              if (Array.isArray(parsed)) {
+                localTickets = parsed.filter(
+                  (t: any) =>
+                    (t.eventId === event.id || t.eventTitle === event.title) &&
+                    (!t.userEmail || t.userEmail.toLowerCase() === cleanUserEmail)
+                );
+              }
+            }
+
+            const merged = [...serverTickets];
+            localTickets.forEach((lt) => {
+              if (!merged.some((m) => m.id === lt.id || (m.referenceNumber && m.referenceNumber === lt.referenceNumber))) {
+                merged.push(lt);
+              }
+            });
+
+            const individualPasses: any[] = [];
+            merged.forEach((item: any) => {
+              const qty = Number(item.quantity) || 1;
+              if (qty > 1) {
+                for (let i = 0; i < qty; i++) {
                   individualPasses.push({
                     ...item,
+                    id: `${item.id}-${i + 1}`,
+                    singleIndex: i + 1,
                     tierName: item.tierName?.replace(/^\d+x\s*/i, "") || "Entrada General",
                   });
                 }
-              });
-              setUserExistingEventTickets(individualPasses);
-            }
+              } else {
+                individualPasses.push({
+                  ...item,
+                  tierName: item.tierName?.replace(/^\d+x\s*/i, "") || "Entrada General",
+                });
+              }
+            });
+
+            setUserExistingEventTickets(individualPasses);
+          } catch (err) {
+            console.error("Error loading user existing tickets:", err);
           }
-        } catch {}
+        };
+
+        fetchUserEventTickets();
       } else {
         setUserExistingEventTickets([]);
       }
@@ -352,15 +399,17 @@ export default function EventPurchaseCheckoutModal({
     return acc;
   }, 0);
 
+  const MAX_TICKETS_PER_EVENT = 3;
+
   const existingTicketsCount = userLoggedIn
     ? userExistingEventTickets.filter(
         (t: any) => t.status !== "rejected" && t.status !== "rechazado"
       ).length
     : 0;
-  const isMaxTicketsReached = userLoggedIn && existingTicketsCount >= 2;
+  const isMaxTicketsReached = userLoggedIn && existingTicketsCount >= MAX_TICKETS_PER_EVENT;
 
   const handleIncrease = (tierId: string) => {
-    if (existingTicketsCount + totalTickets >= 2) return;
+    if (existingTicketsCount + totalTickets >= MAX_TICKETS_PER_EVENT) return;
     const tier = tiers.find((t) => t.id === tierId);
     if (!tier || tier.status === "expired" || tier.status === "sold_out") return;
     if (tier?.remainingTables !== undefined) {
@@ -737,24 +786,10 @@ export default function EventPurchaseCheckoutModal({
                   setShowCheckoutUserMenu((prev) => !prev);
                 }
               }}
-              className="w-10 h-10 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl flex items-center justify-center text-white hover:bg-white/20 shadow-lg cursor-pointer transition-all active:scale-95 overflow-hidden relative shrink-0"
+              className="w-10 h-10 rounded-full bg-zinc-800/90 border border-white/20 backdrop-blur-xl flex items-center justify-center text-white hover:bg-zinc-700/90 shadow-lg cursor-pointer transition-all active:scale-95 overflow-hidden relative shrink-0"
               aria-label="Perfil"
             >
-              {userLoggedIn && userProfile?.avatar ? (
-                <img
-                  src={userProfile.avatar}
-                  alt={userProfile.venueName || userProfile.name || "Perfil"}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                    const fallback = e.currentTarget.parentElement?.querySelector(".checkout-user-fallback");
-                    if (fallback) fallback.classList.remove("hidden");
-                  }}
-                />
-              ) : (
-                <User className="w-5 h-5 text-white" />
-              )}
-              <User className="checkout-user-fallback w-5 h-5 text-white hidden" />
+              <User className="w-5 h-5 text-white" />
             </button>
 
             {/* Hover Tooltip: Perfil (only when menu closed) */}
@@ -789,22 +824,18 @@ export default function EventPurchaseCheckoutModal({
                   >
                     {/* User Header */}
                     <div className="px-1.5 py-1 flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-full overflow-hidden bg-white/10 border border-white/20 shrink-0 flex items-center justify-center shadow-inner">
-                        {userProfile?.avatar ? (
-                          <img src={userProfile.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                        ) : (
-                          <User className="w-5 h-5 text-white" />
-                        )}
+                      <div className="w-11 h-11 rounded-full bg-zinc-800 border border-white/20 shrink-0 flex items-center justify-center shadow-inner">
+                        <User className="w-5 h-5 text-white" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           <p className="text-sm font-black uppercase text-white truncate">
-                            {userProfile?.venueName || userProfile?.name || "Usuario"}
+                            {userProfile?.email?.trim().toLowerCase() === "brandon.medina@unl.edu.ec" ? "Brandon Medina" : (userProfile?.name || "Usuario")}
                           </p>
                         </div>
                         <p className="text-[11px] text-zinc-400 font-medium truncate">{userProfile?.email}</p>
                         <span className="inline-block mt-1 px-2.5 py-0.5 rounded-md text-[9.5px] font-black uppercase tracking-wider bg-white/10 text-white border border-white/20">
-                          {userProfile?.type || "Organizador"}
+                          {userProfile?.email?.trim().toLowerCase() === "brandon.medina@unl.edu.ec" ? "Master Superadmin" : "Usuario"}
                         </span>
                       </div>
                     </div>
@@ -823,17 +854,19 @@ export default function EventPurchaseCheckoutModal({
                         <ChevronRight className="w-4 h-4 text-zinc-400" />
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowCheckoutUserMenu(false);
-                          onOpenCreate?.();
-                        }}
-                        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.10] border border-white/10 hover:border-white/20 text-white transition-all active:scale-[0.98] cursor-pointer text-xs font-bold uppercase tracking-wider"
-                      >
-                        <span>Publicar Evento</span>
-                        <ChevronRight className="w-4 h-4 text-zinc-400" />
-                      </button>
+                      {userProfile?.email?.trim().toLowerCase() === "brandon.medina@unl.edu.ec" && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowCheckoutUserMenu(false);
+                            onOpenCreate?.();
+                          }}
+                          className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.10] border border-white/10 hover:border-white/20 text-white transition-all active:scale-[0.98] cursor-pointer text-xs font-bold uppercase tracking-wider"
+                        >
+                          <span>Publicar Evento</span>
+                          <ChevronRight className="w-4 h-4 text-zinc-400" />
+                        </button>
+                      )}
 
                       <button
                         type="button"
@@ -1033,7 +1066,7 @@ export default function EventPurchaseCheckoutModal({
                   const count = quantities[tier.id] || 0;
                   const isExpiredOrSoldOut = tier.status === "expired" || tier.status === "sold_out";
                   const isTierDisabled = isExpiredOrSoldOut || isMaxTicketsReached;
-                  const canIncrease = !isTierDisabled && (existingTicketsCount + totalTickets < 2);
+                  const canIncrease = !isTierDisabled && (existingTicketsCount + totalTickets < MAX_TICKETS_PER_EVENT);
 
                   return (
                     <div
@@ -1225,7 +1258,7 @@ export default function EventPurchaseCheckoutModal({
                   {/* Desktop Hover Tooltip (clean neutral design without warning colors/icons) */}
                   {isMaxTicketsReached && (
                     <div className="absolute bottom-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-max max-w-[260px] p-2.5 rounded-xl bg-zinc-950/95 border border-white/20 text-zinc-300 text-xs font-normal text-center opacity-0 group-hover/finalize-desktop:opacity-100 transition-opacity duration-200 pointer-events-none shadow-2xl z-50">
-                      Has alcanzado el límite máximo de 2 entradas por usuario para este evento.
+                      Has alcanzado el límite máximo de 3 entradas por usuario para este evento.
                     </div>
                   )}
                 </div>
@@ -1489,10 +1522,9 @@ export default function EventPurchaseCheckoutModal({
               )}
 
               {uploadError && (
-                <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-medium flex items-start gap-3">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-red-400 mt-0.5" />
-                  <span>{uploadError}</span>
-                </div>
+                <p className="text-center text-xs font-semibold text-rose-400/95 px-2 py-1 leading-relaxed">
+                  {uploadError}
+                </p>
               )}
             </div>
 
@@ -1625,7 +1657,7 @@ export default function EventPurchaseCheckoutModal({
 
           {isMaxTicketsReached && (
             <p className="text-[11px] text-zinc-500 font-medium text-center">
-              Has alcanzado el límite máximo de 2 entradas por usuario para este evento.
+              Has alcanzado el límite máximo de 3 entradas por usuario para este evento.
             </p>
           )}
         </div>

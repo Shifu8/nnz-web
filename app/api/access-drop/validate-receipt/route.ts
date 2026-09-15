@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     const analysis = await analyzeReceiptImage(buffer, fileValidation.detectedMime);
 
     if (!analysis.isValidReceipt || analysis.rejectionReason) {
-      return NextResponse.json({ isValid: false, rejectionReason: analysis.rejectionReason || "LA IMAGEN NO PARECE UN COMPROBANTE DE PAGO VALIDO." }, { status: 422 });
+      return NextResponse.json({ isValid: false, rejectionReason: analysis.rejectionReason || "No se pudo validar el comprobante. Por favor adjunta una captura nítida del pago." }, { status: 422 });
     }
 
     return NextResponse.json({ isValid: true, rejectionReason: null });

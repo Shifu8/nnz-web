@@ -74,8 +74,13 @@ export async function POST(
 
     if (status === "aprobado") {
       try {
-        const event = getActiveTicketEvent();
-        const eventId = existing.eventId || event.id;
+        const defaultEvent = getActiveTicketEvent();
+        const eventId = existing.eventId || defaultEvent.id;
+        const targetEvent =
+          getTicketEventById(eventId) ||
+          (existing.eventTitle
+            ? { ...defaultEvent, id: eventId, title: existing.eventTitle, eventName: existing.eventTitle }
+            : defaultEvent);
         const quantity = Math.max(1, existing.quantity || 1);
 
         const serials: string[] = [];
@@ -98,9 +103,9 @@ export async function POST(
             serialNumber,
             qrPayload,
             quantity: 1,
-            eventTitle: event.title,
-            eventCity: event.venue,
-            eventDate: event.dateLabel,
+            eventTitle: targetEvent.title,
+            eventCity: targetEvent.venue,
+            eventDate: targetEvent.dateLabel,
             ticketDesign: existing.ticketDesign,
           });
 
@@ -122,7 +127,6 @@ export async function POST(
           deliveryStatus: "ticket-generated",
         });
 
-        const targetEvent = getTicketEventById(eventId) || event;
         const gmailResult = await sendTicketPdfViaGmailWithLimit({
           to: existing.email,
           firstName: existing.firstName,

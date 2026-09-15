@@ -199,7 +199,10 @@ function CuentaContent() {
 
         // Fetch server events and merge with user profile
         fetch("/api/events")
-          .then((res) => res.json())
+          .then((res) => {
+            if (!res.ok) throw new Error("Status " + res.status);
+            return res.json();
+          })
           .then((data) => {
             if (data?.events && Array.isArray(data.events)) {
               const activeUserNames = [
@@ -230,7 +233,7 @@ function CuentaContent() {
               });
             }
           })
-          .catch((e) => console.error("Error fetching created events from /api/events:", e));
+          .catch(() => {});
 
         // 2. Real Favorites (Connected to billboard hearts)
         const favKey = currentEmail ? `user_favorites_${currentEmail}` : "organizer_favorites";
@@ -244,14 +247,55 @@ function CuentaContent() {
           setFavoriteEvents([]);
         }
 
-        // 3. Real Purchased Tickets
-        const storedPurchases = localStorage.getItem("nenez_purchased_tickets");
-        if (storedPurchases) {
-          const parsedTickets = JSON.parse(storedPurchases);
-          setUserPurchasedTickets(Array.isArray(parsedTickets) ? parsedTickets : []);
-        } else {
-          setUserPurchasedTickets([]);
-        }
+        // 3. Real Purchased Tickets (Server API + LocalStorage)
+        const loadUserTickets = async () => {
+          let serverTickets: any[] = [];
+          if (currentEmail) {
+            try {
+              const res = await fetch(`/api/access-drop/receipts?email=${encodeURIComponent(currentEmail)}`).catch(() => null);
+              if (res && res.ok) {
+                const data = await res.json().catch(() => ({}));
+                if (data.receipts && Array.isArray(data.receipts)) {
+                  serverTickets = data.receipts.map((r: any) => ({
+                    id: r.id,
+                    eventId: r.eventId || "evento",
+                    eventTitle: r.eventTitle || "Evento 4GO",
+                    venue: "Lugar del Evento",
+                    date: r.createdAt ? new Date(r.createdAt).toLocaleDateString("es-EC") : "Fecha",
+                    quantity: r.quantity || 1,
+                    tierName: "Acceso General",
+                    totalAmount: r.totalAmount || 10,
+                    status: r.status === "aprobado" ? "confirmed" : r.status === "rechazado" ? "rejected" : "en_verificacion",
+                    referenceNumber: r.referenceNumber,
+                    serialNumber: r.serialNumber,
+                    qrCode: r.qrPayload || `4GO-${r.serialNumber || r.id}`,
+                    ticketDesign: r.ticketDesign,
+                  }));
+                }
+              }
+            } catch {}
+          }
+
+          let localTickets: any[] = [];
+          try {
+            const storedPurchases = localStorage.getItem("nenez_purchased_tickets");
+            if (storedPurchases) {
+              const parsed = JSON.parse(storedPurchases);
+              if (Array.isArray(parsed)) localTickets = parsed;
+            }
+          } catch {}
+
+          const merged = [...serverTickets];
+          localTickets.forEach((lt) => {
+            if (!merged.some((m) => m.id === lt.id || (m.referenceNumber && m.referenceNumber === lt.referenceNumber))) {
+              merged.push(lt);
+            }
+          });
+
+          setUserPurchasedTickets(merged);
+        };
+
+        loadUserTickets();
 
         // 4. Real Reservations
         const storedRes = localStorage.getItem("4go_user_reservations");
@@ -453,7 +497,9 @@ function CuentaContent() {
     router.push("/");
   };
 
-  // Calculate per-event statistics for managing view
+  const isMasterUser = Boolean(
+    userProfile?.email?.trim().toLowerCase() === "brandon.medina@unl.edu.ec"
+  );
   const approvedReceiptsCount = receiptsList.filter((r) => r.status === "aprobado").length;
   const pendingReceiptsCount = receiptsList.filter((r) => r.status === "en_verificacion" || !r.status).length;
   const eventBasePrice = managingEvent?.price || 10;
@@ -464,162 +510,201 @@ function CuentaContent() {
   return (
     <div className="min-h-screen w-full bg-[#09090b] text-white flex flex-col font-sans select-none">
       {/* Top Header Navigation */}
-      <header className="sticky top-0 z-50 w-full border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-xl px-4 sm:px-8 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/90 backdrop-blur-2xl px-4 sm:px-8 py-3 sm:py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 sm:gap-6">
+          {/* Left: Volver a Cartelera */}
           <Link
             href="/"
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-xs font-bold uppercase tracking-wider text-zinc-200 transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white transition active:scale-95 shrink-0"
           >
             <ChevronLeft className="w-4 h-4" />
-            <span>Volver a Cartelera</span>
+            <span className="hidden xs:inline sm:inline">Volver</span>
+            <span className="inline xs:hidden sm:hidden">Atrás</span>
           </Link>
 
-          <div className="h-5 w-px bg-zinc-800 hidden sm:block" />
-
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-zinc-800 border border-zinc-700 overflow-hidden flex items-center justify-center shrink-0">
-              {userProfile?.avatar ? (
-                <img
-                  src={userProfile.avatar}
-                  alt={userProfile.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <User className="w-5 h-5 text-zinc-400" />
-              )}
+          {/* Middle: Profile Card */}
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 justify-start sm:justify-center">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 border border-white/20 overflow-hidden flex items-center justify-center shrink-0 shadow-inner">
+              <User className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm sm:text-base font-black uppercase tracking-tight text-white">
-                  {userProfile?.venueName || userProfile?.name || "Mi Cuenta"}
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h1 className="text-xs sm:text-sm font-black uppercase tracking-tight text-white truncate max-w-[120px] xs:max-w-[180px] sm:max-w-none">
+                  {userProfile?.name || "Mi Cuenta"}
                 </h1>
-                <span className="px-2 py-0.5 rounded-full bg-white/10 text-[9px] font-black uppercase tracking-wider text-zinc-200 border border-white/15">
-                  Partner 4GO
-                </span>
+                {isMasterUser && (
+                  <span className="px-1.5 py-0.5 rounded-md bg-white/15 text-[8.5px] sm:text-[9px] font-black uppercase tracking-wider text-white border border-white/20 shrink-0">
+                    Master Admin
+                  </span>
+                )}
               </div>
-              <p className="text-[11px] text-zinc-400 font-medium truncate max-w-xs">{userProfile?.email}</p>
+              <p className="text-[10px] sm:text-[11px] text-zinc-400 font-medium truncate max-w-[130px] xs:max-w-[200px] sm:max-w-xs">{userProfile?.email}</p>
             </div>
           </div>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => router.push("/?action=create_event")}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white hover:bg-zinc-200 text-black text-xs font-black uppercase tracking-wider transition cursor-pointer shadow-lg active:scale-95"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[3]" />
-            <span>Publicar Evento</span>
-          </button>
+          {/* Right: Actions (Publish if Master + Logout) */}
+          <div className="flex items-center gap-2 shrink-0">
+            {isMasterUser && (
+              <button
+                type="button"
+                onClick={() => router.push("/?action=create_event")}
+                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-full bg-white hover:bg-zinc-200 text-black text-[11px] sm:text-xs font-black uppercase tracking-wider transition cursor-pointer shadow-lg active:scale-95 shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                <span className="hidden sm:inline">Publicar Evento</span>
+                <span className="inline sm:hidden">Publicar</span>
+              </button>
+            )}
 
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white text-xs font-bold uppercase transition cursor-pointer"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Cerrar Sesión</span>
-          </button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-full sm:rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-zinc-300 hover:text-white text-xs font-bold uppercase transition cursor-pointer shrink-0 active:scale-95"
+              title="Cerrar Sesión"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Cerrar Sesión</span>
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Modern Monochrome Tabs Bar */}
-      <div className="w-full border-b border-zinc-800/60 bg-zinc-950/40 px-4 sm:px-8 py-2.5 flex items-center gap-2 overflow-x-auto no-scrollbar text-xs font-bold uppercase tracking-wider shrink-0">
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab("events");
-            setManagingEvent(null);
-          }}
-          className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-            activeTab === "events"
-              ? "bg-white text-black font-black shadow-md"
-              : "text-zinc-400 hover:text-white hover:bg-white/5"
-          }`}
-        >
-          <Calendar className="w-3.5 h-3.5" />
-          <span>Mis Eventos ({myCreatedEvents.length})</span>
-        </button>
+      <div className="w-full border-b border-white/10 bg-black/60 backdrop-blur-xl px-4 sm:px-8 py-2.5 flex items-center gap-2 overflow-x-auto no-scrollbar text-xs font-bold uppercase tracking-wider shrink-0">
+        {isMasterUser ? (
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("events");
+                setManagingEvent(null);
+              }}
+              className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                activeTab === "events"
+                  ? "bg-white text-black font-black shadow-md"
+                  : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Mis Eventos ({myCreatedEvents.length})</span>
+            </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab("tickets");
-            setManagingEvent(null);
-          }}
-          className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-            activeTab === "tickets"
-              ? "bg-white text-black font-black shadow-md"
-              : "text-zinc-400 hover:text-white hover:bg-white/5"
-          }`}
-        >
-          <Ticket className="w-3.5 h-3.5" />
-          <span>Mis Tickets ({userPurchasedTickets.length})</span>
-        </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("tickets");
+                setManagingEvent(null);
+              }}
+              className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                activeTab === "tickets"
+                  ? "bg-white text-black font-black shadow-md"
+                  : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              <Ticket className="w-3.5 h-3.5" />
+              <span>Mis Tickets ({userPurchasedTickets.length})</span>
+            </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab("reservations");
-            setManagingEvent(null);
-          }}
-          className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-            activeTab === "reservations"
-              ? "bg-white text-black font-black shadow-md"
-              : "text-zinc-400 hover:text-white hover:bg-white/5"
-          }`}
-        >
-          <Building2 className="w-3.5 h-3.5" />
-          <span>Mis Reservas ({userReservations.length})</span>
-        </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("favorites");
+                setManagingEvent(null);
+              }}
+              className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                activeTab === "favorites"
+                  ? "bg-white text-black font-black shadow-md"
+                  : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              <Heart className="w-3.5 h-3.5" />
+              <span>Mis Favoritos ({favoriteEvents.length})</span>
+            </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab("favorites");
-            setManagingEvent(null);
-          }}
-          className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-            activeTab === "favorites"
-              ? "bg-white text-black font-black shadow-md"
-              : "text-zinc-400 hover:text-white hover:bg-white/5"
-          }`}
-        >
-          <Heart className="w-3.5 h-3.5" />
-          <span>Mis Favoritos ({favoriteEvents.length})</span>
-        </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("partner_profile");
+                setManagingEvent(null);
+              }}
+              className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                activeTab === "partner_profile"
+                  ? "bg-white text-black font-black shadow-md"
+                  : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Datos de Partner</span>
+            </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab("partner_profile");
-            setManagingEvent(null);
-          }}
-          className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-            activeTab === "partner_profile"
-              ? "bg-white text-black font-black shadow-md"
-              : "text-zinc-400 hover:text-white hover:bg-white/5"
-          }`}
-        >
-          <ShieldCheck className="w-3.5 h-3.5" />
-          <span>Datos de Partner</span>
-        </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("payouts");
+                setManagingEvent(null);
+              }}
+              className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                activeTab === "payouts"
+                  ? "bg-white text-black font-black shadow-md"
+                  : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              <CreditCard className="w-3.5 h-3.5" />
+              <span>Pagos y Liquidaciones</span>
+            </button>
+          </>
+        ) : (
+          /* REGULAR USER TABS (Clean, No Partner, No Event Creation) */
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("tickets");
+                setManagingEvent(null);
+              }}
+              className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                activeTab === "tickets"
+                  ? "bg-white text-black font-black shadow-md"
+                  : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              <Ticket className="w-3.5 h-3.5" />
+              <span>Mis Tickets ({userPurchasedTickets.length})</span>
+            </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab("payouts");
-            setManagingEvent(null);
-          }}
-          className={`px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
-            activeTab === "payouts"
-              ? "bg-white text-black font-black shadow-md"
-              : "text-zinc-400 hover:text-white hover:bg-white/5"
-          }`}
-        >
-          <CreditCard className="w-3.5 h-3.5" />
-          <span>Pagos y Liquidaciones</span>
-        </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("favorites");
+                setManagingEvent(null);
+              }}
+              className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                activeTab === "favorites"
+                  ? "bg-white text-black font-black shadow-md"
+                  : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              <Heart className="w-3.5 h-3.5" />
+              <span>Mis Favoritos ({favoriteEvents.length})</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("partner_profile");
+                setManagingEvent(null);
+              }}
+              className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                activeTab === "partner_profile"
+                  ? "bg-white text-black font-black shadow-md"
+                  : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>Mis Datos</span>
+            </button>
+          </>
+        )}
       </div>
 
       {/* Main Container */}

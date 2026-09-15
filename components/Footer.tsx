@@ -117,6 +117,14 @@ export default function Footer({ showTopBanner = false }: FooterProps) {
                       Preguntas frecuentes
                     </Link>
                   </li>
+                  <li>
+                    <a
+                      href="mailto:soporte.nenez@gmail.com"
+                      className="hover:text-black transition-colors block font-semibold text-zinc-800"
+                    >
+                      soporte.nenez@gmail.com
+                    </a>
+                  </li>
                 </ul>
               </div>
             </div>

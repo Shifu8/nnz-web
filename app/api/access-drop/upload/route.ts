@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
         {
           error:
             analysis.rejectionReason ||
-            "LA IMAGEN NO PARECE UN COMPROBANTE DE PAGO VALIDO.",
+            "No se pudo validar el comprobante. Asegúrate de subir una captura nítida y completa de la transferencia.",
           code: "RECEIPT_REJECTED",
         },
         { status: 422 },
@@ -204,8 +204,10 @@ export async function POST(request: NextRequest) {
       if (!Number.isNaN(parsedAmount) && Math.abs(parsedAmount - expectedTotal) > 0.01) {
         return NextResponse.json(
           {
-            error: `EL VALOR DETECTADO EN EL COMPROBANTE ($${parsedAmount.toFixed(2)} USD) NO COINCIDE CON EL TOTAL EXACTO A PAGAR ($${expectedTotal.toFixed(2)} USD). VERIFICA QUE LA TRANSFERENCIA SEA POR EL MONTO EXACTO (NI MÁS NI MENOS).`,
+            error: `El valor detectado en el comprobante ($${parsedAmount.toFixed(2)} USD) no coincide con el total a pagar ($${expectedTotal.toFixed(2)} USD). Verifica que la transferencia corresponda al valor exacto de tus entradas.`,
             code: "RECEIPT_REJECTED",
+            detectedAmount: parsedAmount.toFixed(2),
+            expectedAmount: expectedTotal.toFixed(2),
           },
           { status: 422 },
         );
