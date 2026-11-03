@@ -16,7 +16,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data: https://images.unsplash.com",
   "font-src 'self'",
-  "connect-src 'self' https://challenges.cloudflare.com https://pay.payphonetodoesposible.com https://*.supabase.co https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://graph.facebook.com https://in-v3.mailjet.com",
+  "connect-src 'self' https://challenges.cloudflare.com https://pay.payphonetodoesposible.com https://*.supabase.co https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://graph.facebook.com https://in-v3.mailjet.com https://www.googleapis.com/oauth2/v3/userinfo",
   "frame-src 'self' https://challenges.cloudflare.com",
   "media-src 'self' data:",
   "object-src 'none'",
