@@ -72,6 +72,7 @@ export type Event = {
   organizer?: string;
   organizers?: string[];
   venue?: string;
+  address?: string;
   time?: string;
   category?: string;
   ageRestriction?: string;

@@ -5,14 +5,15 @@
  */
 
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Comfortaa, Quicksand } from "next/font/google";
+import { Inter, Geist_Mono, Comfortaa, Quicksand } from "next/font/google";
 
 import "./globals.css";
 import MobileCookieConsent from "@/components/MobileCookieConsent";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -42,9 +43,9 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "4GO | Eventos, Conciertos y Fiestas Exclusivas",
+  title: "4go | Descubre y publica eventos en Loja",
   description:
-    "Descubre los mejores eventos, conciertos y experiencias en Ecuador con 4GO. Entradas 100% seguras y acceso directo.",
+    "Todo lo que pasa en Loja, en 4go. Descubre conciertos, ferias, cultura y talleres, compra tus entradas o publica tu propio evento.",
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -54,8 +55,8 @@ export const metadata: Metadata = {
     apple: "/images/logo_4go_black_white.png?v=4",
   },
   openGraph: {
-    title: "4GO | Eventos & Entradas Exclusivas",
-    description: "Descubre los mejores eventos, conciertos y experiencias en Ecuador con 4GO.",
+    title: "4go | Eventos y experiencias",
+    description: "Descubre eventos en Loja y comparte el tuyo con toda la ciudad.",
     siteName: "4GO",
     images: [
       {
@@ -69,8 +70,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "4GO | Eventos & Entradas Exclusivas",
-    description: "Descubre los mejores eventos, conciertos y experiencias en Ecuador con 4GO.",
+    title: "4go | Eventos y experiencias",
+    description: "Descubre eventos en Loja y comparte el tuyo con toda la ciudad.",
     images: ["/images/nenez_merch_official_couch_hero.png"],
   },
   appleWebApp: { capable: true, title: "4GO", statusBarStyle: "black-translucent" },
@@ -91,7 +92,7 @@ export default function RootLayout({
       lang="es"
       data-scroll-behavior="smooth"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${comfortaa.variable} ${quicksand.variable} h-full antialiased`}
+      className={`${inter.variable} ${geistMono.variable} ${comfortaa.variable} ${quicksand.variable} h-full antialiased`}
     >
       <head>
         <link rel="manifest" href="/manifest.json" />

@@ -265,9 +265,8 @@ export default function EventDetailPage() {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition shrink-0 ${
-                tab === t.key ? "bg-white text-black" : "text-zinc-500 hover:text-white"
-              }`}
+              className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition shrink-0 ${tab === t.key ? "bg-white text-black" : "text-zinc-500 hover:text-white"
+                }`}
             >
               {t.label}
             </button>
@@ -358,7 +357,7 @@ export default function EventDetailPage() {
             {/* Add new type */}
             <div className="p-5 rounded-2xl bg-white/2 border border-white/5">
               <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-4">
-                Agregar tipo de entrada
+                Agregar tipo de entrada {/* los diseños revisar la idea, porque ya no creo que se manejen diseños pero bueno */}
               </p>
               <form onSubmit={handleCreateTT} className="space-y-3">
                 <div className="grid grid-cols-3 gap-3">
@@ -419,11 +418,10 @@ export default function EventDetailPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="text-sm font-black text-white">{r.first_name} {r.last_name}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border ${
-                        r.status === "aprobado" ? "border-white/20 text-white bg-white/5" :
-                        r.status === "rechazado" ? "border-red-500/20 text-red-400 bg-red-500/5" :
-                        "border-yellow-500/20 text-yellow-400 bg-yellow-500/5"
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border ${r.status === "aprobado" ? "border-white/20 text-white bg-white/5" :
+                          r.status === "rechazado" ? "border-red-500/20 text-red-400 bg-red-500/5" :
+                            "border-yellow-500/20 text-yellow-400 bg-yellow-500/5"
+                        }`}>
                         {r.status}
                       </span>
                     </div>

@@ -26,6 +26,9 @@ import {
 import type { Event } from "@/frontend/types/domain";
 import { getHdImageSrc, DEFAULT_HD_EVENT_POSTER } from "@/frontend/utils/hdImages";
 import TicketPassModal from "@/frontend/components/TicketPassModal";
+import TransferPaymentPanel from "@/frontend/components/TransferPaymentPanel";
+import { validateReceiptFileMetadata } from "@/lib/access-drop/fileValidation";
+import TurnstileWidget from "@/frontend/components/TurnstileWidget";
 
 interface EventPurchaseCheckoutModalProps {
   isOpen: boolean;
@@ -213,7 +216,7 @@ export default function EventPurchaseCheckoutModal({
   const [customerName, setCustomerName] = useState(userProfile?.name || "");
   const [customerEmail, setCustomerEmail] = useState(userProfile?.email || "");
   const [customerPhone, setCustomerPhone] = useState(userProfile?.phone || "");
-  const [selectedBankId, setSelectedBankId] = useState("pichincha");
+  const [selectedBankId, setSelectedBankId] = useState<string | null>(null);
 
   // Receipt upload state
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -223,6 +226,8 @@ export default function EventPurchaseCheckoutModal({
   const [uploadSuccessMsg, setUploadSuccessMsg] = useState("");
   const [copiedBankField, setCopiedBankField] = useState<string | null>(null);
   const [verifyingStatusText, setVerifyingStatusText] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -238,6 +243,8 @@ export default function EventPurchaseCheckoutModal({
       setReceiptPreview(null);
       setUploadError("");
       setUploadSuccessMsg("");
+      setSelectedBankId(null);
+      setTurnstileToken("");
       setShowPromoModal(false);
       setPromoInput("");
       setAppliedPromo(null);
@@ -341,9 +348,13 @@ export default function EventPurchaseCheckoutModal({
     }
   }, [isOpen, userLoggedIn, userProfile, event]);
 
+  useEffect(() => {
+    return () => { if (receiptPreview) URL.revokeObjectURL(receiptPreview); };
+  }, [receiptPreview]);
+
   if (!isOpen || !event) return null;
 
-  const basePrice = Math.round(event.price !== undefined ? event.price : 10);
+  const basePrice = event.price ?? 10;
 
   // Compute clean tiers based on the event's actual presales or standard single tier
   const tiers: PurchaseTier[] = (() => {
@@ -367,7 +378,7 @@ export default function EventPurchaseCheckoutModal({
         return {
           id: `presale-${p.id || idx}`,
           name: cleanName,
-          price: Number(p.price) || basePrice,
+          price: Number.isFinite(Number(p.price)) ? Number(p.price) : basePrice,
           releaseTag: tag,
           type: "ticket",
           status: "active",
@@ -510,13 +521,11 @@ export default function EventPurchaseCheckoutModal({
       return;
     }
 
-    if (!file.type.startsWith("image/")) {
-      setUploadError("Por favor sube una imagen válida (JPG o PNG).");
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError("La imagen no debe superar los 5MB.");
+    const validationError = validateReceiptFileMetadata(file);
+    if (validationError) {
+      setReceiptFile(null);
+      setReceiptPreview(null);
+      setUploadError(validationError.message);
       return;
     }
 
@@ -525,11 +534,13 @@ export default function EventPurchaseCheckoutModal({
     setReceiptPreview(url);
   };
 
-  const handleCopyText = (text: string, fieldKey: string) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text);
+  const handleCopyText = async (text: string, fieldKey: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
       setCopiedBankField(fieldKey);
       setTimeout(() => setCopiedBankField(null), 2000);
+    } catch {
+      setUploadError("No pudimos copiar el dato. Puedes seleccionarlo y copiarlo manualmente.");
     }
   };
 
@@ -545,6 +556,12 @@ export default function EventPurchaseCheckoutModal({
   const handleSubmitReceipt = async (e: React.FormEvent) => {
     e.preventDefault();
     setUploadError("");
+
+    if (isUploading) return;
+    if (!selectedBankId) {
+      setUploadError("Selecciona Deuna o Ahorita para continuar.");
+      return;
+    }
 
     if (!customerName.trim()) {
       setUploadError("Por favor ingresa tu nombre completo.");
@@ -578,7 +595,7 @@ export default function EventPurchaseCheckoutModal({
       formData.append("eventId", event.id);
       formData.append("eventTitle", event.title);
       formData.append("ticketDesign", "0");
-      formData.append("cf-turnstile-response", "");
+      formData.append("cf-turnstile-response", turnstileToken);
 
       const res = await fetch("/api/access-drop/upload", {
         method: "POST",
@@ -588,6 +605,8 @@ export default function EventPurchaseCheckoutModal({
       const data = await res.json();
 
       if (!res.ok) {
+        setTurnstileToken("");
+        setTurnstileResetKey((key) => key + 1);
         if (data.code === "RECEIPT_REJECTED") {
           throw new Error(
             data.error ||
@@ -659,18 +678,17 @@ export default function EventPurchaseCheckoutModal({
     }
   };
 
-  const selectedBank = BANK_ACCOUNTS.find((b) => b.id === selectedBankId) || BANK_ACCOUNTS[0];
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.35, ease: "easeInOut" }}
-      className="fixed inset-0 z-[950] bg-black text-white flex flex-col select-none overflow-y-auto"
+      data-checkout-step={currentStep}
+      className={`fixed inset-0 z-[950] flex flex-col overflow-y-auto ${currentStep === "payment" ? "bg-[#faf8f5] text-zinc-900" : "bg-black text-white"}`}
     >
       {/* ─── AMBIENT POSTER COLOR BLUR (AUTHENTIC GRADIENT FADE TO DEEP BLACK) ─── */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-black transform-gpu">
+      <div className={`fixed inset-0 z-0 pointer-events-none overflow-hidden bg-black transform-gpu ${currentStep === "payment" ? "hidden" : ""}`}>
         {/* Blurred Image with Smooth Mask-Image Gradient Fade to Black */}
         <div
           className="absolute top-0 inset-x-0 h-[85vh] max-h-[850px] overflow-hidden"
@@ -954,7 +972,7 @@ export default function EventPurchaseCheckoutModal({
       {/* ─── SCROLLABLE CONTENT BODY ─── */}
       <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 pt-20 md:pt-24 pb-36 lg:pb-20 flex flex-col space-y-5">
         {/* Mobile Centered Breadcrumbs (Only on mobile, below fixed back arrow) */}
-        <div className="md:hidden flex items-center justify-center gap-2 text-xs font-semibold tracking-normal text-zinc-400 pb-1">
+        <div className={`${currentStep === "payment" ? "hidden" : "md:hidden flex"} items-center justify-center gap-2 text-xs font-semibold tracking-normal text-zinc-400 pb-1`}>
           <span className={currentStep === "select" ? "text-white font-bold" : "text-zinc-500"}>
             Entrada
           </span>
@@ -1274,277 +1292,72 @@ export default function EventPurchaseCheckoutModal({
         {/* PASO 2: TRANSFERENCIA BANCARIA Y COMPROBANTE CON OCR / IA    */}
         {/* ══════════════════════════════════════════════════════════════ */}
         {currentStep === "payment" && (
-          <form onSubmit={handleSubmitReceipt} className="w-full max-w-2xl mx-auto space-y-6 text-left">
-            {/* Order Summary Pill */}
-            <div className="p-5 rounded-3xl bg-zinc-900/90 border border-white/15 backdrop-blur-2xl shadow-xl space-y-3">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                  Resumen de tu pedido
-                </span>
-                <span className="text-xs font-black text-white uppercase">
-                  {totalItemsCount} {totalItemsCount === 1 ? "Ítem" : "Ítems"}
-                </span>
+          <form onSubmit={handleSubmitReceipt} className="mx-auto w-full max-w-xl space-y-6 pb-6 text-left">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-violet-700">4go · Compra tu entrada</p>
+                <h2 className="text-3xl font-semibold tracking-tight text-[#180d2b]">Pago</h2>
               </div>
-
-              <div className="space-y-2">
-                {Object.entries(quantities).map(([id, qty]) => {
-                  const t = tiers.find((tier) => tier.id === id);
-                  if (!t) return null;
-                  return (
-                    <div key={id} className="flex justify-between text-xs">
-                      <span className="text-zinc-300 font-medium">
-                        {qty}x {t.name}
-                      </span>
-                      <span className="font-black text-white">
-                        {t.price * qty} $
-                      </span>
-                    </div>
-                  );
-                })}
-
-                {appliedPromo && discountAmount > 0 && (
-                  <div className="flex justify-between text-xs text-white font-bold pt-1 border-t border-white/5">
-                    <span>Descuento:</span>
-                    <span>-{discountAmount} $</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-between items-baseline pt-3 border-t border-white/10">
-                <span className="text-sm font-black text-white">Total a Transferir:</span>
-                <span className="text-2xl font-black text-white">{totalPrice} $</span>
-              </div>
+              <span className="rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-500">2 de 3</span>
+            </div>
+            <div className="flex items-center gap-3 rounded-full bg-[#180d2b] px-5 py-3.5 text-xs text-white shadow-sm">
+              <ShieldCheck className="h-5 w-5 shrink-0 text-[#dfff70]" />
+              <span>Deuna o Ahorita. <strong className="text-[#dfff70]">El total que ves es el que pagas.</strong></span>
             </div>
 
-            {/* Select Bank for Transfer (Only Pichincha & Loja) */}
-            <div className="space-y-3">
-              <label className="text-xs font-black uppercase tracking-wider text-zinc-400 block">
-                1. Selecciona la Cuenta Bancaria para Transferir
-              </label>
-
-              <div className="grid grid-cols-2 gap-3">
-                {BANK_ACCOUNTS.map((b) => (
-                  <button
-                    key={b.id}
-                    type="button"
-                    onClick={() => setSelectedBankId(b.id)}
-                    className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                      selectedBankId === b.id
-                        ? "bg-white/10 border-white text-white shadow-lg ring-1 ring-white/30"
-                        : "bg-black/40 border-white/10 hover:bg-black/60 text-zinc-400"
-                    }`}
-                  >
-                    <span className="text-sm font-black text-white">{b.bank}</span>
-                    <span className="text-xs text-zinc-400 mt-1">{b.type}</span>
+            <TransferPaymentPanel accounts={BANK_ACCOUNTS} selectedId={selectedBankId} onSelect={(id) => { setSelectedBankId(id); setUploadError(""); }} total={totalPrice} copiedField={copiedBankField} onCopy={handleCopyText} busy={isUploading}>
+              <fieldset disabled={isUploading} className="space-y-4">
+                <legend className="mb-3 text-xs font-bold uppercase tracking-wider text-white">Tus datos para la entrada</legend>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label className="space-y-1.5 text-xs text-[#d3c6e3] sm:col-span-2">
+                    <span>Nombre y apellido</span>
+                    <input type="text" autoComplete="name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} required className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-[#dfff70]" />
+                  </label>
+                  <label className="space-y-1.5 text-xs text-[#d3c6e3]">
+                    <span>Correo electrónico</span>
+                    <input type="email" autoComplete="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} required className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-[#dfff70]" />
+                  </label>
+                  <label className="space-y-1.5 text-xs text-[#d3c6e3]">
+                    <span>Celular / WhatsApp</span>
+                    <input type="tel" autoComplete="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="09xxxxxxxx" required className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-[#dfff70]" />
+                  </label>
+                </div>
+                <div className="space-y-3 pt-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-white">Subir comprobante (foto o captura)</p>
+                  <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" className="hidden" aria-label="Seleccionar comprobante de pago" onChange={(e) => handleFileChange(e.target.files?.[0] || null)} />
+                  <button type="button" onClick={() => fileInputRef.current?.click()} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); if (!isUploading) handleFileChange(e.dataTransfer.files?.[0] || null); }} className="flex min-h-44 w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-[#dfff70]/60 bg-white/[0.04] p-5 text-center transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#dfff70]">
+                    {receiptPreview ? <Image src={receiptPreview} alt="Vista previa del comprobante" width={180} height={130} unoptimized className="max-h-36 w-auto rounded-lg object-contain" /> : <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#dfff70] text-[#180d2b]"><Upload className="h-5 w-5" /></span>}
+                    <span className="max-w-full break-all text-sm font-bold text-white">{receiptFile ? receiptFile.name : "Subir comprobante (foto o captura)"}</span>
+                    <span className="text-xs text-[#d3c6e3]">{receiptFile ? "Toca para cambiar la imagen" : "Toca o arrastra tu imagen · JPG o PNG · Hasta 5 MB"}</span>
                   </button>
-                ))}
+                  <p className="text-xs leading-relaxed text-[#d3c6e3]">{receiptFile ? "Imagen lista para enviar. Verificaremos que sea un comprobante válido." : "Sube tu comprobante para continuar."}</p>
+                </div>
+                <TurnstileWidget action="ticket_upload" variant="visible" resetKey={turnstileResetKey} onVerify={setTurnstileToken} onExpire={() => setTurnstileToken("")} onError={() => setTurnstileToken("")} />
+                {uploadError && <p role="alert" className="rounded-xl border border-rose-300/30 bg-rose-400/10 px-4 py-3 text-xs leading-relaxed text-rose-200">{uploadError}</p>}
+                <button type="submit" disabled={isUploading || !receiptFile || (process.env.NODE_ENV === "production" && !turnstileToken)} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#dfff70] px-5 py-3 text-xs font-black uppercase tracking-widest text-[#180d2b] transition-colors hover:bg-[#e9ff9f] disabled:cursor-not-allowed disabled:bg-white/15 disabled:text-white/40">
+                  {isUploading ? <><RefreshCw className="h-4 w-4 animate-spin" /><span>{verifyingStatusText || "Verificando comprobante..."}</span></> : "Enviar comprobante"}
+                </button>
+              </fieldset>
+            </TransferPaymentPanel>
+
+            <section className="space-y-4 pt-2 text-zinc-800" aria-label="Resumen del pedido">
+              <div>
+                <p className="flex items-center gap-2 text-xs font-bold text-violet-700"><span className="h-2 w-2 rounded-full bg-violet-500" />Tu pedido en 4go</p>
+                <h3 className="mt-2 text-base font-bold">{event.title}</h3>
+                <p className="mt-1 text-xs text-zinc-500">{event.organizer || "Organizador del evento"} · {event.city || "Loja"}</p>
               </div>
-
-              {/* Selected Bank Details & QR Code Box */}
-              <div className="p-5 sm:p-6 rounded-3xl bg-black/60 border border-white/15 backdrop-blur-xl space-y-4 font-sans">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                  <div className="space-y-0.5">
-                    <span className="text-[11px] font-bold text-zinc-400 uppercase">Banco</span>
-                    <h4 className="text-base font-black text-white">{selectedBank.bank}</h4>
-                  </div>
-                  <span className="text-xs px-3 py-1 rounded-full bg-white/10 font-bold text-zinc-300">
-                    {selectedBank.type}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
-                  {/* Left Column: Account Details */}
-                  <div className="sm:col-span-7 space-y-3">
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase block">
-                        Número de Cuenta
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-base sm:text-lg font-mono font-black text-white">
-                          {selectedBank.accountNumber}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopyText(selectedBank.accountNumber, "acc")}
-                          className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white transition cursor-pointer"
-                          title="Copiar número"
-                        >
-                          {copiedBankField === "acc" ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-400" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase block">
-                        Titular / RUC
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-white truncate max-w-[170px]">
-                          {selectedBank.holder}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopyText(selectedBank.idNumber, "ruc")}
-                          className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white transition cursor-pointer shrink-0"
-                          title="Copiar RUC"
-                        >
-                          {copiedBankField === "ruc" ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-400" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                      </div>
-                      <p className="text-xs font-mono text-zinc-400">{selectedBank.idNumber}</p>
-                    </div>
-
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase block">
-                        Correo de Notificación
-                      </span>
-                      <p className="text-xs font-bold text-zinc-300">{selectedBank.email}</p>
-                    </div>
-                  </div>
-
-                  {/* Right Column: Official Bank QR Code */}
-                  <div className="sm:col-span-5 flex flex-col items-center justify-center p-3.5 rounded-2xl bg-white text-black text-center shadow-xl space-y-2">
-                    <div className="relative w-36 h-36 rounded-xl overflow-hidden bg-white p-1">
-                      <Image
-                        src={selectedBank.qrImage}
-                        alt={`QR ${selectedBank.bank}`}
-                        fill
-                        priority
-                        unoptimized
-                        sizes="144px"
-                        className="object-contain"
-                      />
-                    </div>
-                    <span className="text-[10px] font-black text-zinc-800 leading-tight uppercase">
-                      {selectedBank.qrSubtitle}
-                    </span>
-                  </div>
-                </div>
+              <div className="space-y-2 border-b border-zinc-200 pb-4 text-sm">
+                {Object.entries(quantities).map(([id, qty]) => {
+                  const tier = tiers.find((item) => item.id === id);
+                  return tier ? <div key={id} className="flex justify-between gap-4"><span>{qty} × {tier.name}</span><span className="shrink-0 tabular-nums">{new Intl.NumberFormat("es-EC", { style: "currency", currency: "USD" }).format(tier.price * qty)}</span></div> : null;
+                })}
+                {discountAmount > 0 && <div className="flex justify-between text-violet-700"><span>Descuento</span><span>−${discountAmount.toFixed(2)}</span></div>}
+                <div className="flex justify-between text-xs text-zinc-500"><span>Recargo por pago</span><span>$0,00</span></div>
               </div>
-            </div>
-
-            {/* User Data Inputs */}
-            <div className="space-y-3">
-              <label className="text-xs font-black uppercase tracking-wider text-zinc-400 block">
-                2. Tus Datos para la Entrada o Reserva
-              </label>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <input
-                    type="text"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Nombre y Apellido"
-                    required
-                    className="w-full px-4 py-3.5 rounded-2xl bg-black/50 border border-white/15 text-xs font-bold text-white placeholder:text-zinc-500 focus:outline-none focus:border-white/50"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="email"
-                    value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                    placeholder="Correo (Gmail preferido)"
-                    required
-                    className="w-full px-4 py-3.5 rounded-2xl bg-black/50 border border-white/15 text-xs font-bold text-white placeholder:text-zinc-500 focus:outline-none focus:border-white/50"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Receipt Upload Box with OCR Verification Protection */}
-            <div className="space-y-3">
-              <label className="text-xs font-black uppercase tracking-wider text-zinc-400 block">
-                3. Sube tu Comprobante de Transferencia
-              </label>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/jpg"
-                className="hidden"
-                onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
-              />
-
-              {!receiptPreview ? (
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full p-8 rounded-3xl border-2 border-dashed border-white/20 hover:border-white/50 bg-black/40 hover:bg-black/60 transition-all flex flex-col items-center justify-center gap-3 cursor-pointer text-center group"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-white/10 group-hover:bg-white group-hover:text-black text-white flex items-center justify-center transition-colors shadow-lg">
-                    <Upload className="w-6 h-6" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs font-black text-white uppercase tracking-wider">
-                      Toca aquí para subir captura o foto
-                    </p>
-                    <p className="text-[11px] text-zinc-400">
-                      Soporta JPG, PNG hasta 5MB. Verificación inteligente anti-fraude.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="relative rounded-3xl overflow-hidden border border-white/20 bg-black/60 p-4 flex items-center gap-4">
-                  <div className="relative w-20 h-24 rounded-xl overflow-hidden bg-zinc-900 border border-white/10 shrink-0">
-                    <Image
-                      src={receiptPreview}
-                      alt="Comprobante"
-                      fill
-                      sizes="80px"
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <p className="text-xs font-black text-white truncate">
-                      {receiptFile?.name || "comprobante.jpg"}
-                    </p>
-                    <p className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
-                      <Check className="w-3 h-3" /> Imagen cargada correctamente
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="text-[11px] font-bold text-zinc-400 hover:text-white underline cursor-pointer"
-                    >
-                      Cambiar foto
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {uploadError && (
-                <p className="text-center text-xs font-semibold text-rose-400/95 px-2 py-1 leading-relaxed">
-                  {uploadError}
-                </p>
-              )}
-            </div>
-
-            {/* Submit Action Button */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={isUploading}
-                className="w-full py-4 rounded-full bg-white hover:bg-zinc-200 text-black font-black text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isUploading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>{verifyingStatusText || "PROCESANDO PAGO..."}</span>
-                  </>
-                ) : (
-                  <span>ENVIAR COMPROBANTE ({totalPrice} $)</span>
-                )}
-              </button>
-            </div>
+              <div className="flex items-baseline justify-between gap-4"><span className="text-sm font-bold">Total</span><strong className="text-4xl font-medium tracking-tight text-[#180d2b]">{new Intl.NumberFormat("es-EC", { style: "currency", currency: "USD" }).format(totalPrice)}</strong></div>
+              <a href={`https://wa.me/593988831372?text=${encodeURIComponent(`Hola 4go, necesito ayuda con el pago de ${event.title}.`)}`} target="_blank" rel="noopener noreferrer" className="inline-block min-h-10 text-xs font-medium text-[#180d2b] underline underline-offset-4">¿Problemas con el pago? Escríbenos por WhatsApp →</a>
+              <button type="button" disabled={isUploading} onClick={onClose} className="block min-h-10 text-sm text-zinc-600 underline underline-offset-4 disabled:opacity-40">Cancelar y volver al evento</button>
+            </section>
           </form>
         )}
 

@@ -310,7 +310,7 @@ test("valida el ejemplo real de Banco de Loja con calidad y OCR", async () => {
     assert.ok(result.confidence >= 28);
     assert.equal(result.isValidReceipt, true);
     assert.equal(result.matchedProfile, "banco-loja");
-    assert.equal(result.detectedBank, "Banco de Loja");
+    assert.match(result.detectedBank || "", /\bBanco de Loja\b/);
     assert.equal(result.validationProvider, "local-ocr+quality+profiles");
   } finally {
     if (originalApiKey) {

@@ -67,7 +67,6 @@ import AIChatbot from "@/frontend/components/AIChatbot";
 import PurchaseFarewell from "@/frontend/components/PurchaseFarewell";
 import AccessDrop, { type AccessDropHandle } from "@/frontend/features/access-drop/AccessDrop";
 import TicketRecoveryModal from "@/frontend/components/TicketRecoveryModal";
-import OutfitBuilderSection from "@/frontend/features/merch/OutfitBuilderSection";
 import StaffModal from "@/frontend/features/staff/StaffModal";
 import BoxOfficeSalesModal from "@/frontend/features/staff/BoxOfficeSalesModal";
 import DrinksSalesModal from "@/frontend/features/staff/DrinksSalesModal";
@@ -84,7 +83,10 @@ import Footer from "@/components/Footer";
 import OrganizerProfileOverlay, { ORGANIZER_DATA } from "@/frontend/features/organizer/OrganizerProfileOverlay";
 import { QuickPreviewModal } from "@/frontend/components/QuickPreviewModal";
 import DrinksMenuModal from "@/frontend/components/DrinksMenuModal";
-import StoryLinesHeader, { type StoryScreen } from "@/frontend/components/StoryLinesHeader";
+import type { StoryScreen } from "@/frontend/components/StoryLinesHeader";
+import FourgoNavigation from "@/frontend/components/FourgoNavigation";
+import FourgoHero from "@/frontend/components/FourgoHero";
+import FourgoExperience from "@/frontend/components/FourgoExperience";
 import AlienIcon from "@/frontend/components/AlienIcon";
 import { events as fallbackEvents } from "@/frontend/services/nenezData";
 import { useHomepageConfig } from "@/frontend/hooks/useHomepageConfig";
@@ -100,7 +102,6 @@ import { getOnlineSalesStatus } from "@/frontend/utils/cutoff";
 const HOME_NAV_ITEMS = [
   { id: "home", label: "Home" },
   { id: "explore", label: "Shows" },
-  { id: "merch", label: "Merch" },
   { id: "access", label: "Passes" },
 ];
 
@@ -175,15 +176,6 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
   const [activeSection, setActiveSection] = useState<HomeNavId>("home");
   const [activeFilterTab, setActiveFilterTab] = useState<FilterTabId>("inicio");
   const [showHiddenMenu, setShowHiddenMenu] = useState(false);
-  const [merchSlideIndex, setMerchSlideIndex] = useState(0);
-
-  const MERCH_SHOWCASE_IMAGES = [
-    { src: "/images/nenez_merch_official_couch_hero.png", title: "4GO x NENEZ Official Merch" },
-  ];
-
-  useEffect(() => {
-    // Static photo - no slide rotation
-  }, []);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isOrganizerOnboardingOpen, setIsOrganizerOnboardingOpen] = useState(false);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
@@ -228,13 +220,14 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
               return parsed;
             }
             return {
+              ...parsed,
               id: parsed.id || `usr_${cleanEmail.split("@")[0]}`,
               name: parsed.name || cleanEmail.split("@")[0],
               email: cleanEmail,
-              type: "Usuario",
-              venueName: "",
+              type: parsed.type || "Usuario",
+              venueName: parsed.venueName || parsed.org_name || "",
               city: parsed.city || "Loja",
-              hasCompletedOnboarding: true,
+              hasCompletedOnboarding: Boolean(parsed.hasCompletedOnboarding || parsed.org_name),
             };
           }
         }
@@ -256,8 +249,8 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
     )
   );
 
-  // If master admin is logged in, event creation dashboard & form is enabled!
-  const isEventCreationAllowed = isMasterAdmin;
+  const [isPublishingEvent, setIsPublishingEvent] = useState(false);
+  const [publishEventError, setPublishEventError] = useState("");
 
   useEffect(() => {
     if (showEventPublishedToast) {
@@ -294,8 +287,8 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
   const isMasterUser = Boolean(
     userProfile &&
     (userProfile.type === "Master Admin" ||
-     userProfile.type === "master" ||
-     userProfile.email?.toLowerCase().trim() === "brandon.medina@unl.edu.ec")
+      userProfile.type === "master" ||
+      userProfile.email?.toLowerCase().trim() === "brandon.medina@unl.edu.ec")
   );
   const [isOnboardingSaving, setIsOnboardingSaving] = useState(false);
   const [isCoOrganizerModalOpen, setIsCoOrganizerModalOpen] = useState(false);
@@ -371,10 +364,10 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
             ...savedPerEmail,
             email: cleanEmail,
             name: savedPerEmail.name || name || cleanEmail.split("@")[0],
-            type: "Usuario",
-            venueName: "",
+            type: savedPerEmail.type || "Usuario",
+            venueName: savedPerEmail.venueName || savedPerEmail.org_name || "",
             city: savedPerEmail.city || "Loja",
-            hasCompletedOnboarding: true,
+            hasCompletedOnboarding: Boolean(savedPerEmail.hasCompletedOnboarding || savedPerEmail.org_name),
           };
         }
 
@@ -383,11 +376,11 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
           id: sub ? `usr_${sub}` : `usr_${cleanEmail.split("@")[0] || Date.now()}`,
           name: name || fallbackName,
           email: cleanEmail,
-          avatar: "",
+          avatar: avatar || "",
           type: "Usuario",
           venueName: "",
           city: "Loja",
-          hasCompletedOnboarding: true,
+          hasCompletedOnboarding: false,
         };
       };
 
@@ -507,16 +500,20 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
               }
               setUserProfile(parsed);
               setUserLoggedIn(true);
-            } else {
-              // Any other account is purged
+            } else if (cleanEmail) {
+              const restoredProfile = {
+                ...parsed,
+                email: cleanEmail,
+                name: parsed.name || parsed.display_name || cleanEmail.split("@")[0],
+                venueName: parsed.venueName || parsed.org_name || "",
+                type: parsed.type || "Usuario",
+                hasCompletedOnboarding: Boolean(parsed.hasCompletedOnboarding || parsed.org_name),
+              };
               if (typeof document !== "undefined") {
-                document.cookie = "organizer_logged_in=; path=/; max-age=0; SameSite=Lax";
+                document.cookie = "organizer_logged_in=1; path=/; max-age=31536000; SameSite=Lax";
               }
-              localStorage.removeItem("organizer_token");
-              localStorage.removeItem("organizer_profile");
-              localStorage.removeItem("organizer_refresh");
-              setUserLoggedIn(false);
-              setUserProfile(null);
+              setUserProfile(restoredProfile);
+              setUserLoggedIn(true);
             }
           } catch {
             if (typeof document !== "undefined") {
@@ -607,6 +604,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
 
   const handleStartPublishEvent = () => {
     setShowUserMenu(false);
+    setPublishEventError("");
     setActiveStoryScreen(0);
 
     if (userProfile?.hasCompletedOnboarding) {
@@ -692,13 +690,23 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
   const [featuredCarouselIndex, setFeaturedCarouselIndex] = useState(0);
 
   const [activeStoryScreen, setActiveStoryScreen] = useState(1);
+
+  function handleHomeSection(section: string) {
+    setActiveStoryScreen(1);
+    window.setTimeout(() => document.getElementById(section)?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+  }
+
+  function handleExploreEvents() {
+    handleHomeSection("eventos");
+  }
+
   const [isLeftVideoMuted, setIsLeftVideoMuted] = useState(true);
   const leftVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (activeStoryScreen === 0 && leftVideoRef.current) {
       leftVideoRef.current.muted = isLeftVideoMuted;
-      leftVideoRef.current.play().catch(() => {});
+      leftVideoRef.current.play().catch(() => { });
     } else if (leftVideoRef.current) {
       leftVideoRef.current.pause();
     }
@@ -716,7 +724,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
 
   // Auto-play 3D Curved Carousel in Eventos screen (moving to the right)
   useEffect(() => {
-    if (activeStoryScreen !== 2) return;
+    if (activeStoryScreen !== 1) return;
     const interval = setInterval(() => {
       setFeaturedCarouselIndex((prev) => (prev + 1) % Math.max(1, (events || []).length));
     }, 2800);
@@ -725,8 +733,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
 
   const storyScreens: StoryScreen[] = [
     { id: "create", label: "Sube tu evento", icon: <PlusCircle className="w-3.5 h-3.5 text-emerald-400" /> },
-    { id: "home", label: "Home", icon: <Sparkles className="w-3.5 h-3.5 text-yellow-400" /> },
-    { id: "eventos", label: "Cartelera", icon: <Calendar className="w-3.5 h-3.5 text-purple-400" /> },
+    { id: "home", label: "Inicio", icon: <Sparkles className="w-3.5 h-3.5 text-yellow-400" /> },
   ];
 
   const handleScreenDragEnd = (_: any, info: { offset: { x: number }; velocity: { x: number } }) => {
@@ -1037,7 +1044,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
   };
 
   useEffect(() => {
-    if (activeStoryScreen === 2) {
+    if (activeStoryScreen === 1) {
       setTimeout(checkChipsScroll, 100);
       window.addEventListener("resize", checkChipsScroll);
       return () => window.removeEventListener("resize", checkChipsScroll);
@@ -1049,7 +1056,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
     if (typeof window === "undefined") return;
 
     const handleFooterNav = (e: any) => {
-      setActiveStoryScreen(2); // Switches to Cartelera / Events screen
+      handleExploreEvents(); // Switches to Cartelera / Events screen
       const filter = e.detail?.filter;
       if (filter === "dj") {
         setSelectedDay("dj");
@@ -1212,7 +1219,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
       const next = { ...prev, [id]: !prev[id] };
       try {
         localStorage.setItem("nnz_followed_profiles", JSON.stringify(next));
-      } catch {}
+      } catch { }
       return next;
     });
   };
@@ -1238,8 +1245,10 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
         else if (tag === "comedy" || tag === "comedia") matchesCategory = cat.includes("comedia") || cat.includes("comedy") || sub.includes("stand");
         else if (tag === "gigs" || tag === "conciertos") matchesCategory = cat.includes("gig") || cat.includes("concierto") || cat.includes("live") || cat.includes("banda");
         else if (tag === "food") matchesCategory = cat.includes("food") || cat.includes("drink") || cat.includes("gastro") || sub.includes("cóctel");
-        else if (tag === "social") matchesCategory = cat.includes("social") || sub.includes("social") || title.includes("social");
-        else if (tag === "wellbeing" || tag === "bienestar") matchesCategory = cat.includes("bienestar") || cat.includes("wellbeing") || cat.includes("yoga");
+        else if (tag === "social") matchesCategory = cat.includes("social") || cat.includes("comunidad") || sub.includes("social") || title.includes("social");
+        else if (tag === "cultura") matchesCategory = cat.includes("arte") || cat.includes("cultura") || cat.includes("teatro");
+        else if (tag === "talleres") matchesCategory = cat.includes("taller") || cat.includes("educaci") || cat.includes("curso");
+        else if (tag === "wellbeing" || tag === "bienestar") matchesCategory = cat.includes("bienestar") || cat.includes("deporte") || cat.includes("wellbeing") || cat.includes("yoga");
         else matchesCategory = cat.includes(tag) || sub.includes(tag) || title.includes(tag) || venue.includes(tag);
       }
 
@@ -1281,8 +1290,8 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
       const existing = map.get(id);
       const userIg = userProfile.instagram
         ? (userProfile.instagram.startsWith("http")
-            ? userProfile.instagram
-            : `https://www.instagram.com/${userProfile.instagram.replace(/^@/, "")}/`)
+          ? userProfile.instagram
+          : `https://www.instagram.com/${userProfile.instagram.replace(/^@/, "")}/`)
         : existing?.instagramUrl;
       map.set(id, {
         id: existing?.id || id,
@@ -1444,7 +1453,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
       if (typeof document !== "undefined") {
         document.body.style.overflow = "";
       }
-      setActiveStoryScreen((prev) => (prev === 0 || prev === 1 || prev === 2 ? prev : 1));
+      setActiveStoryScreen((prev) => (prev === 0 || prev === 1 ? prev : 1));
     };
 
     window.addEventListener("pageshow", handlePageRestore);
@@ -1890,112 +1899,22 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
 
       <Atmosphere />
 
-      {/* --- APPLE ARCADE FULL-BLEED TRANSPARENT TOP HEADER WITH STORIES LINES OVERLAY --- */}
-      <header className={`absolute inset-x-0 top-0 ${isHeaderSearchOpen ? "z-[500]" : "z-[400]"} bg-gradient-to-b from-black/90 via-black/30 to-transparent pt-3 pb-6 transition-all duration-300 px-4 sm:px-6 lg:px-12 pointer-events-auto`}>
-        <div className="w-full relative flex flex-col gap-3">
-          {/* 1. TOP STORY SEGMENT LINES (Permanently mounted, never jumps when search toggles) */}
-          <div className="w-full max-w-xl mx-auto">
-            <StoryLinesHeader
-              screens={storyScreens}
-              activeScreen={activeStoryScreen}
-              onSelectScreen={(idx) => setActiveStoryScreen(idx)}
-            />
-          </div>
-
-          {/* 2. DYNAMIC HEADER TITLE & ACCOUNT BADGE */}
-          <div className="w-full flex items-center justify-between relative gap-2">
-            {/* Dynamic Header Title: Aligned gracefully with spacing on PC */}
-            <div className="w-auto flex items-center justify-start text-left overflow-hidden lg:pl-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveStoryScreen(1);
-                  if (typeof window !== "undefined") {
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }
-                }}
-                className="flex items-center justify-start gap-2 cursor-pointer group focus:outline-none text-left max-w-full"
-              >
-                <AnimatePresence mode="wait">
-                  <motion.h1
-                    key={`header-title-${activeStoryScreen}`}
-                    initial={false}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 6 }}
-                    transition={{ duration: 0.25, ease: "easeOut" }}
-                    className="text-xl sm:text-4xl font-extrabold tracking-tight text-white font-sans drop-shadow-md group-hover:text-purple-300 transition-colors whitespace-nowrap text-left"
-                  >
-                    {storyScreens[activeStoryScreen]?.label || "Home"}
-                  </motion.h1>
-                </AnimatePresence>
-              </button>
-            </div>
-
-            {/* Right: + Crear on Left, Buscar in Middle, Avatar on Far Right (Horizontal Glass Buttons) */}
-            <div className="flex flex-row items-center gap-1.5 sm:gap-2.5 shrink-0 z-[450] relative">
-              {/* + Crear Glass Pill Button (Left) */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveStoryScreen(0);
-                  if (typeof window !== "undefined") {
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }
-                }}
-                className="h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-xl flex items-center gap-1 sm:gap-1.5 text-white font-bold text-xs sm:text-sm shadow-lg cursor-pointer transition-all active:scale-95 whitespace-nowrap"
-                aria-label="Crear Evento"
-              >
-                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
-                <span>Crear</span>
-              </button>
-
-              {/* Search Button with Hover Preview (Middle) */}
-              <div className="relative group flex items-center justify-center">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsHeaderSearchOpen((prev) => !prev);
-                    if (!isHeaderSearchOpen) {
-                      setTimeout(() => headerSearchInputRef.current?.focus(), 100);
-                    }
-                  }}
-                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full border backdrop-blur-xl flex items-center justify-center shadow-lg cursor-pointer transition-all active:scale-95 ${isHeaderSearchOpen
-                    ? "bg-white border-white text-zinc-900 shadow-xl scale-105"
-                    : "bg-white/10 border-white/20 hover:bg-white/20 text-white"
-                    }`}
-                  aria-label="Buscar"
-                >
-                  <Search className={`w-4 h-4 sm:w-5 sm:h-5 ${isHeaderSearchOpen ? "text-zinc-900" : "text-white"}`} />
-                </button>
-              </div>
-
-              {/* Profile Button with Dropdown (Far Right) */}
-              <div className="relative flex items-center justify-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!userLoggedIn) {
-                      setShowAuthModalForFavorites(true);
-                    } else {
-                      setShowUserMenu(!showUserMenu);
-                    }
-                  }}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-xl flex items-center justify-center text-white shadow-lg cursor-pointer transition-all active:scale-95 overflow-hidden relative"
-                  aria-label="Perfil"
-                >
-                  <User className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                </button>
-
-                {/* Hover Tooltip: Perfil (only when menu closed) */}
-                {!showUserMenu && (
-                  <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-zinc-950/90 border border-white/20 text-white text-[11px] font-bold uppercase tracking-wider backdrop-blur-xl shadow-2xl opacity-0 hover:opacity-100 pointer-events-none transition-all duration-200 -translate-y-1 hover:translate-y-0 whitespace-nowrap z-50">
-                    Perfil
-                  </div>
-                )}
-
-                {/* User Dropdown Menu */}
+      <FourgoNavigation
+        screens={storyScreens}
+        activeScreen={activeStoryScreen}
+        onSelectScreen={(index) => {
+          if (index === 0) handleStartPublishEvent();
+          else { setActiveStoryScreen(1); window.scrollTo({ top: 0, behavior: "smooth" }); }
+        }}
+        onExplore={handleExploreEvents}
+        onSection={handleHomeSection}
+        onPublish={handleStartPublishEvent}
+        onSearch={() => { setIsHeaderSearchOpen((prev) => !prev); window.setTimeout(() => headerSearchInputRef.current?.focus(), 100); }}
+        onProfile={() => { if (!userLoggedIn) setShowAuthModalForFavorites(true); else setShowUserMenu((prev) => !prev); }}
+        loggedIn={isMounted && userLoggedIn}
+        profileOpen={showUserMenu}
+        searchOpen={isHeaderSearchOpen}
+        menu={<>                {/* User Dropdown Menu */}
                 <AnimatePresence>
                   {showUserMenu && userLoggedIn && (
                     <>
@@ -2053,7 +1972,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                           </button>
 
                           {/* Publish Event (Only for Master Admin) */}
-                          {isMasterAdmin && (
+                          {(
                             <button
                               type="button"
                               onClick={() => {
@@ -2086,12 +2005,8 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                       </motion.div>
                     </>
                   )}
-                </AnimatePresence>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+                </AnimatePresence></>}
+      />
 
       {/* --- CLEAN SEARCH MODAL OVERLAY MATCHING DESIGN SCREENSHOT --- */}
       <AnimatePresence>
@@ -2221,10 +2136,10 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                                   (prof.id.toLowerCase().includes("cubic")
                                     ? "https://www.instagram.com/cubic_loja/?hl=es"
                                     : prof.id.toLowerCase().includes("sata")
-                                    ? "https://www.instagram.com/sata_events/"
-                                    : prof.id.toLowerCase().includes("prueba")
-                                    ? "https://www.instagram.com/brandon.mdna/"
-                                    : `https://www.instagram.com/${prof.name.toLowerCase().replace(/[^a-z0-9_.]/g, "") || "4gooooooooo"}/`);
+                                      ? "https://www.instagram.com/sata_events/"
+                                      : prof.id.toLowerCase().includes("prueba")
+                                        ? "https://www.instagram.com/brandon.mdna/"
+                                        : `https://www.instagram.com/${prof.name.toLowerCase().replace(/[^a-z0-9_.]/g, "") || "4gooooooooo"}/`);
                                 if (typeof window !== "undefined") {
                                   window.open(igUrl, "_blank", "noopener,noreferrer");
                                 }
@@ -2233,7 +2148,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                               title={`Instagram de ${prof.name}`}
                             >
                               <svg className="w-3.5 h-3.5 text-[#E1306C] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
                               </svg>
                               <span>Instagram</span>
                             </button>
@@ -2359,1236 +2274,1206 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.06)_0%,transparent_70%)] pointer-events-none" />
 
                     {/* Centered Dark Glass Auth / Vertical Dashboard Card */}
-                    {isEventCreationAllowed ? (
+                    {(
                       !(isMounted && userLoggedIn) ? (
-                      <div className="relative z-10 w-full max-w-lg mx-auto bg-zinc-950/90 p-5 sm:p-8 lg:p-10 rounded-3xl border border-white/20 shadow-2xl space-y-4 sm:space-y-6 text-white font-sans my-auto backdrop-blur-md">
-                        <div className="text-center space-y-1.5 sm:space-y-2">
-                          <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white font-sans leading-tight">
-                            Sube tu Evento &amp; Administra tu Cuenta 4GO
-                          </h1>
-                          <p className="text-xs sm:text-sm text-zinc-300 font-medium max-w-md mx-auto leading-relaxed">
-                            Inicia sesión en 1 clic con tu cuenta de Google para comenzar a publicar eventos.
-                          </p>
-                        </div>
-
-                        {/* Social Logins */}
-                        <div className="space-y-3 pt-1">
-                          <button
-                            type="button"
-                            onClick={() => handleQuickSocialLogin("google")}
-                            className="w-full py-3.5 sm:py-4 px-6 rounded-full bg-white hover:bg-zinc-100 text-black font-black text-xs sm:text-sm uppercase tracking-wider border border-white/30 flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-95 cursor-pointer shadow-xl"
-                          >
-                            <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
-                              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                            </svg>
-                            <span>ENTRAR CON GOOGLE</span>
-                          </button>
-                        </div>
-                      </div>
-                    ) : (!userProfile?.hasCompletedOnboarding || organizerSubView === "profile") ? (
-                      <div className="relative z-10 w-full max-w-2xl mx-auto space-y-4 sm:space-y-5 font-sans pt-4 sm:pt-8 lg:pt-28 pb-8">
-                        {/* ─── STEPPER INDICATOR HEADER OUTSIDE MODAL (ORIGINAL CLEAN TEXT STYLE) ─── */}
-                        <div className="flex items-center justify-center gap-3 sm:gap-6 py-2 text-xs sm:text-sm font-bold text-white tracking-wider uppercase drop-shadow-md">
-                          <span className="text-white font-black">
-                            Cuenta de Promotor
-                          </span>
-                          <span className="text-zinc-400 font-normal">→</span>
-                          <span className="text-zinc-400 font-medium">
-                            Crear Evento
-                          </span>
-                          <span className="text-zinc-400 font-normal">→</span>
-                          <span className="text-zinc-400 font-medium">
-                            Publicar
-                          </span>
-                        </div>
-
-                        {/* ─── COMPACT WHITE CARD ONBOARDING MODAL ─── */}
-                        <div className="bg-white text-zinc-900 p-6 sm:p-8 rounded-[32px] border border-zinc-200 shadow-2xl text-left font-sans flex flex-col min-h-[700px] max-h-[730px] overflow-hidden">
-                          {/* Centered Hero Header with Restored Title (Pinned) */}
-                          <div className="space-y-1 border-b border-zinc-100 pb-3 text-center shrink-0">
-                            <h2 className="text-lg sm:text-xl font-black text-zinc-900 uppercase tracking-tight leading-snug">
-                              ELEVA TU CUENTA A PARTNER 4GO
-                            </h2>
-                            <p className="text-[11px] sm:text-xs text-zinc-500 font-medium leading-relaxed">
-                              Crea y gestiona tus eventos, vende entradas digitales y haz crecer tu audiencia.
+                        <div className="relative z-10 w-full max-w-lg mx-auto bg-zinc-950/90 p-5 sm:p-8 lg:p-10 rounded-3xl border border-white/20 shadow-2xl space-y-4 sm:space-y-6 text-white font-sans my-auto backdrop-blur-md">
+                          <div className="text-center space-y-1.5 sm:space-y-2">
+                            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white font-sans leading-tight">
+                              Tu evento también tiene lugar en 4go.
+                            </h1>
+                            <p className="text-xs sm:text-sm text-zinc-300 font-medium max-w-md mx-auto leading-relaxed">
+                              ¿Una feria, un concierto, un taller o un plan diferente? Inicia sesión y compártelo con Loja.
                             </p>
                           </div>
 
-                          {/* Scrollable Form Fields */}
-                          <div className="overflow-y-auto pr-1 sm:pr-2 pt-2 space-y-4 flex-1">
-                            {/* Logo / Profile Picture Uploader */}
-                            <div className="space-y-2 text-center pb-2 border-b border-zinc-100">
-                              <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
-                                Foto de Perfil / Logo de la Marca
-                              </label>
-                              <div className="flex items-center justify-center gap-4">
-                                <div className="w-14 h-14 rounded-full bg-zinc-100 border-2 border-dashed border-zinc-300 flex items-center justify-center overflow-hidden shrink-0 shadow-inner relative">
-                                  {brandLogoUrl || userProfile?.avatar ? (
-                                    <img
-                                      src={brandLogoUrl || userProfile?.avatar}
-                                      alt="Logo de Marca"
-                                      className="w-full h-full object-cover"
-                                      onError={(e) => {
-                                        e.currentTarget.style.display = "none";
-                                        const fallback = e.currentTarget.parentElement?.querySelector(".upload-fallback-icon");
-                                        if (fallback) fallback.classList.remove("hidden");
-                                      }}
-                                    />
-                                  ) : null}
-                                  <Upload className={`upload-fallback-icon w-5 h-5 text-zinc-400 ${brandLogoUrl || userProfile?.avatar ? "hidden" : ""}`} />
-                                </div>
-                                <div className="text-left space-y-1">
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    id="brand-logo-file-input"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                      const file = e.target.files?.[0];
-                                      if (file) {
-                                        const reader = new FileReader();
-                                        reader.onloadend = () => {
-                                          const base64 = reader.result as string;
-                                          setBrandLogoUrl(base64);
-                                          if (userProfile) {
-                                            const updated = { ...userProfile, avatar: base64 };
-                                            setUserProfile(updated);
-                                            const emailClean = (userProfile.email || "").toLowerCase();
-                                            localStorage.setItem("organizer_profile", JSON.stringify(updated));
-                                            if (emailClean) {
-                                              localStorage.setItem(`organizer_profile_${emailClean}`, JSON.stringify(updated));
-                                            }
-                                          }
-                                        };
-                                        reader.readAsDataURL(file);
-                                      }
-                                    }}
-                                  />
-                                  <label
-                                    htmlFor="brand-logo-file-input"
-                                    className="inline-block px-3.5 py-1.5 rounded-xl bg-zinc-900 hover:bg-black text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer shadow-md"
-                                  >
-                                    {brandLogoUrl || userProfile?.avatar ? "Cambiar Foto" : "Subir Foto / Logo"}
-                                  </label>
-                                  <p className="text-[10px] text-zinc-400 font-medium">Recomendado: Formato cuadrado 500x500px.</p>
-                                </div>
-                              </div>
-                            </div>
+                          {/* Social Logins */}
+                          <div className="space-y-3 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => handleQuickSocialLogin("google")}
+                              className="w-full py-3.5 sm:py-4 px-6 rounded-full bg-white hover:bg-zinc-100 text-black font-black text-xs sm:text-sm uppercase tracking-wider border border-white/30 flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-95 cursor-pointer shadow-xl"
+                            >
+                              <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                              </svg>
+                              <span>ENTRAR CON GOOGLE</span>
+                            </button>
+                          </div>
+                        </div>
+                      ) : (!userProfile?.hasCompletedOnboarding || organizerSubView === "profile") ? (
+                        <div className="relative z-10 w-full max-w-2xl mx-auto space-y-4 sm:space-y-5 font-sans pt-4 sm:pt-8 lg:pt-28 pb-8">
+                          {/* ─── STEPPER INDICATOR HEADER OUTSIDE MODAL (ORIGINAL CLEAN TEXT STYLE) ─── */}
+                          <div className="flex items-center justify-center gap-3 sm:gap-6 py-2 text-xs sm:text-sm font-bold text-white tracking-wider uppercase drop-shadow-md">
+                            <span className="text-white font-black">
+                              Cuenta de Promotor
+                            </span>
+                            <span className="text-zinc-400 font-normal">→</span>
+                            <span className="text-zinc-400 font-medium">
+                              Crear Evento
+                            </span>
+                            <span className="text-zinc-400 font-normal">→</span>
+                            <span className="text-zinc-400 font-medium">
+                              Publicar
+                            </span>
+                          </div>
 
-                            {/* Single Brand / Venue Name Input */}
-                            <div className="space-y-1">
-                              <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
-                                Nombre de la Marca / Discoteca
-                              </label>
-                              <input
-                                type="text"
-                                value={orgName || userProfile?.venueName || ""}
-                                onChange={(e) => setOrgName(e.target.value)}
-                                placeholder="Nombre de tu marca o establecimiento"
-                                className="w-full px-3.5 py-2 rounded-xl bg-zinc-50 border border-zinc-300 text-xs sm:text-sm text-zinc-900 focus:outline-none focus:border-black focus:bg-white transition font-medium"
-                              />
-                              <p className="text-[10px] text-zinc-400 font-medium">El nombre público de tu marca o establecimiento.</p>
-                            </div>
-
-                            {/* Instagram Meta Graph API Handle */}
-                            <div className="space-y-1">
-                              <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
-                                Instagram de la Marca (@usuario)
-                              </label>
-                              <div className="relative">
-                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 font-bold text-xs">@</span>
-                                <input
-                                  type="text"
-                                  value={instagramHandle || userProfile?.instagram?.replace(/^@/, '') || ""}
-                                  onChange={(e) => setInstagramHandle(e.target.value.replace(/^@/, ''))}
-                                  placeholder="usuario_instagram"
-                                  className="w-full pl-8 pr-3.5 py-2 rounded-xl bg-zinc-50 border border-zinc-300 text-xs sm:text-sm text-zinc-900 focus:outline-none focus:border-black focus:bg-white transition font-medium"
-                                />
-                              </div>
-                              <p className="text-[10px] text-zinc-400 font-medium">
-                                Conexión con Meta: Tus historias de Instagram se sincronizarán en 4GO.
+                          {/* ─── COMPACT WHITE CARD ONBOARDING MODAL ─── */}
+                          <div className="bg-white text-zinc-900 p-6 sm:p-8 rounded-[32px] border border-zinc-200 shadow-2xl text-left font-sans flex flex-col min-h-[700px] max-h-[730px] overflow-hidden">
+                            {/* Centered Hero Header with Restored Title (Pinned) */}
+                            <div className="space-y-1 border-b border-zinc-100 pb-3 text-center shrink-0">
+                              <h2 className="text-lg sm:text-xl font-black text-zinc-900 uppercase tracking-tight leading-snug">
+                                ELEVA TU CUENTA A PARTNER 4GO  {/* Quieres elevar tu cuenta a partner? */}
+                              </h2>
+                              <p className="text-[11px] sm:text-xs text-zinc-500 font-medium leading-relaxed">
+                                Crea y gestiona tus eventos, vende entradas digitales y haz crecer tu audiencia.
                               </p>
                             </div>
 
-                            {/* Grid for Partner Type & City */}
-                            <div className="grid grid-cols-2 gap-3">
-                              <div className="space-y-1">
+                            {/* Scrollable Form Fields */}
+                            <div className="overflow-y-auto pr-1 sm:pr-2 pt-2 space-y-4 flex-1">
+                              {/* Logo / Profile Picture Uploader */}
+                              <div className="space-y-2 text-center pb-2 border-b border-zinc-100">
                                 <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
-                                  Partner type
+                                  Foto de Perfil / Logo de la Marca
                                 </label>
-                                <select
-                                  value={orgType || userProfile?.type || "Discoteca / Club"}
-                                  onChange={(e) => setOrgType(e.target.value)}
-                                  className="w-full px-3 py-2 rounded-xl bg-zinc-50 border border-zinc-300 text-xs text-zinc-900 font-bold focus:outline-none focus:border-black focus:bg-white transition cursor-pointer"
-                                >
-                                  <option value="Organizador / Promotor">Organizador / Promotor</option>
-                                  <option value="Discoteca / Club">Discoteca / Club</option>
-                                </select>
-                              </div>
-
-                              <div className="space-y-1">
-                                <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
-                                  City
-                                </label>
-                                <select
-                                  value="Loja"
-                                  disabled
-                                  className="w-full px-3 py-2 rounded-xl bg-zinc-100 border border-zinc-300 text-xs font-bold text-zinc-900 cursor-not-allowed appearance-none"
-                                >
-                                  <option value="Loja">Loja</option>
-                                </select>
-                              </div>
-                            </div>
-
-                            {/* DYNAMIC DISCOTECA FIELDS (Button-First Maps Flow, No Operating Hours) */}
-                            {(orgType === "Discoteca / Club" || (!orgType && userProfile?.type === "Discoteca / Club")) && (
-                              <div className="space-y-3 pt-2 border-t border-zinc-100">
-                                {/* Intuitive Button-First Maps Picker */}
-                                <div className="space-y-1">
-                                  <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-800 block">
-                                    Ubicación de la Discoteca (Loja)
-                                  </label>
-                                  {!(clubAddress || userProfile?.address) ? (
-                                    <button
-                                      type="button"
-                                      onClick={() => setIsLocationPickerOpen(true)}
-                                      className="w-full py-2.5 px-3.5 rounded-xl bg-zinc-900 hover:bg-black text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition cursor-pointer shadow-sm"
+                                <div className="flex items-center justify-center gap-4">
+                                  <div className="w-14 h-14 rounded-full bg-zinc-100 border-2 border-dashed border-zinc-300 flex items-center justify-center overflow-hidden shrink-0 shadow-inner relative">
+                                    {brandLogoUrl || userProfile?.avatar ? (
+                                      <img
+                                        src={brandLogoUrl || userProfile?.avatar}
+                                        alt="Logo de Marca"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          e.currentTarget.style.display = "none";
+                                          const fallback = e.currentTarget.parentElement?.querySelector(".upload-fallback-icon");
+                                          if (fallback) fallback.classList.remove("hidden");
+                                        }}
+                                      />
+                                    ) : null}
+                                    <Upload className={`upload-fallback-icon w-5 h-5 text-zinc-400 ${brandLogoUrl || userProfile?.avatar ? "hidden" : ""}`} />
+                                  </div>
+                                  <div className="text-left space-y-1">
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      id="brand-logo-file-input"
+                                      className="hidden"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          const reader = new FileReader();
+                                          reader.onloadend = () => {
+                                            const base64 = reader.result as string;
+                                            setBrandLogoUrl(base64);
+                                            if (userProfile) {
+                                              const updated = { ...userProfile, avatar: base64 };
+                                              setUserProfile(updated);
+                                              const emailClean = (userProfile.email || "").toLowerCase();
+                                              localStorage.setItem("organizer_profile", JSON.stringify(updated));
+                                              if (emailClean) {
+                                                localStorage.setItem(`organizer_profile_${emailClean}`, JSON.stringify(updated));
+                                              }
+                                            }
+                                          };
+                                          reader.readAsDataURL(file);
+                                        }
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor="brand-logo-file-input"
+                                      className="inline-block px-3.5 py-1.5 rounded-xl bg-zinc-900 hover:bg-black text-white font-bold text-xs uppercase tracking-wider transition cursor-pointer shadow-md"
                                     >
-                                      <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-                                      <span>Seleccionar Ubicación en Maps</span>
-                                    </button>
-                                  ) : (
-                                    <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-zinc-50 border border-zinc-300 text-xs font-medium text-zinc-900">
-                                      <div className="flex items-center gap-2 truncate">
-                                        <MapPin className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                                        <span className="truncate font-semibold text-[11px]">{clubAddress || userProfile?.address}</span>
-                                      </div>
+                                      {brandLogoUrl || userProfile?.avatar ? "Cambiar Foto" : "Subir Foto / Logo"}
+                                    </label>
+                                    <p className="text-[10px] text-zinc-400 font-medium">Recomendado: Formato cuadrado 500x500px.</p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Single Brand / Venue Name Input */}
+                              <div className="space-y-1">
+                                <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
+                                  Nombre de la Marca / Discoteca
+                                </label>
+                                <input
+                                  type="text"
+                                  value={orgName || userProfile?.venueName || ""}
+                                  onChange={(e) => setOrgName(e.target.value)}
+                                  placeholder="Nombre de tu marca o establecimiento"
+                                  className="w-full px-3.5 py-2 rounded-xl bg-zinc-50 border border-zinc-300 text-xs sm:text-sm text-zinc-900 focus:outline-none focus:border-black focus:bg-white transition font-medium"
+                                />
+                                <p className="text-[10px] text-zinc-400 font-medium">El nombre público de tu marca o establecimiento.</p>
+                              </div>
+
+                              {/* Instagram Meta Graph API Handle */}
+                              <div className="space-y-1">
+                                <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
+                                  Instagram de la Marca (@usuario)
+                                </label>
+                                <div className="relative">
+                                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 font-bold text-xs">@</span>
+                                  <input
+                                    type="text"
+                                    value={instagramHandle || userProfile?.instagram?.replace(/^@/, '') || ""}
+                                    onChange={(e) => setInstagramHandle(e.target.value.replace(/^@/, ''))}
+                                    placeholder="usuario_instagram"
+                                    className="w-full pl-8 pr-3.5 py-2 rounded-xl bg-zinc-50 border border-zinc-300 text-xs sm:text-sm text-zinc-900 focus:outline-none focus:border-black focus:bg-white transition font-medium"
+                                  />
+                                </div>
+                                <p className="text-[10px] text-zinc-400 font-medium">
+                                  Conexión con Meta: Tus historias de Instagram se sincronizarán en 4GO.
+                                </p>
+                              </div>
+
+                              {/* Grid for Partner Type & City */}
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
+                                    Partner type
+                                  </label>
+                                  <select
+                                    value={orgType || userProfile?.type || "Discoteca / Club"}
+                                    onChange={(e) => setOrgType(e.target.value)}
+                                    className="w-full px-3 py-2 rounded-xl bg-zinc-50 border border-zinc-300 text-xs text-zinc-900 font-bold focus:outline-none focus:border-black focus:bg-white transition cursor-pointer"
+                                  >
+                                    <option value="Organizador / Promotor">Organizador / Promotor</option>
+                                    <option value="Discoteca / Club">Discoteca / Club</option>
+                                  </select>
+                                </div>
+
+                                <div className="space-y-1">
+                                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
+                                    City
+                                  </label>
+                                  <select
+                                    value="Loja"
+                                    disabled
+                                    className="w-full px-3 py-2 rounded-xl bg-zinc-100 border border-zinc-300 text-xs font-bold text-zinc-900 cursor-not-allowed appearance-none"
+                                  >
+                                    <option value="Loja">Loja</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              {/* DYNAMIC DISCOTECA FIELDS (Button-First Maps Flow, No Operating Hours) */}
+                              {(orgType === "Discoteca / Club" || (!orgType && userProfile?.type === "Discoteca / Club")) && (
+                                <div className="space-y-3 pt-2 border-t border-zinc-100">
+                                  {/* Intuitive Button-First Maps Picker */}
+                                  <div className="space-y-1">
+                                    <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-800 block">
+                                      Ubicación de la Discoteca (Loja) {/* Paradoc */}
+                                    </label>
+                                    {!(clubAddress || userProfile?.address) ? (
                                       <button
                                         type="button"
                                         onClick={() => setIsLocationPickerOpen(true)}
-                                        className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-black text-white text-[10px] font-bold uppercase shrink-0 cursor-pointer"
+                                        className="w-full py-2.5 px-3.5 rounded-xl bg-zinc-900 hover:bg-black text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition cursor-pointer shadow-sm"
                                       >
-                                        Cambiar
+                                        <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                                        <span>Seleccionar Ubicación en Maps</span> {/* -- 10 de agosto y 24 de mayo, decirle mañana que confime */}
                                       </button>
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Days of Opening */}
-                                <div className="space-y-1">
-                                  <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-800 block">
-                                    Días de Apertura
-                                  </label>
-                                  <div className="flex flex-wrap gap-1">
-                                    {["Jueves", "Viernes", "Sábado", "Domingo", "Todos"].map((day) => {
-                                      const isSelected = openingDays.includes(day);
-                                      return (
+                                    ) : (
+                                      <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-zinc-50 border border-zinc-300 text-xs font-medium text-zinc-900">
+                                        <div className="flex items-center gap-2 truncate">
+                                          <MapPin className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                                          <span className="truncate font-semibold text-[11px]">{clubAddress || userProfile?.address}</span>
+                                        </div>
                                         <button
-                                          key={day}
                                           type="button"
-                                          onClick={() => {
-                                            if (day === "Todos") {
-                                              setOpeningDays(["Jueves", "Viernes", "Sábado", "Domingo"]);
-                                              return;
-                                            }
-                                            setOpeningDays((prev) =>
-                                              isSelected ? prev.filter((d) => d !== day) : [...prev, day]
-                                            );
-                                          }}
-                                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer border ${
-                                            isSelected
+                                          onClick={() => setIsLocationPickerOpen(true)}
+                                          className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-black text-white text-[10px] font-bold uppercase shrink-0 cursor-pointer"
+                                        >
+                                          Cambiar
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Days of Opening */}
+                                  <div className="space-y-1">
+                                    <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-800 block">
+                                      Días de Apertura
+                                    </label>
+                                    <div className="flex flex-wrap gap-1">
+                                      {["Jueves", "Viernes", "Sábado", "Domingo", "Todos"].map((day) => {
+                                        const isSelected = openingDays.includes(day);
+                                        return (
+                                          <button
+                                            key={day}
+                                            type="button"
+                                            onClick={() => {
+                                              if (day === "Todos") {
+                                                setOpeningDays(["Jueves", "Viernes", "Sábado", "Domingo"]);
+                                                return;
+                                              }
+                                              setOpeningDays((prev) =>
+                                                isSelected ? prev.filter((d) => d !== day) : [...prev, day]
+                                              );
+                                            }}
+                                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer border ${isSelected
                                               ? "bg-zinc-900 text-white border-zinc-900"
                                               : "bg-zinc-100 text-zinc-600 border-zinc-200 hover:bg-zinc-200"
-                                          }`}
+                                              }`}
+                                          >
+                                            {day}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Pinned Action: Next Step Button */}
+                            {(() => {
+                              const currentName = orgName.trim() || userProfile?.venueName || "";
+                              const currentIg = instagramHandle.trim() || userProfile?.instagram || "";
+                              const currentAddr = clubAddress.trim() || userProfile?.address || "";
+                              const currentType = orgType || userProfile?.type || "Discoteca / Club";
+
+                              const isFormValid =
+                                currentName.length > 0 &&
+                                (currentType !== "Discoteca / Club" || (currentAddr.length > 0 && openingDays.length > 0));
+
+                              return (
+                                <div className="pt-3 shrink-0 border-t border-zinc-100">
+                                  <button
+                                    type="button"
+                                    disabled={!isFormValid || isOnboardingSaving}
+                                    onClick={async () => {
+                                      if (!isFormValid || isOnboardingSaving) return;
+                                      setIsOnboardingSaving(true);
+
+                                      const emailClean = (userProfile?.email || "usuario@ejemplo.com").trim().toLowerCase();
+                                      const isMaster = emailClean === "brandon.medina@unl.edu.ec";
+
+                                      const updated = {
+                                        id: isMaster ? "master_admin" : (userProfile?.id || `usr_${Date.now()}`),
+                                        name: currentName,
+                                        email: emailClean,
+                                        avatar: brandLogoUrl || (userProfile?.avatar && !userProfile.avatar.includes("presentation") ? userProfile.avatar : "") || (isMaster ? "/images/logo_4go_black_white.png" : ""),
+                                        venueName: currentName,
+                                        type: isMaster ? "Organizador" : currentType,
+                                        city: "Loja",
+                                        instagram: currentIg ? `@${currentIg.replace(/^@/, '')}` : "",
+                                        address: currentAddr,
+                                        openingDays,
+                                        hasCompletedOnboarding: true,
+                                      };
+
+                                      // Saving animation delay
+                                      setTimeout(() => {
+                                        setUserProfile(updated as any);
+                                        localStorage.setItem("organizer_token", `token-${emailClean}-${Date.now()}`);
+                                        localStorage.setItem("organizer_profile", JSON.stringify(updated));
+                                        localStorage.setItem(`organizer_profile_${emailClean}`, JSON.stringify(updated));
+                                        setIsOnboardingSaving(false);
+                                        setOrganizerSubView("create_event");
+                                      }, 600);
+
+                                      fetch("/api/users/sync", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({
+                                          email: emailClean,
+                                          name: updated.name,
+                                          avatar: updated.avatar,
+                                          provider: "google",
+                                          type: currentType,
+                                          venueName: updated.venueName,
+                                          city: "Loja",
+                                        }),
+                                      }).catch(() => { });
+                                    }}
+                                    className={`w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-widest transition active:scale-95 text-center flex items-center justify-center gap-2 ${isFormValid
+                                      ? "bg-black hover:bg-zinc-800 text-white cursor-pointer shadow-xl"
+                                      : "bg-zinc-200 text-zinc-400 cursor-not-allowed opacity-60"
+                                      }`}
+                                  >
+                                    {isOnboardingSaving ? (
+                                      <>
+                                        <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                                        <span>Guardando Cuenta Partner...</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span>Siguiente: Crear Evento</span>
+                                        <span>→</span>
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      ) : organizerSubView === "published" ? (
+                        <div className="relative z-10 w-full max-w-2xl mx-auto space-y-5 font-sans pt-24 sm:pt-28 pb-8">
+                          {/* ─── STEPPER INDICATOR HEADER (PASO 2: PUBLICAR) ─── */}
+                          <div className="flex items-center justify-center gap-3 sm:gap-6 py-2 text-xs sm:text-sm font-bold text-white tracking-wider uppercase drop-shadow-md">
+                            <button
+                              type="button"
+                              onClick={() => setOrganizerSubView("create_event")}
+                              className="text-zinc-400 hover:text-white transition cursor-pointer font-medium"
+                            >
+                              1. Crear Evento
+                            </button>
+                            <span className="text-zinc-400 font-normal">→</span>
+                            <span className="text-white font-black">
+                              2. Publicar
+                            </span>
+                          </div>
+
+                          {/* ─── PUBLISHED SUCCESS CARD ─── */}
+                          <div className="bg-white text-zinc-900 p-6 sm:p-8 rounded-[32px] border border-zinc-200 shadow-2xl space-y-4 text-center font-sans flex flex-col min-h-[700px] max-h-[730px] justify-between overflow-hidden">
+                            {/* Success Icon & Header */}
+                            <div className="space-y-2.5">
+                              <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-inner text-2xl font-black">
+                                ✓
+                              </div>
+                              <div className="space-y-1">
+                                <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 uppercase tracking-tight">
+                                  ¡Evento Publicado Correctamente!
+                                </h2>
+                                <p className="text-xs sm:text-sm text-zinc-500 font-medium max-w-md mx-auto">
+                                  Tu evento ya se encuentra activo en la cartelera principal de 4GO y disponible para la compra de tickets.
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Event Summary Box */}
+                            {lastPublishedEvent && (
+                              <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-200 text-left flex flex-col sm:flex-row items-center gap-4">
+                                <div className="w-20 h-24 sm:w-24 sm:h-28 rounded-xl overflow-hidden bg-black shrink-0 relative shadow-md">
+                                  <img
+                                    src={lastPublishedEvent.poster || lastPublishedEvent.imageUrl || "/images/4go_red_girl_showcase.jpg"}
+                                    alt={lastPublishedEvent.title}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <div className="space-y-1.5 flex-1 min-w-0 text-center sm:text-left">
+                                  <h4 className="text-base sm:text-lg font-black text-zinc-900 uppercase truncate">
+                                    {lastPublishedEvent.title}
+                                  </h4>
+                                  <p className="text-xs text-zinc-600 font-semibold truncate">
+                                    📍 {lastPublishedEvent.venue} • {lastPublishedEvent.city || "Loja"}
+                                  </p>
+                                  <p className="text-xs text-zinc-500 font-medium">
+                                    🗓️ {lastPublishedEvent.dateLabel || lastPublishedEvent.date}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Actions Buttons */}
+                            <div className="space-y-3 pt-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setNewEventTitle("");
+                                  setNewEventSubtitle("");
+                                  setNewEventDate("");
+                                  setNewEventDoorsOpen("");
+                                  setNewEventVenueName("");
+                                  setNewEventVenueAddress("");
+                                  setOrganizerSubView("create_event");
+                                }}
+                                className="w-full py-4 rounded-full bg-black hover:bg-zinc-800 text-white font-black text-xs uppercase tracking-widest transition active:scale-95 text-center cursor-pointer shadow-xl flex items-center justify-center gap-2"
+                              >
+                                <span>+ Publicar Otro Evento</span>
+                              </button>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    handleExploreEvents();
+                                    if (typeof window !== "undefined") {
+                                      window.scrollTo({ top: 0, behavior: "smooth" });
+                                    }
+                                  }}
+                                  className="w-full py-3 px-4 rounded-2xl bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-bold text-xs uppercase tracking-wider transition cursor-pointer"
+                                >
+                                  Ver en Cartelera →
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => router.push("/cuenta")}
+                                  className="w-full py-3 px-4 rounded-2xl bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-bold text-xs uppercase tracking-wider transition cursor-pointer"
+                                >
+                                  Ir a Mi Cuenta
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative z-10 w-full max-w-2xl mx-auto space-y-4 sm:space-y-6 font-sans pt-4 sm:pt-8 lg:pt-28 pb-12">
+                          {/* --- STEPPER INDICATOR HEADER (1. CREAR EVENTO -> 2. PUBLICAR) --- */}
+                          <div className="flex items-center justify-center gap-3 sm:gap-6 py-2 text-xs sm:text-sm font-bold text-white tracking-wider uppercase drop-shadow-md">
+                            <span className="text-white font-black">
+                              1. Crear Evento
+                            </span>
+                            <span className="text-zinc-400 font-normal">→</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (lastPublishedEvent) setOrganizerSubView("published");
+                              }}
+                              className={`transition ${lastPublishedEvent
+                                ? "text-zinc-400 hover:text-white cursor-pointer font-medium"
+                                : "text-zinc-500 cursor-not-allowed font-medium"
+                                }`}
+                            >
+                              2. Publicar
+                            </button>
+                          </div>
+
+                          {/* --- COMPACT WHITE CARD MODAL (CREAR EVENTO DIRECTO) --- */}
+                          <div className="bg-white text-zinc-900 p-6 sm:p-8 rounded-[32px] border border-zinc-200 shadow-2xl text-left font-sans flex flex-col min-h-[700px] max-h-[730px] overflow-hidden">
+                            {/* Top Organizer Header inside White Modal (Pinned Header) */}
+                            <div className="flex items-center justify-between border-b border-zinc-100 pb-3 shrink-0">
+                              <div className="flex items-center gap-3">
+                                <div className="w-11 h-11 rounded-2xl bg-zinc-900 border border-zinc-200 overflow-hidden shrink-0 flex items-center justify-center shadow-sm">
+                                  {userProfile?.avatar ? (
+                                    <img
+                                      src={userProfile.avatar}
+                                      alt="Logo"
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = "none";
+                                      }}
+                                    />
+                                  ) : (
+                                    <Building2 className="w-5 h-5 text-white" />
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h3 className="text-sm sm:text-base font-black text-zinc-900 uppercase tracking-tight">
+                                      {userProfile?.venueName || userProfile?.name || "PROMOTOR"}
+                                    </h3>
+                                    <span className="px-2 py-0.5 rounded-full bg-zinc-100 border border-zinc-200 text-zinc-700 text-[9px] font-bold uppercase tracking-wider">
+                                      Partner 4GO
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-zinc-500 font-medium truncate max-w-[170px] sm:max-w-[260px]">{userProfile?.email}</p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => router.push("/cuenta?tab=partner_profile")}
+                                  className="px-3.5 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-900 text-[11px] font-bold transition active:scale-95 cursor-pointer text-center flex items-center gap-1.5 border border-zinc-200 shadow-sm"
+                                >
+                                  <ShieldCheck className="w-3.5 h-3.5 text-zinc-700" />
+                                  <span>Configurar Partner</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Scrollable Event Creation Form Fields */}
+                            <div className="overflow-y-auto pr-1 sm:pr-2 pt-3 pb-2 space-y-4 flex-1">
+                              <div className="space-y-0.5 border-b border-zinc-100 pb-2.5">
+                                <h2 className="text-lg sm:text-xl font-black text-zinc-900 uppercase tracking-tight">
+                                  CREAR Y PUBLICAR EVENTO
+                                </h2>
+                                <p className="text-[11px] text-zinc-500 font-medium">
+                                  Configura los detalles oficiales de tu evento para la cartelera principal de 4GO.
+                                </p>
+                              </div>
+
+                              {/* 1. Flyer / Poster del Evento Uploader (Starts empty, no forced photo) */}
+                              <div className="space-y-2 pb-3 border-b border-zinc-100">
+                                <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
+                                  Flyer / Poster Oficial del Evento
+                                </label>
+
+                                {newEventPoster ? (
+                                  <div className="flex items-center gap-4 p-3 rounded-2xl bg-zinc-50 border border-zinc-200">
+                                    <div className="w-16 h-20 rounded-xl bg-zinc-900 border border-zinc-300 overflow-hidden shrink-0 shadow-md">
+                                      <img
+                                        src={newEventPoster}
+                                        alt="Preview del Flyer"
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                    <div className="space-y-1.5 text-left">
+                                      <p className="text-xs font-bold text-zinc-900">Flyer cargado correctamente</p>
+                                      <div className="flex items-center gap-2">
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          id="event-poster-file-change"
+                                          className="hidden"
+                                          onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                              const reader = new FileReader();
+                                              reader.onloadend = () => {
+                                                setNewEventPoster(reader.result as string);
+                                              };
+                                              reader.readAsDataURL(file);
+                                            }
+                                          }}
+                                        />
+                                        <label
+                                          htmlFor="event-poster-file-change"
+                                          className="inline-block px-3 py-1.5 rounded-xl bg-zinc-200 hover:bg-zinc-300 text-zinc-800 font-bold text-[11px] uppercase tracking-wider transition cursor-pointer"
                                         >
-                                          {day}
+                                          Cambiar Flyer
+                                        </label>
+                                        <button
+                                          type="button"
+                                          onClick={() => setNewEventPoster("")}
+                                          className="px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] uppercase tracking-wider transition cursor-pointer"
+                                        >
+                                          Eliminar
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      id="event-poster-file-input"
+                                      className="hidden"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          const reader = new FileReader();
+                                          reader.onloadend = () => {
+                                            setNewEventPoster(reader.result as string);
+                                          };
+                                          reader.readAsDataURL(file);
+                                        }
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor="event-poster-file-input"
+                                      className="w-full flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-dashed border-zinc-300 hover:border-black bg-zinc-50 hover:bg-zinc-100/70 transition cursor-pointer text-center group"
+                                    >
+                                      <div className="w-10 h-10 rounded-xl bg-zinc-200 group-hover:bg-black group-hover:text-white text-zinc-700 flex items-center justify-center transition mb-2">
+                                        <ImagePlus className="w-5 h-5" />
+                                      </div>
+                                      <span className="text-xs font-bold text-zinc-900 uppercase tracking-wider">
+                                        Subir Flyer / Poster Oficial
+                                      </span>
+                                      <span className="text-[10px] text-zinc-500 font-medium mt-0.5">
+                                        Formato vertical o cuadrado (JPG, PNG o WEBP)
+                                      </span>
+                                    </label>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* 2. Título & Subtítulo (Venue / Sala) */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
+                                    Título del Evento *
+                                  </label>
+                                  <input
+                                    type="text"
+                                    required
+                                    value={newEventTitle}
+                                    onChange={(e) => setNewEventTitle(e.target.value)}
+                                    placeholder="Ej. ORIGIN // Club Night"
+                                    className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 border border-zinc-300 text-xs sm:text-sm text-zinc-900 focus:outline-none focus:border-black focus:bg-white transition font-medium"
+                                  />
+                                </div>
+
+                                <div className="space-y-1">
+                                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
+                                    Subtítulo / Sala
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={newEventSubtitle}
+                                    onChange={(e) => setNewEventSubtitle(e.target.value)}
+                                    placeholder="Ej. Sala Principal / Terraza VIP"
+                                    className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 border border-zinc-300 text-xs sm:text-sm text-zinc-900 focus:outline-none focus:border-black focus:bg-white transition font-medium"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* 3. Fecha & Hora de Apertura Fácil & Rápida */}
+                              <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  {/* Fecha con selector nativo y accesos rápidos */}
+                                  <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
+                                        Fecha del Evento *
+                                      </label>
+                                      <span className="text-[10px] text-zinc-500 font-medium">
+                                        {newEventDate ? new Date(newEventDate + 'T12:00:00').toLocaleDateString('es-EC', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Selecciona fecha'}
+                                      </span>
+                                    </div>
+                                    <input
+                                      type="date"
+                                      required
+                                      min={new Date().toISOString().split('T')[0]}
+                                      value={newEventDate}
+                                      onChange={(e) => setNewEventDate(e.target.value)}
+                                      className="w-full px-3.5 py-2 rounded-xl bg-white border border-zinc-300 text-xs sm:text-sm text-zinc-900 focus:outline-none focus:border-black transition font-semibold cursor-pointer"
+                                    />
+
+                                    {/* Quick Date Pills */}
+                                    <div className="flex flex-wrap gap-1.5 pt-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const d = new Date();
+                                          setNewEventDate(d.toISOString().split('T')[0]);
+                                        }}
+                                        className="px-2 py-1 rounded-lg bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-[10px] font-bold transition cursor-pointer"
+                                      >
+                                        Hoy
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const d = new Date();
+                                          d.setDate(d.getDate() + 1);
+                                          setNewEventDate(d.toISOString().split('T')[0]);
+                                        }}
+                                        className="px-2 py-1 rounded-lg bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-[10px] font-bold transition cursor-pointer"
+                                      >
+                                        Mañana
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const d = new Date();
+                                          let diff = (5 - d.getDay() + 7) % 7;
+                                          if (diff === 0) diff = 7;
+                                          d.setDate(d.getDate() + diff);
+                                          setNewEventDate(d.toISOString().split('T')[0]);
+                                        }}
+                                        className="px-2 py-1 rounded-lg bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-[10px] font-bold transition cursor-pointer"
+                                      >
+                                        Viernes
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const d = new Date();
+                                          let diff = (6 - d.getDay() + 7) % 7;
+                                          if (diff === 0) diff = 7;
+                                          d.setDate(d.getDate() + diff);
+                                          setNewEventDate(d.toISOString().split('T')[0]);
+                                        }}
+                                        className="px-2 py-1 rounded-lg bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-[10px] font-bold transition cursor-pointer"
+                                      >
+                                        Sábado
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Hora de Apertura con selector rápido */}
+                                  <div className="space-y-1.5">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
+                                      Hora de Apertura *
+                                    </label>
+                                    <input
+                                      type="time"
+                                      required
+                                      value={newEventDoorsOpen}
+                                      onChange={(e) => setNewEventDoorsOpen(e.target.value)}
+                                      className="w-full px-3.5 py-2 rounded-xl bg-white border border-zinc-300 text-xs sm:text-sm text-zinc-900 focus:outline-none focus:border-black transition font-semibold cursor-pointer"
+                                    />
+
+                                    {/* Quick Time Pills */}
+                                    <div className="flex flex-wrap gap-1.5 pt-1">
+                                      {["20:00", "21:00", "22:00", "23:00"].map((t) => (
+                                        <button
+                                          key={t}
+                                          type="button"
+                                          onClick={() => setNewEventDoorsOpen(t)}
+                                          className={`px-2 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer ${newEventDoorsOpen === t
+                                            ? "bg-black text-white"
+                                            : "bg-zinc-200 hover:bg-zinc-300 text-zinc-800"
+                                            }`}
+                                        >
+                                          {t}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Categoría */}
+                                <div className="space-y-1 pt-1 border-t border-zinc-200">
+                                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
+                                    Categoría del evento
+                                  </label>
+                                  <select
+                                    value={newEventCategory}
+                                    onChange={(e) => setNewEventCategory(e.target.value)}
+                                    className="w-full px-3 py-2 rounded-xl bg-white border border-zinc-300 text-xs font-bold text-zinc-900 focus:outline-none focus:border-black transition cursor-pointer"
+                                  >
+                                    <option value="Electronic / House">Electronic / House</option>
+                                    <option value="Fiesta / Club">Fiesta / Club Nocturno</option>
+                                    <option value="Reggaeton / Urban">Reggaeton / Urban</option>
+                                    <option value="Concierto">Concierto en Vivo</option>
+                                    <option value="Festival">Festival / Open Air</option>
+                                    <option value="Techno / Underground">Techno / Underground</option>
+                                    <option value="Arte y cultura">Arte y cultura</option>
+                                    <option value="Ferias y gastronomía">Ferias y gastronomía</option>
+                                    <option value="Talleres y educación">Talleres y educación</option>
+                                    <option value="Deportes y bienestar">Deportes y bienestar</option>
+                                    <option value="Comunidad">Comunidad</option>
+                                    <option value="Otros">Otros eventos</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              {/* 4. Preventa de Entradas (Solo 1 por defecto, con opción de agregar más) */}
+                              <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <label className="text-xs font-black uppercase tracking-wider text-zinc-800 block">
+                                      Entradas &amp; Preventas
+                                    </label>
+                                    <p className="text-[10px] text-zinc-500 font-medium">
+                                      Define tus fases de preventa. Puedes comenzar con una y habilitar más fases luego.
+                                    </p>
+                                  </div>
+                                  <span className="text-[10px] text-zinc-500 font-bold">0% de comisión</span>
+                                </div>
+
+                                <div className="space-y-3">
+                                  {newEventPresales.map((phase, idx) => (
+                                    <div
+                                      key={phase.id}
+                                      className="p-3 rounded-2xl bg-white border border-zinc-200 space-y-2.5 shadow-sm"
+                                    >
+                                      {/* Row 1: Nombre, Precio y Eliminar */}
+                                      <div className="flex items-center gap-3">
+                                        <div className="flex-1 space-y-0.5">
+                                          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                                            Nombre de Fase
+                                          </span>
+                                          <input
+                                            type="text"
+                                            value={phase.name}
+                                            onChange={(e) => {
+                                              const val = e.target.value;
+                                              setNewEventPresales((prev) =>
+                                                prev.map((item) => (item.id === phase.id ? { ...item, name: val } : item))
+                                              );
+                                            }}
+                                            placeholder="Ej. Preventa 1 / Early Bird"
+                                            className="w-full px-3 py-1.5 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-bold text-zinc-900 focus:outline-none focus:border-black"
+                                          />
+                                        </div>
+
+                                        <div className="w-28 space-y-0.5">
+                                          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                                            Precio ($ USD)
+                                          </span>
+                                          <input
+                                            type="number"
+                                            min="0"
+                                            step="0.5"
+                                            value={phase.price}
+                                            onChange={(e) => {
+                                              const val = e.target.value;
+                                              setNewEventPresales((prev) =>
+                                                prev.map((item) => (item.id === phase.id ? { ...item, price: val } : item))
+                                              );
+                                            }}
+                                            placeholder="5.00"
+                                            className="w-full px-3 py-1.5 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-black text-zinc-900 focus:outline-none focus:border-black"
+                                          />
+                                        </div>
+
+                                        {newEventPresales.length > 1 && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setNewEventPresales((prev) => prev.filter((item) => item.id !== phase.id));
+                                            }}
+                                            className="p-2 rounded-xl text-zinc-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer self-end mb-0.5"
+                                            title="Eliminar fase"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </button>
+                                        )}
+                                      </div>
+
+                                      {/* Row 2: Programación de Duración / Vigencia */}
+                                      <div className="pt-2 border-t border-zinc-100 grid grid-cols-1 sm:grid-cols-2 gap-2.5 items-center">
+                                        <div className="space-y-1">
+                                          <label className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider flex items-center gap-1">
+                                            <Clock className="w-3 h-3 text-zinc-400" />
+                                            <span>Programar Duración</span>
+                                          </label>
+                                          <select
+                                            value={phase.duration || "1_semana"}
+                                            onChange={(e) => {
+                                              const val = e.target.value;
+                                              setNewEventPresales((prev) =>
+                                                prev.map((item) => (item.id === phase.id ? { ...item, duration: val } : item))
+                                              );
+                                            }}
+                                            className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-50 border border-zinc-200 text-xs font-semibold text-zinc-800 focus:outline-none focus:border-black cursor-pointer"
+                                          >
+                                            <option value="1_semana">Dura 1 Semana (7 días)</option>
+                                            <option value="2_semanas">Dura 2 Semanas (14 días)</option>
+                                            <option value="3_dias">Dura 3 Días</option>
+                                            <option value="hasta_evento">Hasta el día del evento</option>
+                                            <option value="aforo">Hasta agotar aforo / cupos</option>
+                                            <option value="fecha_custom">Fecha límite personalizada</option>
+                                          </select>
+                                        </div>
+
+                                        {phase.duration === "fecha_custom" ? (
+                                          <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider block">
+                                              Fecha Fin de Preventa
+                                            </label>
+                                            <input
+                                              type="date"
+                                              value={phase.customEndDate || ""}
+                                              onChange={(e) => {
+                                                const val = e.target.value;
+                                                setNewEventPresales((prev) =>
+                                                  prev.map((item) => (item.id === phase.id ? { ...item, customEndDate: val } : item))
+                                                );
+                                              }}
+                                              className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-50 border border-zinc-200 text-xs font-semibold text-zinc-900 focus:outline-none focus:border-black cursor-pointer"
+                                            />
+                                          </div>
+                                        ) : (
+                                          <div className="p-2 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-between">
+                                            <span className="text-[10.5px] text-zinc-600 font-medium">
+                                              {idx === 0
+                                                ? "Activa desde la publicación"
+                                                : `Se activa al vencer ${newEventPresales[idx - 1]?.name || 'fase previa'}`}
+                                            </span>
+                                            <span className="px-2 py-0.5 rounded-md bg-zinc-200 text-zinc-700 text-[9px] font-bold uppercase">
+                                              {idx === 0 ? "Fase 1" : `Fase ${idx + 1}`}
+                                            </span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setNewEventPresales((prev) => [
+                                      ...prev,
+                                      {
+                                        id: Date.now(),
+                                        name: `Preventa ${prev.length + 1}`,
+                                        price: String(Number(prev[prev.length - 1]?.price || 5) + 5),
+                                        duration: "1_semana",
+                                        customEndDate: "",
+                                        capacity: "",
+                                      },
+                                    ]);
+                                  }}
+                                  className="w-full py-2.5 rounded-xl bg-zinc-200/80 hover:bg-zinc-300 text-zinc-800 text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                  <span>+ Agregar otra fase de preventa</span>
+                                </button>
+                              </div>
+
+                              {/* 5. Información & Restricciones (Combo Box / Chips, sin texto libre) */}
+                              <div className="space-y-3">
+                                <div className="space-y-1">
+                                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
+                                    Información / Descripción del Evento
+                                  </label>
+                                  <textarea
+                                    value={newEventDescription}
+                                    onChange={(e) => setNewEventDescription(e.target.value)}
+                                    rows={2}
+                                    placeholder="Detalla la experiencia, artistas invitados, normas de ingreso, etc."
+                                    className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 border border-zinc-300 text-xs text-zinc-900 focus:outline-none focus:border-black focus:bg-white transition font-medium"
+                                  />
+                                </div>
+
+                                {/* Restricción de Edad (Combo Box Seleccionable) */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
+                                      Restricción de Edad
+                                    </label>
+                                    <select
+                                      value={newEventAgeRestriction}
+                                      onChange={(e) => setNewEventAgeRestriction(e.target.value)}
+                                      className="w-full px-3 py-2 rounded-xl bg-zinc-50 border border-zinc-300 text-xs font-bold text-zinc-900 focus:outline-none focus:border-black focus:bg-white transition cursor-pointer"
+                                    >
+                                      <option value="+18 Años (Cédula de identidad física obligatoria)">+18 Años (Cédula física requerida)</option>
+                                      <option value="+21 Años (Exclusivo adultos / VIP)">+21 Años (Exclusivo adultos / VIP)</option>
+                                      <option value="Todo Público / Evento Familiar">Todo Público / Evento Familiar</option>
+                                      <option value="+16 Años (Con autorización o representante)">+16 Años (Con representante)</option>
+                                    </select>
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
+                                      Presentado Por
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={userProfile?.venueName ? `Presented by ${userProfile.venueName}` : "Presented by Oficial"}
+                                      disabled
+                                      className="w-full px-3.5 py-2 rounded-xl bg-zinc-100 border border-zinc-200 text-xs text-zinc-500 font-semibold cursor-not-allowed"
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Normas y Restricciones Estandarizadas (Selector de Chips) */}
+                                <div className="space-y-1.5">
+                                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
+                                    Normas de Admisión Estandarizadas
+                                  </label>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {[
+                                      "Cédula o documento físico obligatorio",
+                                      "Prohibido ingreso de bebidas y alimentos",
+                                      "Código de vestimenta casual / semiformal",
+                                      "Prohibido el reingreso al recinto",
+                                      "Derecho de admisión reservado",
+                                      "Prohibido el ingreso de objetos peligrosos",
+                                    ].map((policy) => {
+                                      const isSelected = newEventPolicies.includes(policy);
+                                      return (
+                                        <button
+                                          key={policy}
+                                          type="button"
+                                          onClick={() => {
+                                            if (isSelected) {
+                                              setNewEventPolicies((prev) => prev.filter((p) => p !== policy));
+                                            } else {
+                                              setNewEventPolicies((prev) => [...prev, policy]);
+                                            }
+                                          }}
+                                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer ${isSelected
+                                            ? "bg-black text-white"
+                                            : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200"
+                                            }`}
+                                        >
+                                          <Check className={`w-3 h-3 ${isSelected ? "text-white" : "opacity-0"}`} />
+                                          <span>{policy}</span>
                                         </button>
                                       );
                                     })}
                                   </div>
                                 </div>
                               </div>
-                            )}
-                          </div>
 
-                          {/* Pinned Action: Next Step Button */}
-                          {(() => {
-                            const currentName = orgName.trim() || userProfile?.venueName || "";
-                            const currentIg = instagramHandle.trim() || userProfile?.instagram || "";
-                            const currentAddr = clubAddress.trim() || userProfile?.address || "";
-                            const currentType = orgType || userProfile?.type || "Discoteca / Club";
+                              {/* 6. Lugar / Ubicación (Google Maps & Selector Rápido) */}
+                              <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-2.5">
+                                <div className="flex items-center justify-between">
+                                  <label className="text-xs font-black uppercase tracking-wider text-zinc-800 block">
+                                    Lugar &amp; Ubicación del Evento
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsLocationPickerOpen(true)}
+                                    className="px-3 py-1 rounded-xl bg-black hover:bg-zinc-800 text-white text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+                                  >
+                                    <MapPin className="w-3.5 h-3.5 text-white" />
+                                    <span>Marcar en Google Maps</span>
+                                  </button>
+                                </div>
 
-                            const isFormValid =
-                              currentName.length > 0 &&
-                              (currentType !== "Discoteca / Club" || (currentAddr.length > 0 && openingDays.length > 0));
-
-                            return (
-                              <div className="pt-3 shrink-0 border-t border-zinc-100">
-                                <button
-                                  type="button"
-                                  disabled={!isFormValid || isOnboardingSaving}
-                                  onClick={async () => {
-                                    if (!isFormValid || isOnboardingSaving) return;
-                                    setIsOnboardingSaving(true);
-
-                                    const emailClean = (userProfile?.email || "usuario@ejemplo.com").trim().toLowerCase();
-                                    const isMaster = emailClean === "brandon.medina@unl.edu.ec";
-
-                                    const updated = {
-                                      id: isMaster ? "master_admin" : (userProfile?.id || `usr_${Date.now()}`),
-                                      name: currentName,
-                                      email: emailClean,
-                                      avatar: brandLogoUrl || (userProfile?.avatar && !userProfile.avatar.includes("presentation") ? userProfile.avatar : "") || (isMaster ? "/images/logo_4go_black_white.png" : ""),
-                                      venueName: currentName,
-                                      type: isMaster ? "Organizador" : currentType,
-                                      city: "Loja",
-                                      instagram: currentIg ? `@${currentIg.replace(/^@/, '')}` : "",
-                                      address: currentAddr,
-                                      openingDays,
-                                      hasCompletedOnboarding: true,
-                                    };
-
-                                    // Saving animation delay
-                                    setTimeout(() => {
-                                      setUserProfile(updated as any);
-                                      localStorage.setItem("organizer_token", `token-${emailClean}-${Date.now()}`);
-                                      localStorage.setItem("organizer_profile", JSON.stringify(updated));
-                                      localStorage.setItem(`organizer_profile_${emailClean}`, JSON.stringify(updated));
-                                      setIsOnboardingSaving(false);
-                                      setOrganizerSubView("create_event");
-                                    }, 600);
-
-                                    fetch("/api/users/sync", {
-                                      method: "POST",
-                                      headers: { "Content-Type": "application/json" },
-                                      body: JSON.stringify({
-                                        email: emailClean,
-                                        name: updated.name,
-                                        avatar: updated.avatar,
-                                        provider: "google",
-                                        type: currentType,
-                                        venueName: updated.venueName,
-                                        city: "Loja",
-                                      }),
-                                    }).catch(() => {});
-                                  }}
-                                  className={`w-full py-3.5 rounded-full font-bold text-xs uppercase tracking-widest transition active:scale-95 text-center flex items-center justify-center gap-2 ${
-                                    isFormValid
-                                      ? "bg-black hover:bg-zinc-800 text-white cursor-pointer shadow-xl"
-                                      : "bg-zinc-200 text-zinc-400 cursor-not-allowed opacity-60"
-                                  }`}
-                                >
-                                  {isOnboardingSaving ? (
-                                    <>
-                                      <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                                      <span>Guardando Cuenta Partner...</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <span>Siguiente: Crear Evento</span>
-                                      <span>→</span>
-                                    </>
-                                  )}
-                                </button>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <div className="space-y-1">
+                                    <span className="text-[11px] font-bold text-zinc-600 block">Establecimiento / Venue</span>
+                                    <input
+                                      type="text"
+                                      value={newEventVenueName}
+                                      onChange={(e) => setNewEventVenueName(e.target.value)}
+                                      placeholder="Cubic Club"
+                                      className="w-full px-3.5 py-2 rounded-xl bg-white border border-zinc-300 text-xs font-semibold text-zinc-900 focus:outline-none focus:border-black transition"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <span className="text-[11px] font-bold text-zinc-600 block">Dirección Física</span>
+                                    <input
+                                      type="text"
+                                      value={newEventVenueAddress}
+                                      onChange={(e) => setNewEventVenueAddress(e.target.value)}
+                                      placeholder="Av. Salvador Bustamante Celi y Guayaquil, Loja"
+                                      className="w-full px-3.5 py-2 rounded-xl bg-white border border-zinc-300 text-xs font-semibold text-zinc-900 focus:outline-none focus:border-black transition"
+                                    />
+                                  </div>
+                                </div>
                               </div>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    ) : organizerSubView === "published" ? (
-                      <div className="relative z-10 w-full max-w-2xl mx-auto space-y-5 font-sans pt-24 sm:pt-28 pb-8">
-                        {/* ─── STEPPER INDICATOR HEADER (PASO 2: PUBLICAR) ─── */}
-                        <div className="flex items-center justify-center gap-3 sm:gap-6 py-2 text-xs sm:text-sm font-bold text-white tracking-wider uppercase drop-shadow-md">
-                          <button
-                            type="button"
-                            onClick={() => setOrganizerSubView("create_event")}
-                            className="text-zinc-400 hover:text-white transition cursor-pointer font-medium"
-                          >
-                            1. Crear Evento
-                          </button>
-                          <span className="text-zinc-400 font-normal">→</span>
-                          <span className="text-white font-black">
-                            2. Publicar
-                          </span>
-                        </div>
 
-                        {/* ─── PUBLISHED SUCCESS CARD ─── */}
-                        <div className="bg-white text-zinc-900 p-6 sm:p-8 rounded-[32px] border border-zinc-200 shadow-2xl space-y-4 text-center font-sans flex flex-col min-h-[700px] max-h-[730px] justify-between overflow-hidden">
-                          {/* Success Icon & Header */}
-                          <div className="space-y-2.5">
-                            <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-inner text-2xl font-black">
-                              ✓
-                            </div>
-                            <div className="space-y-1">
-                              <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 uppercase tracking-tight">
-                                ¡Evento Publicado Correctamente!
-                              </h2>
-                              <p className="text-xs sm:text-sm text-zinc-500 font-medium max-w-md mx-auto">
-                                Tu evento ya se encuentra activo en la cartelera principal de 4GO y disponible para la compra de tickets.
-                              </p>
-                            </div>
-                          </div>
+                              {/* 7. Sección Promotor & Co-Promotores (con Enlace Único de Consentimiento) */}
+                              <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-2.5">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <label className="text-xs font-black uppercase tracking-wider text-zinc-800 block">
+                                      Promotores del Evento
+                                    </label>
+                                    <p className="text-[10px] text-zinc-500 font-medium">
+                                      Vincula otras marcas mediante enlace único de consentimiento oficial.
+                                    </p>
+                                  </div>
 
-                          {/* Event Summary Box */}
-                          {lastPublishedEvent && (
-                            <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-200 text-left flex flex-col sm:flex-row items-center gap-4">
-                              <div className="w-20 h-24 sm:w-24 sm:h-28 rounded-xl overflow-hidden bg-black shrink-0 relative shadow-md">
-                                <img
-                                  src={lastPublishedEvent.poster || lastPublishedEvent.imageUrl || "/images/4go_red_girl_showcase.jpg"}
-                                  alt={lastPublishedEvent.title}
-                                  className="w-full h-full object-cover"
-                                />
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsCoOrganizerModalOpen(true)}
+                                    className="px-3 py-1.5 rounded-xl bg-black hover:bg-zinc-800 text-white text-[11px] font-bold uppercase tracking-wider transition active:scale-95 cursor-pointer flex items-center gap-1 shadow-sm"
+                                  >
+                                    <span>+ Vincular Co-Organizadores</span>
+                                  </button>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2 pt-1">
+                                  {newEventCoOrganizers.map((coOrg, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-zinc-200 text-xs font-bold text-zinc-800 shadow-sm"
+                                    >
+                                      <span>{coOrg}</span>
+                                      <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-zinc-100 text-zinc-600 font-semibold uppercase">
+                                        {idx === 0 ? "Principal" : "Co-Host"}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
-                              <div className="space-y-1.5 flex-1 min-w-0 text-center sm:text-left">
-                                <h4 className="text-base sm:text-lg font-black text-zinc-900 uppercase truncate">
-                                  {lastPublishedEvent.title}
-                                </h4>
-                                <p className="text-xs text-zinc-600 font-semibold truncate">
-                                  📍 {lastPublishedEvent.venue} • {lastPublishedEvent.city || "Loja"}
-                                </p>
-                                <p className="text-xs text-zinc-500 font-medium">
-                                  🗓️ {lastPublishedEvent.dateLabel || lastPublishedEvent.date}
+
+                              {/* ─── 8. OBLIGATORY LEGAL & FISCAL DISCLAIMERS (CHECKBOXES) ─── */}
+                              <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-3 font-sans">
+                                {/* Checkbox 1: Fiscal / Tributario */}
+                                <label className="flex items-start justify-between gap-3 cursor-pointer select-none pb-3 border-b border-zinc-200/80">
+                                  <span className="text-xs font-medium text-zinc-800 leading-relaxed">
+                                    Como organizador, eres responsable de cumplir con tus obligaciones fiscales según tu régimen tributario.
+                                  </span>
+                                  <input
+                                    type="checkbox"
+                                    checked={agreeFiscal}
+                                    onChange={(e) => setAgreeFiscal(e.target.checked)}
+                                    className="w-5 h-5 rounded-md border-zinc-300 text-black focus:ring-black accent-black cursor-pointer shrink-0 mt-0.5"
+                                  />
+                                </label>
+
+                                {/* Checkbox 2: Normativa municipal y aforo */}
+                                <label className="flex items-start justify-between gap-3 cursor-pointer select-none pb-3 border-b border-zinc-200/80">
+                                  <span className="text-xs font-medium text-zinc-800 leading-relaxed">
+                                    Como organizador, eres responsable de cumplir la normativa de cada municipio en permisos y aforo.
+                                  </span>
+                                  <input
+                                    type="checkbox"
+                                    checked={agreeMunicipal}
+                                    onChange={(e) => setAgreeMunicipal(e.target.checked)}
+                                    className="w-5 h-5 rounded-md border-zinc-300 text-black focus:ring-black accent-black cursor-pointer shrink-0 mt-0.5"
+                                  />
+                                </label>
+
+                                {/* Legal Note */}
+                                <p className="text-[11px] text-zinc-500 font-medium pt-0.5">
+                                  Tu convenio estará en la sección legal una vez aprobado tu evento.
                                 </p>
                               </div>
                             </div>
-                          )}
 
-                          {/* Actions Buttons */}
-                          <div className="space-y-3 pt-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setNewEventTitle("");
-                                setNewEventSubtitle("");
-                                setNewEventDate("");
-                                setNewEventDoorsOpen("");
-                                setNewEventVenueName("");
-                                setNewEventVenueAddress("");
-                                setOrganizerSubView("create_event");
-                              }}
-                              className="w-full py-4 rounded-full bg-black hover:bg-zinc-800 text-white font-black text-xs uppercase tracking-widest transition active:scale-95 text-center cursor-pointer shadow-xl flex items-center justify-center gap-2"
-                            >
-                              <span>+ Publicar Otro Evento</span>
-                            </button>
+                            {/* Pinned Submit Button Footer */}
+                            <div className="pt-3 shrink-0 border-t border-zinc-100 space-y-1.5">
+                              {(!agreeFiscal || !agreeMunicipal || !newEventTitle.trim() || !newEventDate.trim()) && (
+                                <p className="text-[11px] text-amber-700 bg-amber-50 px-3 py-1 rounded-xl text-center font-medium border border-amber-200">
+                                  Completa el título, fecha y marca ambas declaraciones legales para publicar el evento.
+                                </p>
+                              )}
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                              {publishEventError && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{publishEventError}</p>}
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setActiveStoryScreen(2);
+                                disabled={isPublishingEvent || !agreeFiscal || !agreeMunicipal || !newEventTitle.trim() || !newEventDate.trim()}
+                                onClick={async () => {
+                                  if (isPublishingEvent || !newEventTitle.trim() || !newEventDate.trim() || !agreeFiscal || !agreeMunicipal) return;
+                                  setPublishEventError("");
+                                  setIsPublishingEvent(true);
+
+                                  const basePrice = Number(newEventPresales[0]?.price ?? 0);
+                                  const newEvtPayload = {
+                                    title: newEventTitle,
+                                    subtitle: newEventSubtitle || "SALA PRINCIPAL",
+                                    category: newEventCategory,
+                                    city: newEventCity,
+                                    price: basePrice,
+                                    date: newEventDate,
+                                    time: newEventDoorsOpen,
+                                    address: newEventVenueAddress,
+                                    importantInfo: newEventPolicies.filter(Boolean).map((description) => ({ icon: "info", title: "Información del evento", description })),
+                                    dateLabel: new Date(newEventDate + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase(),
+                                    venue: newEventVenueName || userProfile?.venueName || "Local del Evento",
+                                    poster: newEventPoster || "/images/4go_red_girl_showcase.jpg",
+                                    imageUrl: newEventPoster || "/images/4go_red_girl_showcase.jpg",
+                                    description: newEventDescription || `Evento oficial por ${userProfile?.venueName || userProfile?.name || "Organizador"}. Entradas con acceso instantáneo.`,
+                                    lineup: newEventCoOrganizers,
+                                    organizer: userProfile?.venueName || userProfile?.name || "Promotor Oficial",
+                                    organizers: newEventCoOrganizers,
+                                    ageRestriction: newEventAgeRestriction || "18+",
+                                    presales: newEventPresales,
+                                  };
+
+                                  let publishedEvt: Event;
+                                  try {
+                                    const res = await fetch("/api/events", {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify(newEvtPayload),
+                                    });
+                                    const data = await res.json();
+                                    if (!res.ok || !data.success || !data.event) {
+                                      throw new Error(data.error || "No se pudo publicar el evento. Inténtalo de nuevo.");
+                                    }
+                                    publishedEvt = data.event;
+                                    setEvents((prev) => [data.event, ...prev.filter((e) => e.id !== data.event.id)]);
+                                  } catch (error) {
+                                    setPublishEventError(error instanceof Error ? error.message : "No se pudo conectar. Tu evento no se ha publicado; inténtalo de nuevo.");
+                                    return;
+                                  } finally {
+                                    setIsPublishingEvent(false);
+                                  }
+
+                                  try {
+                                    const existing = JSON.parse(localStorage.getItem("4go_created_events") || "[]");
+                                    const updatedCreated = [publishedEvt, ...existing.filter((e: any) => e.id !== publishedEvt.id)];
+                                    localStorage.setItem("4go_created_events", JSON.stringify(updatedCreated));
+                                  } catch (err) {
+                                    console.error("Error saving created event:", err);
+                                  }
+
+                                  setLastPublishedEvent(publishedEvt);
+                                  setOrganizerSubView("published");
+                                  setShowEventPublishedToast(true);
+                                  handleExploreEvents();
                                   if (typeof window !== "undefined") {
                                     window.scrollTo({ top: 0, behavior: "smooth" });
                                   }
                                 }}
-                                className="w-full py-3 px-4 rounded-2xl bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-bold text-xs uppercase tracking-wider transition cursor-pointer"
+                                className="w-full py-3.5 rounded-full bg-black hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-xs uppercase tracking-widest transition active:scale-95 text-center cursor-pointer shadow-xl"
                               >
-                                Ver en Cartelera →
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => router.push("/cuenta")}
-                                className="w-full py-3 px-4 rounded-2xl bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-bold text-xs uppercase tracking-wider transition cursor-pointer"
-                              >
-                                Ir a Mi Cuenta
+                                {isPublishingEvent ? "Publicando tu evento..." : "Publicar evento en 4go →"}
                               </button>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="relative z-10 w-full max-w-2xl mx-auto space-y-4 sm:space-y-6 font-sans pt-4 sm:pt-8 lg:pt-28 pb-12">
-                        {/* --- STEPPER INDICATOR HEADER (1. CREAR EVENTO -> 2. PUBLICAR) --- */}
-                        <div className="flex items-center justify-center gap-3 sm:gap-6 py-2 text-xs sm:text-sm font-bold text-white tracking-wider uppercase drop-shadow-md">
-                          <span className="text-white font-black">
-                            1. Crear Evento
-                          </span>
-                          <span className="text-zinc-400 font-normal">→</span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (lastPublishedEvent) setOrganizerSubView("published");
-                            }}
-                            className={`transition ${
-                              lastPublishedEvent
-                                ? "text-zinc-400 hover:text-white cursor-pointer font-medium"
-                                : "text-zinc-500 cursor-not-allowed font-medium"
-                            }`}
-                          >
-                            2. Publicar
-                          </button>
-                        </div>
-
-                        {/* --- COMPACT WHITE CARD MODAL (CREAR EVENTO DIRECTO) --- */}
-                        <div className="bg-white text-zinc-900 p-6 sm:p-8 rounded-[32px] border border-zinc-200 shadow-2xl text-left font-sans flex flex-col min-h-[700px] max-h-[730px] overflow-hidden">
-                          {/* Top Organizer Header inside White Modal (Pinned Header) */}
-                          <div className="flex items-center justify-between border-b border-zinc-100 pb-3 shrink-0">
-                            <div className="flex items-center gap-3">
-                              <div className="w-11 h-11 rounded-2xl bg-zinc-900 border border-zinc-200 overflow-hidden shrink-0 flex items-center justify-center shadow-sm">
-                                {userProfile?.avatar ? (
-                                  <img
-                                    src={userProfile.avatar}
-                                    alt="Logo"
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = "none";
-                                    }}
-                                  />
-                                ) : (
-                                  <Building2 className="w-5 h-5 text-white" />
-                                )}
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <h3 className="text-sm sm:text-base font-black text-zinc-900 uppercase tracking-tight">
-                                    {userProfile?.venueName || userProfile?.name || "PROMOTOR"}
-                                  </h3>
-                                  <span className="px-2 py-0.5 rounded-full bg-zinc-100 border border-zinc-200 text-zinc-700 text-[9px] font-bold uppercase tracking-wider">
-                                    Partner 4GO
-                                  </span>
-                                </div>
-                                <p className="text-[11px] text-zinc-500 font-medium truncate max-w-[170px] sm:max-w-[260px]">{userProfile?.email}</p>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => router.push("/cuenta?tab=partner_profile")}
-                                className="px-3.5 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-900 text-[11px] font-bold transition active:scale-95 cursor-pointer text-center flex items-center gap-1.5 border border-zinc-200 shadow-sm"
-                              >
-                                <ShieldCheck className="w-3.5 h-3.5 text-zinc-700" />
-                                <span>Configurar Partner</span>
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Scrollable Event Creation Form Fields */}
-                          <div className="overflow-y-auto pr-1 sm:pr-2 pt-3 pb-2 space-y-4 flex-1">
-                            <div className="space-y-0.5 border-b border-zinc-100 pb-2.5">
-                              <h2 className="text-lg sm:text-xl font-black text-zinc-900 uppercase tracking-tight">
-                                CREAR Y PUBLICAR EVENTO
-                              </h2>
-                              <p className="text-[11px] text-zinc-500 font-medium">
-                                Configura los detalles oficiales de tu evento para la cartelera principal de 4GO.
-                              </p>
-                            </div>
-
-                            {/* 1. Flyer / Poster del Evento Uploader (Starts empty, no forced photo) */}
-                            <div className="space-y-2 pb-3 border-b border-zinc-100">
-                              <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
-                                Flyer / Poster Oficial del Evento
-                              </label>
-                              
-                              {newEventPoster ? (
-                                <div className="flex items-center gap-4 p-3 rounded-2xl bg-zinc-50 border border-zinc-200">
-                                  <div className="w-16 h-20 rounded-xl bg-zinc-900 border border-zinc-300 overflow-hidden shrink-0 shadow-md">
-                                    <img
-                                      src={newEventPoster}
-                                      alt="Preview del Flyer"
-                                      className="w-full h-full object-cover"
-                                    />
-                                  </div>
-                                  <div className="space-y-1.5 text-left">
-                                    <p className="text-xs font-bold text-zinc-900">Flyer cargado correctamente</p>
-                                    <div className="flex items-center gap-2">
-                                      <input
-                                        type="file"
-                                        accept="image/*"
-                                        id="event-poster-file-change"
-                                        className="hidden"
-                                        onChange={(e) => {
-                                          const file = e.target.files?.[0];
-                                          if (file) {
-                                            const reader = new FileReader();
-                                            reader.onloadend = () => {
-                                              setNewEventPoster(reader.result as string);
-                                            };
-                                            reader.readAsDataURL(file);
-                                          }
-                                        }}
-                                      />
-                                      <label
-                                        htmlFor="event-poster-file-change"
-                                        className="inline-block px-3 py-1.5 rounded-xl bg-zinc-200 hover:bg-zinc-300 text-zinc-800 font-bold text-[11px] uppercase tracking-wider transition cursor-pointer"
-                                      >
-                                        Cambiar Flyer
-                                      </label>
-                                      <button
-                                        type="button"
-                                        onClick={() => setNewEventPoster("")}
-                                        className="px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[11px] uppercase tracking-wider transition cursor-pointer"
-                                      >
-                                        Eliminar
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    id="event-poster-file-input"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                      const file = e.target.files?.[0];
-                                      if (file) {
-                                        const reader = new FileReader();
-                                        reader.onloadend = () => {
-                                          setNewEventPoster(reader.result as string);
-                                        };
-                                        reader.readAsDataURL(file);
-                                      }
-                                    }}
-                                  />
-                                  <label
-                                    htmlFor="event-poster-file-input"
-                                    className="w-full flex flex-col items-center justify-center p-5 rounded-2xl border-2 border-dashed border-zinc-300 hover:border-black bg-zinc-50 hover:bg-zinc-100/70 transition cursor-pointer text-center group"
-                                  >
-                                    <div className="w-10 h-10 rounded-xl bg-zinc-200 group-hover:bg-black group-hover:text-white text-zinc-700 flex items-center justify-center transition mb-2">
-                                      <ImagePlus className="w-5 h-5" />
-                                    </div>
-                                    <span className="text-xs font-bold text-zinc-900 uppercase tracking-wider">
-                                      Subir Flyer / Poster Oficial
-                                    </span>
-                                    <span className="text-[10px] text-zinc-500 font-medium mt-0.5">
-                                      Formato vertical o cuadrado (JPG, PNG o WEBP)
-                                    </span>
-                                  </label>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* 2. Título & Subtítulo (Venue / Sala) */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              <div className="space-y-1">
-                                <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
-                                  Título del Evento *
-                                </label>
-                                <input
-                                  type="text"
-                                  required
-                                  value={newEventTitle}
-                                  onChange={(e) => setNewEventTitle(e.target.value)}
-                                  placeholder="Ej. ORIGIN // Club Night"
-                                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 border border-zinc-300 text-xs sm:text-sm text-zinc-900 focus:outline-none focus:border-black focus:bg-white transition font-medium"
-                                />
-                              </div>
-
-                              <div className="space-y-1">
-                                <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
-                                  Subtítulo / Sala
-                                </label>
-                                <input
-                                  type="text"
-                                  value={newEventSubtitle}
-                                  onChange={(e) => setNewEventSubtitle(e.target.value)}
-                                  placeholder="Ej. Sala Principal / Terraza VIP"
-                                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 border border-zinc-300 text-xs sm:text-sm text-zinc-900 focus:outline-none focus:border-black focus:bg-white transition font-medium"
-                                />
-                              </div>
-                            </div>
-
-                            {/* 3. Fecha & Hora de Apertura Fácil & Rápida */}
-                            <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-3">
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                {/* Fecha con selector nativo y accesos rápidos */}
-                                <div className="space-y-1.5">
-                                  <div className="flex items-center justify-between">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
-                                      Fecha del Evento *
-                                    </label>
-                                    <span className="text-[10px] text-zinc-500 font-medium">
-                                      {newEventDate ? new Date(newEventDate + 'T12:00:00').toLocaleDateString('es-EC', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Selecciona fecha'}
-                                    </span>
-                                  </div>
-                                  <input
-                                    type="date"
-                                    required
-                                    min={new Date().toISOString().split('T')[0]}
-                                    value={newEventDate}
-                                    onChange={(e) => setNewEventDate(e.target.value)}
-                                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-zinc-300 text-xs sm:text-sm text-zinc-900 focus:outline-none focus:border-black transition font-semibold cursor-pointer"
-                                  />
-                                  
-                                  {/* Quick Date Pills */}
-                                  <div className="flex flex-wrap gap-1.5 pt-1">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const d = new Date();
-                                        setNewEventDate(d.toISOString().split('T')[0]);
-                                      }}
-                                      className="px-2 py-1 rounded-lg bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-[10px] font-bold transition cursor-pointer"
-                                    >
-                                      Hoy
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const d = new Date();
-                                        d.setDate(d.getDate() + 1);
-                                        setNewEventDate(d.toISOString().split('T')[0]);
-                                      }}
-                                      className="px-2 py-1 rounded-lg bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-[10px] font-bold transition cursor-pointer"
-                                    >
-                                      Mañana
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const d = new Date();
-                                        let diff = (5 - d.getDay() + 7) % 7;
-                                        if (diff === 0) diff = 7;
-                                        d.setDate(d.getDate() + diff);
-                                        setNewEventDate(d.toISOString().split('T')[0]);
-                                      }}
-                                      className="px-2 py-1 rounded-lg bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-[10px] font-bold transition cursor-pointer"
-                                    >
-                                      Viernes
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const d = new Date();
-                                        let diff = (6 - d.getDay() + 7) % 7;
-                                        if (diff === 0) diff = 7;
-                                        d.setDate(d.getDate() + diff);
-                                        setNewEventDate(d.toISOString().split('T')[0]);
-                                      }}
-                                      className="px-2 py-1 rounded-lg bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-[10px] font-bold transition cursor-pointer"
-                                    >
-                                      Sábado
-                                    </button>
-                                  </div>
-                                </div>
-
-                                {/* Hora de Apertura con selector rápido */}
-                                <div className="space-y-1.5">
-                                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
-                                    Hora de Apertura *
-                                  </label>
-                                  <input
-                                    type="time"
-                                    required
-                                    value={newEventDoorsOpen}
-                                    onChange={(e) => setNewEventDoorsOpen(e.target.value)}
-                                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-zinc-300 text-xs sm:text-sm text-zinc-900 focus:outline-none focus:border-black transition font-semibold cursor-pointer"
-                                  />
-
-                                  {/* Quick Time Pills */}
-                                  <div className="flex flex-wrap gap-1.5 pt-1">
-                                    {["20:00", "21:00", "22:00", "23:00"].map((t) => (
-                                      <button
-                                        key={t}
-                                        type="button"
-                                        onClick={() => setNewEventDoorsOpen(t)}
-                                        className={`px-2 py-1 rounded-lg text-[10px] font-bold transition cursor-pointer ${
-                                          newEventDoorsOpen === t
-                                            ? "bg-black text-white"
-                                            : "bg-zinc-200 hover:bg-zinc-300 text-zinc-800"
-                                        }`}
-                                      >
-                                        {t}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Categoría */}
-                              <div className="space-y-1 pt-1 border-t border-zinc-200">
-                                <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
-                                  Categoría / Género Musical
-                                </label>
-                                <select
-                                  value={newEventCategory}
-                                  onChange={(e) => setNewEventCategory(e.target.value)}
-                                  className="w-full px-3 py-2 rounded-xl bg-white border border-zinc-300 text-xs font-bold text-zinc-900 focus:outline-none focus:border-black transition cursor-pointer"
-                                >
-                                  <option value="Electronic / House">Electronic / House</option>
-                                  <option value="Fiesta / Club">Fiesta / Club Nocturno</option>
-                                  <option value="Reggaeton / Urban">Reggaeton / Urban</option>
-                                  <option value="Concierto">Concierto en Vivo</option>
-                                  <option value="Festival">Festival / Open Air</option>
-                                  <option value="Techno / Underground">Techno / Underground</option>
-                                </select>
-                              </div>
-                            </div>
-
-                            {/* 4. Preventa de Entradas (Solo 1 por defecto, con opción de agregar más) */}
-                            <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-3">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <label className="text-xs font-black uppercase tracking-wider text-zinc-800 block">
-                                    Entradas &amp; Preventas
-                                  </label>
-                                  <p className="text-[10px] text-zinc-500 font-medium">
-                                    Define tus fases de preventa. Puedes comenzar con una y habilitar más fases luego.
-                                  </p>
-                                </div>
-                                <span className="text-[10px] text-zinc-500 font-bold">0% de comisión</span>
-                              </div>
-
-                              <div className="space-y-3">
-                                {newEventPresales.map((phase, idx) => (
-                                  <div
-                                    key={phase.id}
-                                    className="p-3 rounded-2xl bg-white border border-zinc-200 space-y-2.5 shadow-sm"
-                                  >
-                                    {/* Row 1: Nombre, Precio y Eliminar */}
-                                    <div className="flex items-center gap-3">
-                                      <div className="flex-1 space-y-0.5">
-                                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                                          Nombre de Fase
-                                        </span>
-                                        <input
-                                          type="text"
-                                          value={phase.name}
-                                          onChange={(e) => {
-                                            const val = e.target.value;
-                                            setNewEventPresales((prev) =>
-                                              prev.map((item) => (item.id === phase.id ? { ...item, name: val } : item))
-                                            );
-                                          }}
-                                          placeholder="Ej. Preventa 1 / Early Bird"
-                                          className="w-full px-3 py-1.5 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-bold text-zinc-900 focus:outline-none focus:border-black"
-                                        />
-                                      </div>
-
-                                      <div className="w-28 space-y-0.5">
-                                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                                          Precio ($ USD)
-                                        </span>
-                                        <input
-                                          type="number"
-                                          min="0"
-                                          step="0.5"
-                                          value={phase.price}
-                                          onChange={(e) => {
-                                            const val = e.target.value;
-                                            setNewEventPresales((prev) =>
-                                              prev.map((item) => (item.id === phase.id ? { ...item, price: val } : item))
-                                            );
-                                          }}
-                                          placeholder="5.00"
-                                          className="w-full px-3 py-1.5 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-black text-zinc-900 focus:outline-none focus:border-black"
-                                        />
-                                      </div>
-
-                                      {newEventPresales.length > 1 && (
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setNewEventPresales((prev) => prev.filter((item) => item.id !== phase.id));
-                                          }}
-                                          className="p-2 rounded-xl text-zinc-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer self-end mb-0.5"
-                                          title="Eliminar fase"
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                        </button>
-                                      )}
-                                    </div>
-
-                                    {/* Row 2: Programación de Duración / Vigencia */}
-                                    <div className="pt-2 border-t border-zinc-100 grid grid-cols-1 sm:grid-cols-2 gap-2.5 items-center">
-                                      <div className="space-y-1">
-                                        <label className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider flex items-center gap-1">
-                                          <Clock className="w-3 h-3 text-zinc-400" />
-                                          <span>Programar Duración</span>
-                                        </label>
-                                        <select
-                                          value={phase.duration || "1_semana"}
-                                          onChange={(e) => {
-                                            const val = e.target.value;
-                                            setNewEventPresales((prev) =>
-                                              prev.map((item) => (item.id === phase.id ? { ...item, duration: val } : item))
-                                            );
-                                          }}
-                                          className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-50 border border-zinc-200 text-xs font-semibold text-zinc-800 focus:outline-none focus:border-black cursor-pointer"
-                                        >
-                                          <option value="1_semana">Dura 1 Semana (7 días)</option>
-                                          <option value="2_semanas">Dura 2 Semanas (14 días)</option>
-                                          <option value="3_dias">Dura 3 Días</option>
-                                          <option value="hasta_evento">Hasta el día del evento</option>
-                                          <option value="aforo">Hasta agotar aforo / cupos</option>
-                                          <option value="fecha_custom">Fecha límite personalizada</option>
-                                        </select>
-                                      </div>
-
-                                      {phase.duration === "fecha_custom" ? (
-                                        <div className="space-y-1">
-                                          <label className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider block">
-                                            Fecha Fin de Preventa
-                                          </label>
-                                          <input
-                                            type="date"
-                                            value={phase.customEndDate || ""}
-                                            onChange={(e) => {
-                                              const val = e.target.value;
-                                              setNewEventPresales((prev) =>
-                                                prev.map((item) => (item.id === phase.id ? { ...item, customEndDate: val } : item))
-                                              );
-                                            }}
-                                            className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-50 border border-zinc-200 text-xs font-semibold text-zinc-900 focus:outline-none focus:border-black cursor-pointer"
-                                          />
-                                        </div>
-                                      ) : (
-                                        <div className="p-2 rounded-xl bg-zinc-50 border border-zinc-100 flex items-center justify-between">
-                                          <span className="text-[10.5px] text-zinc-600 font-medium">
-                                            {idx === 0
-                                              ? "Activa desde la publicación"
-                                              : `Se activa al vencer ${newEventPresales[idx - 1]?.name || 'fase previa'}`}
-                                          </span>
-                                          <span className="px-2 py-0.5 rounded-md bg-zinc-200 text-zinc-700 text-[9px] font-bold uppercase">
-                                            {idx === 0 ? "Fase 1" : `Fase ${idx + 1}`}
-                                          </span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setNewEventPresales((prev) => [
-                                    ...prev,
-                                    {
-                                      id: Date.now(),
-                                      name: `Preventa ${prev.length + 1}`,
-                                      price: String(Number(prev[prev.length - 1]?.price || 5) + 5),
-                                      duration: "1_semana",
-                                      customEndDate: "",
-                                      capacity: "",
-                                    },
-                                  ]);
-                                }}
-                                className="w-full py-2.5 rounded-xl bg-zinc-200/80 hover:bg-zinc-300 text-zinc-800 text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5"
-                              >
-                                <Plus className="w-3.5 h-3.5" />
-                                <span>+ Agregar otra fase de preventa</span>
-                              </button>
-                            </div>
-
-                            {/* 5. Información & Restricciones (Combo Box / Chips, sin texto libre) */}
-                            <div className="space-y-3">
-                              <div className="space-y-1">
-                                <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
-                                  Información / Descripción del Evento
-                                </label>
-                                <textarea
-                                  value={newEventDescription}
-                                  onChange={(e) => setNewEventDescription(e.target.value)}
-                                  rows={2}
-                                  placeholder="Detalla la experiencia, artistas invitados, normas de ingreso, etc."
-                                  className="w-full px-3.5 py-2.5 rounded-xl bg-zinc-50 border border-zinc-300 text-xs text-zinc-900 focus:outline-none focus:border-black focus:bg-white transition font-medium"
-                                />
-                              </div>
-
-                              {/* Restricción de Edad (Combo Box Seleccionable) */}
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
-                                    Restricción de Edad
-                                  </label>
-                                  <select
-                                    value={newEventAgeRestriction}
-                                    onChange={(e) => setNewEventAgeRestriction(e.target.value)}
-                                    className="w-full px-3 py-2 rounded-xl bg-zinc-50 border border-zinc-300 text-xs font-bold text-zinc-900 focus:outline-none focus:border-black focus:bg-white transition cursor-pointer"
-                                  >
-                                    <option value="+18 Años (Cédula de identidad física obligatoria)">+18 Años (Cédula física requerida)</option>
-                                    <option value="+21 Años (Exclusivo adultos / VIP)">+21 Años (Exclusivo adultos / VIP)</option>
-                                    <option value="Todo Público / Evento Familiar">Todo Público / Evento Familiar</option>
-                                    <option value="+16 Años (Con autorización o representante)">+16 Años (Con representante)</option>
-                                  </select>
-                                </div>
-
-                                <div className="space-y-1">
-                                  <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
-                                    Presentado Por
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={userProfile?.venueName ? `Presented by ${userProfile.venueName}` : "Presented by Oficial"}
-                                    disabled
-                                    className="w-full px-3.5 py-2 rounded-xl bg-zinc-100 border border-zinc-200 text-xs text-zinc-500 font-semibold cursor-not-allowed"
-                                  />
-                                </div>
-                              </div>
-
-                              {/* Normas y Restricciones Estandarizadas (Selector de Chips) */}
-                              <div className="space-y-1.5">
-                                <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
-                                  Normas de Admisión Estandarizadas
-                                </label>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {[
-                                    "Cédula o documento físico obligatorio",
-                                    "Prohibido ingreso de bebidas y alimentos",
-                                    "Código de vestimenta casual / semiformal",
-                                    "Prohibido el reingreso al recinto",
-                                    "Derecho de admisión reservado",
-                                    "Prohibido el ingreso de objetos peligrosos",
-                                  ].map((policy) => {
-                                    const isSelected = newEventPolicies.includes(policy);
-                                    return (
-                                      <button
-                                        key={policy}
-                                        type="button"
-                                        onClick={() => {
-                                          if (isSelected) {
-                                            setNewEventPolicies((prev) => prev.filter((p) => p !== policy));
-                                          } else {
-                                            setNewEventPolicies((prev) => [...prev, policy]);
-                                          }
-                                        }}
-                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                                          isSelected
-                                            ? "bg-black text-white"
-                                            : "bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200"
-                                        }`}
-                                      >
-                                        <Check className={`w-3 h-3 ${isSelected ? "text-white" : "opacity-0"}`} />
-                                        <span>{policy}</span>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* 6. Lugar / Ubicación (Google Maps & Selector Rápido) */}
-                            <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-2.5">
-                              <div className="flex items-center justify-between">
-                                <label className="text-xs font-black uppercase tracking-wider text-zinc-800 block">
-                                  Lugar &amp; Ubicación del Evento
-                                </label>
-                                <button
-                                  type="button"
-                                  onClick={() => setIsLocationPickerOpen(true)}
-                                  className="px-3 py-1 rounded-xl bg-black hover:bg-zinc-800 text-white text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition cursor-pointer shadow-sm"
-                                >
-                                  <MapPin className="w-3.5 h-3.5 text-white" />
-                                  <span>Marcar en Google Maps</span>
-                                </button>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div className="space-y-1">
-                                  <span className="text-[11px] font-bold text-zinc-600 block">Establecimiento / Venue</span>
-                                  <input
-                                    type="text"
-                                    value={newEventVenueName}
-                                    onChange={(e) => setNewEventVenueName(e.target.value)}
-                                    placeholder="Cubic Club"
-                                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-zinc-300 text-xs font-semibold text-zinc-900 focus:outline-none focus:border-black transition"
-                                  />
-                                </div>
-                                <div className="space-y-1">
-                                  <span className="text-[11px] font-bold text-zinc-600 block">Dirección Física</span>
-                                  <input
-                                    type="text"
-                                    value={newEventVenueAddress}
-                                    onChange={(e) => setNewEventVenueAddress(e.target.value)}
-                                    placeholder="Av. Salvador Bustamante Celi y Guayaquil, Loja"
-                                    className="w-full px-3.5 py-2 rounded-xl bg-white border border-zinc-300 text-xs font-semibold text-zinc-900 focus:outline-none focus:border-black transition"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* 7. Sección Promotor & Co-Promotores (con Enlace Único de Consentimiento) */}
-                            <div className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-2.5">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <label className="text-xs font-black uppercase tracking-wider text-zinc-800 block">
-                                    Promotores del Evento
-                                  </label>
-                                  <p className="text-[10px] text-zinc-500 font-medium">
-                                    Vincula otras marcas mediante enlace único de consentimiento oficial.
-                                  </p>
-                                </div>
-
-                                <button
-                                  type="button"
-                                  onClick={() => setIsCoOrganizerModalOpen(true)}
-                                  className="px-3 py-1.5 rounded-xl bg-black hover:bg-zinc-800 text-white text-[11px] font-bold uppercase tracking-wider transition active:scale-95 cursor-pointer flex items-center gap-1 shadow-sm"
-                                >
-                                  <span>+ Vincular Co-Organizadores</span>
-                                </button>
-                              </div>
-
-                              <div className="flex flex-wrap gap-2 pt-1">
-                                {newEventCoOrganizers.map((coOrg, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-zinc-200 text-xs font-bold text-zinc-800 shadow-sm"
-                                  >
-                                    <span>{coOrg}</span>
-                                    <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-zinc-100 text-zinc-600 font-semibold uppercase">
-                                      {idx === 0 ? "Principal" : "Co-Host"}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* ─── 8. OBLIGATORY LEGAL & FISCAL DISCLAIMERS (CHECKBOXES) ─── */}
-                            <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-3 font-sans">
-                              {/* Checkbox 1: Fiscal / Tributario */}
-                              <label className="flex items-start justify-between gap-3 cursor-pointer select-none pb-3 border-b border-zinc-200/80">
-                                <span className="text-xs font-medium text-zinc-800 leading-relaxed">
-                                  Como organizador, eres responsable de cumplir con tus obligaciones fiscales según tu régimen tributario.
-                                </span>
-                                <input
-                                  type="checkbox"
-                                  checked={agreeFiscal}
-                                  onChange={(e) => setAgreeFiscal(e.target.checked)}
-                                  className="w-5 h-5 rounded-md border-zinc-300 text-black focus:ring-black accent-black cursor-pointer shrink-0 mt-0.5"
-                                />
-                              </label>
-
-                              {/* Checkbox 2: Normativa municipal y aforo */}
-                              <label className="flex items-start justify-between gap-3 cursor-pointer select-none pb-3 border-b border-zinc-200/80">
-                                <span className="text-xs font-medium text-zinc-800 leading-relaxed">
-                                  Como organizador, eres responsable de cumplir la normativa de cada municipio en permisos y aforo.
-                                </span>
-                                <input
-                                  type="checkbox"
-                                  checked={agreeMunicipal}
-                                  onChange={(e) => setAgreeMunicipal(e.target.checked)}
-                                  className="w-5 h-5 rounded-md border-zinc-300 text-black focus:ring-black accent-black cursor-pointer shrink-0 mt-0.5"
-                                />
-                              </label>
-
-                              {/* Legal Note */}
-                              <p className="text-[11px] text-zinc-500 font-medium pt-0.5">
-                                Tu convenio estará en la sección legal una vez aprobado tu evento.
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Pinned Submit Button Footer */}
-                          <div className="pt-3 shrink-0 border-t border-zinc-100 space-y-1.5">
-                            {(!agreeFiscal || !agreeMunicipal || !newEventTitle.trim() || !newEventDate.trim()) && (
-                              <p className="text-[11px] text-amber-700 bg-amber-50 px-3 py-1 rounded-xl text-center font-medium border border-amber-200">
-                                Completa el título, fecha y marca ambas declaraciones legales para publicar el evento.
-                              </p>
-                            )}
-
-                            <button
-                              type="button"
-                              disabled={!agreeFiscal || !agreeMunicipal || !newEventTitle.trim() || !newEventDate.trim()}
-                              onClick={async () => {
-                                if (!newEventTitle.trim() || !newEventDate.trim() || !agreeFiscal || !agreeMunicipal) return;
-                                
-                                const basePrice = Number(newEventPresales[0]?.price) || 5;
-                                const newEvtPayload = {
-                                  title: newEventTitle,
-                                  subtitle: newEventSubtitle || "SALA PRINCIPAL",
-                                  category: newEventCategory,
-                                  city: newEventCity,
-                                  price: basePrice,
-                                  date: newEventDate,
-                                  dateLabel: new Date(newEventDate + 'T12:00:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase(),
-                                  venue: newEventVenueName || userProfile?.venueName || "Local del Evento",
-                                  poster: newEventPoster || "/images/4go_red_girl_showcase.jpg",
-                                  imageUrl: newEventPoster || "/images/4go_red_girl_showcase.jpg",
-                                  description: newEventDescription || `Evento oficial por ${userProfile?.venueName || userProfile?.name || "Organizador"}. Entradas con acceso instantáneo.`,
-                                  lineup: newEventCoOrganizers,
-                                  organizer: userProfile?.venueName || userProfile?.name || "Promotor Oficial",
-                                  organizers: newEventCoOrganizers,
-                                  ageRestriction: newEventAgeRestriction || "18+",
-                                  presales: newEventPresales,
-                                };
-
-                                let publishedEvt: Event;
-                                try {
-                                  const res = await fetch("/api/events", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify(newEvtPayload),
-                                  });
-                                  const data = await res.json();
-                                  if (data.success && data.event) {
-                                    publishedEvt = data.event;
-                                    setEvents((prev) => [data.event, ...prev.filter((e) => e.id !== data.event.id)]);
-                                  } else {
-                                    publishedEvt = {
-                                      id: `evt-${Date.now()}`,
-                                      ...newEvtPayload,
-                                      startsAt: new Date().toISOString(),
-                                    } as any;
-                                    setEvents((prev) => [publishedEvt, ...prev]);
-                                  }
-                                } catch {
-                                  publishedEvt = {
-                                    id: `evt-${Date.now()}`,
-                                    ...newEvtPayload,
-                                    startsAt: new Date().toISOString(),
-                                  } as any;
-                                  setEvents((prev) => [publishedEvt, ...prev]);
-                                }
-
-                                try {
-                                  const existing = JSON.parse(localStorage.getItem("4go_created_events") || "[]");
-                                  const updatedCreated = [publishedEvt, ...existing.filter((e: any) => e.id !== publishedEvt.id)];
-                                  localStorage.setItem("4go_created_events", JSON.stringify(updatedCreated));
-                                } catch (err) {
-                                  console.error("Error saving created event:", err);
-                                }
-
-                                setLastPublishedEvent(publishedEvt);
-                                setOrganizerSubView("published");
-                                setShowEventPublishedToast(true);
-                                setActiveStoryScreen(2);
-                                if (typeof window !== "undefined") {
-                                  window.scrollTo({ top: 0, behavior: "smooth" });
-                                }
-                              }}
-                              className="w-full py-3.5 rounded-full bg-black hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-xs uppercase tracking-widest transition active:scale-95 text-center cursor-pointer shadow-xl"
-                            >
-                              Publicar Evento Ahora →
-                            </button>
-                          </div>
-                        </div>
-                      </div>
                       )
-                    ) : (
-                      /* ONLY the pulsing PRÓXIMAMENTE button + subtitle (Not clickable, No text glow) */
-                      <div className="relative z-10 w-full flex flex-col items-center justify-center my-auto py-12 space-y-4 text-center select-none">
-                        <motion.div
-                          animate={{
-                            opacity: [0.55, 1, 0.55],
-                            scale: [0.99, 1.01, 0.99],
-                            boxShadow: [
-                              "0 0 0px rgba(255,255,255,0)",
-                              "0 0 20px rgba(255,255,255,0.18)",
-                              "0 0 0px rgba(255,255,255,0)",
-                            ],
-                          }}
-                          transition={{
-                            duration: 1.8,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                          }}
-                          className="px-10 sm:px-14 py-3.5 sm:py-4 rounded-full bg-[#1c1c1e]/90 border border-white/30 text-white font-black text-xs sm:text-sm uppercase tracking-widest shadow-2xl pointer-events-none cursor-default"
-                        >
-                          <span className="font-black tracking-[0.18em] text-white">
-                            PRÓXIMAMENTE
-                          </span>
-                        </motion.div>
-
-                        <p className="text-xs sm:text-sm text-zinc-400 font-medium max-w-sm px-4 leading-relaxed">
-                          El registro de partners y creación abierta de eventos estará disponible muy pronto.
-                        </p>
-                      </div>
                     )}
                   </div>
 
@@ -3688,21 +3573,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                       >
                         <motion.button
                           type="button"
-                          onClick={() => {
-                            if (isMasterAdmin) {
-                              setActiveStoryScreen(0);
-                              if (typeof window !== "undefined") {
-                                window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-                                document.documentElement.scrollTop = 0;
-                                document.body.scrollTop = 0;
-                              }
-                            } else {
-                              setActiveStoryScreen(2);
-                              if (typeof window !== "undefined") {
-                                window.scrollTo({ top: 0, behavior: "smooth" });
-                              }
-                            }
-                          }}
+                          onClick={handleStartPublishEvent}
                           animate={{
                             opacity: [0.7, 1, 0.7],
                             scale: [0.99, 1.01, 0.99],
@@ -3715,14 +3586,12 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                           className="px-10 sm:px-14 py-4 rounded-full bg-[#1c1c1e] hover:bg-zinc-900 border border-black/30 text-white font-black text-xs sm:text-sm uppercase tracking-widest shadow-xl transition-all cursor-pointer active:scale-95 select-none"
                         >
                           <span className="font-black tracking-[0.18em]">
-                            {isMasterAdmin ? "PUBLICAR EVENTO" : "IR A EVENTOS"}
+                            PUBLICAR MI EVENTO
                           </span>
                         </motion.button>
 
                         <p className="text-xs text-zinc-500 font-medium max-w-sm">
-                          {isMasterAdmin
-                            ? "Administra y publica tus eventos oficiales desde tu panel de organizador."
-                            : "Explora la cartelera oficial y asegura tus entradas en tiempo real."}
+                          Un espacio para los planes de toda Loja. Crea tu cuenta y publica tu evento.
                         </p>
                       </motion.div>
                     </motion.div>
@@ -3731,7 +3600,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
               </motion.div>
             )}
 
-            {(activeStoryScreen === 1 || (activeStoryScreen !== 0 && activeStoryScreen !== 2)) && (
+            {activeStoryScreen === 1 && (
               <motion.div
                 key="screen-1-home"
                 initial={{ opacity: 0 }}
@@ -3740,278 +3609,282 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                 transition={{ duration: 0.18, ease: "easeOut" }}
                 className="bg-black text-white min-h-screen pt-0 pb-0 font-sans"
               >
-                {/* --- 1. FULL-BLEED HERO SHOWCASE --- */}
-                <section className="relative w-full overflow-hidden">
-                  {(() => {
-                    const heroSlides = [
-                      {
-                        id: "4go-chef-intro",
-                        poster: "/images/4go_dj_green_alien_hero.png",
-                        title: "",
-                        line1: "You ready?",
-                        line2: "Explora y vive la fiesta con 4GO",
-                        event: events[0] || fallbackEvents[0],
-                      },
-                      ...events.map((e) => ({
-                        id: e.id,
-                        poster: e.poster || "/images/now4go-hero-presentation-hd-v3.png",
-                        title: e.title,
-                        line1: e.subtitle || e.venue,
-                        line2: e.description || "Entradas oficiales disponibles",
-                        event: e,
-                      })),
-                    ];
+                <FourgoHero onExplore={handleExploreEvents} />
+                <FourgoExperience onExplore={handleExploreEvents} onPublish={handleStartPublishEvent} />
+                <section id="eventos" className="fourgo-events">
+                <div className="max-w-[1400px] mx-auto space-y-6 relative z-10">
 
-                    const currentSlide = heroSlides[heroIndex % heroSlides.length];
-
-                    return (
-                      <div className="relative w-full flex flex-col items-center">
-                        <div
-                          className="relative w-screen left-1/2 -translate-x-1/2 h-[420px] sm:h-auto sm:aspect-[2.4/1] overflow-hidden bg-black"
+<div className="fourgo-section-intro fourgo-section-intro--events">
+                    <h2><span>02</span>EVENTOS</h2>
+                    <div className="fourgo-section-intro__copy"><p>Tu siguiente entrada, aquí.</p><p>Explora la cartelera, encuentra tu evento y compra tus entradas. Tú eliges cómo vivirlo.</p></div>
+                  </div>
+                  {/* --- YOUTUBE-STYLE CLEAN SEARCH ON TOP & FILTER CHIPS BELOW --- */}
+                  <div className="flex flex-col items-center gap-3.5 relative z-20 w-full">
+                    {/* Top: Centered Search Input */}
+                    <div className="relative w-full max-w-md mx-auto flex items-center">
+                      <Search className="absolute left-3.5 w-4 h-4 text-white/50 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={carteleraSearchQuery}
+                        onChange={(e) => {
+                          setCarteleraSearchQuery(e.target.value);
+                          setTimeout(checkChipsScroll, 100);
+                        }}
+                        placeholder="Buscar evento, promotor o club..."
+                        className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/30 text-xs font-semibold text-white placeholder:text-white/75 focus:outline-none focus:border-white/40 focus:bg-[#2b2b2b] transition-all shadow-inner"
+                      />
+                      {carteleraSearchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCarteleraSearchQuery("");
+                            setTimeout(checkChipsScroll, 100);
+                          }}
+                          className="absolute right-3 p-1 text-white/60 hover:text-white transition cursor-pointer"
                         >
-                          {/* Blurred backdrop for desktop side fill */}
-                          <Image
-                            src={currentSlide.poster}
-                            alt=""
-                            fill
-                            priority
-                            quality={100}
-                            sizes="(max-width: 639px) 1px, 100vw"
-                            aria-hidden="true"
-                            className="hidden sm:block object-cover object-center scale-110 blur-2xl brightness-[0.4] saturate-150"
-                          />
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
 
-                          {/* --- HD ULTRA-CRISP RESPONSIVE PICTURE ELEMENT --- */}
-                          <picture className="absolute inset-0 z-10 flex items-center justify-center w-full h-full">
-                            {/* 1. Prioritize Modern WebP format with 1x & 2x Retina resolution density */}
-                            <source
-                              type="image/webp"
-                              srcSet="/images/4go_dj_green_alien_hero_1x.webp 1x, /images/4go_dj_green_alien_hero_2k.webp 2x"
-                            />
-                            {/* 2. Fallback PNG 2K high-res asset */}
-                            <img
-                              src="/images/4go_dj_green_alien_hero_2k.png"
-                              alt={currentSlide.title}
-                              loading="eager"
-                              decoding="async"
-                              className="w-full h-full object-cover object-center sm:object-contain brightness-105"
-                              style={{
-                                maxWidth: "100%",
-                                height: "100%",
-                                imageRendering: "-webkit-optimize-contrast",
+                    {/* Bottom: Chips Horizontal Carousel (Centered on PC, Scrollable on Mobile) */}
+                    <div className="relative w-full max-w-5xl mx-auto flex items-center justify-center">
+                      {/* Floating Left Scroll Arrow Button */}
+                      <AnimatePresence>
+                        {canChipsScrollLeft && (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute left-0 inset-y-0 z-20 flex items-center pl-1 pr-6 bg-gradient-to-r from-[#c65a88] via-[#c65a88]/85 to-transparent pointer-events-none"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const el = carteleraChipsRef.current;
+                                if (el) {
+                                  el.scrollBy({ left: -220, behavior: "smooth" });
+                                  setTimeout(checkChipsScroll, 250);
+                                }
                               }}
-                            />
-                          </picture>
-                          {/* Seamless gradient overlay fading smoothly down into solid pure black */}
-                          <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-b from-transparent via-black/60 via-black/90 to-black z-10 pointer-events-none" />
-                          <div className="absolute bottom-6 inset-x-0 p-6 flex flex-col items-center text-center z-10 max-w-xl mx-auto">
-                            {currentSlide.title && currentSlide.title.toLowerCase() !== "4go" && (
-                              <h2 className="text-4xl sm:text-6xl font-black text-white tracking-tight uppercase leading-tight drop-shadow-2xl">
-                                {currentSlide.title}
-                              </h2>
-                            )}
-                            <div className="mt-1.5 flex flex-col items-center text-center space-y-0.5">
-                              <p className="text-xs sm:text-sm font-bold text-zinc-100 drop-shadow line-clamp-1">
-                                {currentSlide.line1}
-                              </p>
-                              <p className="text-xs sm:text-sm font-medium text-zinc-300 drop-shadow line-clamp-1">
-                                {currentSlide.line2}
-                              </p>
+                              className="pointer-events-auto w-7 h-7 rounded-full bg-[#202020] hover:bg-[#303030] text-white flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-md border border-white/15"
+                              aria-label="Anterior"
+                            >
+                              <ChevronLeft className="w-4 h-4 text-white stroke-[2.5]" />
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      <div
+                        ref={carteleraChipsRef}
+                        id="cartelera-chips-container"
+                        onScroll={checkChipsScroll}
+                        className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1 px-8 sm:px-10 w-full justify-start md:justify-center"
+                      >
+                        {[
+                          { id: "todos", label: "Todo" },
+                          { id: "favoritos", label: "Favoritos" },
+                          { id: "mis_reservas", label: "Mis Reservas" },
+                          { id: "party", label: "Fiesta" },
+                          { id: "comedy", label: "Comedia" },
+                          { id: "gigs", label: "Conciertos" },
+                          { id: "cultura", label: "Cultura" },
+                          { id: "food", label: "Ferias y comida" },
+                          { id: "talleres", label: "Talleres" },
+                          { id: "social", label: "Comunidad" },
+                          { id: "wellbeing", label: "Deportes y bienestar" },
+                        ].map((cat) => {
+                          const isActive = selectedDay === cat.id || (cat.id === "todos" && selectedDay === "todos");
+                          return (
+                            <button
+                              key={`chip-${cat.id}`}
+                              type="button"
+                              onClick={() => {
+                                if (!userLoggedIn && (cat.id === "favoritos" || cat.id === "mis_reservas")) {
+                                  setShowAuthModalForFavorites(true);
+                                  return;
+                                }
+                                setSelectedDay(cat.id);
+                              }}
+                              aria-pressed={isActive}
+                              className={`px-4 py-2 rounded-full border text-xs font-semibold shrink-0 transition-colors cursor-pointer select-none ${isActive
+                                ? "bg-[#fffdf3] border-[#fffdf3] text-[#30163e]"
+                                : "bg-white/5 border-white/30 hover:bg-white/15 text-white"
+                                }`}
+                            >
+                              {cat.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Floating Right Scroll Arrow Button */}
+                      <AnimatePresence>
+                        {canChipsScrollRight && (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute right-0 inset-y-0 z-20 flex items-center pr-1 pl-6 bg-gradient-to-l from-[#c65a88] via-[#c65a88]/85 to-transparent pointer-events-none"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const el = carteleraChipsRef.current;
+                                if (el) {
+                                  el.scrollBy({ left: 220, behavior: "smooth" });
+                                  setTimeout(checkChipsScroll, 250);
+                                }
+                              }}
+                              className="pointer-events-auto w-7 h-7 rounded-full bg-[#202020] hover:bg-[#303030] text-white flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-md border border-white/15"
+                              aria-label="Siguiente"
+                            >
+                              <ChevronRight className="w-4 h-4 text-white stroke-[2.5]" />
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+
+                  {/* MAIN CONTENT AREA: PROFILES & 2-COLUMN EVENTS GRID */}
+                  <div className="w-full pt-2 space-y-6">
+                    {/* Matching Organizer / Club Profile Badges ("Bolitas") */}
+                    {matchingCarteleraProfiles.length > 0 && (
+                      <div className="w-full flex items-center justify-center gap-2.5 overflow-x-auto no-scrollbar py-1 text-center max-w-4xl mx-auto">
+                        {matchingCarteleraProfiles.map((prof) => (
+                          <button
+                            key={`cartelera-prof-pill-${prof.id}`}
+                            type="button"
+                            onClick={() => {
+                              setSelectedOrganizerSlug(prof.id);
+                              setOpenedFromEvent(null);
+                              setOpenedFromOrganizerSlug(null);
+                              setActiveOverlay("organizer");
+                            }}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl hover:bg-white/20 hover:border-white/30 text-white transition-all cursor-pointer shadow-xl shrink-0 group active:scale-95"
+                          >
+                            <div className="relative w-7 h-7 rounded-full bg-zinc-800 border border-white/30 overflow-hidden flex items-center justify-center shrink-0 shadow-md">
+                              {prof.avatar ? (
+                                <Image src={prof.avatar} alt={prof.name} fill sizes="28px" className="object-cover" />
+                              ) : (
+                                <span className="text-[9px] font-black uppercase text-white tracking-wider">
+                                  {prof.name.slice(0, 2)}
+                                </span>
+                              )}
                             </div>
-                            <div className="mt-5 flex flex-col items-center gap-3">
-                              {!userLoggedIn ? (
-                                /* GOOGLE SOCIAL LOGIN BUTTON */
-                                <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
+                            <span className="text-xs font-black text-white group-hover:text-[#dfff28] transition-colors truncate">
+                              {prof.name}
+                            </span>
+                            <BadgeCheck className="w-4 h-4 text-sky-400 fill-sky-400/20 shrink-0" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="w-full">
+                      {filteredCarteleraEvents.length > 0 ? (
+                        <div className="fourgo-events__grid">
+                          {filteredCarteleraEvents.map((evt) => (
+                            <div
+                              key={`cartelera-card-${evt.id}`}
+                              onClick={() => {
+                                setSelectedCarouselEvent(evt);
+                                setOpenedFromEvent(null);
+                                setOpenedFromOrganizerSlug(null);
+                                setActiveOverlay("event");
+                              }}
+                              className="fourgo-event-card group"
+                            >
+                              {/* Poster Artwork Container */}
+                              <div className="relative w-full aspect-square rounded-[24px] sm:rounded-[28px] overflow-hidden bg-zinc-950 border border-white/10 group-hover:border-white/30 transition-all duration-300 shadow-[0_15px_35px_rgba(0,0,0,0.7)]">
+                                <Image
+                                  src={evt.poster || "/images/now4go-hero-presentation-hd-v3.png"}
+                                  alt={evt.title}
+                                  fill
+                                  className="object-cover"
+                                  sizes="(max-width: 768px) 100vw, 360px"
+                                />
+
+                                {/* Heart Favorite Overlay Button (Snappy 0ms Mobile Tap) */}
+                                <div className="absolute bottom-3 right-3 sm:bottom-3.5 sm:right-3.5 z-20 pointer-events-auto">
                                   <button
                                     type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleQuickSocialLogin("google");
+                                      e.preventDefault();
+                                      if (!userLoggedIn) {
+                                        setShowAuthModalForFavorites(true);
+                                        return;
+                                      }
+                                      toggleFavorite(evt.id, e);
                                     }}
-                                    className="px-6 py-3 rounded-full bg-white hover:bg-zinc-200 text-black font-black text-xs uppercase tracking-wider shadow-xl transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-2"
+                                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/25 flex items-center justify-center text-white hover:scale-110 active:scale-90 transition-transform shadow-lg cursor-pointer touch-manipulation select-none"
+                                    aria-label="Guardar favorito"
                                   >
-                                    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                                      <path
-                                        fill="#4285F4"
-                                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                                      />
-                                      <path
-                                        fill="#34A853"
-                                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                                      />
-                                      <path
-                                        fill="#FBBC05"
-                                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                                      />
-                                      <path
-                                        fill="#EA4335"
-                                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                                      />
-                                    </svg>
-                                    <span>ENTRAR CON GOOGLE</span>
+                                    <Heart
+                                      className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors ${userLoggedIn && likedEvents[evt.id]
+                                        ? "text-red-500 fill-red-500"
+                                        : "text-white hover:text-red-400"
+                                        }`}
+                                    />
                                   </button>
                                 </div>
-                              ) : (
-                                /* LOGGED IN: PUBLICAR EVENTO (Admin) / IR A EVENTOS (User) */
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (isMasterAdmin) {
-                                      setActiveStoryScreen(0);
-                                      if (typeof window !== "undefined") {
-                                        window.scrollTo({ top: 0, behavior: "smooth" });
-                                      }
-                                    } else {
-                                      setActiveStoryScreen(2);
-                                      if (typeof window !== "undefined") {
-                                        window.scrollTo({ top: 0, behavior: "smooth" });
-                                      }
-                                    }
-                                  }}
-                                  className="px-8 py-3.5 rounded-full bg-white/20 backdrop-blur-xl border border-white/40 text-white font-black text-xs sm:text-sm uppercase tracking-widest hover:bg-white/30 shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all hover:scale-105 active:scale-95 cursor-pointer animate-pulse"
-                                >
-                                  {isMasterAdmin ? "PUBLICAR EVENTO" : "IR A EVENTOS"}
-                                </button>
-                              )}
+                              </div>
+
+                              {/* Glassmorphism Info Box Below Poster */}
+                              <div className="fourgo-event-card__info">
+                                <p className="mb-2 flex items-center gap-2 text-[11px] font-medium"><Calendar className="h-3.5 w-3.5 shrink-0" />{evt.dateLabel}{evt.time ? ` · ${evt.time}` : ""}</p>
+                                <h4 className="text-base sm:text-lg font-black text-white tracking-tight font-sans line-clamp-1">
+                                  {evt.title}
+                                </h4>
+                                <div className="flex items-center justify-between gap-2 pt-0.5">
+                                  <p className="text-xs sm:text-sm text-zinc-300 font-medium tracking-normal truncate">
+                                    {evt.venue || "CUBIC LOJA"} • Desde {evt.price === 0 ? "0" : (evt.price || "10")} $
+                                  </p>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleOpenReservationModal(evt, e)}
+                                    className="px-4 py-1.5 rounded-full bg-white hover:bg-zinc-200 text-black text-[11px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 shrink-0"
+                                  >
+                                    {userLoggedIn && userReservations[evt.id] ? "COMPRADO ✓" : "COMPRAR"}
+                                  </button>
+                                </div>
+                              </div>
                             </div>
-                          </div>
+                          ))}
                         </div>
-                      </div>
-                    );
-                  })()}
-                </section>
-
-                {/* --- HORIZONTAL EVENT CAROUSEL ("Trending on 4GO" FULL BLEED EDGE-TO-EDGE) --- */}
-                <section id="trending-events-section" className="w-full bg-white text-black py-8 sm:py-12 relative z-20 overflow-x-hidden">
-                  <div className="max-w-[1400px] mx-auto px-4 sm:px-8 mb-6">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-zinc-200 pb-4">
-                      <div className="max-w-2xl">
-                        <h2 className="text-2xl sm:text-3xl font-black text-black tracking-tight font-sans drop-shadow-sm">
-                          Tendencias en 4GO
-                        </h2>
-                        <p className="text-xs sm:text-sm text-zinc-600 font-medium mt-1 leading-relaxed">
-                          Descubre algunos de los eventos más populares en tu ciudad, desde noches de fiesta y conciertos hasta festivales y espectáculos en vivo.
-                        </p>
-                      </div>
-
-                      {/* VER EVENTOS Pill Button */}
-                      <div className="flex items-center gap-3 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => setActiveStoryScreen(2)}
-                          className="px-6 py-2.5 rounded-full bg-black text-white font-black text-xs uppercase tracking-wider hover:bg-zinc-800 transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-md"
-                        >
-                          DESCUBRE MÁS EVENTOS
-                        </button>
-                      </div>
+                      ) : (
+                        <div className="w-full py-16 text-center space-y-3 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-xl p-8 max-w-2xl mx-auto my-6">
+                          <p className="text-sm sm:text-base text-zinc-300 font-semibold">
+                            {selectedDay === "favoritos"
+                              ? "Aún no tienes eventos guardados en tus favoritos. Toca el corazón en cualquier evento para guardarlo aquí."
+                              : selectedDay === "mis_reservas"
+                                ? "Aún no tienes reservas activas. Explora los eventos de la cartelera y asegura tu lugar en puerta gratis."
+                                : `No hay eventos que coincidan con la búsqueda "${carteleraSearchQuery || selectedDay}"`}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedDay("todos");
+                              setCarteleraSearchQuery("");
+                            }}
+                            className="px-6 py-3 rounded-full bg-white hover:bg-zinc-200 text-black font-black text-xs uppercase tracking-wider shadow-xl hover:scale-105 active:scale-95 transition cursor-pointer"
+                          >
+                            {selectedDay === "favoritos" || selectedDay === "mis_reservas" ? "Explorar todos los eventos" : "Restablecer búsqueda"}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
-
-                  {/* Horizontal Scroll Row (Edge-to-Edge 100% Full Bleed Screen Width) */}
-                  <div
-                    id="trending-events-carousel"
-                    data-carousel="true"
-                    onMouseEnter={() => setIsCarouselHovered(true)}
-                    onMouseLeave={() => setIsCarouselHovered(false)}
-                    onTouchStart={() => setIsCarouselHovered(true)}
-                    onTouchEnd={() => setIsCarouselHovered(false)}
-                    className="relative w-full overflow-hidden py-2 select-none touch-pan-y"
-                  >
-                    <style>{`
-                      @keyframes marqueeLeftResponsive {
-                        0% { transform: translate3d(0%, 0, 0); }
-                        100% { transform: translate3d(-50%, 0, 0); }
-                      }
-                    `}</style>
-                    <div
-                      className={`flex items-center gap-4 sm:gap-6 py-2 overflow-x-auto no-scrollbar ${
-                        events.length <= 4
-                          ? "justify-center w-full min-w-full px-4 sm:px-8"
-                          : "justify-start w-max shrink-0 pl-4 sm:pl-6"
-                      }`}
-                      style={{
-                        animation: events.length > 5 ? "marqueeLeftResponsive 240s linear infinite" : "none",
-                        animationPlayState: isCarouselHovered ? "paused" : "running",
-                        willChange: "transform",
-                        WebkitBackfaceVisibility: "hidden",
-                      }}
-                    >
-                      {events.map((evt, idx) => (
-                        <div
-                          key={`carousel-card-${evt.id}-${idx}`}
-                          onClick={() => {
-                            setSelectedCarouselEvent(evt);
-                            setOpenedFromEvent(null);
-                            setOpenedFromOrganizerSlug(null);
-                            setActiveOverlay("event");
-                          }}
-                          className="w-48 sm:w-56 md:w-60 lg:w-64 shrink-0 flex flex-col space-y-2 cursor-pointer group"
-                        >
-                          {/* Square Artwork Container with Play & Heart Overlays */}
-                          <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-zinc-900 shadow-md border border-zinc-200 group-hover:border-zinc-400 transition-colors">
-                            <Image
-                              src={evt.poster || "/images/now4go-hero-presentation-hd-v3.png"}
-                              alt={evt.title}
-                              fill
-                              unoptimized
-                              priority
-                              className="object-cover brightness-105"
-                              sizes="(max-width: 640px) 150px, 300px"
-                            />
-                            {/* Subtle Gradient Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-
-                            {/* Heart Overlay Button (Bottom Right - Snappy 0ms Mobile Tap) */}
-                            <div className="absolute bottom-2 right-2 sm:bottom-2.5 sm:right-2.5 z-20 pointer-events-auto">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  if (!userLoggedIn) {
-                                    setShowAuthModalForFavorites(true);
-                                    return;
-                                  }
-                                  toggleFavorite(evt.id, e);
-                                }}
-                                className="w-8 h-8 sm:w-8 sm:h-8 rounded-full bg-white hover:bg-zinc-100 active:bg-zinc-200 border border-white flex items-center justify-center transition-transform active:scale-90 shadow-md cursor-pointer touch-manipulation select-none"
-                                aria-label="Guardar favorito"
-                              >
-                                <Heart
-                                  className={`w-4 h-4 transition-colors ${
-                                    userLoggedIn && likedEvents[evt.id]
-                                      ? "text-red-500 fill-red-500"
-                                      : "text-zinc-900"
-                                  }`}
-                                />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Event Details Text Below Artwork */}
-                          <div className="flex flex-col space-y-0.5 px-0.5 pt-1 text-black">
-                            <h4 className="text-xs sm:text-sm font-extrabold text-black tracking-tight leading-tight line-clamp-1 group-hover:text-purple-600 transition-colors">
-                              {evt.title}
-                            </h4>
-                            <span className="text-[11px] sm:text-xs font-bold text-zinc-800">
-                              {evt.dateLabel || "sáb, 26 sept"}
-                            </span>
-                            <span className="text-[11px] sm:text-xs font-semibold text-zinc-600 truncate">
-                              {evt.venue || "Factory Town"}
-                            </span>
-                            <span className="text-[11px] sm:text-xs font-black text-black pt-0.5">
-                              {evt.price === 0 ? "Desde Gratis" : `Desde ${evt.price || "52,74"} $`}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                </div>
                 </section>
 
                 {/* --- 3. FEATURE SECTION (COMPRAR ENTRADAS - WHITE BACKGROUND, HORIZONTAL ON PC, VERTICAL ON MOBILE) --- */}
-                <div id="comprar-features-section" className="w-full bg-white text-black pt-16 sm:pt-24 pb-20 sm:pb-28 px-6 sm:px-12 font-sans relative z-10 border-t border-zinc-200">
+                <div id="comprar-features-section" className="fourgo-how w-full bg-white text-black pt-16 sm:pt-24 pb-20 sm:pb-28 px-6 sm:px-12 font-sans relative z-10 border-t border-zinc-200">
                   <div className="max-w-[1200px] mx-auto text-center space-y-14 sm:space-y-16">
                     {/* Main Centered Header */}
                     <div className="space-y-2 text-center max-w-2xl mx-auto">
@@ -4072,7 +3945,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                 </div>
 
                 {/* --- 4. WHITE ORGANIZER BANNER SECTION (PUBLICA TUS EVENTOS) --- */}
-                <section id="organizer-banner-section" className="w-full bg-white text-black py-16 sm:py-24 relative z-20 font-sans border-t border-zinc-200">
+                <section id="organizer-banner-section" className="fourgo-organizer w-full bg-white text-black py-16 sm:py-24 relative z-20 font-sans border-t border-zinc-200">
                   <div className="max-w-[1300px] mx-auto px-6 sm:px-12">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
                       {/* Left Column: Title, Description & Action Buttons */}
@@ -4081,7 +3954,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                           PUBLICA TUS EVENTOS &amp; CONECTA CON TU AUDIENCIA
                         </h2>
                         <p className="text-xs sm:text-sm text-zinc-600 font-semibold leading-relaxed max-w-xl">
-                          Diseñado exclusivamente para productores, creadores y clubes nocturnos. Gestiona preventas en tiempo real, validación QR ultrasónica en puerta y control total de entradas en una sola plataforma.
+                          Un espacio para quienes hacen que Loja se mueva. Publica tu concierto, feria, taller o actividad cultural, comparte los detalles y gestiona tus entradas desde 4go.
                         </p>
 
                         {/* Action Buttons */}
@@ -4116,356 +3989,14 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                   </div>
                 </section>
 
-                {/* --- 6. MERCH 4GO SECTION WITH CLEAN MINIMAL OVERLAY --- */}
-                <section id="merch-4go-section" className="w-full relative z-20 font-sans py-36 sm:py-48 lg:py-56 overflow-hidden border-t border-white/10 text-white min-h-[550px] sm:min-h-[680px] lg:min-h-[850px] flex items-end justify-center pb-16 sm:pb-24 lg:pb-28">
-                  {/* Full-bleed Vivid Hero Image as Section Background */}
-                  <div className="absolute inset-0 z-0 overflow-hidden">
-                    <Image
-                      src="/images/nenez_merch_official_couch_hero.png"
-                      alt="NENEZ Merch Official Couch"
-                      fill
-                      priority
-                      quality={100}
-                      className="object-cover object-[center_12%] sm:object-[center_15%] lg:object-[center_10%]"
-                      sizes="100vw"
-                    />
-                    {/* Soft vignette gradient overlay for bottom text readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/20" />
-                  </div>
-
-                  {/* Clean Minimal Overlay: Title + Subtitle + White Pill Button */}
-                  <div className="max-w-md mx-auto px-6 relative z-10 text-center flex flex-col items-center">
-                    <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight drop-shadow-lg font-sans uppercase">
-                      MERCH
-                    </h3>
-                    <p className="text-xs sm:text-sm font-bold text-white/90 tracking-normal mt-1 drop-shadow-md">
-                      4GO presenta su linea de ropa urbana limitada
-                    </p>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const message = "Hola 4GO, deseo comprar prendas del Merch";
-                        if (typeof window !== "undefined") {
-                          window.open(`https://wa.me/593988831372?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
-                        }
-                      }}
-                      className="mt-5 px-8 py-3.5 rounded-full bg-white text-black font-black uppercase text-xs sm:text-sm tracking-wider hover:bg-zinc-100 active:scale-95 transition-all shadow-[0_10px_30px_rgba(0,0,0,0.5)] cursor-pointer"
-                    >
-                      COMPRAR AHORA
-                    </button>
-                    <p className="mt-2.5 text-[11px] text-zinc-400 font-medium">
-                      Asegúrate de tener WhatsApp abierto
-                    </p>
-                  </div>
-                </section>
               </motion.div>
             )}
 
-            {activeStoryScreen === 2 && (
-              <motion.div
-                key="screen-2-cartelera"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.18, ease: "easeOut" }}
-                className="w-full text-white min-h-screen pt-28 sm:pt-32 pb-40 px-4 sm:px-8 relative z-10 bg-black overflow-hidden"
-              >
-                {/* ─── ULTRA-VIVID AMBIENT POSTER COLOR BLUR (AUTHENTIC GRADIENT FADE TO DEEP BLACK) ─── */}
-                <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-black transform-gpu">
-                  {/* Blurred Image with Smooth Mask-Image Gradient Fade to Black */}
-                  <div
-                    className="absolute top-0 inset-x-0 h-[85vh] max-h-[850px] overflow-hidden"
-                    style={{
-                      WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 25%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0) 100%)",
-                      maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.9) 25%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0) 100%)",
-                    }}
-                  >
-                    <Image
-                      src={events[0]?.poster || "/images/alien_face_v2_1.png"}
-                      alt=""
-                      aria-hidden="true"
-                      fill
-                      loading="lazy"
-                      quality={20}
-                      sizes="120px"
-                      className="object-cover object-top scale-125 blur-2xl opacity-60 transform-gpu"
-                    />
-                  </div>
 
-                  {/* Global Smooth Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/25 via-40% to-black pointer-events-none" />
-                </div>
-
-                <div className="max-w-[1400px] mx-auto space-y-6 relative z-10">
-
-                  {/* --- YOUTUBE-STYLE CLEAN SEARCH ON TOP & FILTER CHIPS BELOW --- */}
-                  <div className="flex flex-col items-center gap-3.5 relative z-20 w-full">
-                    {/* Top: Centered Search Input */}
-                    <div className="relative w-full max-w-md mx-auto flex items-center">
-                      <Search className="absolute left-3.5 w-4 h-4 text-white/50 pointer-events-none" />
-                      <input
-                        type="text"
-                        value={carteleraSearchQuery}
-                        onChange={(e) => {
-                          setCarteleraSearchQuery(e.target.value);
-                          setTimeout(checkChipsScroll, 100);
-                        }}
-                        placeholder="Buscar evento, promotor o club..."
-                        className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-[#202020] hover:bg-[#252525] border border-white/10 text-xs font-semibold text-white placeholder:text-white/45 focus:outline-none focus:border-white/40 focus:bg-[#2b2b2b] transition-all shadow-inner"
-                      />
-                      {carteleraSearchQuery && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCarteleraSearchQuery("");
-                            setTimeout(checkChipsScroll, 100);
-                          }}
-                          className="absolute right-3 p-1 text-white/60 hover:text-white transition cursor-pointer"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Bottom: Chips Horizontal Carousel (Centered on PC, Scrollable on Mobile) */}
-                    <div className="relative w-full max-w-5xl mx-auto flex items-center justify-center">
-                      {/* Floating Left Scroll Arrow Button */}
-                      <AnimatePresence>
-                        {canChipsScrollLeft && (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.15 }}
-                            className="absolute left-0 inset-y-0 z-20 flex items-center pl-1 pr-6 bg-gradient-to-r from-black via-black/85 to-transparent pointer-events-none"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const el = carteleraChipsRef.current;
-                                if (el) {
-                                  el.scrollBy({ left: -220, behavior: "smooth" });
-                                  setTimeout(checkChipsScroll, 250);
-                                }
-                              }}
-                              className="pointer-events-auto w-7 h-7 rounded-full bg-[#202020] hover:bg-[#303030] text-white flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-md border border-white/15"
-                              aria-label="Anterior"
-                            >
-                              <ChevronLeft className="w-4 h-4 text-white stroke-[2.5]" />
-                            </button>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                      <div
-                        ref={carteleraChipsRef}
-                        id="cartelera-chips-container"
-                        onScroll={checkChipsScroll}
-                        className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1 px-8 sm:px-10 w-full justify-start md:justify-center"
-                      >
-                        {[
-                          { id: "todos", label: "Todo" },
-                          { id: "favoritos", label: "Favoritos" },
-                          { id: "mis_reservas", label: "Mis Reservas" },
-                          { id: "party", label: "Fiesta" },
-                          { id: "comedy", label: "Comedia" },
-                          { id: "gigs", label: "Gigs" },
-                          { id: "food", label: "Food" },
-                          { id: "social", label: "Social" },
-                          { id: "wellbeing", label: "Bienestar" },
-                        ].map((cat) => {
-                          const isActive = selectedDay === cat.id || (cat.id === "todos" && selectedDay === "todos");
-                          return (
-                            <button
-                              key={`chip-${cat.id}`}
-                              type="button"
-                              onClick={() => {
-                                if (!userLoggedIn && (cat.id === "favoritos" || cat.id === "mis_reservas")) {
-                                  setShowAuthModalForFavorites(true);
-                                  return;
-                                }
-                                setSelectedDay(cat.id);
-                              }}
-                              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold shrink-0 transition-colors cursor-pointer select-none ${
-                                isActive
-                                  ? "bg-white text-black shadow-sm"
-                                  : "bg-[#272727] hover:bg-[#3f3f3f] text-white/90"
-                              }`}
-                            >
-                              {cat.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Floating Right Scroll Arrow Button */}
-                      <AnimatePresence>
-                        {canChipsScrollRight && (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.15 }}
-                            className="absolute right-0 inset-y-0 z-20 flex items-center pr-1 pl-6 bg-gradient-to-l from-black via-black/85 to-transparent pointer-events-none"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const el = carteleraChipsRef.current;
-                                if (el) {
-                                  el.scrollBy({ left: 220, behavior: "smooth" });
-                                  setTimeout(checkChipsScroll, 250);
-                                }
-                              }}
-                              className="pointer-events-auto w-7 h-7 rounded-full bg-[#202020] hover:bg-[#303030] text-white flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-md border border-white/15"
-                              aria-label="Siguiente"
-                            >
-                              <ChevronRight className="w-4 h-4 text-white stroke-[2.5]" />
-                            </button>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </div>
-
-                  {/* MAIN CONTENT AREA: PROFILES & 2-COLUMN EVENTS GRID */}
-                  <div className="w-full pt-2 space-y-6">
-                    {/* Matching Organizer / Club Profile Badges ("Bolitas") */}
-                    {matchingCarteleraProfiles.length > 0 && (
-                      <div className="w-full flex items-center justify-center gap-2.5 overflow-x-auto no-scrollbar py-1 text-center max-w-4xl mx-auto">
-                        {matchingCarteleraProfiles.map((prof) => (
-                          <button
-                            key={`cartelera-prof-pill-${prof.id}`}
-                            type="button"
-                            onClick={() => {
-                              setSelectedOrganizerSlug(prof.id);
-                              setOpenedFromEvent(null);
-                              setOpenedFromOrganizerSlug(null);
-                              setActiveOverlay("organizer");
-                            }}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl hover:bg-white/20 hover:border-white/30 text-white transition-all cursor-pointer shadow-xl shrink-0 group active:scale-95"
-                          >
-                            <div className="relative w-7 h-7 rounded-full bg-zinc-800 border border-white/30 overflow-hidden flex items-center justify-center shrink-0 shadow-md">
-                              {prof.avatar ? (
-                                <Image src={prof.avatar} alt={prof.name} fill sizes="28px" className="object-cover" />
-                              ) : (
-                                <span className="text-[9px] font-black uppercase text-white tracking-wider">
-                                  {prof.name.slice(0, 2)}
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-xs font-black text-white group-hover:text-[#dfff28] transition-colors truncate">
-                              {prof.name}
-                            </span>
-                            <BadgeCheck className="w-4 h-4 text-sky-400 fill-sky-400/20 shrink-0" />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="w-full">
-                      {filteredCarteleraEvents.length > 0 ? (
-                        <div className="flex flex-wrap justify-center gap-6 sm:gap-8 max-w-6xl mx-auto">
-                          {filteredCarteleraEvents.map((evt) => (
-                            <div
-                              key={`cartelera-card-${evt.id}`}
-                              onClick={() => {
-                                setSelectedCarouselEvent(evt);
-                                setOpenedFromEvent(null);
-                                setOpenedFromOrganizerSlug(null);
-                                setActiveOverlay("event");
-                              }}
-                              className="group flex flex-col text-left cursor-pointer space-y-3 w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.35rem)] max-w-[360px]"
-                            >
-                              {/* Poster Artwork Container */}
-                              <div className="relative w-full aspect-square rounded-[24px] sm:rounded-[28px] overflow-hidden bg-zinc-950 border border-white/10 group-hover:border-white/30 transition-all duration-300 shadow-[0_15px_35px_rgba(0,0,0,0.7)]">
-                                <Image
-                                  src={evt.poster || "/images/now4go-hero-presentation-hd-v3.png"}
-                                  alt={evt.title}
-                                  fill
-                                  className="object-cover"
-                                  sizes="(max-width: 768px) 100vw, 360px"
-                                />
-
-                                {/* Heart Favorite Overlay Button (Snappy 0ms Mobile Tap) */}
-                                <div className="absolute bottom-3 right-3 sm:bottom-3.5 sm:right-3.5 z-20 pointer-events-auto">
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      e.preventDefault();
-                                      if (!userLoggedIn) {
-                                        setShowAuthModalForFavorites(true);
-                                        return;
-                                      }
-                                      toggleFavorite(evt.id, e);
-                                    }}
-                                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/25 flex items-center justify-center text-white hover:scale-110 active:scale-90 transition-transform shadow-lg cursor-pointer touch-manipulation select-none"
-                                    aria-label="Guardar favorito"
-                                  >
-                                    <Heart
-                                      className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors ${
-                                        userLoggedIn && likedEvents[evt.id]
-                                          ? "text-red-500 fill-red-500"
-                                          : "text-white hover:text-red-400"
-                                      }`}
-                                    />
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* Glassmorphism Info Box Below Poster */}
-                              <div className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3.5 sm:p-5 shadow-2xl space-y-2 transition-colors group-hover:border-white/20">
-                                <h4 className="text-base sm:text-lg font-black text-white tracking-tight font-sans line-clamp-1">
-                                  {evt.title}
-                                </h4>
-                                <div className="flex items-center justify-between gap-2 pt-0.5">
-                                  <p className="text-xs sm:text-sm text-zinc-300 font-medium tracking-normal truncate">
-                                    {evt.venue || "CUBIC LOJA"} • Desde {evt.price === 0 ? "0" : (evt.price || "10")} $
-                                  </p>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => handleOpenReservationModal(evt, e)}
-                                    className="px-4 py-1.5 rounded-full bg-white hover:bg-zinc-200 text-black text-[11px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 shrink-0"
-                                  >
-                                    {userLoggedIn && userReservations[evt.id] ? "COMPRADO ✓" : "COMPRAR"}
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="w-full py-16 text-center space-y-3 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-xl p-8 max-w-2xl mx-auto my-6">
-                          <p className="text-sm sm:text-base text-zinc-300 font-semibold">
-                            {selectedDay === "favoritos"
-                              ? "Aún no tienes eventos guardados en tus favoritos. Toca el corazón en cualquier evento para guardarlo aquí."
-                              : selectedDay === "mis_reservas"
-                                ? "Aún no tienes reservas activas. Explora los eventos de la cartelera y asegura tu lugar en puerta gratis."
-                                : `No hay eventos que coincidan con la búsqueda "${carteleraSearchQuery || selectedDay}"`}
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedDay("todos");
-                              setCarteleraSearchQuery("");
-                            }}
-                            className="px-6 py-3 rounded-full bg-white hover:bg-zinc-200 text-black font-black text-xs uppercase tracking-wider shadow-xl hover:scale-105 active:scale-95 transition cursor-pointer"
-                          >
-                            {selectedDay === "favoritos" || selectedDay === "mis_reservas" ? "Explorar todos los eventos" : "Restablecer búsqueda"}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
           </AnimatePresence>
 
           {/* Footer with DevEc Software Development Branding */}
-          <Footer />
+          <Footer animatedScene />
         </div>
       </div>
 

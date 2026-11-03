@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "";
 const CITIES = ["Loja", "Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Ibarra"];
-const CATEGORIES = ["Festival", "Club", "Concierto", "Electrónica", "Reggaeton", "Urban", "Indie"];
+const CATEGORIES = ["Festival", "Club", "Concierto", "Arte y cultura", "Ferias y gastronomía", "Talleres y educación", "Deportes y bienestar", "Comunidad", "Electrónica", "Reggaeton", "Urban", "Indie", "Otros"];
 
 export default function NewEventPage() {
   const router = useRouter();

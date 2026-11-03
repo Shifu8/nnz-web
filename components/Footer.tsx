@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   Globe,
   Music,
@@ -12,9 +13,12 @@ import {
 
 interface FooterProps {
   showTopBanner?: boolean;
+  animatedScene?: boolean;
 }
 
-export default function Footer({ showTopBanner = false }: FooterProps) {
+const FourgoFooterScene = dynamic(() => import("@/frontend/components/FourgoFooterScene"));
+
+export default function Footer({ showTopBanner = false, animatedScene = false }: FooterProps) {
   return (
     <div className="w-full font-sans">
       {/* ─── SECTION 1: COMPRA EN SEGUNDOS (ONLY ON EVENT DETAILS) ─── */}
@@ -49,7 +53,8 @@ export default function Footer({ showTopBanner = false }: FooterProps) {
       )}
 
       {/* ─── SECTION 2: WHITE FOOTER DIRECTORY (MATCHES EXACT HOME FOOTER) ─── */}
-      <footer className="w-full bg-white text-zinc-900 border-t border-zinc-200 pt-16 sm:pt-20 pb-32 sm:pb-24 lg:pb-16 px-4 sm:px-8 relative z-20 overflow-hidden font-sans">
+      {animatedScene && <FourgoFooterScene />}
+      <footer className={`${animatedScene ? "fourgo-footer--night" : ""} w-full bg-white text-zinc-900 border-t border-zinc-200 pt-16 sm:pt-20 pb-32 sm:pb-24 lg:pb-16 px-4 sm:px-8 relative z-20 overflow-hidden font-sans`}>
         {/* Background ambient lighting */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-64 bg-gradient-to-t from-purple-500/5 via-transparent to-transparent pointer-events-none blur-3xl" />
 
@@ -58,9 +63,9 @@ export default function Footer({ showTopBanner = false }: FooterProps) {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-start lg:items-center">
             {/* Left Column: Logo + Description */}
             <div className="lg:col-span-5 lg:self-center flex items-center gap-5 sm:gap-6 h-full">
-              <div className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0 flex items-center justify-center">
+              <div className={`relative ${animatedScene ? "w-28 h-20 sm:w-36 sm:h-24" : "w-20 h-20 sm:w-24 sm:h-24"} shrink-0 flex items-center justify-center`}>
                 <Image
-                  src="/images/logo_4go_black_white.png"
+                  src={animatedScene ? "/images/4go-balloon-wordmark.webp" : "/images/logo_4go_black_white.png"}
                   alt="4GO Logo"
                   width={96}
                   height={96}
