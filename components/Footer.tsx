@@ -62,8 +62,8 @@ export default function Footer({ showTopBanner = false, animatedScene = false }:
           {/* ─── TOP SECTION: NAVIGATION COLUMNS ─── */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-start lg:items-center">
             {/* Left Column: Logo + Description */}
-            <div className="lg:col-span-5 lg:self-center flex items-center gap-5 sm:gap-6 h-full">
-              <div className={`relative ${animatedScene ? "w-28 h-20 sm:w-36 sm:h-24" : "w-20 h-20 sm:w-24 sm:h-24"} shrink-0 flex items-center justify-center`}>
+            <div className="fourgo-footer__brand lg:col-span-5 lg:self-center flex items-center gap-5 sm:gap-6 h-full">
+              <div className={`fourgo-footer__logo relative ${animatedScene ? "w-28 h-20 sm:w-36 sm:h-24" : "w-20 h-20 sm:w-24 sm:h-24"} shrink-0 flex items-center justify-center`}>
                 <Image
                   src={animatedScene ? "/images/4go-balloon-wordmark.webp" : "/images/logo_4go_black_white.png"}
                   alt="4GO Logo"
@@ -75,7 +75,8 @@ export default function Footer({ showTopBanner = false, animatedScene = false }:
                   className="object-contain"
                 />
               </div>
-              <p className="text-sm sm:text-base text-zinc-600 font-medium max-w-md leading-relaxed">
+              {animatedScene && <p className="fourgo-footer__brand-name text-zinc-700">4go · Eventos en Loja</p>}
+              <p className="fourgo-footer__description text-sm sm:text-base text-zinc-600 font-medium max-w-md leading-relaxed">
                 Descubre los mejores eventos, conciertos y experiencias en Loja. Pases oficiales y reservas instantáneas desde tu dispositivo.
               </p>
             </div>

@@ -118,6 +118,7 @@
 .fourgo-footer--night { --color-zinc-100: #ffffff0c; --color-zinc-200: #ffffff24; --color-zinc-500: #ab9cbc; --color-zinc-600: #c7b9d5; --color-zinc-700: #e0d5eb; --color-zinc-800: #ece3f4; --color-zinc-900: #fcf7ff; border-color: #170d29; background: #170d29; color: #fcf7ff; }
 .fourgo-footer--night a:hover { color: #dfff70; }
 .fourgo-footer--night svg text { fill: currentColor; }
+.fourgo-footer__brand-name { display: none; }
 
 @media (min-width: 1500px) {
   .fourgo-experience, .fourgo-events { padding-left: 32px; padding-right: 32px; }
@@ -163,6 +164,11 @@
   .fourgo-event-card__info > div { align-items: flex-start; flex-direction: column; }
   .fourgo-event-card__info p { white-space: normal; font-size: 11px; }
   .fourgo-event-card__info button { margin-top: 4px; font-size: 9px; }
+  .fourgo-footer--night { padding-top: 24px; }
+  .fourgo-footer--night .fourgo-footer__brand { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .fourgo-footer--night .fourgo-footer__logo { width: 120px; height: auto; justify-content: flex-start; }
+  .fourgo-footer--night .fourgo-footer__brand-name { display: block; margin: 0; font-size: 15px; font-weight: 600; line-height: 1.4; }
+  .fourgo-footer--night .fourgo-footer__description { display: none; }
 }
 @media (max-width: 420px) {
   .fourgo-events__grid { grid-template-columns: 1fr; }
