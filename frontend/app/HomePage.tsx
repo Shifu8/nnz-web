@@ -86,7 +86,6 @@ import DrinksMenuModal from "@/frontend/components/DrinksMenuModal";
 import type { StoryScreen } from "@/frontend/components/StoryLinesHeader";
 import FourgoNavigation from "@/frontend/components/FourgoNavigation";
 import FourgoHero from "@/frontend/components/FourgoHero";
-import FourgoExperience from "@/frontend/components/FourgoExperience";
 import AlienIcon from "@/frontend/components/AlienIcon";
 import { events as fallbackEvents } from "@/frontend/services/nenezData";
 import { useHomepageConfig } from "@/frontend/hooks/useHomepageConfig";
@@ -98,6 +97,7 @@ import type { ThemeColors } from "@/lib/homepage-config/themes";
 import type { HomepageConfig } from "@/lib/homepage-config/types";
 import type { Event } from "@/frontend/types/domain";
 import { getOnlineSalesStatus } from "@/frontend/utils/cutoff";
+import styles from "./HomePage.module.css";
 
 const HOME_NAV_ITEMS = [
   { id: "home", label: "Home" },
@@ -1186,6 +1186,13 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
 
   const handleOpenReservationModal = (evt: Event, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (evt.isDemo) {
+      setSelectedCarouselEvent(evt);
+      setOpenedFromEvent(null);
+      setOpenedFromOrganizerSlug(null);
+      setActiveOverlay("event");
+      return;
+    }
     setReservationTargetEvent(evt);
     setShowReservationModal(true);
   };
@@ -1634,7 +1641,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
     "--theme-bg-pink-500": "rgba(255, 255, 255, 0.08)",
     "--theme-bg-pink-500-hover": "rgba(255, 255, 255, 0.14)",
     "--theme-tag-bg": theme.tagBg,
-    background: "black",
+    background: "var(--fourgo-paper, #fff5e2)",
   } as CSSProperties;
 
   // Loader transition trigger
@@ -1825,7 +1832,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
 
   return (
     <main
-      className="relative min-h-screen overflow-x-clip bg-black text-white"
+      className={`${styles.page} fourgo-home relative min-h-screen overflow-x-clip`}
       style={themeStyle}
     >
       {/* StormGo Animated Intro Loader Splash Overlay */}
@@ -1906,7 +1913,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
         )}
       </AnimatePresence>
 
-      <Atmosphere />
+      {activeStoryScreen !== 1 && <Atmosphere />}
 
       <FourgoNavigation
         screens={storyScreens}
@@ -1915,12 +1922,9 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
           if (index === 0) handleStartPublishEvent();
           else { setActiveStoryScreen(1); window.scrollTo({ top: 0, behavior: "smooth" }); }
         }}
-        onExplore={handleExploreEvents}
-        onSection={handleHomeSection}
         onPublish={handleStartPublishEvent}
         onSearch={() => { setIsHeaderSearchOpen((prev) => !prev); window.setTimeout(() => headerSearchInputRef.current?.focus(), 100); }}
         onProfile={() => { if (!userLoggedIn) setShowAuthModalForFavorites(true); else setShowUserMenu((prev) => !prev); }}
-        loggedIn={isMounted && userLoggedIn}
         profileOpen={showUserMenu}
         searchOpen={isHeaderSearchOpen}
         menu={<>                {/* User Dropdown Menu */}
@@ -3618,22 +3622,21 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.18, ease: "easeOut" }}
-                className="bg-black text-white min-h-screen pt-0 pb-0 font-sans"
+                className="fourgo-landing min-h-screen pt-0 pb-0 font-sans"
               >
                 <FourgoHero onExplore={handleExploreEvents} />
-                <FourgoExperience onExplore={handleExploreEvents} onPublish={handleStartPublishEvent} />
                 <section id="eventos" className="fourgo-events">
                 <div className="max-w-[1400px] mx-auto space-y-6 relative z-10">
 
 <div className="fourgo-section-intro fourgo-section-intro--events">
-                    <h2><span>02</span>EVENTOS</h2>
+                    <h2><span>01</span>EVENTOS</h2>
                     <div className="fourgo-section-intro__copy"><p>Tu siguiente entrada, aquí.</p><p>Explora la cartelera, encuentra tu evento y compra tus entradas. Tú eliges cómo vivirlo.</p></div>
                   </div>
                   {/* --- YOUTUBE-STYLE CLEAN SEARCH ON TOP & FILTER CHIPS BELOW --- */}
                   <div className="flex flex-col items-center gap-3.5 relative z-20 w-full">
                     {/* Top: Centered Search Input */}
                     <div className="relative w-full max-w-md mx-auto flex items-center">
-                      <Search className="absolute left-3.5 w-4 h-4 text-white/50 pointer-events-none" />
+                      <Search className="absolute left-3.5 w-4 h-4 text-[#8a7462] pointer-events-none" />
                       <input
                         type="text"
                         value={carteleraSearchQuery}
@@ -3651,7 +3654,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                             setCarteleraSearchQuery("");
                             setTimeout(checkChipsScroll, 100);
                           }}
-                          className="absolute right-3 p-1 text-white/60 hover:text-white transition cursor-pointer"
+                          className="absolute right-3 p-1 text-[#8a7462] hover:text-[#452724] transition cursor-pointer"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -3668,7 +3671,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute left-0 inset-y-0 z-20 flex items-center pl-1 pr-6 bg-gradient-to-r from-[#c65a88] via-[#c65a88]/85 to-transparent pointer-events-none"
+                            className="absolute left-0 inset-y-0 z-20 flex items-center pl-1 pr-6 bg-gradient-to-r from-[#fff5e2] via-[#fff5e2]/85 to-transparent pointer-events-none"
                           >
                             <button
                               type="button"
@@ -3721,8 +3724,8 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                               }}
                               aria-pressed={isActive}
                               className={`px-4 py-2 rounded-full border text-xs font-semibold shrink-0 transition-colors cursor-pointer select-none ${isActive
-                                ? "bg-[#fffdf3] border-[#fffdf3] text-[#30163e]"
-                                : "bg-white/5 border-white/30 hover:bg-white/15 text-white"
+                                ? "bg-[#452724] border-[#452724] text-[#fff8e8]"
+                                : "bg-white/25 border-[#452724]/20 hover:bg-white/60 text-[#452724]"
                                 }`}
                             >
                               {cat.label}
@@ -3739,7 +3742,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute right-0 inset-y-0 z-20 flex items-center pr-1 pl-6 bg-gradient-to-l from-[#c65a88] via-[#c65a88]/85 to-transparent pointer-events-none"
+                            className="absolute right-0 inset-y-0 z-20 flex items-center pr-1 pl-6 bg-gradient-to-l from-[#fff5e2] via-[#fff5e2]/85 to-transparent pointer-events-none"
                           >
                             <button
                               type="button"
@@ -3776,7 +3779,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                               setOpenedFromOrganizerSlug(null);
                               setActiveOverlay("organizer");
                             }}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl hover:bg-white/20 hover:border-white/30 text-white transition-all cursor-pointer shadow-xl shrink-0 group active:scale-95"
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 border border-[#452724]/20 backdrop-blur-xl hover:bg-white/70 text-[#452724] transition-all cursor-pointer shrink-0 group active:scale-95"
                           >
                             <div className="relative w-7 h-7 rounded-full bg-zinc-800 border border-white/30 overflow-hidden flex items-center justify-center shrink-0 shadow-md">
                               {prof.avatar ? (
@@ -3787,7 +3790,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                                 </span>
                               )}
                             </div>
-                            <span className="text-xs font-black text-white group-hover:text-[#dfff28] transition-colors truncate">
+                            <span className="text-xs font-black text-[#452724] group-hover:text-[#3e604c] transition-colors truncate">
                               {prof.name}
                             </span>
                             <BadgeCheck className="w-4 h-4 text-sky-400 fill-sky-400/20 shrink-0" />
@@ -3819,6 +3822,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                                   className="object-cover"
                                   sizes="(max-width: 768px) 100vw, 360px"
                                 />
+                                {evt.isDemo && <span className="absolute left-3 top-3 rounded-full border border-white/30 bg-black/75 px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-white">Ejemplo</span>}
 
                                 {/* Heart Favorite Overlay Button (Snappy 0ms Mobile Tap) */}
                                 <div className="absolute bottom-3 right-3 sm:bottom-3.5 sm:right-3.5 z-20 pointer-events-auto">
@@ -3861,7 +3865,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                                     onClick={(e) => handleOpenReservationModal(evt, e)}
                                     className="px-4 py-1.5 rounded-full bg-white hover:bg-zinc-200 text-black text-[11px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 shrink-0"
                                   >
-                                    {userLoggedIn && userReservations[evt.id] ? "COMPRADO ✓" : "COMPRAR"}
+                                    {evt.isDemo ? "VER EVENTO" : userLoggedIn && userReservations[evt.id] ? "COMPRADO ✓" : "COMPRAR"}
                                   </button>
                                 </div>
                               </div>
@@ -3869,7 +3873,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                           ))}
                         </div>
                       ) : (
-                        <div className="w-full py-16 text-center space-y-3 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-xl p-8 max-w-2xl mx-auto my-6">
+                        <div className="fourgo-events__empty w-full py-16 text-center space-y-3 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-xl p-8 max-w-2xl mx-auto my-6">
                           <p className="text-sm sm:text-base text-zinc-300 font-semibold">
                             {selectedDay === "favoritos"
                               ? "Aún no tienes eventos guardados en tus favoritos. Toca el corazón en cualquier evento para guardarlo aquí."
@@ -3895,7 +3899,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                 </section>
 
                 {/* --- 3. FEATURE SECTION (COMPRAR ENTRADAS - WHITE BACKGROUND, HORIZONTAL ON PC, VERTICAL ON MOBILE) --- */}
-                <div id="comprar-features-section" className="fourgo-how w-full bg-white text-black pt-16 sm:pt-24 pb-20 sm:pb-28 px-6 sm:px-12 font-sans relative z-10 border-t border-zinc-200">
+                <div id="comprar-features-section" className="fourgo-how w-full pt-16 sm:pt-24 pb-20 sm:pb-28 px-6 sm:px-12 font-sans relative z-10 border-t">
                   <div className="max-w-[1200px] mx-auto text-center space-y-14 sm:space-y-16">
                     {/* Main Centered Header */}
                     <div className="space-y-2 text-center max-w-2xl mx-auto">
@@ -3956,7 +3960,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                 </div>
 
                 {/* --- 4. WHITE ORGANIZER BANNER SECTION (PUBLICA TUS EVENTOS) --- */}
-                <section id="organizer-banner-section" className="fourgo-organizer w-full bg-white text-black py-16 sm:py-24 relative z-20 font-sans border-t border-zinc-200">
+                <section id="organizer-banner-section" className="fourgo-organizer w-full py-16 sm:py-24 relative z-20 font-sans border-t">
                   <div className="max-w-[1300px] mx-auto px-6 sm:px-12">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
                       {/* Left Column: Title, Description & Action Buttons */}
@@ -3973,7 +3977,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                           <button
                             type="button"
                             onClick={() => setActiveStoryScreen(0)}
-                            className="px-6 py-3.5 rounded-full bg-black text-white hover:bg-zinc-800 text-xs sm:text-sm font-black uppercase tracking-wider transition-all active:scale-95 shadow-xl inline-flex items-center justify-center cursor-pointer"
+                            className="fourgo-organizer__cta px-6 py-3.5 rounded-full text-xs sm:text-sm font-black uppercase tracking-wider transition-all active:scale-95 shadow-xl inline-flex items-center justify-center cursor-pointer"
                           >
                             CREAR CUENTA DE ORGANIZADOR
                           </button>
@@ -3987,7 +3991,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                             src="/images/4go_red_girl_showcase.jpg"
                             alt="Publica tus eventos 4GO"
                             fill
-                            className="object-cover brightness-105"
+                            className="fourgo-organizer__art object-cover brightness-105"
                             sizes="(max-width: 768px) 100vw, 600px"
                           />
                           {/* Overlay copyright text on bottom left */}
@@ -4065,6 +4069,10 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
             }}
             onBuyEvent={(evt) => {
               setSelectedCarouselEvent(evt);
+              if (evt.isDemo) {
+                setActiveOverlay("event");
+                return;
+              }
               setIsTicketModalOpen(true);
             }}
           />
@@ -4087,11 +4095,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
               }
               setOpenedFromEvent(null);
             }}
-            onBuy={(event) => {
-              setSelectedCarouselEvent(event);
-              setReservationTargetEvent(event);
-              setShowReservationModal(true);
-            }}
+            onBuy={handleOpenReservationModal}
             onSelectEvent={(event) => {
               setSelectedCarouselEvent(event);
             }}

@@ -5,6 +5,7 @@
  */
 
 import type { Artist, Event, MerchItem } from "@/frontend/types/domain";
+import { demoEvents } from "./demoEvents";
 
 export const artists: Artist[] = [
   {
@@ -57,7 +58,7 @@ export const artists: Artist[] = [
   },
 ];
 
-export const events: Event[] = [];
+export const events: Event[] = demoEvents;
 
 export const merch: MerchItem[] = [
   {

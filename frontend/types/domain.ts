@@ -69,6 +69,7 @@ export type Event = {
   description: string;
 
   // Extended editorial fields
+  isDemo?: boolean;
   organizer?: string;
   organizers?: string[];
   venue?: string;

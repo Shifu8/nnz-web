@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft,
   Heart,
   Share2,
   MapPin,
@@ -27,16 +26,15 @@ import {
   ExternalLink,
   DoorOpen,
   ArrowRight,
-  Search,
   User,
   Flame,
-  Plus,
   LogOut,
 } from "lucide-react";
 import type { Event } from "@/frontend/types/domain";
 import { DEFAULT_HD_EVENT_POSTER, getHdImageSrc } from "@/frontend/utils/hdImages";
 import { ORGANIZER_DATA } from "@/frontend/features/organizer/OrganizerProfileOverlay";
 import Footer from "@/components/Footer";
+import { FourgoHeaderActions, FourgoWordmark } from "@/frontend/components/FourgoHeaderControls";
 
 interface EventDetailOverlayProps {
   event: Event;
@@ -241,79 +239,16 @@ export default function EventDetailOverlay({
 
       {/* ─── TOP NAVIGATION BAR ─── */}
       <header className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-4 sm:px-8 py-4 bg-gradient-to-b from-[#0c0714]/95 via-[#0c0714]/70 to-transparent pointer-events-auto">
-        {/* Left: Back Arrow Button [←] with Hover Tooltip */}
-        <div className="relative group flex items-center">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            className="flex items-center justify-center w-11 h-11 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 backdrop-blur-xl transition-all cursor-pointer shadow-2xl active:scale-95 shrink-0"
-            aria-label="Atrás"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          {/* Hover Tooltip: Atrás */}
-          <div className="absolute left-[calc(100%+10px)] top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-zinc-950/90 border border-white/20 text-white text-[11px] font-bold uppercase tracking-wider backdrop-blur-xl shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 -translate-x-1 group-hover:translate-x-0 whitespace-nowrap z-50">
-            Atrás
-          </div>
-        </div>
-
-        {/* Right Controls: + Crear on Left, Buscar in Middle, Avatar on Far Right (Horizontal Glass Buttons) */}
-        <div className="flex flex-row items-center gap-2 sm:gap-2.5 shrink-0 relative">
-          {/* + Crear Glass Pill Button (Left) */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenCreate?.();
-            }}
-            className="h-10 px-3.5 sm:px-4 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-xl flex items-center gap-1.5 text-white font-bold text-xs sm:text-sm shadow-lg cursor-pointer transition-all active:scale-95 whitespace-nowrap shrink-0"
-            aria-label="Crear Evento"
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>Crear</span>
-          </button>
-
-          {/* Search Button with Hover Preview (Middle) */}
-          <div className="relative group flex items-center justify-center">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpenSearch?.();
-              }}
-              className="w-10 h-10 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 text-white backdrop-blur-xl flex items-center justify-center shadow-lg cursor-pointer transition-all active:scale-95 shrink-0"
-              aria-label="Buscar"
-            >
-              <Search className="w-5 h-5 text-white" />
-            </button>
-
-            {/* Hover Tooltip: Buscar */}
-            <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-zinc-950/90 border border-white/20 text-white text-[11px] font-bold uppercase tracking-wider backdrop-blur-xl shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 -translate-y-1 group-hover:translate-y-0 whitespace-nowrap z-50">
-              Buscar
-            </div>
-          </div>
-
-          {/* Profile Button with Dropdown (Far Right) */}
-          <div className="relative flex items-center justify-center">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!userLoggedIn) {
-                  onOpenAuth?.();
-                } else {
-                  setShowDetailUserMenu((prev) => !prev);
-                }
-              }}
-              className="w-10 h-10 rounded-full bg-zinc-800/90 border border-white/20 backdrop-blur-xl flex items-center justify-center text-white hover:bg-zinc-700/90 shadow-lg cursor-pointer transition-all active:scale-95 overflow-hidden relative shrink-0"
-              aria-label="Perfil"
-            >
-              <User className="w-5 h-5 text-white" />
-            </button>
-
+        <FourgoWordmark onActivate={onClose} />
+        <FourgoHeaderActions
+          onCreate={onOpenCreate}
+          onSearch={onOpenSearch}
+          onMenu={() => {
+            if (!userLoggedIn) onOpenAuth?.();
+            else setShowDetailUserMenu((value) => !value);
+          }}
+          menuOpen={showDetailUserMenu}
+        >
             {/* User Dropdown Menu */}
             <AnimatePresence>
               {showDetailUserMenu && userLoggedIn && (
@@ -399,8 +334,7 @@ export default function EventDetailOverlay({
                 </>
               )}
             </AnimatePresence>
-          </div>
-        </div>
+        </FourgoHeaderActions>
       </header>
 
       {/* ─── FULL-PAGE MAIN SCROLLABLE CONTAINER ─── */}
@@ -595,16 +529,17 @@ export default function EventDetailOverlay({
                   Desde {displayPrice}
                 </div>
                 <p className="text-xs text-zinc-600 font-medium leading-normal">
-                  Precio final con acceso asegurado. Sin cargos sorpresa al pagar.
+                  {event.isDemo ? "Evento de ejemplo. Sin venta de entradas." : "Precio final con acceso asegurado. Sin cargos sorpresa al pagar."}
                 </p>
               </div>
 
               <button
                 type="button"
+                disabled={event.isDemo}
                 onClick={() => onBuy(event)}
-                className="px-9 py-4 rounded-full bg-[#dfff28] hover:bg-[#cbf01a] text-black font-black text-xs uppercase tracking-widest transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0 text-center shadow-md"
+                className="px-9 py-4 rounded-full bg-[#dfff28] hover:bg-[#cbf01a] text-black font-black text-xs uppercase tracking-widest transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0 text-center shadow-md disabled:pointer-events-none disabled:opacity-60"
               >
-                COMPRAR
+                {event.isDemo ? "EVENTO DE EJEMPLO" : "COMPRAR"}
               </button>
             </div>
 
@@ -925,16 +860,17 @@ export default function EventDetailOverlay({
             Desde {displayPrice}
           </div>
           <span className="text-[11px] font-bold text-zinc-600 leading-none">
-            Precio final garantizado
+            {event.isDemo ? "Precio ilustrativo" : "Precio final garantizado"}
           </span>
         </div>
 
         <button
           type="button"
+          disabled={event.isDemo}
           onClick={() => onBuy(event)}
-          className="px-8 py-3.5 rounded-full bg-[#dfff28] hover:bg-[#d4f522] text-black font-black text-xs uppercase tracking-widest transition-all active:scale-95 cursor-pointer shadow-md shrink-0"
+          className="px-8 py-3.5 rounded-full bg-[#dfff28] hover:bg-[#d4f522] text-black font-black text-xs uppercase tracking-widest transition-all active:scale-95 cursor-pointer shadow-md shrink-0 disabled:pointer-events-none disabled:opacity-60"
         >
-          COMPRAR
+          {event.isDemo ? "EJEMPLO" : "COMPRAR"}
         </button>
       </div>
 

@@ -56,7 +56,7 @@ export default function Footer({ showTopBanner = false, animatedScene = false }:
       {animatedScene && <FourgoFooterScene />}
       <footer className={`${animatedScene ? "fourgo-footer--night" : ""} w-full bg-white text-zinc-900 border-t border-zinc-200 pt-16 sm:pt-20 pb-32 sm:pb-24 lg:pb-16 px-4 sm:px-8 relative z-20 overflow-hidden font-sans`}>
         {/* Background ambient lighting */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-64 bg-gradient-to-t from-purple-500/5 via-transparent to-transparent pointer-events-none blur-3xl" />
+        <div className="fourgo-footer__ambient absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-64 bg-gradient-to-t from-[#80684d]/5 via-transparent to-transparent pointer-events-none blur-3xl" />
 
         <div className="max-w-[1400px] mx-auto space-y-16 relative z-10 text-left">
           {/* ─── TOP SECTION: NAVIGATION COLUMNS ─── */}
@@ -82,10 +82,10 @@ export default function Footer({ showTopBanner = false, animatedScene = false }:
             </div>
 
             {/* Right Columns: Links (Nuestra empresa, Fan Support) */}
-            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-8 sm:gap-12 pt-2 max-w-xl">
+            <div className="fourgo-footer__links lg:col-span-7 grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-12 pt-2 max-w-xl">
               {/* Column 1: Nuestra Empresa */}
-              <div className="space-y-4">
-                <h4 className="text-sm sm:text-base font-black uppercase tracking-widest text-zinc-900">
+              <div className="min-w-0 space-y-4">
+                <h4 className="text-xs sm:text-base font-black uppercase tracking-wider text-zinc-900">
                   Nuestra empresa
                 </h4>
                 <ul className="space-y-3 text-xs sm:text-sm text-zinc-600 font-medium">
@@ -108,8 +108,8 @@ export default function Footer({ showTopBanner = false, animatedScene = false }:
               </div>
 
               {/* Column 2: Fan Support */}
-              <div className="space-y-4">
-                <h4 className="text-sm sm:text-base font-black uppercase tracking-widest text-zinc-900">
+              <div className="min-w-0 space-y-4">
+                <h4 className="text-xs sm:text-base font-black uppercase tracking-wider text-zinc-900">
                   Fan Support
                 </h4>
                 <ul className="space-y-3 text-xs sm:text-sm text-zinc-600 font-medium">
@@ -126,7 +126,7 @@ export default function Footer({ showTopBanner = false, animatedScene = false }:
                   <li>
                     <a
                       href="mailto:soporte.nenez@gmail.com"
-                      className="hover:text-black transition-colors block font-semibold text-zinc-800"
+                      className="hover:text-black transition-colors block break-all font-semibold text-zinc-800"
                     >
                       soporte.nenez@gmail.com
                     </a>
