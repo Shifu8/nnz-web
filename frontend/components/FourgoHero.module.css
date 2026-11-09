@@ -1,0 +1,32 @@
+.hero { position: relative; height: min(73vw, 1000px); min-height: 680px; overflow: hidden; background: #282626; color: #fff5e2; }
+.backdrop { object-fit: cover; object-position: center; pointer-events: none; }
+.stage { position: absolute; inset: 17% 15% 25% 11%; display: grid; grid-template-columns: .75fr 1.6fr; align-items: center; gap: 4%; }
+.copy { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; }
+.copy h1 { margin: 0 0 12px; font-family: "4go Rounded", var(--font-quicksand), sans-serif; font-size: clamp(105px, 13.3vw, 192px); font-weight: 400; font-style: italic; line-height: .85; letter-spacing: -.055em; transform: rotate(-5deg); }
+.copy p { margin: 22px 0 24px; font-family: var(--font-quicksand), sans-serif; font-size: clamp(22px, 2.65vw, 37px); font-weight: 700; line-height: 1.15; letter-spacing: -.025em; }
+.cta { display: inline-flex; align-items: center; justify-content: center; gap: 15px; min-height: 54px; padding: 8px 25px; border: 1px solid #fff5e2; border-radius: 999px; background: #fff5e2; color: #282626; font-size: clamp(17px, 1.9vw, 25px); font-weight: 800; letter-spacing: -.04em; white-space: nowrap; transition: transform .2s, background-color .2s; }
+.cta:hover { transform: translateY(-3px) rotate(-1deg); background: #f8cf4b; border-color: #f8cf4b; }
+.cta:focus-visible, .instagram:focus-visible { outline: 2px solid #f8cf4b; outline-offset: 5px; }
+.instagram { margin: 13px 0 0 22px; color: #fff5e2c9; font-size: 12px; font-weight: 600; text-decoration: none; }
+.instagram:hover { color: #f8cf4b; }
+.wave { position: absolute; inset: auto 0 -1px; width: 100%; height: 56px; pointer-events: none; }
+@media (min-width: 1600px) { .stage { right: max(15%, calc((100% - 1300px) / 2)); left: max(11%, calc((100% - 1300px) / 2)); } }
+@media (max-width: 1023px) and (min-width: 768px) {
+  .hero { min-height: 690px; }
+  .stage { inset: 21% 10% 25% 9%; gap: 3%; }
+  .copy h1 { font-size: 110px; }
+  .copy p { font-size: 24px; }
+  .cta { min-height: 48px; padding: 8px 20px; font-size: 18px; }
+}
+@media (max-width: 767px) {
+  .hero { height: 930px; min-height: 930px; }
+  .backdrop { object-position: 50% 50%; }
+  .stage { inset: 105px 24px 170px; display: flex; flex-direction: column; justify-content: center; gap: 30px; }
+  .copy { align-items: center; text-align: center; }
+  .copy h1 { margin-bottom: 0; font-size: 106px; }
+  .copy p { margin: 18px 0 20px; font-size: 23px; }
+  .cta { min-height: 49px; padding: 8px 26px; font-size: 20px; }
+  .instagram { margin: 11px 0 0; font-size: 11px; }
+  .wave { height: 35px; }
+}
+@media (prefers-reduced-motion: reduce) { .cta { transition: none; } }

@@ -1,0 +1,155 @@
+.section {
+  --card-width: clamp(175px, 17vw, 230px);
+  --card-gap: 18px;
+  padding: 30px 0 36px;
+  overflow: hidden;
+  background: var(--fourgo-paper, #fff5e2);
+  color: var(--fourgo-ink, #452724);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 clamp(18px, 4vw, 64px) 18px;
+}
+
+.header p {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.header p span { color: #3e604c; font-size: 20px; }
+
+.pause {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #45272435;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.pause:hover { background: #4527240c; }
+.pause:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+
+.row { overflow: hidden; padding: 6px 0; }
+.row + .row { margin-top: 8px; }
+
+.track {
+  display: flex;
+  width: max-content;
+  animation: drift 70s linear infinite;
+}
+
+.row[data-direction="right"] .track { animation-direction: reverse; }
+.row[data-direction="left"] .track { animation-duration: 78s; }
+.section[data-paused="true"] .track,
+.row:focus-within .track { animation-play-state: paused; }
+
+.group {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: space-around;
+  gap: var(--card-gap);
+  min-width: 100vw;
+  padding-right: var(--card-gap);
+}
+
+.card {
+  display: block;
+  flex: 0 0 var(--card-width);
+  width: var(--card-width);
+  overflow: hidden;
+  border: 1px solid #45272420;
+  border-radius: 12px;
+  background: #fff9ed;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform .2s, border-color .2s;
+}
+
+.card:hover { transform: translateY(-3px); border-color: #3e604c; }
+.card:focus-visible { outline: 2px solid #3e604c; outline-offset: 3px; }
+.artwork { position: relative; width: 100%; aspect-ratio: 4 / 5; background: #3e604c; }
+.poster { object-fit: cover; }
+
+.badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #fff5e2e8;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.info { position: relative; display: grid; gap: 5px; padding: 13px 32px 14px 12px; }
+.title { overflow: hidden; font-size: 14px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.details { overflow: hidden; color: #796353; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.arrow { position: absolute; top: 14px; right: 10px; }
+
+.compact {
+  --card-width: 240px;
+  --card-gap: 14px;
+  flex-shrink: 0;
+  width: 100%;
+  padding: 0 0 max(70px, calc(env(safe-area-inset-bottom) + 12px));
+}
+
+.compact .header { padding: 0 20px 4px; }
+.compact .header p { font-size: 9px; }
+.compact .pause { width: 28px; height: 28px; }
+.compact .row { padding: 4px 0; }
+.compact .row + .row { margin-top: 2px; }
+.compact .card { display: flex; align-items: center; height: 72px; border-radius: 10px; }
+.compact .artwork { flex: 0 0 56px; align-self: stretch; width: 56px; aspect-ratio: auto; }
+.compact .info { flex: 1; min-width: 0; padding: 10px 26px 10px 12px; }
+.compact .title { font-size: 12px; }
+.compact .details { font-size: 9px; }
+.compact .arrow { top: 10px; right: 8px; width: 14px; }
+.compact .badge { top: 4px; left: 3px; padding: 2px 3px; font-size: 5px; }
+
+@keyframes drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (hover: hover) {
+  .row:hover .track { animation-play-state: paused; }
+}
+
+@media (max-width: 767px) {
+  .section { --card-width: 150px; --card-gap: 12px; padding: 20px 0 24px; }
+  .header { padding-bottom: 10px; }
+  .row + .row { margin-top: 4px; }
+  .info { padding: 11px 28px 12px 10px; }
+  .title { font-size: 12px; }
+  .details { font-size: 8px; }
+  .compact { --card-width: 210px; --card-gap: 10px; padding: 0 0 max(70px, calc(env(safe-area-inset-bottom) + 12px)); }
+  .compact .header { padding: 0 16px; }
+  .compact .row { padding: 2px 0; }
+  .compact .card { height: 52px; }
+  .compact .artwork { flex-basis: 40px; width: 40px; }
+  .compact .info { padding-left: 10px; }
+  .compact .title { font-size: 11px; }
+  .compact .details { font-size: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row { overflow-x: auto; }
+  .track { animation: none; }
+  .group[aria-hidden="true"] { display: none; }
+  .card { transition: none; }
+}

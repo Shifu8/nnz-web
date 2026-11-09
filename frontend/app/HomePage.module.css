@@ -7,8 +7,6 @@
 }
 
 .page :global(.fourgo-landing),
-.page :global(.fourgo-hero),
-.page :global(.fourgo-hero__video),
 .page :global(.fourgo-events),
 .page :global(.fourgo-how),
 .page :global(.fourgo-outro),
@@ -26,4 +24,37 @@
   flex-direction: row;
   align-items: center;
   gap: 24px;
+}
+
+.page:global(.fourgo-home--events) :global(.fourgo-events) { padding-top: 110px; }
+.page :global(.fourgo-catalogue-content) { display: flex; flex-direction: column; gap: 16px; }
+.page:global(.fourgo-home--events) :global(.fourgo-catalogue-marquees) { margin-top: 0; padding-top: 6px; border-top: 1px solid #45272420; }
+.page:global(.fourgo-home--events) :global(.fourgo-catalogue-marquees) > section { padding-top: 8px; padding-bottom: 6px; }
+.page :global(.fourgo-catalogue-heading) { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding-top: 8px; scroll-margin-top: 115px; }
+.page :global(.fourgo-catalogue-heading) p { margin-bottom: 5px; color: #3e604c; font-size: 9px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+.page :global(.fourgo-catalogue-heading) h2 { color: #452724; font-family: "4go Rounded", sans-serif; font-size: clamp(32px, 3vw, 43px); font-weight: 400; line-height: 1; letter-spacing: -.03em; }
+.page :global(.fourgo-catalogue-heading) > span { padding: 7px 11px; border: 1px solid #45272425; border-radius: 99px; color: #796353; font-size: 10px; font-weight: 600; white-space: nowrap; }
+.page :global(.fourgo-catalogue-tools) { padding: 18px; border: 1px solid #45272418; border-radius: 22px; background: #fffaf0a6; }
+.page :global(.fourgo-catalogue-search) { max-width: none; }
+.page :global(.fourgo-catalogue-search) input { min-height: 47px; border-radius: 13px; background: #fffaf1; font-size: 12px; }
+.page :global(.fourgo-catalogue-tools) :global(#cartelera-chips-container) { padding-top: 0; }
+.page:global(.fourgo-home--events) :global(.fourgo-event-card) { transition: transform .25s; }
+.page:global(.fourgo-home--events) :global(.fourgo-event-card):hover { transform: translateY(-5px); }
+.page:global(.fourgo-home--events) :global(.fourgo-event-card__info) h4 { color: #452724; font-family: "4go Rounded", sans-serif; font-weight: 400; font-size: clamp(20px, 2vw, 29px); }
+@media (max-width: 767px) {
+  .page:global(.fourgo-home--events) :global(.fourgo-events) { padding-top: 91px; }
+  .page :global(.fourgo-catalogue-content) { gap: 12px; }
+  .page :global(.fourgo-catalogue-heading) { padding-top: 0; }
+  .page :global(.fourgo-catalogue-heading) h2 { font-size: 29px; }
+  .page :global(.fourgo-catalogue-tools) { gap: 10px; padding: 10px; border-radius: 18px; }
+  .page :global(.fourgo-catalogue-search) input { min-height: 40px; font-size: 11px; }
+  .page:global(.fourgo-home--events) :global(.fourgo-events__grid) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 13px; padding-top: 0; }
+  .page:global(.fourgo-home--events) :global(.fourgo-event-card__info) h4 { font-size: 19px; }
+  .page:global(.fourgo-home--events) :global(.fourgo-event-card__info) > div { align-items: flex-start; flex-direction: column; }
+  .page:global(.fourgo-home--events) :global(.fourgo-event-card__info) p { font-size: 10px; line-height: 1.45; }
+  .page:global(.fourgo-home--events) :global(.fourgo-event-card__info) button { padding: 8px 12px; font-size: 8px; }
+  .page :global(.fourgo-catalogue-heading) { scroll-margin-top: 95px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page:global(.fourgo-home--events) :global(.fourgo-event-card) { transition: none; }
 }

@@ -86,6 +86,9 @@ import DrinksMenuModal from "@/frontend/components/DrinksMenuModal";
 import type { StoryScreen } from "@/frontend/components/StoryLinesHeader";
 import FourgoNavigation from "@/frontend/components/FourgoNavigation";
 import FourgoHero from "@/frontend/components/FourgoHero";
+import FourgoEventMarquees from "@/frontend/components/FourgoEventMarquees";
+import FourgoEventsHero from "@/frontend/components/FourgoEventsHero";
+import { useFourgoNavigation } from "@/frontend/components/FourgoPageTransition";
 import AlienIcon from "@/frontend/components/AlienIcon";
 import { events as fallbackEvents } from "@/frontend/services/nenezData";
 import { useHomepageConfig } from "@/frontend/hooks/useHomepageConfig";
@@ -137,6 +140,7 @@ interface HomePageProps {
   initialConfig: HomepageConfig;
   initialEventSlug?: string;
   initialLoggedIn?: boolean;
+  initialView?: "home" | "events";
 }
 
 function TypewriterText({ text }: { text: string }) {
@@ -167,8 +171,9 @@ function TypewriterText({ text }: { text: string }) {
   );
 }
 
-export default function HomePage({ initialConfig, initialEventSlug, initialLoggedIn }: HomePageProps) {
+export default function HomePage({ initialConfig, initialEventSlug, initialLoggedIn, initialView = initialEventSlug ? "events" : "home" }: HomePageProps) {
   const router = useRouter();
+  const navigate = useFourgoNavigation();
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const manualActiveUntil = useRef(0);
 
@@ -700,13 +705,8 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
 
   const [activeStoryScreen, setActiveStoryScreen] = useState(1);
 
-  function handleHomeSection(section: string) {
-    setActiveStoryScreen(1);
-    window.setTimeout(() => document.getElementById(section)?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
-  }
-
   function handleExploreEvents() {
-    handleHomeSection("eventos");
+    navigate("/events");
   }
 
   const [isLeftVideoMuted, setIsLeftVideoMuted] = useState(true);
@@ -1832,7 +1832,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
 
   return (
     <main
-      className={`${styles.page} fourgo-home relative min-h-screen overflow-x-clip`}
+      className={`${styles.page} fourgo-home ${initialView === "events" ? "fourgo-home--events" : "fourgo-home--landing"} relative min-h-screen overflow-x-clip`}
       style={themeStyle}
     >
       {/* StormGo Animated Intro Loader Splash Overlay */}
@@ -1916,6 +1916,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
       {activeStoryScreen !== 1 && <Atmosphere />}
 
       <FourgoNavigation
+        loggedIn={userLoggedIn}
         screens={storyScreens}
         activeScreen={activeStoryScreen}
         onSelectScreen={(index) => {
@@ -3624,18 +3625,31 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                 transition={{ duration: 0.18, ease: "easeOut" }}
                 className="fourgo-landing min-h-screen pt-0 pb-0 font-sans"
               >
-                <FourgoHero onExplore={handleExploreEvents} />
+                {initialView === "home" && <FourgoHero />}
+                {initialView === "events" && (
                 <section id="eventos" className="fourgo-events">
-                <div className="max-w-[1400px] mx-auto space-y-6 relative z-10">
-
-<div className="fourgo-section-intro fourgo-section-intro--events">
-                    <h2><span>01</span>EVENTOS</h2>
-                    <div className="fourgo-section-intro__copy"><p>Tu siguiente entrada, aquí.</p><p>Explora la cartelera, encuentra tu evento y compra tus entradas. Tú eliges cómo vivirlo.</p></div>
+                <div className="fourgo-catalogue-content max-w-[1400px] mx-auto relative z-10">
+                  <FourgoEventsHero />
+                  <div className="fourgo-catalogue-marquees">
+                  <FourgoEventMarquees
+                    compact
+                    events={events}
+                    onSelectEvent={(event) => {
+                      setSelectedCarouselEvent(event);
+                      setOpenedFromEvent(null);
+                      setOpenedFromOrganizerSlug(null);
+                      setActiveOverlay("event");
+                    }}
+                  />
                   </div>
                   {/* --- YOUTUBE-STYLE CLEAN SEARCH ON TOP & FILTER CHIPS BELOW --- */}
-                  <div className="flex flex-col items-center gap-3.5 relative z-20 w-full">
+                  <div id="cartelera" className="fourgo-catalogue-heading">
+                    <h2>La cartelera</h2>
+                    <span>{filteredCarteleraEvents.length} {filteredCarteleraEvents.length === 1 ? "plan" : "planes"}</span>
+                  </div>
+                  <div className="fourgo-catalogue-tools flex flex-col items-center gap-3.5 relative z-20 w-full">
                     {/* Top: Centered Search Input */}
-                    <div className="relative w-full max-w-md mx-auto flex items-center">
+                    <div className="fourgo-catalogue-search relative w-full mx-auto flex items-center">
                       <Search className="absolute left-3.5 w-4 h-4 text-[#8a7462] pointer-events-none" />
                       <input
                         type="text"
@@ -3820,7 +3834,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                                   alt={evt.title}
                                   fill
                                   className="object-cover"
-                                  sizes="(max-width: 768px) 100vw, 360px"
+                                  sizes="(max-width: 767px) 45vw, (max-width: 1023px) 45vw, 440px"
                                 />
                                 {evt.isDemo && <span className="absolute left-3 top-3 rounded-full border border-white/30 bg-black/75 px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-white">Ejemplo</span>}
 
@@ -3897,14 +3911,15 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                   </div>
                 </div>
                 </section>
+                )}
 
                 {/* --- 3. FEATURE SECTION (COMPRAR ENTRADAS - WHITE BACKGROUND, HORIZONTAL ON PC, VERTICAL ON MOBILE) --- */}
-                <div id="comprar-features-section" className="fourgo-how w-full pt-16 sm:pt-24 pb-20 sm:pb-28 px-6 sm:px-12 font-sans relative z-10 border-t">
+                {initialView === "home" && <div id="comprar-features-section" className="fourgo-how w-full pt-12 sm:pt-16 pb-20 sm:pb-24 px-6 sm:px-12 font-sans relative z-10">
                   <div className="max-w-[1200px] mx-auto text-center space-y-14 sm:space-y-16">
                     {/* Main Centered Header */}
                     <div className="space-y-2 text-center max-w-2xl mx-auto">
                       <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight leading-tight text-black font-sans">
-                        COMPRAR ENTRADAS NUNCA FUE TAN FÁCIL
+                        COMPRAR ENTRADAS<br />NUNCA FUE TAN FÁCIL
                       </h2>
                     </div>
 
@@ -3958,7 +3973,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                       ))}
                     </div>
                   </div>
-                </div>
+                </div>}
               </motion.div>
             )}
 

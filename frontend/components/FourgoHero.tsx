@@ -1,68 +1,34 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUpRight } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { useFourgoNavigation } from "./FourgoPageTransition";
+import FourgoDJScreen from "./FourgoDJScreen";
+import styles from "./FourgoHero.module.css";
 
-export default function FourgoHero({ onExplore }: { onExplore: () => void }) {
-  const heroRef = useRef<HTMLElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [hasVideoError, setHasVideoError] = useState(false);
-
-  useEffect(() => {
-    const hero = heroRef.current;
-    const video = videoRef.current;
-    if (!hero || !video) return;
-
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let inView = hero.getBoundingClientRect().bottom > 0;
-    const syncPlayback = () => {
-      if (!inView || document.hidden || reducedMotion.matches) {
-        video.pause();
-      } else {
-        void video.play().catch(() => {});
-      }
-    };
-    const observer = new IntersectionObserver(([entry]) => {
-      inView = entry.isIntersecting;
-      syncPlayback();
-    }, { threshold: 0.15 });
-
-    observer.observe(hero);
-    document.addEventListener("visibilitychange", syncPlayback);
-    reducedMotion.addEventListener("change", syncPlayback);
-    syncPlayback();
-    return () => {
-      observer.disconnect();
-      document.removeEventListener("visibilitychange", syncPlayback);
-      reducedMotion.removeEventListener("change", syncPlayback);
-      video.pause();
-    };
-  }, []);
+export default function FourgoHero() {
+  const navigate = useFourgoNavigation();
 
   return (
-    <section ref={heroRef} className="fourgo-hero" aria-label="4go, eventos y experiencias">
-      <video
-        ref={videoRef}
-        className="fourgo-hero__video"
-        src="/videos/4go-home-radio.mp4?v=four-go-title"
-        poster="/videos/4go-home-radio-poster.webp?v=four-go-title"
-        width={720}
-        height={1280}
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        disablePictureInPicture
-        aria-hidden="true"
-        onError={() => setHasVideoError(true)}
-        onLoadedData={() => setHasVideoError(false)}
-      />
-      <h1 className="sr-only">4go · Eventos y experiencias</h1>
-      <div className="fourgo-hero__bottom">
-        <button type="button" onClick={onExplore} className="fourgo-hero__cta">Ver eventos <ArrowUpRight size={18} /></button>
-        <button type="button" onClick={onExplore} aria-label="Bajar a los eventos" className="fourgo-hero__down"><ArrowDown size={17} /></button>
-        {hasVideoError && <p className="fourgo-hero__status" role="status">El video no está disponible en este momento.</p>}
+    <section className={`fourgo-hero ${styles.hero}`} aria-label="4go, música y eventos en Loja">
+      <Image src="/images/fourgo-retro-hero.webp" alt="" fill priority sizes="100vw" className={styles.backdrop} />
+      <div className={styles.stage}>
+        <div className={styles.copy}>
+          <h1>4go</h1>
+          <p>Música, cultura,<br />fiestas y más<br />en un solo lugar.</p>
+          <Link href="/events" className={styles.cta} onClick={(event) => {
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            event.preventDefault();
+            navigate("/events");
+          }}>
+            Ver eventos <ArrowRight size={25} aria-hidden="true" />
+          </Link>
+          <a className={styles.instagram} href="https://www.instagram.com/4go.ec/" target="_blank" rel="noopener noreferrer">@4go.ec</a>
+        </div>
+        <FourgoDJScreen />
       </div>
+      <svg className={styles.wave} viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true"><path d="M0 42C190 61 350 4 550 27S850 59 1060 26 1260 24 1440 42V70H0Z" fill="#fff5e2" /><path d="M0 42C190 61 350 4 550 27S850 59 1060 26 1260 24 1440 42" fill="none" stroke="#bca48d" strokeWidth="1" /></svg>
     </section>
   );
 }

@@ -1,9 +1,13 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
-import { FourgoHeaderActions, FourgoWordmark } from "@/frontend/components/FourgoHeaderControls";
-import StoryLinesHeader, { type StoryScreen } from "@/frontend/components/StoryLinesHeader";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Plus, Search, UserRound } from "lucide-react";
+import { FourgoWordmark } from "@/frontend/components/FourgoHeaderControls";
+import type { StoryScreen } from "@/frontend/components/StoryLinesHeader";
+import { useFourgoNavigation } from "./FourgoPageTransition";
 import styles from "./FourgoNavigation.module.css";
 
 interface FourgoNavigationProps {
@@ -16,49 +20,55 @@ interface FourgoNavigationProps {
   profileOpen: boolean;
   searchOpen: boolean;
   menu: ReactNode;
+  loggedIn?: boolean;
 }
 
-export default function FourgoNavigation({ screens, activeScreen, onSelectScreen, onPublish, onSearch, onProfile, profileOpen, searchOpen, menu }: FourgoNavigationProps) {
-  const headerRef = useRef<HTMLElement>(null);
-  const [hasScrolledPastHero, setHasScrolledPastHero] = useState(false);
-  const showWordmark = activeScreen !== 1 || hasScrolledPastHero;
+export default function FourgoNavigation({ activeScreen, onSelectScreen, onPublish, onSearch, onProfile, profileOpen, searchOpen, menu, loggedIn = false }: FourgoNavigationProps) {
+  const [hasScrolled, setHasScrolled] = useState(false);
+  const pathname = usePathname();
+  const navigate = useFourgoNavigation();
+  const isLanding = pathname === "/" && activeScreen === 1;
 
   useEffect(() => {
-    setHasScrolledPastHero(false);
-    if (activeScreen !== 1) return;
-    const hero = document.querySelector(".fourgo-hero");
-    if (!hero) return;
-
-    let observer: IntersectionObserver | undefined;
-    const observeHero = () => {
-      observer?.disconnect();
-      const headerBottom = Math.ceil(headerRef.current?.getBoundingClientRect().bottom ?? 0) + 16;
-      observer = new IntersectionObserver(([entry]) => {
-        setHasScrolledPastHero(entry.boundingClientRect.bottom <= headerBottom);
-      }, { rootMargin: `-${headerBottom}px 0px 0px 0px`, threshold: 0 });
-      observer.observe(hero);
-    };
-
-    observeHero();
-    window.addEventListener("resize", observeHero);
-    return () => {
-      observer?.disconnect();
-      window.removeEventListener("resize", observeHero);
-    };
-  }, [activeScreen]);
+    const update = () => setHasScrolled(window.scrollY > 40);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
 
   return (
-    <header ref={headerRef} className={`fourgo-header ${searchOpen ? "fourgo-header--search" : ""}`}>
-      <div className="fourgo-header__stories">
-        <StoryLinesHeader screens={screens} activeScreen={activeScreen} onSelectScreen={onSelectScreen} />
-      </div>
-      <div className="fourgo-nav">
-        <div className={`${styles.wordmark} ${showWordmark ? styles.visible : ""}`} aria-hidden={!showWordmark} inert={!showWordmark}>
-          <FourgoWordmark onActivate={() => onSelectScreen(1)} />
+    <header className={`fourgo-header ${styles.header} ${!isLanding ? styles.light : ""} ${hasScrolled ? styles.scrolled : ""} ${searchOpen ? "fourgo-header--search" : ""}`}>
+      <div className={styles.bar}>
+        <FourgoWordmark onActivate={() => {
+          if (pathname === "/") { onSelectScreen(1); window.scrollTo({ top: 0, behavior: "smooth" }); }
+          else navigate("/");
+        }} />
+        <nav className={styles.links} aria-label="Navegación principal">
+          {[
+            { label: "Eventos", href: "/events" },
+            { label: "Agenda", href: "/events#eventos" },
+            { label: "Lugares", href: "/venues" },
+            { label: "Sobre 4GO", href: "/about" },
+          ].map((link) => (
+            <Link key={link.label} href={link.href} className={`${styles.link} ${link.label === "Eventos" ? styles.active : ""}`} onClick={(event) => {
+              if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+              event.preventDefault();
+              navigate(link.href);
+            }}>{link.label}</Link>
+          ))}
+        </nav>
+        <div className={styles.actions}>
+          <button type="button" className={styles.search} onClick={onSearch} aria-label="Buscar eventos" aria-expanded={searchOpen}>
+            <Search size={20} aria-hidden="true" /><span>Buscar eventos...</span>
+          </button>
+          <button type="button" className={styles.create} onClick={onPublish} aria-label="Publicar evento" title="Publicar evento"><Plus size={20} aria-hidden="true" /></button>
+          <div className={styles.account}>
+            <button type="button" className={styles.login} onClick={onProfile} aria-expanded={profileOpen}>
+              <UserRound size={20} aria-hidden="true" /><span>{loggedIn ? "Mi cuenta" : "Iniciar sesión"}</span>
+            </button>
+            {menu}
+          </div>
         </div>
-        <FourgoHeaderActions onCreate={onPublish} onSearch={onSearch} onMenu={onProfile} menuOpen={profileOpen} searchOpen={searchOpen}>
-          {menu}
-        </FourgoHeaderActions>
       </div>
     </header>
   );

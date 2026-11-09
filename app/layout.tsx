@@ -10,6 +10,7 @@ import { Inter, Geist_Mono, Comfortaa, Quicksand } from "next/font/google";
 import "./globals.css";
 import MobileCookieConsent from "@/components/MobileCookieConsent";
 import FourgoMusicPlayer from "@/frontend/components/FourgoMusicPlayer";
+import FourgoPageTransition from "@/frontend/components/FourgoPageTransition";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -106,7 +107,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/images/logo_4go_black_white.png?v=4" />
       </head>
       <body className="min-h-full flex flex-col">
-        {children}
+        <FourgoPageTransition>{children}</FourgoPageTransition>
         <MobileCookieConsent />
         <FourgoMusicPlayer />
       </body>
