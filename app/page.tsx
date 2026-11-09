@@ -10,10 +10,11 @@ import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ action?: string }> }) {
+  const params = await searchParams;
   const cookieStore = await cookies();
   const initialLoggedIn = Boolean(cookieStore.get("organizer_logged_in")?.value);
   const config = loadConfig();
-  return <NenezHomePage initialConfig={config} initialLoggedIn={initialLoggedIn} />;
+  return <NenezHomePage initialConfig={config} initialLoggedIn={initialLoggedIn} initialCreateEvent={params.action === "create_event"} />;
 }
 

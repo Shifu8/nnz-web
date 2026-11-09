@@ -37,7 +37,7 @@ export default function FourgoNavigation({ activeScreen, onSelectScreen, onPubli
   }, []);
 
   return (
-    <header className={`fourgo-header ${styles.header} ${!isLanding ? styles.light : ""} ${hasScrolled ? styles.scrolled : ""} ${searchOpen ? "fourgo-header--search" : ""}`}>
+    <header className={`fourgo-header ${styles.header} ${!isLanding ? styles.light : ""} ${hasScrolled ? styles.scrolled : ""} ${pathname === "/events" && activeScreen === 1 ? styles.catalogue : ""} ${searchOpen ? "fourgo-header--search" : ""}`}>
       <div className={styles.bar}>
         <FourgoWordmark onActivate={() => {
           if (pathname === "/") { onSelectScreen(1); window.scrollTo({ top: 0, behavior: "smooth" }); }

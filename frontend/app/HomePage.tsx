@@ -141,6 +141,7 @@ interface HomePageProps {
   initialEventSlug?: string;
   initialLoggedIn?: boolean;
   initialView?: "home" | "events";
+  initialCreateEvent?: boolean;
 }
 
 function TypewriterText({ text }: { text: string }) {
@@ -171,7 +172,7 @@ function TypewriterText({ text }: { text: string }) {
   );
 }
 
-export default function HomePage({ initialConfig, initialEventSlug, initialLoggedIn, initialView = initialEventSlug ? "events" : "home" }: HomePageProps) {
+export default function HomePage({ initialConfig, initialEventSlug, initialLoggedIn, initialView = initialEventSlug ? "events" : "home", initialCreateEvent = false }: HomePageProps) {
   const router = useRouter();
   const navigate = useFourgoNavigation();
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
@@ -303,7 +304,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
   const [agreeFiscal, setAgreeFiscal] = useState(false);
   const [agreeMunicipal, setAgreeMunicipal] = useState(false);
 
-  const [orgType, setOrgType] = useState('Discoteca / Club');
+  const [orgType, setOrgType] = useState('Organizador / Promotor');
   const [orgName, setOrgName] = useState('');
   const [orgCity, setOrgCity] = useState('Loja');
   const [brandLogoUrl, setBrandLogoUrl] = useState('');
@@ -323,7 +324,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
         setNewEventVenueName((prev) => (!prev || prev === "Cubic Club" ? (userProfile.venueName || userProfile.name || "") : prev));
         setNewEventCoOrganizers([mainOrg]);
       }
-      if (userProfile.type) setOrgType(userProfile.type);
+      setOrgType(userProfile.type === "Discoteca / Club" ? "Discoteca / Club" : "Organizador / Promotor");
       if (userProfile.instagram) setInstagramHandle(userProfile.instagram.replace(/^@/, ''));
       if (userProfile.address) {
         setClubAddress(userProfile.address);
@@ -337,6 +338,15 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
   useEffect(() => {
     setIsMounted(true);
     if (typeof window !== "undefined") {
+      const currentParams = new URLSearchParams(window.location.search);
+      let resumeCreateEvent = initialCreateEvent || currentParams.get("action") === "create_event";
+      try {
+        resumeCreateEvent ||= sessionStorage.getItem("fourgo_auth_intent") === "create_event";
+      } catch { }
+      if (resumeCreateEvent) {
+        setActiveStoryScreen(0);
+        setOrganizerSubView(userProfile?.hasCompletedOnboarding ? "create_event" : "profile");
+      }
       // Helper function to build dynamic profile for any logged in email
       const resolveProfileForEmail = (
         email: string,
@@ -401,7 +411,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
       const code = urlParams.get("code");
 
       if (idToken || accessToken || code) {
-        window.history.replaceState({}, document.title, window.location.pathname);
+        window.history.replaceState(window.history.state, document.title, window.location.pathname);
 
         let userEmail = "";
         let userName = "";
@@ -441,7 +451,13 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
 
           setUserProfile(userObj);
           setUserLoggedIn(true);
-          setOrganizerSubView("menu");
+          if (resumeCreateEvent) {
+            setActiveStoryScreen(0);
+            setOrganizerSubView(userObj.hasCompletedOnboarding ? "create_event" : "profile");
+            try { sessionStorage.removeItem("fourgo_auth_intent"); } catch { }
+          } else {
+            setOrganizerSubView("menu");
+          }
           setShowAuthModalForFavorites(false);
           setShowUserMenu(false);
 
@@ -532,12 +548,9 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
         }
       }
 
-      // Check if routed from /cuenta to publish event
-      const currentParams = new URLSearchParams(window.location.search);
-      if (currentParams.get("action") === "create_event") {
-        setActiveStoryScreen(0);
-        setOrganizerSubView("create_event");
-        window.history.replaceState({}, document.title, window.location.pathname);
+      // Resume the Partner flow from the welcome page, account, or Google.
+      if (resumeCreateEvent) {
+        window.history.replaceState(window.history.state, document.title, window.location.pathname);
       }
     }
   }, []);
@@ -585,6 +598,11 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
         }
         setShowAuthModalForFavorites(false);
         setShowUserMenu(false);
+        // Google returns to the registered callback URL; preserve the Partner flow.
+        try {
+          if (activeStoryScreen === 0) sessionStorage.setItem("fourgo_auth_intent", "create_event");
+          else sessionStorage.removeItem("fourgo_auth_intent");
+        } catch { }
         window.location.assign(result.url);
       } catch (error) {
         console.error("Google sign-in failed:", error);
@@ -618,18 +636,9 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
 
   const handleStartPublishEvent = () => {
     setShowUserMenu(false);
+    setIsAccountDashboardOpen(false);
     setPublishEventError("");
-    setActiveStoryScreen(0);
-
-    if (userProfile?.hasCompletedOnboarding) {
-      setOrganizerSubView("create_event");
-    } else {
-      setOrganizerSubView("profile");
-    }
-
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    navigate("/crear");
   };
 
   const handleCompleteOnboarding = async (e: React.FormEvent) => {
@@ -703,7 +712,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
   // 3D Perspective Curved Carousel state for Eventos screen
   const [featuredCarouselIndex, setFeaturedCarouselIndex] = useState(0);
 
-  const [activeStoryScreen, setActiveStoryScreen] = useState(1);
+  const [activeStoryScreen, setActiveStoryScreen] = useState(initialCreateEvent ? 0 : 1);
 
   function handleExploreEvents() {
     navigate("/events");
@@ -1989,13 +1998,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                           {(
                             <button
                               type="button"
-                              onClick={() => {
-                                setShowUserMenu(false);
-                                setActiveStoryScreen(0);
-                                setTimeout(() => {
-                                  document.getElementById("subir-evento-section")?.scrollIntoView({ behavior: "smooth" });
-                                }, 100);
-                              }}
+                              onClick={handleStartPublishEvent}
                               className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.10] border border-white/10 hover:border-white/20 text-white transition-all active:scale-[0.98] cursor-pointer text-xs font-bold uppercase tracking-wider"
                             >
                               <span>Publicar Evento</span>
@@ -2293,10 +2296,10 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                         <div className="relative z-10 w-full max-w-lg mx-auto bg-zinc-950/90 p-5 sm:p-8 lg:p-10 rounded-3xl border border-white/20 shadow-2xl space-y-4 sm:space-y-6 text-white font-sans my-auto backdrop-blur-md">
                           <div className="text-center space-y-1.5 sm:space-y-2">
                             <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white font-sans leading-tight">
-                              Tu evento también tiene lugar en 4go.
+                              Eleva tu cuenta a Partner 4GO
                             </h1>
                             <p className="text-xs sm:text-sm text-zinc-300 font-medium max-w-md mx-auto leading-relaxed">
-                              ¿Una feria, un concierto, un taller o un plan diferente? Inicia sesión y compártelo con Loja.
+                              Entra con Google, completa tu perfil Partner y empieza a crear y publicar tus eventos en 4GO.
                             </p>
                           </div>
 
@@ -2324,7 +2327,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                           {/* ─── STEPPER INDICATOR HEADER OUTSIDE MODAL (ORIGINAL CLEAN TEXT STYLE) ─── */}
                           <div className="flex items-center justify-center gap-3 sm:gap-6 py-2 text-xs sm:text-sm font-bold text-white tracking-wider uppercase drop-shadow-md">
                             <span className="text-white font-black">
-                              Cuenta de Promotor
+                              Cuenta Partner 4GO
                             </span>
                             <span className="text-zinc-400 font-normal">→</span>
                             <span className="text-zinc-400 font-medium">
@@ -2448,7 +2451,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                               <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1">
                                   <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
-                                    Partner type
+                                    Tipo de Partner
                                   </label>
                                   <select
                                     value={orgType || userProfile?.type || "Discoteca / Club"}
@@ -2462,7 +2465,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
 
                                 <div className="space-y-1">
                                   <label className="text-xs font-bold uppercase tracking-wider text-zinc-700 block">
-                                    City
+                                    Ciudad
                                   </label>
                                   <select
                                     value="Loja"
@@ -3652,7 +3655,8 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                     <div className="fourgo-catalogue-search relative w-full mx-auto flex items-center">
                       <Search className="absolute left-3.5 w-4 h-4 text-[#8a7462] pointer-events-none" />
                       <input
-                        type="text"
+                        type="search"
+                        aria-label="Buscar eventos, promotores o clubes"
                         value={carteleraSearchQuery}
                         onChange={(e) => {
                           setCarteleraSearchQuery(e.target.value);
@@ -3668,6 +3672,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                             setCarteleraSearchQuery("");
                             setTimeout(checkChipsScroll, 100);
                           }}
+                          aria-label="Borrar búsqueda"
                           className="absolute right-3 p-1 text-[#8a7462] hover:text-[#452724] transition cursor-pointer"
                         >
                           <X className="w-3.5 h-3.5" />
@@ -3685,7 +3690,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute left-0 inset-y-0 z-20 flex items-center pl-1 pr-6 bg-gradient-to-r from-[#fff5e2] via-[#fff5e2]/85 to-transparent pointer-events-none"
+                            className="fourgo-chip-edge--left absolute left-0 inset-y-0 z-20 flex items-center pl-1 pr-6 pointer-events-none"
                           >
                             <button
                               type="button"
@@ -3756,7 +3761,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute right-0 inset-y-0 z-20 flex items-center pr-1 pl-6 bg-gradient-to-l from-[#fff5e2] via-[#fff5e2]/85 to-transparent pointer-events-none"
+                            className="fourgo-chip-edge--right absolute right-0 inset-y-0 z-20 flex items-center pr-1 pl-6 pointer-events-none"
                           >
                             <button
                               type="button"
@@ -3851,8 +3856,9 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                                       }
                                       toggleFavorite(evt.id, e);
                                     }}
-                                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/25 flex items-center justify-center text-white hover:scale-110 active:scale-90 transition-transform shadow-lg cursor-pointer touch-manipulation select-none"
+                                    className="fourgo-event-favorite w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/25 flex items-center justify-center text-white hover:scale-110 active:scale-90 transition-transform shadow-lg cursor-pointer touch-manipulation select-none"
                                     aria-label="Guardar favorito"
+                                    aria-pressed={Boolean(userLoggedIn && likedEvents[evt.id])}
                                   >
                                     <Heart
                                       className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors ${userLoggedIn && likedEvents[evt.id]

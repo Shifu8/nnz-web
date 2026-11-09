@@ -16,6 +16,16 @@
 .light { background: #fff5e2; color: #452724; }
 .light .link:hover { color: #3e604c; }
 .header button:focus-visible, .header a:focus-visible { outline: 2px solid #f8cf4b; outline-offset: 5px; }
+.catalogue, .catalogue.scrolled { background: #ffdf57; color: #171711; }
+.catalogue .active::after { height: 5px; border-radius: 0; background: #f29bce; transform: rotate(-2deg); }
+.catalogue .link:hover { color: #171711; }
+.catalogue .search { color: #171711; }
+.catalogue .create { display: grid; width: 40px; height: 40px; border: 1.5px solid #171711; border-radius: 8px; background: #fffdf4; box-shadow: 2px 2px 0 #171711; transition: transform .18s, background .18s, box-shadow .18s; }
+.catalogue .create:hover { background: #f29bce; transform: translateY(-2px); }
+.catalogue .login { border: 1.5px solid #171711; border-radius: 8px; background: #f29bce; box-shadow: 3px 3px 0 #171711; color: #171711; transition: transform .18s, background .18s, box-shadow .18s; }
+.catalogue .login:hover { background: #f7b3da; transform: translateY(-2px); }
+.catalogue .login:active, .catalogue .create:active { transform: translate(2px, 2px); box-shadow: none; }
+.catalogue button:focus-visible, .catalogue a:focus-visible { outline-color: #171711; }
 @media (max-width: 1199px) { .bar { gap: 18px; } .links { gap: 18px; } .link { font-size: 14px; } .bar :global(.fourgo-wordmark) { width: 98px; } .create { display: none; } }
 @media (max-width: 1023px) { .header { padding: 14px 24px; } .bar { gap: 16px; } .search { width: 44px; justify-content: center; padding: 8px; } .search span { display: none; } .links { gap: 20px; } }
 @media (max-width: 767px) {
@@ -27,6 +37,9 @@
   .create { display: grid; width: 26px; }
   .login { min-height: 40px; padding: 8px 12px; font-size: 12px; gap: 6px; }
   .search { width: 38px; min-height: 38px; }
+  .catalogue .create { width: 32px; height: 36px; }
+  .catalogue .login { padding: 8px 11px; }
 }
 @media (max-width: 374px) { .header { padding-right: 12px; padding-left: 12px; } .actions { gap: 5px; } .login { padding-right: 10px; padding-left: 10px; font-size: 11px; } }
-@media (prefers-reduced-motion: reduce) { .header { transition: none; } }
+@media (max-width: 374px) { .catalogue .bar :global(.fourgo-wordmark) { width: 70px; } .catalogue .login { padding-inline: 8px; } }
+@media (prefers-reduced-motion: reduce) { .header, .catalogue .login, .catalogue .create { transition: none; } }
