@@ -209,6 +209,7 @@ export default function EventDetailOverlay({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.22, ease: "easeOut" }}
+      data-fourgo-event-detail
       className={`fixed inset-0 ${zIndex} bg-black text-white flex flex-col select-none overflow-hidden`}
     >
       {/* ─── ULTRA-VIVID AMBIENT POSTER COLOR BLUR (AUTHENTIC GRADIENT FADE TO DEEP BLACK) ─── */}

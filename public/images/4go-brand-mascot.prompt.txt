@@ -1,0 +1,11 @@
+Mode: built-in image_gen tool, background extraction.
+Source: the user's black walking brand mascot image.
+
+Use case: background-extraction.
+Asset type: transparent PNG brand mascot for a website footer.
+Input image 1 is the EDIT TARGET, the user's exact black walking lemon brand mark on a warm cream paper background.
+Primary request: remove the cream paper background and isolate this EXACT existing black logo on true transparent alpha. Preserve the exact black silhouette, pose, relaxed sideways eyes, small smile, glints at the top, arm and hand gestures, striped socks, rounded shoes, and the small circled R mark at lower left. Do not redraw or redesign the brand.
+Preserve all original shapes, line thicknesses, outlines, relative proportions, and complete feet/hands with no clipping. The cream-colored negative spaces/details should become transparent cutouts so the website cream color shows through them. Preserve the pupils and other black details.
+Output composition: tightly centered full mascot and circled R together, with a small consistent transparent margin on all four sides; no large empty border.
+Background: genuine transparent alpha, no white, cream, black rectangle or baked checkerboard. Pure original near-black artwork only; no added color, no text, no wordmark, no shadow, no new elements.
+Constraints: change only background transparency and trim excess outer margin; retain the exact brand artwork from the input.

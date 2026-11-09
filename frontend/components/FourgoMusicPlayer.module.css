@@ -1,0 +1,32 @@
+.toggle {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid #45272430;
+  border-radius: 50%;
+  background: #fff5e2f2;
+  color: #452724;
+  box-shadow: 0 4px 20px #45272420;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color .2s, color .2s, transform .2s;
+}
+
+.toggle:hover { background: #eee2c7; transform: translateY(-2px); }
+.toggle[aria-pressed="true"] { background: #3e604c; border-color: #3e604c; color: #fff5e2; }
+.toggle:focus-visible { outline: 2px solid #452724; outline-offset: 4px; }
+
+@media (max-width: 1023px) {
+  :global(body:has([data-fourgo-event-detail])) .toggle {
+    bottom: calc(100px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle { transition: none; }
+}

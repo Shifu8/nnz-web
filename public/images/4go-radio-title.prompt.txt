@@ -1,0 +1,13 @@
+Mode: built-in image_gen tool.
+Reference images: accepted 4go title and original LOT RADIO title lettering.
+
+Use case: logo-brand.
+Asset type: transparent replacement wordmark for the title area of an existing illustrated radio/DJ video.
+Input image 1: accepted 4go lettering, style reference only.
+Input image 2: original LOT RADIO lettering, supporting typography reference only.
+Primary request: replace the accepted lettering with EXACTLY "FOUR GO" in uppercase, one cohesive horizontal line, with a clear word space between FOUR and GO. Spell F O U R, space, G O. No digits.
+Style: match the supplied playful vintage hand-drawn condensed rounded block typography. Very heavy tall softly rounded glyphs; narrow rounded counters; fine slightly irregular chocolate brown outlines; solid warm pale cream letter interiors; thick crisp chocolate brown offset extrusion below and slightly to the right. The lettering is flat hand-inked artwork, not balloons. Keep all six letters the same cap height and aligned on the same baseline, with a balanced compact word space.
+Palette: warm pale cream #FFF5E2 and chocolate brown #452724, matching the references.
+Composition: wide horizontal wordmark, generous readable size, all letter shadows inside canvas, small transparent margins.
+Background: TRUE TRANSPARENT alpha outside the letters. Cream interiors remain opaque.
+Constraints: text must read FOUR GO, no other lettering, no THE badge, no colored dot, no surrounding badge, no background scene, no green, no glow, no mockup, no curved text. Keep the exact same visual style as the accepted reference while changing only the written name.

@@ -3,88 +3,95 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import dynamic from "next/dynamic";
-import {
-  Globe,
-  Music,
-  ShieldCheck,
-  Ticket,
-} from "lucide-react";
+import styles from "./Footer.module.css";
+import { Globe } from "lucide-react";
 
 interface FooterProps {
   showTopBanner?: boolean;
   animatedScene?: boolean;
 }
 
-const FourgoFooterScene = dynamic(() => import("@/frontend/components/FourgoFooterScene"));
-
 export default function Footer({ showTopBanner = false, animatedScene = false }: FooterProps) {
+  const useCreamTheme = animatedScene || showTopBanner;
+
   return (
     <div className="w-full font-sans">
       {/* ─── SECTION 1: COMPRA EN SEGUNDOS (ONLY ON EVENT DETAILS) ─── */}
       {showTopBanner && (
-        <section className="w-full bg-black text-white py-16 sm:py-20 px-4 sm:px-8 border-t border-white/10 relative z-20 font-sans">
+        <section className={`${styles.banner} fourgo-event-access w-full py-16 sm:py-20 px-4 sm:px-8 border-t relative z-20 font-sans`}>
           <div className="max-w-2xl mx-auto flex flex-col items-center text-center space-y-6">
-            {/* Dark Mascot Logo */}
-            <div className="relative w-32 h-32 sm:w-36 sm:h-36 flex items-center justify-center">
+            <div className="relative w-40 h-40 sm:w-44 sm:h-44 flex items-center justify-center">
               <Image
-                src="/images/logo_4go_vertical_eye_dark.png"
-                alt="4GO"
-                width={144}
-                height={144}
+                src="/images/lemon-relax.png"
+                alt="Limón descansando entre flores"
+                fill
                 unoptimized
-                priority
-                style={{ width: "auto", height: "auto" }}
+                sizes="(max-width: 640px) 160px, 176px"
                 className="object-contain"
               />
             </div>
 
             {/* Title */}
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white uppercase tracking-tight">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#452724] uppercase tracking-tight">
               COMPRA EN SEGUNDOS
             </h2>
 
             {/* Comprehensive Description */}
-            <p className="text-sm sm:text-base text-zinc-300 font-medium leading-relaxed max-w-xl">
+            <p className="text-sm sm:text-base text-[#796353] font-medium leading-relaxed max-w-xl">
               Compra tus entradas oficiales y reservas con total tranquilidad. Cada orden es validada y confirmada directamente por el organizador de cada evento, con precios 100% transparentes sin cargos ocultos y acceso digital garantizado.
             </p>
           </div>
         </section>
       )}
 
+      {useCreamTheme && (
+        <svg
+          className={`${styles.divider} fourgo-footer__divider`}
+          viewBox="0 0 1440 64"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path
+            d="M-2 42C180 5 340 4 520 23S780 43 960 23S1270 9 1442 28"
+            fill="none"
+            stroke="#d7c39e"
+            strokeWidth="1.5"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+      )}
+
       {/* ─── SECTION 2: WHITE FOOTER DIRECTORY (MATCHES EXACT HOME FOOTER) ─── */}
-      {animatedScene && <FourgoFooterScene />}
-      <footer className={`${animatedScene ? "fourgo-footer--night" : ""} w-full bg-white text-zinc-900 border-t border-zinc-200 pt-16 sm:pt-20 pb-32 sm:pb-24 lg:pb-16 px-4 sm:px-8 relative z-20 overflow-hidden font-sans`}>
+      <footer className={`${useCreamTheme ? `fourgo-footer--night ${styles.cream}` : ""} ${useCreamTheme ? "" : "border-t"} w-full bg-white text-zinc-900 border-zinc-200 pt-8 sm:pt-10 pb-20 lg:pb-16 px-4 sm:px-8 relative z-20 overflow-hidden font-sans`}>
         {/* Background ambient lighting */}
         <div className="fourgo-footer__ambient absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-64 bg-gradient-to-t from-[#80684d]/5 via-transparent to-transparent pointer-events-none blur-3xl" />
 
-        <div className="max-w-[1400px] mx-auto space-y-16 relative z-10 text-left">
+        <div className="max-w-[1400px] mx-auto space-y-8 sm:space-y-10 relative z-10 text-left">
           {/* ─── TOP SECTION: NAVIGATION COLUMNS ─── */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-start lg:items-center">
-            {/* Left Column: Logo + Description */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start lg:items-center">
+            {/* Brand mascot and introduction */}
             <div className="fourgo-footer__brand lg:col-span-5 lg:self-center flex items-center gap-5 sm:gap-6 h-full">
-              <div className={`fourgo-footer__logo relative ${animatedScene ? "w-28 h-20 sm:w-36 sm:h-24" : "w-20 h-20 sm:w-24 sm:h-24"} shrink-0 flex items-center justify-center`}>
-                <Image
-                  src={animatedScene ? "/images/4go-balloon-wordmark.webp" : "/images/logo_4go_black_white.png"}
-                  alt="4GO Logo"
-                  width={96}
-                  height={96}
-                  unoptimized
-                  priority
-                  style={{ width: "auto", height: "auto" }}
-                  className="object-contain"
-                />
+              <Image
+                src="/images/4go-brand-mascot.png"
+                alt="Mascota de la marca 4go"
+                width={128}
+                height={128}
+                unoptimized
+                className="fourgo-footer__mascot w-24 h-24 sm:w-32 sm:h-32 shrink-0 object-contain"
+              />
+              <div className="min-w-0 space-y-2">
+                <p className="fourgo-footer__brand-name text-sm sm:text-base font-semibold text-zinc-700">4go · Eventos en Loja</p>
+                <p className="fourgo-footer__description text-xs sm:text-sm lg:text-base text-zinc-600 font-medium max-w-md leading-relaxed">
+                  Descubre los mejores eventos, conciertos y experiencias en Loja. Pases oficiales y reservas instantáneas desde tu dispositivo.
+                </p>
               </div>
-              {animatedScene && <p className="fourgo-footer__brand-name text-zinc-700">4go · Eventos en Loja</p>}
-              <p className="fourgo-footer__description text-sm sm:text-base text-zinc-600 font-medium max-w-md leading-relaxed">
-                Descubre los mejores eventos, conciertos y experiencias en Loja. Pases oficiales y reservas instantáneas desde tu dispositivo.
-              </p>
             </div>
 
             {/* Right Columns: Links (Nuestra empresa, Fan Support) */}
-            <div className="fourgo-footer__links lg:col-span-7 grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-12 pt-2 max-w-xl">
+            <div className="fourgo-footer__links lg:col-span-7 grid grid-cols-2 gap-x-4 gap-y-6 sm:gap-8 max-w-xl">
               {/* Column 1: Nuestra Empresa */}
-              <div className="min-w-0 space-y-4">
+              <div className="min-w-0 space-y-3">
                 <h4 className="text-xs sm:text-base font-black uppercase tracking-wider text-zinc-900">
                   Nuestra empresa
                 </h4>
@@ -108,7 +115,7 @@ export default function Footer({ showTopBanner = false, animatedScene = false }:
               </div>
 
               {/* Column 2: Fan Support */}
-              <div className="min-w-0 space-y-4">
+              <div className="min-w-0 space-y-3">
                 <h4 className="text-xs sm:text-base font-black uppercase tracking-wider text-zinc-900">
                   Fan Support
                 </h4>
@@ -136,9 +143,9 @@ export default function Footer({ showTopBanner = false, animatedScene = false }:
             </div>
           </div>
 
-          {/* ─── MIDDLE DIVIDER & SUB-FOOTER ROW (CENTERED & LARGER) ─── */}
-          <div className="border-t border-zinc-200 pt-10 space-y-6">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-6 text-xs sm:text-sm text-zinc-600 font-medium">
+          {/* Copyright, legal links and social accounts */}
+          <div className="space-y-5 sm:space-y-6">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-5 text-xs sm:text-sm text-zinc-600 font-medium">
               {/* Left: Copyright & Language */}
               <div className="flex flex-wrap items-center justify-center gap-4">
                 <span className="text-zinc-700 font-semibold text-xs sm:text-sm">
@@ -154,7 +161,7 @@ export default function Footer({ showTopBanner = false, animatedScene = false }:
               </div>
 
               {/* Middle: Legal / Policy Links & Social Icons */}
-              <div className="flex flex-wrap items-center justify-center gap-5 sm:gap-7 text-zinc-600 text-xs sm:text-sm font-medium">
+              <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 sm:gap-x-6 text-zinc-600 text-xs sm:text-sm font-medium">
                 <a href="/privacy_policy" className="hover:text-black transition-colors">
                   Política de Privacidad
                 </a>
@@ -210,7 +217,7 @@ export default function Footer({ showTopBanner = false, animatedScene = false }:
             </div>
 
             {/* Copyright & Inline Compact DevEc Branding */}
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-4 pt-4 border-t border-zinc-200/60 w-full overflow-hidden">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-3 w-full overflow-hidden">
               <p className="text-xs sm:text-sm text-zinc-500 text-center lg:text-left font-medium max-w-xl">
                 4GO y el logo de 4GO son marcas registradas de 4GO Events Ltd. Todos los derechos reservados.
               </p>

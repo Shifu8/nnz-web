@@ -1,0 +1,24 @@
+.banner,
+.cream:global(.fourgo-footer--night) {
+  color-scheme: only light;
+  background: #fff5e2;
+  color: #452724;
+  border-color: #e3d4b7;
+}
+
+.cream :global(.fourgo-footer__ambient) {
+  display: none;
+}
+
+.divider {
+  position: relative;
+  z-index: 20;
+  display: block;
+  width: 100%;
+  height: clamp(40px, 4vw, 64px);
+  margin-top: -20px;
+  overflow: hidden;
+  background: #fff5e2;
+  color-scheme: only light;
+  pointer-events: none;
+}

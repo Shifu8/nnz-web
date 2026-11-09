@@ -11,7 +11,6 @@
 .page :global(.fourgo-hero__video),
 .page :global(.fourgo-events),
 .page :global(.fourgo-how),
-.page :global(.fourgo-organizer),
 .page :global(.fourgo-outro),
 .page :global(.fourgo-footer--night) {
   color-scheme: only light;
@@ -21,4 +20,10 @@
 .page :global(.fourgo-events)::before,
 .page :global(.fourgo-footer--night) :global(.fourgo-footer__ambient) {
   display: none;
+}
+
+.page:global(.fourgo-home) :global(.fourgo-footer__brand) {
+  flex-direction: row;
+  align-items: center;
+  gap: 24px;
 }

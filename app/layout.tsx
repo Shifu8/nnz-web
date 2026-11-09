@@ -9,6 +9,7 @@ import { Inter, Geist_Mono, Comfortaa, Quicksand } from "next/font/google";
 
 import "./globals.css";
 import MobileCookieConsent from "@/components/MobileCookieConsent";
+import FourgoMusicPlayer from "@/frontend/components/FourgoMusicPlayer";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -107,6 +108,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         {children}
         <MobileCookieConsent />
+        <FourgoMusicPlayer />
       </body>
     </html>
   );

@@ -3912,17 +3912,20 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-10 lg:gap-16 items-start">
                       {[
                         {
-                          face: "/images/alien_face_v2_1.png",
+                          illustration: "/images/lemon-flowers.png",
+                          illustrationAlt: "Limón caminando con un ramo de flores",
                           title: "COMPRA EN SEGUNDOS",
                           desc: "Obtén tus entradas oficiales en menos tiempo del que te tomó leer esto.",
                         },
                         {
-                          face: "/images/alien_face_v2_2.png",
+                          illustration: "/images/lemon-relax.png",
+                          illustrationAlt: "Limón descansando entre flores",
                           title: "PRECIOS TRANSPARENTES",
                           desc: "Mira el precio total desde el inicio, sin cargos ocultos ni sorpresas al pagar.",
                         },
                         {
-                          face: "/images/alien_face_v2_3.png",
+                          illustration: "/images/lemon-dj.png",
+                          illustrationAlt: "Limón bailando con audífonos",
                           title: "RECOMENDACIONES PERSONALIZADAS",
                           desc: "Descubre los eventos hechos a tu medida directamente en tu inicio.",
                         },
@@ -3931,15 +3934,13 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                           key={item.title}
                           className="flex flex-col items-center text-center space-y-3.5"
                         >
-                          {/* Distinct Larger Alien Face Illustration (No zoom) */}
-                          <div className="relative w-32 h-28 sm:w-36 sm:h-32 mb-1">
+                          <div className="relative w-40 h-40 sm:w-48 sm:h-48 mb-1">
                             <Image
-                              src={item.face}
-                              alt={item.title}
+                              src={item.illustration}
+                              alt={item.illustrationAlt}
                               fill
-                              priority
                               unoptimized
-                              sizes="(max-width: 640px) 128px, 144px"
+                              sizes="(max-width: 640px) 160px, 192px"
                               className="object-contain"
                             />
                           </div>
@@ -3958,52 +3959,6 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                     </div>
                   </div>
                 </div>
-
-                {/* --- 4. WHITE ORGANIZER BANNER SECTION (PUBLICA TUS EVENTOS) --- */}
-                <section id="organizer-banner-section" className="fourgo-organizer w-full py-16 sm:py-24 relative z-20 font-sans border-t">
-                  <div className="max-w-[1300px] mx-auto px-6 sm:px-12">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-                      {/* Left Column: Title, Description & Action Buttons */}
-                      <div className="lg:col-span-6 space-y-6 text-left">
-                        <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-black tracking-tight font-sans uppercase leading-[1.05]">
-                          PUBLICA TUS EVENTOS &amp; CONECTA CON TU AUDIENCIA
-                        </h2>
-                        <p className="text-xs sm:text-sm text-zinc-600 font-semibold leading-relaxed max-w-xl">
-                          Un espacio para quienes hacen que Loja se mueva. Publica tu concierto, feria, taller o actividad cultural, comparte los detalles y gestiona tus entradas desde 4go.
-                        </p>
-
-                        {/* Action Buttons */}
-                        <div className="flex items-center justify-start pt-2">
-                          <button
-                            type="button"
-                            onClick={() => setActiveStoryScreen(0)}
-                            className="fourgo-organizer__cta px-6 py-3.5 rounded-full text-xs sm:text-sm font-black uppercase tracking-wider transition-all active:scale-95 shadow-xl inline-flex items-center justify-center cursor-pointer"
-                          >
-                            CREAR CUENTA DE ORGANIZADOR
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Right Column: Rounded Image Container with Red Girl Photo & Copyright watermark */}
-                      <div className="lg:col-span-6 w-full flex justify-center lg:justify-end">
-                        <div className="relative w-full max-w-[540px] aspect-[4/3.5] rounded-[2.5rem] overflow-hidden shadow-2xl border border-black/10 bg-zinc-950">
-                          <Image
-                            src="/images/4go_red_girl_showcase.jpg"
-                            alt="Publica tus eventos 4GO"
-                            fill
-                            className="fourgo-organizer__art object-cover brightness-105"
-                            sizes="(max-width: 768px) 100vw, 600px"
-                          />
-                          {/* Overlay copyright text on bottom left */}
-                          <span className="absolute bottom-4 left-5 text-[10px] sm:text-[11px] font-extrabold text-white/90 tracking-wider shadow-md drop-shadow">
-                            © 4GO 2026, all rights reserved
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
               </motion.div>
             )}
 

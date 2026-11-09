@@ -1,0 +1,19 @@
+.wordmark {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity .2s ease, transform .2s ease, visibility .2s;
+}
+
+.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wordmark { transition: none; transform: none; }
+}
