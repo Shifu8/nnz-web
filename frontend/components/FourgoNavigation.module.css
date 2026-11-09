@@ -26,6 +26,8 @@
 .catalogue .login:hover { background: #f7b3da; transform: translateY(-2px); }
 .catalogue .login:active, .catalogue .create:active { transform: translate(2px, 2px); box-shadow: none; }
 .catalogue button:focus-visible, .catalogue a:focus-visible { outline-color: #171711; }
+.partner, .partner.scrolled { background: #ccb7f4; color: #171711; }
+.partner .active::after { display: none; }
 @media (max-width: 1199px) { .bar { gap: 18px; } .links { gap: 18px; } .link { font-size: 14px; } .bar :global(.fourgo-wordmark) { width: 98px; } .create { display: none; } }
 @media (max-width: 1023px) { .header { padding: 14px 24px; } .bar { gap: 16px; } .search { width: 44px; justify-content: center; padding: 8px; } .search span { display: none; } .links { gap: 20px; } }
 @media (max-width: 767px) {

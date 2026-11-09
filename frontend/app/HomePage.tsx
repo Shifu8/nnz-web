@@ -49,8 +49,6 @@ import {
   HelpCircle,
   Play,
   Heart,
-  Volume2,
-  VolumeX,
   Mic,
   Building2,
   UserCheck,
@@ -93,6 +91,7 @@ import AlienIcon from "@/frontend/components/AlienIcon";
 import { events as fallbackEvents } from "@/frontend/services/nenezData";
 import { useHomepageConfig } from "@/frontend/hooks/useHomepageConfig";
 import OrganizerOnboardingModal from "@/frontend/components/OrganizerOnboardingModal";
+import PartnerCreateIntro from "@/frontend/features/organizer/PartnerCreateIntro";
 import CoOrganizerModal from "@/frontend/components/CoOrganizerModal";
 import LocationPickerModal from "@/frontend/components/LocationPickerModal";
 import MyAccountDashboardModal from "@/frontend/features/account/MyAccountDashboardModal";
@@ -717,18 +716,6 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
   function handleExploreEvents() {
     navigate("/events");
   }
-
-  const [isLeftVideoMuted, setIsLeftVideoMuted] = useState(true);
-  const leftVideoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    if (activeStoryScreen === 0 && leftVideoRef.current) {
-      leftVideoRef.current.muted = isLeftVideoMuted;
-      leftVideoRef.current.play().catch(() => { });
-    } else if (leftVideoRef.current) {
-      leftVideoRef.current.pause();
-    }
-  }, [activeStoryScreen, isLeftVideoMuted]);
 
   // Responsive animation state: animations disabled on mobile, enabled on PC (>= 768px)
   const [isDesktopAnimation, setIsDesktopAnimation] = useState(false);
@@ -1841,7 +1828,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
 
   return (
     <main
-      className={`${styles.page} fourgo-home ${initialView === "events" ? "fourgo-home--events" : "fourgo-home--landing"} relative min-h-screen overflow-x-clip`}
+      className={`${styles.page} fourgo-home ${initialView === "events" ? "fourgo-home--events" : "fourgo-home--landing"} ${activeStoryScreen === 0 ? "fourgo-home--partner" : ""} relative min-h-screen overflow-x-clip`}
       style={themeStyle}
     >
       {/* StormGo Animated Intro Loader Splash Overlay */}
@@ -2222,7 +2209,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
 
 
       {/* --- MAIN HOME CONTENT (FULL BLEED HERO photo STARTING AT TOP:0) --- */}
-      <div className="pb-0 min-h-screen bg-black text-white pt-0">
+      <div className="fourgo-main-content pb-0 min-h-screen bg-black text-white pt-0">
         <div className="w-full">
           <AnimatePresence initial={false}>
             {activeStoryScreen === 0 && (
@@ -2232,74 +2219,27 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.18, ease: "easeOut" }}
-                className="relative w-full flex flex-col select-none -mt-20 sm:-mt-24 -mb-16 lg:-mb-24"
+                className={`${styles.partnerScreen} no-swipe`}
               >
-                {/* --- TOP HERO ROW (30% LEFT VIDEO / 70% RIGHT AUTH FORM WITH VIDEO) --- */}
-                <div className="w-full min-h-[100dvh] flex flex-col lg:flex-row items-stretch">
-                  {/* 1. LEFT COLUMN (30% WIDTH): BACKGROUND VIDEO FROM DOWNLOADS WITH AUDIO */}
-                  <div className="relative w-full lg:w-[30%] h-[42vh] sm:h-[48vh] lg:h-auto lg:min-h-[calc(100vh+6rem)] self-stretch bg-zinc-950 overflow-hidden flex-shrink-0">
-                    <video
-                      ref={leftVideoRef}
-                      autoPlay
-                      loop
-                      muted={isLeftVideoMuted}
-                      playsInline
-                      poster="/videos/subir_evento_left_poster.jpg"
-                      preload="auto"
-                      className="absolute inset-0 w-full h-full object-cover brightness-105"
-                    >
-                      <source media="(min-width: 768px)" src="/videos/subir_evento_left_video.mp4" type="video/mp4" />
-                      <source src="/videos/subir_evento_left_video_mobile.mp4" type="video/mp4" />
-                    </video>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent opacity-90" />
-
-                    {/* Bottom Footer: Left Copyright & Right Mute/Unmute Slider Switch */}
-                    <div className="absolute bottom-3 left-4 right-4 lg:bottom-6 lg:left-5 lg:right-5 z-10 flex items-center justify-between gap-2 pointer-events-auto">
-                      <span className="text-[9px] sm:text-[10px] font-semibold text-white/70 tracking-tight drop-shadow-md">
-                        © 2026, all rights reserved
-                      </span>
-
-                      {/* Mute/Unmute Audio Pill Slider */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (leftVideoRef.current) {
-                            leftVideoRef.current.muted = !isLeftVideoMuted;
-                            setIsLeftVideoMuted(!isLeftVideoMuted);
-                          }
-                        }}
-                        className="px-2.5 py-1 rounded-full bg-zinc-900/90 border border-white/20 text-white flex items-center gap-1.5 hover:bg-black transition active:scale-95 cursor-pointer shadow-lg backdrop-blur-md"
-                        title={isLeftVideoMuted ? "Activar sonido" : "Silenciar"}
-                      >
-                        {isLeftVideoMuted ? (
-                          <VolumeX className="w-3.5 h-3.5 text-zinc-400" />
-                        ) : (
-                          <Volume2 className="w-3.5 h-3.5 text-yellow-400" />
-                        )}
-                        <div className="w-6 h-1 rounded-full bg-white/30 relative overflow-hidden">
-                          <div className={`h-full bg-yellow-400 transition-all duration-300 ${isLeftVideoMuted ? 'w-0' : 'w-full'}`} />
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 2. RIGHT COLUMN (70% WIDTH): CENTERED AUTH FORM WITH DEEP BLACK BG & SOFT WHITE BLUR GLOW */}
-                  <div id="subir-evento-section" className="relative w-full lg:w-[70%] flex-1 min-h-[58vh] lg:min-h-screen px-4 sm:px-8 lg:px-12 py-8 sm:py-12 lg:py-16 flex flex-col items-center justify-center bg-black text-white font-sans overflow-hidden">
-                    {/* Ambient soft white/radial glow behind the card */}
-                    <div className="absolute inset-0 bg-black pointer-events-none" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] sm:w-[520px] h-[340px] sm:h-[520px] bg-white/[0.05] rounded-full blur-[110px] pointer-events-none" />
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.06)_0%,transparent_70%)] pointer-events-none" />
-
-                    {/* Centered Dark Glass Auth / Vertical Dashboard Card */}
+                <PartnerCreateIntro
+                  step={!(isMounted && userLoggedIn) || !userProfile?.hasCompletedOnboarding || organizerSubView === "profile" ? 1 : organizerSubView === "published" ? 3 : 2}
+                  canEditProfile={isMounted && userLoggedIn}
+                  canCreateEvent={Boolean(isMounted && userLoggedIn && userProfile?.hasCompletedOnboarding)}
+                  hasPublishedEvent={Boolean(lastPublishedEvent)}
+                  onSelectStep={(step) => setOrganizerSubView(step === 1 ? "profile" : step === 2 ? "create_event" : "published")}
+                />
+                <div className={styles.partnerWorkspace}>
+                  <div id="subir-evento-section" className={styles.partnerForm}>
+                    {/* Partner sign-in, profile, and event editor */}
                     {(
                       !(isMounted && userLoggedIn) ? (
-                        <div className="relative z-10 w-full max-w-lg mx-auto bg-zinc-950/90 p-5 sm:p-8 lg:p-10 rounded-3xl border border-white/20 shadow-2xl space-y-4 sm:space-y-6 text-white font-sans my-auto backdrop-blur-md">
+                        <div className={styles.partnerAuth}>
                           <div className="text-center space-y-1.5 sm:space-y-2">
-                            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white font-sans leading-tight">
-                              Eleva tu cuenta a Partner 4GO
-                            </h1>
-                            <p className="text-xs sm:text-sm text-zinc-300 font-medium max-w-md mx-auto leading-relaxed">
-                              Entra con Google, completa tu perfil Partner y empieza a crear y publicar tus eventos en 4GO.
+                            <h2 className="text-xl sm:text-2xl font-black tracking-tight leading-tight">
+                              Entra con Google y empieza
+                            </h2>
+                            <p className="text-xs sm:text-sm text-zinc-600 font-medium max-w-md mx-auto leading-relaxed">
+                              Completa el perfil de tu marca o club y empieza a crear y publicar tus eventos en 4GO.
                             </p>
                           </div>
 
@@ -2309,7 +2249,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                               type="button"
                               onClick={() => handleQuickSocialLogin("google")}
                               disabled={isGoogleSigningIn}
-                              className="w-full py-3.5 sm:py-4 px-6 rounded-full bg-white hover:bg-zinc-100 text-black font-black text-xs sm:text-sm uppercase tracking-wider border border-white/30 flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-95 cursor-pointer shadow-xl disabled:opacity-60 disabled:cursor-wait"
+                              className={styles.partnerGoogle}
                             >
                               <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -2319,32 +2259,17 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                               </svg>
                               <span>{isGoogleSigningIn ? "Conectando..." : "ENTRAR CON GOOGLE"}</span>
                             </button>
-                            {googleSignInError && <p role="alert" className="text-xs leading-relaxed text-rose-200">{googleSignInError}</p>}
+                            {googleSignInError && <p role="alert" className="text-xs leading-relaxed text-rose-700">{googleSignInError}</p>}
                           </div>
                         </div>
                       ) : (!userProfile?.hasCompletedOnboarding || organizerSubView === "profile") ? (
-                        <div className="relative z-10 w-full max-w-2xl mx-auto space-y-4 sm:space-y-5 font-sans pt-4 sm:pt-8 lg:pt-28 pb-8">
-                          {/* ─── STEPPER INDICATOR HEADER OUTSIDE MODAL (ORIGINAL CLEAN TEXT STYLE) ─── */}
-                          <div className="flex items-center justify-center gap-3 sm:gap-6 py-2 text-xs sm:text-sm font-bold text-white tracking-wider uppercase drop-shadow-md">
-                            <span className="text-white font-black">
-                              Cuenta Partner 4GO
-                            </span>
-                            <span className="text-zinc-400 font-normal">→</span>
-                            <span className="text-zinc-400 font-medium">
-                              Crear Evento
-                            </span>
-                            <span className="text-zinc-400 font-normal">→</span>
-                            <span className="text-zinc-400 font-medium">
-                              Publicar
-                            </span>
-                          </div>
-
+                        <div className="fourgo-partner-panel w-full font-sans">
                           {/* ─── COMPACT WHITE CARD ONBOARDING MODAL ─── */}
-                          <div className="bg-white text-zinc-900 p-6 sm:p-8 rounded-[32px] border border-zinc-200 shadow-2xl text-left font-sans flex flex-col min-h-[700px] max-h-[730px] overflow-hidden">
+                          <div className="fourgo-partner-card text-left font-sans flex flex-col">
                             {/* Centered Hero Header with Restored Title (Pinned) */}
                             <div className="space-y-1 border-b border-zinc-100 pb-3 text-center shrink-0">
                               <h2 className="text-lg sm:text-xl font-black text-zinc-900 uppercase tracking-tight leading-snug">
-                                ELEVA TU CUENTA A PARTNER 4GO  {/* Quieres elevar tu cuenta a partner? */}
+                                Completa tu perfil Partner
                               </h2>
                               <p className="text-[11px] sm:text-xs text-zinc-500 font-medium leading-relaxed">
                                 Crea y gestiona tus eventos, vende entradas digitales y haz crecer tu audiencia.
@@ -2631,24 +2556,9 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                           </div>
                         </div>
                       ) : organizerSubView === "published" ? (
-                        <div className="relative z-10 w-full max-w-2xl mx-auto space-y-5 font-sans pt-24 sm:pt-28 pb-8">
-                          {/* ─── STEPPER INDICATOR HEADER (PASO 2: PUBLICAR) ─── */}
-                          <div className="flex items-center justify-center gap-3 sm:gap-6 py-2 text-xs sm:text-sm font-bold text-white tracking-wider uppercase drop-shadow-md">
-                            <button
-                              type="button"
-                              onClick={() => setOrganizerSubView("create_event")}
-                              className="text-zinc-400 hover:text-white transition cursor-pointer font-medium"
-                            >
-                              1. Crear Evento
-                            </button>
-                            <span className="text-zinc-400 font-normal">→</span>
-                            <span className="text-white font-black">
-                              2. Publicar
-                            </span>
-                          </div>
-
+                        <div className="fourgo-partner-panel w-full font-sans">
                           {/* ─── PUBLISHED SUCCESS CARD ─── */}
-                          <div className="bg-white text-zinc-900 p-6 sm:p-8 rounded-[32px] border border-zinc-200 shadow-2xl space-y-4 text-center font-sans flex flex-col min-h-[700px] max-h-[730px] justify-between overflow-hidden">
+                          <div className="fourgo-partner-card space-y-6 text-center font-sans flex flex-col">
                             {/* Success Icon & Header */}
                             <div className="space-y-2.5">
                               <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-inner text-2xl font-black">
@@ -2732,31 +2642,11 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                           </div>
                         </div>
                       ) : (
-                        <div className="relative z-10 w-full max-w-2xl mx-auto space-y-4 sm:space-y-6 font-sans pt-4 sm:pt-8 lg:pt-28 pb-12">
-                          {/* --- STEPPER INDICATOR HEADER (1. CREAR EVENTO -> 2. PUBLICAR) --- */}
-                          <div className="flex items-center justify-center gap-3 sm:gap-6 py-2 text-xs sm:text-sm font-bold text-white tracking-wider uppercase drop-shadow-md">
-                            <span className="text-white font-black">
-                              1. Crear Evento
-                            </span>
-                            <span className="text-zinc-400 font-normal">→</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (lastPublishedEvent) setOrganizerSubView("published");
-                              }}
-                              className={`transition ${lastPublishedEvent
-                                ? "text-zinc-400 hover:text-white cursor-pointer font-medium"
-                                : "text-zinc-500 cursor-not-allowed font-medium"
-                                }`}
-                            >
-                              2. Publicar
-                            </button>
-                          </div>
-
+                        <div className="fourgo-partner-panel w-full font-sans">
                           {/* --- COMPACT WHITE CARD MODAL (CREAR EVENTO DIRECTO) --- */}
-                          <div className="bg-white text-zinc-900 p-6 sm:p-8 rounded-[32px] border border-zinc-200 shadow-2xl text-left font-sans flex flex-col min-h-[700px] max-h-[730px] overflow-hidden">
+                          <div className="fourgo-partner-card text-left font-sans flex flex-col">
                             {/* Top Organizer Header inside White Modal (Pinned Header) */}
-                            <div className="flex items-center justify-between border-b border-zinc-100 pb-3 shrink-0">
+                            <div className="fourgo-partner-identity flex items-center justify-between border-b border-zinc-100 pb-3 shrink-0">
                               <div className="flex items-center gap-3">
                                 <div className="w-11 h-11 rounded-2xl bg-zinc-900 border border-zinc-200 overflow-hidden shrink-0 flex items-center justify-center shadow-sm">
                                   {userProfile?.avatar ? (
@@ -3498,9 +3388,9 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
 
                 </div>
 
-                {/* --- LOWER FEATURE SECTION BELOW VIDEO & LOGIN HERO (WHITE BACKGROUND WITH ANIMATED FACES) --- */}
-                <div id="subir-features-section" className="w-full bg-white text-black pt-20 sm:pt-28 pb-28 sm:pb-36 px-6 sm:px-12 font-sans relative z-10">
-                  <div className="max-w-xl mx-auto flex flex-col items-center text-center space-y-16 sm:space-y-24">
+                {/* Partner tools and benefits */}
+                <div id="subir-features-section" className={styles.partnerFeatures}>
+                  <div className={styles.partnerFeatureGrid}>
                     {/* Main Centered Header */}
                     <motion.div
                       initial={isDesktopAnimation ? { opacity: 0, y: 30 } : false}
@@ -3548,7 +3438,7 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                         whileInView={isDesktopAnimation ? { opacity: 1, y: 0 } : undefined}
                         viewport={isDesktopAnimation ? { once: true, amount: 0.05 } : undefined}
                         transition={isDesktopAnimation ? { duration: 0.4, ease: "easeOut" } : { duration: 0 }}
-                        className="flex flex-col items-center text-center space-y-3.5"
+                        className="fourgo-partner-feature flex flex-col items-center text-center space-y-3.5"
                       >
                         {/* Distinct Larger Alien Face Illustration (No zoom) */}
                         <div className="relative w-32 h-28 sm:w-40 sm:h-36 mb-1">
@@ -3592,17 +3482,8 @@ export default function HomePage({ initialConfig, initialEventSlug, initialLogge
                       >
                         <motion.button
                           type="button"
-                          onClick={handleStartPublishEvent}
-                          animate={{
-                            opacity: [0.7, 1, 0.7],
-                            scale: [0.99, 1.01, 0.99],
-                          }}
-                          transition={{
-                            duration: 1.8,
-                            repeat: Infinity,
-                            ease: "easeInOut",
-                          }}
-                          className="px-10 sm:px-14 py-4 rounded-full bg-[#1c1c1e] hover:bg-zinc-900 border border-black/30 text-white font-black text-xs sm:text-sm uppercase tracking-widest shadow-xl transition-all cursor-pointer active:scale-95 select-none"
+                          onClick={() => document.getElementById("subir-evento-section")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" })}
+                          className={styles.partnerFeatureCta}
                         >
                           <span className="font-black tracking-[0.18em]">
                             PUBLICAR MI EVENTO

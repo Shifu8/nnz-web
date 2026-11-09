@@ -105,3 +105,79 @@
 @media (prefers-reduced-motion: reduce) {
   .page:global(.fourgo-home--events) :global(.fourgo-event-card), .page:global(.fourgo-home--events) :global(.fourgo-event-card) button { transition: none; }
 }
+
+.page:global(.fourgo-home--partner) {
+  --fourgo-paper: #ccb7f4;
+  --fourgo-surface: #ccb7f4;
+  --fourgo-ink: #171711;
+  --fourgo-muted: #514563;
+  background: #ccb7f4;
+  color: #171711;
+}
+
+.page:global(.fourgo-home--partner) :global(.fourgo-main-content),
+.page:global(.fourgo-home--partner) :global(.fourgo-footer--night),
+.page:global(.fourgo-home--partner) :global(.fourgo-footer__divider) { background: #ccb7f4; color: #171711; }
+
+.partnerScreen { position: relative; width: 100%; background: #ccb7f4; color: #171711; font-family: var(--font-inter), Arial, sans-serif; }
+.partnerWorkspace { width: min(922px, 100%); margin-inline: auto; padding: 0 36px 72px; }
+.partnerForm { position: relative; width: 100%; scroll-margin-top: 112px; }
+.partnerAuth, .page :global(.fourgo-partner-card) { width: 100%; padding: 32px; border: 2px solid #171711; border-radius: 16px; background: #fffdf4; box-shadow: 6px 6px 0 #171711; color: #171711; }
+.partnerAuth { max-width: 600px; margin: 0 auto; display: grid; gap: 24px; }
+.partnerAuth h2 { margin-bottom: 10px; }
+.partnerGoogle { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 54px; padding: 14px 20px; border: 1.5px solid #171711; border-radius: 8px; background: #f29bce; box-shadow: 3px 3px 0 #171711; color: #171711; font-size: 12px; font-weight: 900; cursor: pointer; transition: background .18s, transform .18s, box-shadow .18s; }
+.partnerGoogle:hover { background: #f7b3da; transform: translateY(-2px); }
+.partnerGoogle:active { transform: translate(2px, 2px); box-shadow: none; }
+.partnerGoogle:disabled { opacity: .6; cursor: wait; transform: none; }
+.partnerGoogle:focus-visible { outline: 3px solid #171711; outline-offset: 5px; }
+.page :global(.fourgo-partner-panel) { margin: 0; padding: 0; max-width: none; }
+.page :global(.fourgo-partner-card) { min-height: 0; max-height: none; overflow: visible; }
+.page :global(.fourgo-partner-card) > div { border-color: #17171125; }
+.page :global(.fourgo-partner-card) > div:has(> h2) { text-align: left; padding-bottom: 20px; }
+.page :global(.fourgo-partner-card) h2 { color: #171711; font-weight: 900; letter-spacing: -.045em; }
+.page :global(.fourgo-partner-card) input:not([type="checkbox"]):not([type="file"]),
+.page :global(.fourgo-partner-card) select,
+.page :global(.fourgo-partner-card) textarea { border: 1px solid #17171155; border-radius: 8px; background: #fffdf4; color: #171711; }
+.page :global(.fourgo-partner-card) input:focus-visible,
+.page :global(.fourgo-partner-card) select:focus-visible,
+.page :global(.fourgo-partner-card) textarea:focus-visible { outline: 2px solid #7b53ae; outline-offset: 3px; }
+.page :global(.fourgo-partner-card) > div:last-child > button,
+.page :global(.fourgo-partner-card) > div:last-child > div > button { border: 1.5px solid #171711; border-radius: 8px; background: #f29bce; box-shadow: 3px 3px 0 #171711; color: #171711; }
+.page :global(.fourgo-partner-card) > div:last-child > button:disabled,
+.page :global(.fourgo-partner-card) > div:last-child > div > button:disabled { background: #ede5f6; color: #6b6275; box-shadow: none; }
+.page :global(.fourgo-partner-identity) { flex-wrap: wrap; gap: 16px; margin-bottom: 6px; padding-bottom: 20px; }
+.page :global(.fourgo-partner-identity) > div:first-child { min-width: 0; }
+.page :global(.fourgo-partner-identity) > div:first-child > div:last-child { min-width: 0; }
+.page :global(.fourgo-partner-identity) h3 { overflow-wrap: anywhere; }
+.page :global(.fourgo-partner-identity) button { border: 1px solid #171711; border-radius: 7px; background: #e9dff8; color: #171711; box-shadow: 2px 2px 0 #171711; }
+
+.partnerFeatures { position: relative; padding: 56px 36px 92px; background: #ccb7f4; color: #171711; }
+.partnerFeatureGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch; gap: 26px; width: min(1100px, 100%); margin: 0 auto; text-align: center; }
+.partnerFeatureGrid > div:first-child, .partnerFeatureGrid > div:last-child { grid-column: 1 / -1; }
+.partnerFeatureGrid > div:first-child { max-width: 650px; margin: 0 auto 12px; }
+.partnerFeatureGrid > div:first-child h2 { font-size: clamp(28px, 3.5vw, 43px); letter-spacing: -.055em; }
+.partnerFeatureGrid :global(.fourgo-partner-feature) { padding: 24px 22px 28px; border: 1.5px solid #171711; border-radius: 12px; background: #fffdf4; box-shadow: 4px 4px 0 #171711; }
+.partnerFeatureGrid :global(.fourgo-partner-feature) h3 { font-size: 18px; letter-spacing: -.035em; }
+.partnerFeatureGrid :global(.fourgo-partner-feature) p { font-size: 12px; }
+.partnerFeatureGrid :global(.fourgo-partner-feature) > div:first-child { width: 110px; height: 100px; }
+.partnerFeatureCta { min-height: 53px; padding: 15px 28px; border: 1.5px solid #171711; border-radius: 8px; background: #f29bce; box-shadow: 4px 4px 0 #171711; color: #171711; font-size: 11px; font-weight: 900; cursor: pointer; transition: transform .18s, background .18s, box-shadow .18s; }
+.partnerFeatureCta:hover { background: #f7b3da; transform: translateY(-2px); }
+.partnerFeatureCta:active { transform: translate(3px, 3px); box-shadow: none; }
+.partnerFeatureCta:focus-visible { outline: 3px solid #171711; outline-offset: 5px; }
+
+@media (max-width: 767px) {
+  .partnerWorkspace { padding: 0 20px 42px; }
+  .partnerForm { scroll-margin-top: 93px; }
+  .partnerAuth, .page :global(.fourgo-partner-card) { padding: 22px 18px; border-radius: 13px; box-shadow: 4px 4px 0 #171711; }
+  .partnerAuth h2 { font-size: 20px; }
+  .page :global(.fourgo-partner-identity) > div:first-child > div:last-child > div { flex-wrap: wrap; gap: 5px; }
+  .page :global(.fourgo-partner-identity) h3 { font-size: 12px; }
+  .page :global(.fourgo-partner-identity) button { font-size: 10px; }
+  .partnerFeatures { padding: 38px 20px 65px; }
+  .partnerFeatureGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .partnerFeatureGrid :global(.fourgo-partner-feature) { padding: 20px 12px; }
+  .partnerFeatureGrid :global(.fourgo-partner-feature) h3 { font-size: 15px; }
+  .partnerFeatureGrid :global(.fourgo-partner-feature) p { font-size: 11px; }
+}
+@media (max-width: 420px) { .partnerFeatureGrid { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .partnerGoogle, .partnerFeatureCta { transition: none; } }
